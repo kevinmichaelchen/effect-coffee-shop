@@ -1,0 +1,23 @@
+{
+  "name": "effect-v4-onion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.11",
+  "scripts": {
+    "http": "bun run src/presentation/http/main.ts",
+    "cli": "bun run src/presentation/cli/main.ts",
+    "mcp:stdio": "bun run src/presentation/mcp/stdio-main.ts",
+    "mcp:http": "bun run src/presentation/mcp/http-main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test --path-ignore-patterns 'vendor/**'"
+  },
+  "dependencies": {
+    "@effect/platform-bun": "4.0.0-beta.43",
+    "effect": "4.0.0-beta.43"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.8",
+    "typescript": "^5.9.3"
+  }
+}
