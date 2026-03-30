@@ -27,77 +27,51 @@ If we want, we can rename the public MCP tool IDs later. That would be a protoco
 - `vendor/alchemy-effect`
   - A likely future home for Cloudflare infrastructure provisioning, not application behavior.
 
-## Oxc and TypeScript exploration
+## Adopted toolchain
 
-As of 2026-03-30, the cleanest path looks like this:
+As of 2026-03-30, this repo is pinned to:
 
-1. Keep `tsc --noEmit` for compile-time typechecking right now.
-2. Evaluate `oxlint` first for fast non-type-aware linting.
-3. Evaluate `oxfmt` with a trial diff before adopting it as the formatter.
-4. Revisit Oxlint type-aware linting when we are ready for the TypeScript 7 toolchain shift.
+- `@typescript/native-preview@7.0.0-dev.20260330.1`
+- `oxlint@1.57.0`
+- `oxlint-tsgolint@0.18.1`
+- `oxfmt@0.42.0`
+
+### Typechecking
+
+Primary typechecking now runs through `tsgo`:
+
+- `bun run typecheck` -> `tsgo --noEmit`
+
+The repo no longer carries a separate `typescript` package. The compiler path is intentionally the bleeding-edge native preview only.
 
 ### Oxlint
 
-`oxlint` looks ready for early adoption as a fast base linter:
+Root lint configuration lives in `.oxlintrc.json`.
 
-- Official docs position it as the primary linter or an incremental ESLint replacement.
-- It supports native rules plus JS plugins, though JS plugin support is still marked alpha.
-- It is a good fit for correctness-focused linting in CI before we add heavier type-aware rules.
+The adopted settings are:
+
+- `options.typeAware: true`
+- `options.typeCheck: true`
+- `options.maxWarnings: 0`
+- `ignorePatterns: ["vendor/**"]`
+
+`bun run lint` uses `oxlint --disable-nested-config .` so only the root repo config applies, even though vendored dependencies contain their own lint configs.
 
 ### Oxfmt
 
-`oxfmt` looks promising, but formatter swaps should be judged by diff quality, not by benchmarks alone.
+`oxfmt` is now the formatter of record for this repo.
 
-Reasons it is worth evaluating:
+The relevant root files are:
 
-- Official docs claim Prettier-compatible JavaScript and TypeScript output.
-- It has built-in import sorting and related formatting features.
-- It is designed for large repositories and CI throughput.
+- `.oxfmtrc.json`
+- `.prettierignore`
 
-Recommended approach:
-
-- Add it only after running a one-time diff against the current tree.
-- Accept it if the formatting delta is small and stylistically acceptable.
-
-### Type-aware linting
-
-Oxlint's official type-aware mode is not just a flag flip on top of today's TypeScript compiler:
-
-- It requires `oxlint-tsgolint`.
-- The docs say it is powered by `tsgolint` plus `typescript-go`.
-- The docs frame that runtime as TypeScript 7.
-
-That matters because this repo currently uses `typescript@^5.9.3`. So the practical recommendation is:
-
-- Do not replace `tsc --noEmit` with `oxlint --type-aware --type-check` yet.
-- Revisit that once we intentionally move toward the TS6 to TS7 transition.
-
-### TypeScript 6
-
-TypeScript 6.0 beta was announced on 2026-02-11 as the bridge release before TypeScript 7's Go-based implementation.
-
-For this repo, that suggests caution rather than urgency:
-
-- We already depend on beta-stage Effect packages.
-- We are still shaping the application architecture.
-- Oxlint's type-aware story is converging around the TS7 era.
-
-So the near-term recommendation is to stay on stable TypeScript 5.9.x until we have a concrete reason to move.
+`.prettierignore` excludes `vendor/` so formatting runs stay focused on the application code instead of vendored upstream repositories.
 
 ### lintcn
 
-`lintcn` is interesting, but it solves a more specific problem than base linting:
-
-- It focuses on repo-owned, type-aware TypeScript rules.
-- Its workflow is useful once we know the architectural invariants we want to enforce.
-
-That makes it a good second-phase tool, after the app patterns settle.
+`lintcn` is vendored for future repo-owned type-aware rules. It is not yet wired into the day-to-day scripts because the app-specific invariants worth encoding there are still emerging.
 
 ### alchemy-effect
 
-`alchemy-effect` remains a good fit for a later infrastructure layer:
-
-- The repo describes it as alpha.
-- It is better aligned with deployment stacks than with our current in-memory application runtime.
-
-That matches the intended plan to keep the onion core stable and swap only the external adapters when we move to Cloudflare.
+`alchemy-effect` is still best treated as a later infrastructure concern, not part of the local Bun runtime path for this in-memory scaffold.

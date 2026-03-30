@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": ["vendor/**"],
+  "options": {
+    "typeAware": true,
+    "typeCheck": true,
+    "maxWarnings": 0
+  }
+}

@@ -10,6 +10,9 @@ Simple Onion Architecture playground for a coffee-order application built with T
 - `lintcn` vendored as a Git submodule at `vendor/lintcn`.
 - `alchemy-effect` vendored as a Git submodule at `vendor/alchemy-effect`.
 - Bun scaffold added with in-memory adapters plus HTTP, CLI, and MCP presentations.
+- Primary typecheck now runs through `tsgo` via `@typescript/native-preview`.
+- `oxlint` is enabled with type-aware linting and compiler diagnostics.
+- `oxfmt` is the committed formatter for this repo.
 - When Effect examples and memory diverge, update `vendor/effect-smol` and treat that repo as the source of truth.
 
 ## What I verified in `effect-smol`
@@ -70,5 +73,7 @@ Validate the scaffold:
 
 ```bash
 bun run typecheck
+bun run lint
+bun run fmt:check
 bun test
 ```

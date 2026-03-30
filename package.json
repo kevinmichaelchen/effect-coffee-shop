@@ -3,13 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "packageManager": "bun@1.3.11",
   "scripts": {
     "http": "bun run src/presentation/http/main.ts",
     "cli": "bun run src/presentation/cli/main.ts",
     "mcp:stdio": "bun run src/presentation/mcp/stdio-main.ts",
     "mcp:http": "bun run src/presentation/mcp/http-main.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
+    "lint": "oxlint --disable-nested-config .",
+    "lint:fix": "oxlint --disable-nested-config --fix .",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "check": "bun run typecheck && bun run lint && bun run fmt:check && bun run test",
     "test": "bun test --path-ignore-patterns 'vendor/**'"
   },
   "dependencies": {
@@ -18,6 +22,10 @@
   },
   "devDependencies": {
     "@types/bun": "^1.3.8",
-    "typescript": "^5.9.3"
-  }
+    "@typescript/native-preview": "7.0.0-dev.20260330.1",
+    "oxfmt": "0.42.0",
+    "oxlint": "1.57.0",
+    "oxlint-tsgolint": "0.18.1"
+  },
+  "packageManager": "bun@1.3.11"
 }
