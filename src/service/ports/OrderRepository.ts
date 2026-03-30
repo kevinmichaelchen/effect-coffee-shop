@@ -5,7 +5,6 @@ import type { CoffeeOrder, ListOrdersFilters, OrderId } from "../../domain/order
 export class OrderRepository extends ServiceMap.Service<
   OrderRepository,
   {
-    readonly nextId: Effect.Effect<OrderId>;
     readonly save: (order: CoffeeOrder) => Effect.Effect<CoffeeOrder>;
     readonly getById: (orderId: OrderId) => Effect.Effect<CoffeeOrder | undefined>;
     readonly list: (filters?: ListOrdersFilters) => Effect.Effect<ReadonlyArray<CoffeeOrder>>;

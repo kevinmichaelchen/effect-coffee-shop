@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import { InMemoryCoffeeAppLive } from "../src/external/live.ts";
 import {
@@ -40,6 +41,7 @@ describe("coffee order workflow", () => {
     const result = await Effect.runPromise(program);
 
     expect(result.created.status).toBe("pending");
+    expect(DateTime.isUtc(result.created.createdAt)).toBe(true);
     expect(result.loaded.id).toBe(result.created.id);
     expect(result.brewing.status).toBe("brewing");
     expect(result.ready.status).toBe("ready");
@@ -59,5 +61,33 @@ describe("coffee order workflow", () => {
     const error = await Effect.runPromise(Effect.flip(program));
 
     expect(error.message).toBe("Tea drinks do not support extra shots");
+  });
+
+  test("generates human-readable ids while keeping createdAt serializable", async () => {
+    const program = Effect.gen(function* () {
+      const first = yield* placeOrder({
+        customerName: "Avery",
+        drinkId: "latte",
+        size: "medium",
+      });
+      const second = yield* placeOrder({
+        customerName: "Morgan",
+        drinkId: "tea",
+        size: "small",
+      });
+
+      return {
+        first,
+        second,
+        encodedFirst: JSON.parse(JSON.stringify(first)),
+      };
+    }).pipe(Effect.provide(InMemoryCoffeeAppLive));
+
+    const result = await Effect.runPromise(program);
+
+    expect(result.first.id).toBe("order-0001");
+    expect(result.second.id).toBe("order-0002");
+    expect(DateTime.isUtc(result.first.createdAt)).toBe(true);
+    expect(result.encodedFirst.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 });

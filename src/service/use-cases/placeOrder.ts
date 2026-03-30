@@ -1,3 +1,4 @@
+import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import { DrinkNotFoundError, InvalidOrderInputError } from "../../domain/errors.ts";
 import {
@@ -17,6 +18,7 @@ import {
   type Temperature,
 } from "../../domain/menu.ts";
 import { type CoffeeOrder, type PlaceOrderRequest } from "../../domain/order.ts";
+import { OrderIdGenerator } from "../ports/OrderIdGenerator.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
@@ -30,8 +32,9 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
 ): Effect.fn.Return<
   CoffeeOrder,
   DrinkNotFoundError | InvalidOrderInputError,
-  MenuRepository | OrderRepository
+  MenuRepository | OrderIdGenerator | OrderRepository
 > {
+  const orderIdGenerator = yield* OrderIdGenerator;
   const menuRepository = yield* MenuRepository;
   const orderRepository = yield* OrderRepository;
 
@@ -111,8 +114,8 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
     });
   }
 
-  const id = yield* orderRepository.nextId;
-  const createdAt = yield* Effect.sync(() => new Date().toISOString());
+  const id = yield* orderIdGenerator.next;
+  const createdAt = yield* DateTime.now;
   const notes = trimmedOrUndefined(request.notes);
 
   const order: CoffeeOrder = {

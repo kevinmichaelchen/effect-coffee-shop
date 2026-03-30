@@ -10,6 +10,7 @@ import * as Tool from "effect/unstable/ai/Tool";
 import * as Toolkit from "effect/unstable/ai/Toolkit";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import { InMemoryCoffeeAppLive } from "../../external/live.ts";
+import { OrderIdGenerator } from "../../service/ports/OrderIdGenerator.ts";
 import { MenuRepository } from "../../service/ports/MenuRepository.ts";
 import { OrderRepository } from "../../service/ports/OrderRepository.ts";
 import {
@@ -23,7 +24,7 @@ import {
   startBrewing,
 } from "../../service/use-cases/index.ts";
 import { prettyJson } from "../shared/json.ts";
-import { CoffeeOrderSchema, PlaceOrderRequestSchema } from "../../domain/order.ts";
+import { CoffeeOrderSchema, OrderIdSchema, PlaceOrderRequestSchema } from "../../domain/order.ts";
 import { AppErrorSchema } from "./schemas.ts";
 
 const PlaceOrderTool = Tool.make("place_order", {
@@ -36,7 +37,7 @@ const PlaceOrderTool = Tool.make("place_order", {
 const GetOrderTool = Tool.make("get_order", {
   description: "Fetch one order by id",
   parameters: Schema.Struct({
-    orderId: Schema.String,
+    orderId: OrderIdSchema,
   }),
   success: CoffeeOrderSchema,
   failure: AppErrorSchema,
@@ -54,7 +55,7 @@ const ListOrdersTool = Tool.make("list_orders", {
 const StartBrewingTool = Tool.make("start_brewing", {
   description: "Move an order from pending to brewing",
   parameters: Schema.Struct({
-    orderId: Schema.String,
+    orderId: OrderIdSchema,
   }),
   success: CoffeeOrderSchema,
   failure: AppErrorSchema,
@@ -63,7 +64,7 @@ const StartBrewingTool = Tool.make("start_brewing", {
 const MarkReadyTool = Tool.make("mark_ready", {
   description: "Move an order from brewing to ready",
   parameters: Schema.Struct({
-    orderId: Schema.String,
+    orderId: OrderIdSchema,
   }),
   success: CoffeeOrderSchema,
   failure: AppErrorSchema,
@@ -72,7 +73,7 @@ const MarkReadyTool = Tool.make("mark_ready", {
 const PickUpOrderTool = Tool.make("pick_up_order", {
   description: "Move an order from ready to picked-up",
   parameters: Schema.Struct({
-    orderId: Schema.String,
+    orderId: OrderIdSchema,
   }),
   success: CoffeeOrderSchema,
   failure: AppErrorSchema,
@@ -81,7 +82,7 @@ const PickUpOrderTool = Tool.make("pick_up_order", {
 const CancelOrderTool = Tool.make("cancel_order", {
   description: "Cancel a pending or brewing order",
   parameters: Schema.Struct({
-    orderId: Schema.String,
+    orderId: OrderIdSchema,
   }),
   success: CoffeeOrderSchema,
   failure: AppErrorSchema,
@@ -102,12 +103,14 @@ const CoffeeToolkitLive = McpServer.toolkit(CoffeeToolkit).pipe(
     CoffeeToolkit.toLayer(
       Effect.gen(function* () {
         const menuRepository = yield* MenuRepository;
+        const orderIdGenerator = yield* OrderIdGenerator;
         const orderRepository = yield* OrderRepository;
 
         return CoffeeToolkit.of({
           place_order: (input) =>
             placeOrder(input).pipe(
               Effect.provideService(MenuRepository, menuRepository),
+              Effect.provideService(OrderIdGenerator, orderIdGenerator),
               Effect.provideService(OrderRepository, orderRepository),
             ),
           get_order: ({ orderId }) =>
@@ -151,7 +154,7 @@ const OpenOrdersResource = McpServer.resource({
   ),
 });
 
-const orderIdParam = McpSchema.param("orderId", Schema.String);
+const orderIdParam = McpSchema.param("orderId", OrderIdSchema);
 
 const OrderResource = McpServer.resource`coffee://orders/${orderIdParam}`({
   name: "Coffee Order",

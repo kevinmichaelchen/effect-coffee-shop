@@ -16,6 +16,7 @@ import {
   CoffeeOrderSchema,
   CoffeeOrdersSchema,
   ListOrdersRequestSchema,
+  OrderIdSchema,
   PlaceOrderRequestSchema,
 } from "../../domain/order.ts";
 import {
@@ -71,35 +72,35 @@ class OrdersApi extends HttpApiGroup.make("orders")
     }),
     HttpApiEndpoint.get("getById", "/:orderId", {
       params: {
-        orderId: Schema.String,
+        orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
       error: OrderNotFoundError,
     }),
     HttpApiEndpoint.post("startBrewing", "/:orderId/start-brewing", {
       params: {
-        orderId: Schema.String,
+        orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
       error: UpdateOrderErrorSchema,
     }),
     HttpApiEndpoint.post("markReady", "/:orderId/mark-ready", {
       params: {
-        orderId: Schema.String,
+        orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
       error: UpdateOrderErrorSchema,
     }),
     HttpApiEndpoint.post("pickUp", "/:orderId/pick-up", {
       params: {
-        orderId: Schema.String,
+        orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
       error: UpdateOrderErrorSchema,
     }),
     HttpApiEndpoint.post("cancel", "/:orderId/cancel", {
       params: {
-        orderId: Schema.String,
+        orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
       error: UpdateOrderErrorSchema,

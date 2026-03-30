@@ -5,7 +5,11 @@ export const orderStatuses = ["pending", "brewing", "ready", "picked-up", "cance
 export type OrderStatus = (typeof orderStatuses)[number];
 export const OrderStatusSchema = Schema.Literals(orderStatuses);
 
-export const OrderIdSchema = Schema.String.annotate({ identifier: "OrderId" });
+const orderIdPattern = /^order-\d+$/;
+
+export const OrderIdSchema = Schema.String.check(Schema.isPattern(orderIdPattern)).annotate({
+  identifier: "OrderId",
+});
 export type OrderId = typeof OrderIdSchema.Type;
 
 export const CoffeeOrderSchema = Schema.Struct({
@@ -20,7 +24,7 @@ export const CoffeeOrderSchema = Schema.Struct({
   notes: Schema.optionalKey(Schema.String),
   status: OrderStatusSchema,
   priceCents: Schema.Int,
-  createdAt: Schema.String,
+  createdAt: Schema.DateTimeUtc,
 }).annotate({ identifier: "CoffeeOrder" });
 export type CoffeeOrder = typeof CoffeeOrderSchema.Type;
 
