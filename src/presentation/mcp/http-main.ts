@@ -5,12 +5,12 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import { BunCoffeeAppLive } from "#runtime/bun/live";
-import { CoffeeMcpHttpLive } from "./server.ts";
+import { CoffeeMcpClassicHttpLive } from "./server.ts";
 
 const CoffeeMcpHttpServerLive = Layer.unwrap(
   Effect.gen(function* () {
     const port = yield* Config.number("COFFEE_MCP_HTTP_PORT").pipe(Config.withDefault(3001));
-    return HttpRouter.serve(CoffeeMcpHttpLive).pipe(
+    return HttpRouter.serve(CoffeeMcpClassicHttpLive).pipe(
       Layer.provide(BunCoffeeAppLive),
       Layer.provideMerge(BunHttpServer.layer({ port })),
     );

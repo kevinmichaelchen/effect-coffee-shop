@@ -1,226 +1,45 @@
-import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Schema from "effect/Schema";
-import * as McpSchema from "effect/unstable/ai/McpSchema";
 import * as McpServer from "effect/unstable/ai/McpServer";
-import * as Tool from "effect/unstable/ai/Tool";
-import * as Toolkit from "effect/unstable/ai/Toolkit";
-import { CoffeeOrderSchema, OrderIdSchema, PlaceOrderRequestSchema } from "#domain/order";
-import { OrderIdGenerator } from "#service/ports/OrderIdGenerator";
-import { MenuRepository } from "#service/ports/MenuRepository";
-import { OrderRepository } from "#service/ports/OrderRepository";
-import {
-  cancelOrder,
-  getOrder,
-  listMenu,
-  listOrders,
-  markReady,
-  pickUpOrder,
-  placeOrder,
-  startBrewing,
-} from "#service/use-cases/index";
-import { prettyJson } from "../shared/json.ts";
-import { AppErrorSchema } from "./schemas.ts";
+import { CoffeeCodeModeToolsLive } from "./code-mode.ts";
+import { CoffeeClassicToolsLive } from "./classic-tools.ts";
+import { MenuResource, OpenOrdersResource, OrderResource } from "./resources.ts";
+import { RecommendDrinkPrompt, SummarizeOpenOrdersPrompt } from "./prompts.ts";
 
-const PlaceOrderTool = Tool.make("place_order", {
-  description: "Create a new coffee order",
-  parameters: PlaceOrderRequestSchema,
-  success: CoffeeOrderSchema,
-  failure: AppErrorSchema,
-});
+const mcpServerInfo = {
+  name: "Coffee Orders MCP",
+  version: "0.1.0",
+} as const;
 
-const GetOrderTool = Tool.make("get_order", {
-  description: "Fetch one order by id",
-  parameters: Schema.Struct({
-    orderId: OrderIdSchema,
-  }),
-  success: CoffeeOrderSchema,
-  failure: AppErrorSchema,
-});
-
-const ListOrdersTool = Tool.make("list_orders", {
-  description: "List orders, optionally filtered by status",
-  parameters: Schema.Struct({
-    status: Schema.optionalKey(Schema.String),
-  }),
-  success: Schema.Array(CoffeeOrderSchema),
-  failure: AppErrorSchema,
-});
-
-const StartBrewingTool = Tool.make("start_brewing", {
-  description: "Move an order from pending to brewing",
-  parameters: Schema.Struct({
-    orderId: OrderIdSchema,
-  }),
-  success: CoffeeOrderSchema,
-  failure: AppErrorSchema,
-});
-
-const MarkReadyTool = Tool.make("mark_ready", {
-  description: "Move an order from brewing to ready",
-  parameters: Schema.Struct({
-    orderId: OrderIdSchema,
-  }),
-  success: CoffeeOrderSchema,
-  failure: AppErrorSchema,
-});
-
-const PickUpOrderTool = Tool.make("pick_up_order", {
-  description: "Move an order from ready to picked-up",
-  parameters: Schema.Struct({
-    orderId: OrderIdSchema,
-  }),
-  success: CoffeeOrderSchema,
-  failure: AppErrorSchema,
-});
-
-const CancelOrderTool = Tool.make("cancel_order", {
-  description: "Cancel a pending or brewing order",
-  parameters: Schema.Struct({
-    orderId: OrderIdSchema,
-  }),
-  success: CoffeeOrderSchema,
-  failure: AppErrorSchema,
-});
-
-const CoffeeToolkit = Toolkit.make(
-  PlaceOrderTool,
-  GetOrderTool,
-  ListOrdersTool,
-  StartBrewingTool,
-  MarkReadyTool,
-  PickUpOrderTool,
-  CancelOrderTool,
-);
-
-const CoffeeToolkitLive = McpServer.toolkit(CoffeeToolkit).pipe(
-  Layer.provideMerge(
-    CoffeeToolkit.toLayer(
-      Effect.gen(function* () {
-        const menuRepository = yield* MenuRepository;
-        const orderIdGenerator = yield* OrderIdGenerator;
-        const orderRepository = yield* OrderRepository;
-
-        return CoffeeToolkit.of({
-          place_order: (input) =>
-            placeOrder(input).pipe(
-              Effect.provideService(MenuRepository, menuRepository),
-              Effect.provideService(OrderIdGenerator, orderIdGenerator),
-              Effect.provideService(OrderRepository, orderRepository),
-            ),
-          get_order: ({ orderId }) =>
-            getOrder(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
-          list_orders: ({ status }) =>
-            listOrders(status === undefined ? {} : { status }).pipe(
-              Effect.provideService(OrderRepository, orderRepository),
-            ),
-          start_brewing: ({ orderId }) =>
-            startBrewing(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
-          mark_ready: ({ orderId }) =>
-            markReady(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
-          pick_up_order: ({ orderId }) =>
-            pickUpOrder(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
-          cancel_order: ({ orderId }) =>
-            cancelOrder(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
-        });
-      }),
-    ),
-  ),
-);
-
-const MenuResource = McpServer.resource({
-  uri: "coffee://menu",
-  name: "Coffee Menu",
-  description: "The current coffee menu",
-  mimeType: "application/json",
-  content: listMenu().pipe(Effect.map(prettyJson)),
-});
-
-const OpenOrdersResource = McpServer.resource({
-  uri: "coffee://orders/open",
-  name: "Open Orders",
-  description: "Orders that have not been picked up or cancelled",
-  mimeType: "application/json",
-  content: listOrders({}).pipe(
-    Effect.map((orders) =>
-      orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
-    ),
-    Effect.map(prettyJson),
-  ),
-});
-
-const orderIdParam = McpSchema.param("orderId", OrderIdSchema);
-
-const OrderResource = McpServer.resource`coffee://orders/${orderIdParam}`({
-  name: "Coffee Order",
-  description: "One coffee order by id",
-  mimeType: "application/json",
-  completion: {
-    orderId: () => listOrders({}).pipe(Effect.map((orders) => orders.map((order) => order.id))),
-  },
-  content: Effect.fn("CoffeeMcp.orderResource")(function* (_uri, orderId) {
-    const order = yield* getOrder(orderId);
-    return prettyJson(order);
-  }),
-});
-
-const RecommendDrinkPrompt = McpServer.prompt({
-  name: "recommend-drink",
-  description: "Suggest a drink from the available menu",
-  parameters: {
-    occasion: Schema.String,
-  },
-  completion: {
-    occasion: () => Effect.succeed(["morning rush", "afternoon break", "late night", "decaf"]),
-  },
-  content: Effect.fn("CoffeeMcp.recommendDrinkPrompt")(function* ({ occasion }) {
-    const menu = yield* listMenu();
-    return `Recommend one drink for "${occasion}" from this menu:\n${prettyJson(menu)}`;
-  }),
-});
-
-const SummarizeOpenOrdersPrompt = McpServer.prompt({
-  name: "summarize-open-orders",
-  description: "Summarize the current open order queue",
-  parameters: {
-    focus: Schema.String,
-  },
-  completion: {
-    focus: () => Effect.succeed(["kitchen", "pickup", "operations"]),
-  },
-  content: Effect.fn("CoffeeMcp.summarizeOpenOrdersPrompt")(function* ({ focus }) {
-    const openOrders = yield* listOrders({}).pipe(
-      Effect.map((orders) =>
-        orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
-      ),
-    );
-    return `Summarize the open order queue for ${focus}:\n${prettyJson(openOrders)}`;
-  }),
-});
-
-const CoffeeMcpFeaturesLive = Layer.mergeAll(
+const CoffeeMcpSharedFeaturesLive = Layer.mergeAll(
   MenuResource,
   OpenOrdersResource,
   OrderResource,
   RecommendDrinkPrompt,
   SummarizeOpenOrdersPrompt,
-  CoffeeToolkitLive,
 );
 
-export const CoffeeMcpStdioLive = CoffeeMcpFeaturesLive.pipe(
-  Layer.provide(
-    McpServer.layerStdio({
-      name: "Coffee Orders MCP",
-      version: "0.1.0",
-    }),
-  ),
+export const CoffeeMcpClassicFeaturesLive = Layer.mergeAll(
+  CoffeeMcpSharedFeaturesLive,
+  CoffeeClassicToolsLive,
 );
 
-export const CoffeeMcpHttpLive = CoffeeMcpFeaturesLive.pipe(
+export const CoffeeMcpCodeModeFeaturesLive = Layer.mergeAll(
+  CoffeeMcpSharedFeaturesLive,
+  CoffeeCodeModeToolsLive,
+);
+
+export const CoffeeMcpClassicStdioLive = CoffeeMcpClassicFeaturesLive.pipe(
+  Layer.provide(McpServer.layerStdio(mcpServerInfo)),
+);
+
+export const CoffeeMcpCodeModeStdioLive = CoffeeMcpCodeModeFeaturesLive.pipe(
+  Layer.provide(McpServer.layerStdio(mcpServerInfo)),
+);
+
+export const CoffeeMcpClassicHttpLive = CoffeeMcpClassicFeaturesLive.pipe(
   Layer.provide(
     McpServer.layerHttp({
-      name: "Coffee Orders MCP",
-      version: "0.1.0",
+      ...mcpServerInfo,
       path: "/mcp",
     }),
   ),
