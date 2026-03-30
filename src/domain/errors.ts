@@ -1,28 +1,28 @@
-import * as Schema from "effect/Schema"
-import { OrderIdSchema, OrderStatusSchema } from "./order.ts"
+import * as Schema from "effect/Schema";
+import { OrderIdSchema, OrderStatusSchema } from "./order.ts";
 
 export class DrinkNotFoundError extends Schema.TaggedErrorClass<DrinkNotFoundError>()(
   "DrinkNotFoundError",
   {
-    drinkId: Schema.String
+    drinkId: Schema.String,
   },
-  { httpApiStatus: 404 }
+  { httpApiStatus: 404 },
 ) {}
 
 export class InvalidOrderInputError extends Schema.TaggedErrorClass<InvalidOrderInputError>()(
   "InvalidOrderInputError",
   {
-    message: Schema.String
+    message: Schema.String,
   },
-  { httpApiStatus: 400 }
+  { httpApiStatus: 400 },
 ) {}
 
 export class OrderNotFoundError extends Schema.TaggedErrorClass<OrderNotFoundError>()(
   "OrderNotFoundError",
   {
-    orderId: OrderIdSchema
+    orderId: OrderIdSchema,
   },
-  { httpApiStatus: 404 }
+  { httpApiStatus: 404 },
 ) {}
 
 export class InvalidOrderStatusTransitionError extends Schema.TaggedErrorClass<InvalidOrderStatusTransitionError>()(
@@ -30,7 +30,7 @@ export class InvalidOrderStatusTransitionError extends Schema.TaggedErrorClass<I
   {
     orderId: OrderIdSchema,
     from: OrderStatusSchema,
-    to: OrderStatusSchema
+    to: OrderStatusSchema,
   },
-  { httpApiStatus: 409 }
+  { httpApiStatus: 409 },
 ) {}

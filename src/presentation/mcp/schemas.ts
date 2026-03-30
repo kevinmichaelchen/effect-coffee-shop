@@ -1,14 +1,14 @@
-import * as Schema from "effect/Schema"
+import * as Schema from "effect/Schema";
 import {
   DrinkNotFoundError,
   InvalidOrderInputError,
   InvalidOrderStatusTransitionError,
-  OrderNotFoundError
-} from "../../domain/errors.ts"
+  OrderNotFoundError,
+} from "../../domain/errors.ts";
 
 export const AppErrorSchema = Schema.Union([
   DrinkNotFoundError,
   InvalidOrderInputError,
   OrderNotFoundError,
-  InvalidOrderStatusTransitionError
-]).annotate({ identifier: "AppError" })
+  InvalidOrderStatusTransitionError,
+]).annotate({ identifier: "AppError" });

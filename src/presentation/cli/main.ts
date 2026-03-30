@@ -1,1 +1,1 @@
-import "./command.ts"
+import "./command.ts";
