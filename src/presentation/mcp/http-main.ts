@@ -1,7 +1,20 @@
+import * as BunHttpServer from "@effect/platform-bun/BunHttpServer";
 import * as BunRuntime from "@effect/platform-bun/BunRuntime";
+import * as Config from "effect/Config";
+import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { makeCoffeeMcpHttpServer } from "./server.ts";
+import * as HttpRouter from "effect/unstable/http/HttpRouter";
+import { BunCoffeeAppLive } from "#runtime/bun/live";
+import { CoffeeMcpHttpLive } from "./server.ts";
 
-const port = Number(process.env.PORT ?? "3001");
+const CoffeeMcpHttpServerLive = Layer.unwrap(
+  Effect.gen(function* () {
+    const port = yield* Config.number("COFFEE_MCP_HTTP_PORT").pipe(Config.withDefault(3001));
+    return HttpRouter.serve(CoffeeMcpHttpLive).pipe(
+      Layer.provide(BunCoffeeAppLive),
+      Layer.provideMerge(BunHttpServer.layer({ port })),
+    );
+  }),
+);
 
-Layer.launch(makeCoffeeMcpHttpServer(port)).pipe(BunRuntime.runMain);
+Layer.launch(CoffeeMcpHttpServerLive).pipe(BunRuntime.runMain);

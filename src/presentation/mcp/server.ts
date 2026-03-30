@@ -1,6 +1,3 @@
-import * as BunServices from "@effect/platform-bun/BunServices";
-import * as BunHttpServer from "@effect/platform-bun/BunHttpServer";
-import * as BunRuntime from "@effect/platform-bun/BunRuntime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
@@ -8,9 +5,7 @@ import * as McpSchema from "effect/unstable/ai/McpSchema";
 import * as McpServer from "effect/unstable/ai/McpServer";
 import * as Tool from "effect/unstable/ai/Tool";
 import * as Toolkit from "effect/unstable/ai/Toolkit";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import { CoffeeOrderSchema, OrderIdSchema, PlaceOrderRequestSchema } from "#domain/order";
-import { InMemoryCoffeeAppLive } from "#external/live";
 import { OrderIdGenerator } from "#service/ports/OrderIdGenerator";
 import { MenuRepository } from "#service/ports/MenuRepository";
 import { OrderRepository } from "#service/ports/OrderRepository";
@@ -136,7 +131,7 @@ const CoffeeToolkitLive = McpServer.toolkit(CoffeeToolkit).pipe(
 const MenuResource = McpServer.resource({
   uri: "coffee://menu",
   name: "Coffee Menu",
-  description: "The current in-memory coffee menu",
+  description: "The current coffee menu",
   mimeType: "application/json",
   content: listMenu().pipe(Effect.map(prettyJson)),
 });
@@ -210,7 +205,7 @@ const CoffeeMcpFeaturesLive = Layer.mergeAll(
   RecommendDrinkPrompt,
   SummarizeOpenOrdersPrompt,
   CoffeeToolkitLive,
-).pipe(Layer.provide(InMemoryCoffeeAppLive));
+);
 
 export const CoffeeMcpStdioLive = CoffeeMcpFeaturesLive.pipe(
   Layer.provide(
@@ -219,7 +214,6 @@ export const CoffeeMcpStdioLive = CoffeeMcpFeaturesLive.pipe(
       version: "0.1.0",
     }),
   ),
-  Layer.provide(BunServices.layer),
 );
 
 export const CoffeeMcpHttpLive = CoffeeMcpFeaturesLive.pipe(
@@ -231,8 +225,3 @@ export const CoffeeMcpHttpLive = CoffeeMcpFeaturesLive.pipe(
     }),
   ),
 );
-
-export const runCoffeeMcpStdio = Layer.launch(CoffeeMcpStdioLive).pipe(BunRuntime.runMain);
-
-export const makeCoffeeMcpHttpServer = (port: number) =>
-  HttpRouter.serve(CoffeeMcpHttpLive).pipe(Layer.provideMerge(BunHttpServer.layer({ port })));

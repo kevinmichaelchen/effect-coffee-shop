@@ -1,5 +1,3 @@
-import * as BunServices from "@effect/platform-bun/BunServices";
-import * as BunRuntime from "@effect/platform-bun/BunRuntime";
 import * as Console from "effect/Console";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
@@ -7,7 +5,6 @@ import * as Command from "effect/unstable/cli/Command";
 import * as Flag from "effect/unstable/cli/Flag";
 import { drinkIds, drinkSizes, milks, temperatures } from "#domain/menu";
 import { orderStatuses } from "#domain/order";
-import { InMemoryCoffeeAppLive } from "#external/live";
 import {
   cancelOrder,
   getOrder,
@@ -163,6 +160,4 @@ export const coffeeCli = Command.make("coffee").pipe(
 
 export const runCoffeeCli = Command.run(coffeeCli, {
   version: "0.1.0",
-}).pipe(Effect.provide(InMemoryCoffeeAppLive), Effect.provide(BunServices.layer));
-
-BunRuntime.runMain(runCoffeeCli);
+});

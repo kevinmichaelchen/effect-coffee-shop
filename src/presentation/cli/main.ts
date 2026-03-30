@@ -1,1 +1,11 @@
-import "./command.ts";
+import * as BunServices from "@effect/platform-bun/BunServices";
+import * as BunRuntime from "@effect/platform-bun/BunRuntime";
+import * as Effect from "effect/Effect";
+import { BunCoffeeAppLive } from "#runtime/bun/live";
+import { runCoffeeCli } from "./command.ts";
+
+runCoffeeCli.pipe(
+  Effect.provide(BunCoffeeAppLive),
+  Effect.provide(BunServices.layer),
+  BunRuntime.runMain,
+);

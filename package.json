@@ -7,7 +7,9 @@
     "#domain/*": "./src/domain/*.ts",
     "#external/*": "./src/external/*.ts",
     "#effect-smol/sql/d1": "./vendor/effect-smol/packages/sql/d1/src/index.ts",
+    "#effect-smol/sql/sqlite-bun": "./vendor/effect-smol/packages/sql/sqlite-bun/src/index.ts",
     "#presentation/*": "./src/presentation/*.ts",
+    "#runtime/*": "./src/runtime/*.ts",
     "#service/*": "./src/service/*.ts"
   },
   "scripts": {
