@@ -1,3 +1,1 @@
-import { runCoffeeMcpStdio } from "./server.ts"
-
-void runCoffeeMcpStdio
+import "./server.ts";
