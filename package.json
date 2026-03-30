@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "imports": {
+    "#effect-smol/sql/d1": "./vendor/effect-smol/packages/sql/d1/src/index.ts"
+  },
   "scripts": {
     "http": "bun run src/presentation/http/main.ts",
     "cli": "bun run src/presentation/cli/main.ts",
