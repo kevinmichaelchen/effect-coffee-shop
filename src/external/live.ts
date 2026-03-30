@@ -3,8 +3,14 @@ import { InMemoryOrderIdGeneratorLive } from "./in-memory/InMemoryOrderIdGenerat
 import { InMemoryMenuRepositoryLive } from "./in-memory/InMemoryMenuRepository.ts";
 import { InMemoryOrderRepositoryLive } from "./in-memory/InMemoryOrderRepository.ts";
 
-export const InMemoryCoffeeAppLive = Layer.mergeAll(
+export const InMemoryCoffeeRepositoriesLive = Layer.mergeAll(
   InMemoryMenuRepositoryLive,
-  InMemoryOrderIdGeneratorLive,
   InMemoryOrderRepositoryLive,
 );
+
+export const InMemoryCoffeeAppLive = Layer.mergeAll(
+  InMemoryCoffeeRepositoriesLive,
+  InMemoryOrderIdGeneratorLive,
+);
+
+export { SqlCoffeeAppLive, SqlCoffeeRepositoriesLive } from "./sql/live.ts";

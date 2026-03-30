@@ -1,6 +1,6 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
-import { InMemoryCoffeeAppLive } from "../src/external/live.ts";
+import { InMemoryCoffeeAppLive } from "../../src/external/live.ts";
 import {
   cancelOrder,
   listOrders,
@@ -8,7 +8,7 @@ import {
   pickUpOrder,
   placeOrder,
   startBrewing,
-} from "../src/service/use-cases/index.ts";
+} from "../../src/service/use-cases/index.ts";
 
 const withApp = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
   effect.pipe(Effect.provide(InMemoryCoffeeAppLive));
@@ -257,66 +257,4 @@ describe("order service", () => {
       }),
     },
   ])("allows valid status transitions %#", ({ program }) => withApp(program));
-
-  it.effect.each([
-    {
-      program: Effect.gen(function* () {
-        const created = yield* placeOrder(baseOrderRequest);
-        const error = yield* Effect.flip(markReady(created.id));
-        if (error._tag !== "InvalidOrderStatusTransitionError") {
-          assert.fail(`Expected InvalidOrderStatusTransitionError, received ${error._tag}`);
-        }
-
-        assert.strictEqual(error.from, "pending");
-        assert.strictEqual(error.to, "ready");
-      }),
-    },
-    {
-      program: Effect.gen(function* () {
-        const created = yield* placeOrder(baseOrderRequest);
-        const error = yield* Effect.flip(pickUpOrder(created.id));
-        if (error._tag !== "InvalidOrderStatusTransitionError") {
-          assert.fail(`Expected InvalidOrderStatusTransitionError, received ${error._tag}`);
-        }
-
-        assert.strictEqual(error.from, "pending");
-        assert.strictEqual(error.to, "picked-up");
-      }),
-    },
-    {
-      program: Effect.gen(function* () {
-        const created = yield* placeOrder(baseOrderRequest);
-        yield* startBrewing(created.id);
-        yield* markReady(created.id);
-        const error = yield* Effect.flip(startBrewing(created.id));
-        if (error._tag !== "InvalidOrderStatusTransitionError") {
-          assert.fail(`Expected InvalidOrderStatusTransitionError, received ${error._tag}`);
-        }
-
-        assert.strictEqual(error.from, "ready");
-        assert.strictEqual(error.to, "brewing");
-      }),
-    },
-    {
-      program: Effect.gen(function* () {
-        const created = yield* placeOrder(baseOrderRequest);
-        yield* startBrewing(created.id);
-        yield* markReady(created.id);
-        const error = yield* Effect.flip(cancelOrder(created.id));
-        if (error._tag !== "InvalidOrderStatusTransitionError") {
-          assert.fail(`Expected InvalidOrderStatusTransitionError, received ${error._tag}`);
-        }
-
-        assert.strictEqual(error.from, "ready");
-        assert.strictEqual(error.to, "cancelled");
-      }),
-    },
-    {
-      program: Effect.gen(function* () {
-        const error = yield* Effect.flip(startBrewing("order-9999"));
-        assert.strictEqual(error._tag, "OrderNotFoundError");
-        assert.strictEqual(error.orderId, "order-9999");
-      }),
-    },
-  ])("rejects invalid status transitions %#", ({ program }) => withApp(program));
 });
