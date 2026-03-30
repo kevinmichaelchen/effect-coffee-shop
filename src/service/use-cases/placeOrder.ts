@@ -13,6 +13,7 @@ import {
   isTemperature,
   milks,
   temperatures,
+  type MenuItem,
   type DrinkSize,
   type Milk,
   type Temperature,
@@ -27,6 +28,94 @@ const trimmedOrUndefined = (value: string | undefined): string | undefined => {
   return trimmed === "" ? undefined : trimmed;
 };
 
+const invalidOrderInput = (message: string) => new InvalidOrderInputError({ message });
+
+const validateCustomerName = Effect.fnUntraced(function* (
+  customerName: string,
+): Effect.fn.Return<string, InvalidOrderInputError> {
+  const trimmedCustomerName = customerName.trim();
+  if (trimmedCustomerName.length === 0) {
+    return yield* invalidOrderInput("customerName must not be blank");
+  }
+  return trimmedCustomerName;
+});
+
+const validateSize = Effect.fnUntraced(function* (
+  size: string,
+): Effect.fn.Return<DrinkSize, InvalidOrderInputError> {
+  if (!isDrinkSize(size)) {
+    return yield* invalidOrderInput(`size must be one of: ${availableValues(drinkSizes)}`);
+  }
+  return size;
+});
+
+const resolveMilk = Effect.fnUntraced(function* (
+  menuItem: MenuItem,
+  milk: string | undefined,
+): Effect.fn.Return<Milk, InvalidOrderInputError> {
+  const selectedMilk =
+    milk === undefined
+      ? defaultMilkFor(menuItem)
+      : isMilk(milk)
+        ? milk
+        : yield* invalidOrderInput(`milk must be one of: ${availableValues(milks)}`);
+
+  if (!menuItem.availableMilks.some((availableMilk) => availableMilk === selectedMilk)) {
+    return yield* invalidOrderInput(
+      `${menuItem.name} does not support milk option "${selectedMilk}"`,
+    );
+  }
+
+  return selectedMilk;
+});
+
+const resolveTemperature = Effect.fnUntraced(function* (
+  menuItem: MenuItem,
+  temperature: string | undefined,
+): Effect.fn.Return<Temperature, InvalidOrderInputError> {
+  const selectedTemperature =
+    temperature === undefined
+      ? defaultTemperatureFor(menuItem)
+      : isTemperature(temperature)
+        ? temperature
+        : yield* invalidOrderInput(`temperature must be one of: ${availableValues(temperatures)}`);
+
+  if (
+    !menuItem.availableTemperatures.some(
+      (availableTemperature) => availableTemperature === selectedTemperature,
+    )
+  ) {
+    return yield* invalidOrderInput(
+      `${menuItem.name} does not support temperature "${selectedTemperature}"`,
+    );
+  }
+
+  return selectedTemperature;
+});
+
+const resolveShots = Effect.fnUntraced(function* (
+  menuItem: MenuItem,
+  shots: number | undefined,
+): Effect.fn.Return<number, InvalidOrderInputError> {
+  const selectedShots = shots ?? defaultShotsFor(menuItem);
+
+  if (!Number.isInteger(selectedShots) || selectedShots < 0) {
+    return yield* invalidOrderInput("shots must be a non-negative integer");
+  }
+
+  if (menuItem.kind === "tea" && selectedShots > 0) {
+    return yield* invalidOrderInput("Tea drinks do not support extra shots");
+  }
+
+  if (selectedShots > menuItem.maxShots) {
+    return yield* invalidOrderInput(
+      `${menuItem.name} supports at most ${menuItem.maxShots} shot(s)`,
+    );
+  }
+
+  return selectedShots;
+});
+
 export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
   request: PlaceOrderRequest,
 ): Effect.fn.Return<
@@ -38,12 +127,7 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
   const menuRepository = yield* MenuRepository;
   const orderRepository = yield* OrderRepository;
 
-  const customerName = request.customerName.trim();
-  if (customerName.length === 0) {
-    return yield* new InvalidOrderInputError({
-      message: "customerName must not be blank",
-    });
-  }
+  const customerName = yield* validateCustomerName(request.customerName);
 
   const menuItem = yield* menuRepository.findById(request.drinkId);
   if (menuItem === undefined) {
@@ -52,67 +136,10 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
     });
   }
 
-  if (!isDrinkSize(request.size)) {
-    return yield* new InvalidOrderInputError({
-      message: `size must be one of: ${availableValues(drinkSizes)}`,
-    });
-  }
-  const size: DrinkSize = request.size;
-
-  let milk: Milk = defaultMilkFor(menuItem);
-  if (request.milk !== undefined) {
-    if (!isMilk(request.milk)) {
-      return yield* new InvalidOrderInputError({
-        message: `milk must be one of: ${availableValues(milks)}`,
-      });
-    }
-    milk = request.milk;
-  }
-
-  if (!menuItem.availableMilks.some((availableMilk) => availableMilk === milk)) {
-    return yield* new InvalidOrderInputError({
-      message: `${menuItem.name} does not support milk option "${milk}"`,
-    });
-  }
-
-  let temperature: Temperature = defaultTemperatureFor(menuItem);
-  if (request.temperature !== undefined) {
-    if (!isTemperature(request.temperature)) {
-      return yield* new InvalidOrderInputError({
-        message: `temperature must be one of: ${availableValues(temperatures)}`,
-      });
-    }
-    temperature = request.temperature;
-  }
-
-  if (
-    !menuItem.availableTemperatures.some(
-      (availableTemperature) => availableTemperature === temperature,
-    )
-  ) {
-    return yield* new InvalidOrderInputError({
-      message: `${menuItem.name} does not support temperature "${temperature}"`,
-    });
-  }
-
-  const shots = request.shots ?? defaultShotsFor(menuItem);
-  if (!Number.isInteger(shots) || shots < 0) {
-    return yield* new InvalidOrderInputError({
-      message: "shots must be a non-negative integer",
-    });
-  }
-
-  if (menuItem.kind === "tea" && shots > 0) {
-    return yield* new InvalidOrderInputError({
-      message: "Tea drinks do not support extra shots",
-    });
-  }
-
-  if (shots > menuItem.maxShots) {
-    return yield* new InvalidOrderInputError({
-      message: `${menuItem.name} supports at most ${menuItem.maxShots} shot(s)`,
-    });
-  }
+  const size = yield* validateSize(request.size);
+  const milk = yield* resolveMilk(menuItem, request.milk);
+  const temperature = yield* resolveTemperature(menuItem, request.temperature);
+  const shots = yield* resolveShots(menuItem, request.shots);
 
   const id = yield* orderIdGenerator.next;
   const createdAt = yield* DateTime.now;

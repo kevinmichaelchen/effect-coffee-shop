@@ -5,5 +5,22 @@
     "typeAware": true,
     "typeCheck": true,
     "maxWarnings": 0
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.ts"],
+      "rules": {
+        "complexity": ["error", { "max": 10 }],
+        "max-depth": ["error", { "max": 4 }],
+        "max-lines": ["error", { "max": 220, "skipBlankLines": true, "skipComments": true }],
+        "max-lines-per-function": [
+          "error",
+          { "max": 75, "skipBlankLines": true, "skipComments": true }
+        ],
+        "max-params": ["error", { "max": 5 }],
+        "max-statements": ["error", { "max": 18 }],
+        "promise-function-async": "error"
+      }
+    }
+  ]
 }

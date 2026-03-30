@@ -19,7 +19,7 @@ class D1Miniflare extends ServiceMap.Service<D1Miniflare, Miniflare>()("test/D1M
             script: "",
           }),
       ),
-      (miniflare) => Effect.promise(() => miniflare.dispose()),
+      (miniflare) => Effect.tryPromise(() => miniflare.dispose()),
     ),
   );
 
