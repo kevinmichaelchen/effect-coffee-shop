@@ -8,8 +8,8 @@ import {
   MilkSchema,
   TemperatureSchema,
   type MenuItem,
-} from "../../domain/menu.ts";
-import { OrderIdSchema, OrderStatusSchema, type CoffeeOrder } from "../../domain/order.ts";
+} from "#domain/menu";
+import { OrderIdSchema, OrderStatusSchema, type CoffeeOrder } from "#domain/order";
 
 export class SqlMenuItemModel extends Model.Class<SqlMenuItemModel>("SqlMenuItemModel")({
   id: DrinkIdSchema,

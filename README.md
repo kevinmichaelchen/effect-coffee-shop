@@ -3,6 +3,7 @@
 Coffee-order application used to explore Onion Architecture with TypeScript, Bun, and Effect v4.
 
 The app keeps the boundaries explicit:
+
 - `src/domain` for business types and rules
 - `src/service` for use cases and ports
 - `src/external` for adapter implementations

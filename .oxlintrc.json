@@ -21,6 +21,12 @@
         "max-statements": ["error", { "max": 18 }],
         "promise-function-async": "error"
       }
+    },
+    {
+      "files": ["test/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": ["error", { "patterns": ["../../src/*", "../src/*"] }]
+      }
     }
   ]
 }

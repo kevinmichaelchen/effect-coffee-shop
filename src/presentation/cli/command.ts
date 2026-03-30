@@ -5,9 +5,9 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Command from "effect/unstable/cli/Command";
 import * as Flag from "effect/unstable/cli/Flag";
-import { InMemoryCoffeeAppLive } from "../../external/live.ts";
-import { drinkIds, drinkSizes, milks, temperatures } from "../../domain/menu.ts";
-import { orderStatuses } from "../../domain/order.ts";
+import { drinkIds, drinkSizes, milks, temperatures } from "#domain/menu";
+import { orderStatuses } from "#domain/order";
+import { InMemoryCoffeeAppLive } from "#external/live";
 import {
   cancelOrder,
   getOrder,
@@ -17,7 +17,7 @@ import {
   pickUpOrder,
   placeOrder,
   startBrewing,
-} from "../../service/use-cases/index.ts";
+} from "#service/use-cases/index";
 import { prettyJson } from "../shared/json.ts";
 
 const customerName = Flag.string("customer-name").pipe(

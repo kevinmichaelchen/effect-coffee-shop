@@ -1,8 +1,8 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import type { CoffeeOrder, ListOrdersFilters } from "../../domain/order.ts";
-import { OrderRepository } from "../../service/ports/OrderRepository.ts";
+import type { CoffeeOrder, ListOrdersFilters } from "#domain/order";
+import { OrderRepository } from "#service/ports/OrderRepository";
 
 export const InMemoryOrderRepositoryLive = Layer.effect(
   OrderRepository,

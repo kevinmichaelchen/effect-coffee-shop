@@ -8,26 +8,12 @@ import {
   type CoffeeOrder,
   type ListOrdersFilters,
   type OrderId,
-} from "../../domain/order.ts";
-import { OrderRepository } from "../../service/ports/OrderRepository.ts";
+} from "#domain/order";
+import { OrderRepository } from "#service/ports/OrderRepository";
 import { SqlOrderModel, toCoffeeOrder, toSqlOrderInsert } from "./models.ts";
 
 type SqlRepositoryError = Schema.SchemaError | SqlError.SqlError;
 type SqlRepositoryMaybeMissingError = SqlRepositoryError | Cause.NoSuchElementError;
-type SqlOrderQueries = {
-  readonly findById: (
-    orderId: OrderId,
-  ) => Effect.Effect<typeof SqlOrderModel.Type, SqlRepositoryMaybeMissingError>;
-  readonly insert: (
-    order: typeof SqlOrderModel.insert.Type,
-  ) => Effect.Effect<typeof SqlOrderModel.Type, SqlRepositoryError>;
-  readonly update: (
-    order: typeof SqlOrderModel.update.Type,
-  ) => Effect.Effect<typeof SqlOrderModel.Type, SqlRepositoryError>;
-  readonly list: (
-    filters: ListOrdersFilters,
-  ) => Effect.Effect<ReadonlyArray<typeof SqlOrderModel.Type>, SqlRepositoryError>;
-};
 
 const ListOrdersFiltersSchema = Schema.Struct({
   status: Schema.optionalKey(OrderStatusSchema),
@@ -41,11 +27,23 @@ const makeSqlOrderQueries = Effect.gen(function* () {
     idColumn: "id",
   });
 
-  const queries: SqlOrderQueries = {
-    findById: repository.findById as SqlOrderQueries["findById"],
-    insert: repository.insert as SqlOrderQueries["insert"],
-    update: repository.update as SqlOrderQueries["update"],
-    list: SqlSchema.findAll({
+  const findById = (
+    orderId: OrderId,
+  ): Effect.Effect<typeof SqlOrderModel.Type, SqlRepositoryMaybeMissingError> =>
+    repository.findById(orderId);
+
+  const insert = (
+    order: typeof SqlOrderModel.insert.Type,
+  ): Effect.Effect<typeof SqlOrderModel.Type, SqlRepositoryError> => repository.insert(order);
+
+  const update = (
+    order: typeof SqlOrderModel.update.Type,
+  ): Effect.Effect<typeof SqlOrderModel.Type, SqlRepositoryError> => repository.update(order);
+
+  const listRecords = (
+    filters: ListOrdersFilters,
+  ): Effect.Effect<ReadonlyArray<typeof SqlOrderModel.Type>, SqlRepositoryError> =>
+    SqlSchema.findAll({
       Request: ListOrdersFiltersSchema,
       Result: SqlOrderModel,
       execute: (filters) =>
@@ -61,16 +59,15 @@ const makeSqlOrderQueries = Effect.gen(function* () {
           WHERE status = ${filters.status}
           ORDER BY createdAt, id
         `,
-    }) as SqlOrderQueries["list"],
-  };
+    })(filters);
 
   const save = Effect.fn("SqlOrderRepository.save")(function* (
     order: CoffeeOrder,
   ): Effect.fn.Return<CoffeeOrder, SqlRepositoryError> {
     const record = toSqlOrderInsert(order);
-    const saved = yield* queries.findById(order.id).pipe(
-      Effect.flatMap(() => queries.update(record)),
-      Effect.catchTag("NoSuchElementError", () => queries.insert(record)),
+    const saved = yield* findById(order.id).pipe(
+      Effect.flatMap(() => update(record)),
+      Effect.catchTag("NoSuchElementError", () => insert(record)),
     );
     return toCoffeeOrder(saved);
   });
@@ -78,7 +75,7 @@ const makeSqlOrderQueries = Effect.gen(function* () {
   const getById = Effect.fn("SqlOrderRepository.getById")(function* (
     orderId: OrderId,
   ): Effect.fn.Return<CoffeeOrder | undefined, SqlRepositoryError> {
-    return yield* queries.findById(orderId).pipe(
+    return yield* findById(orderId).pipe(
       Effect.map(toCoffeeOrder),
       Effect.catchTag("NoSuchElementError", () => Effect.succeed(undefined)),
     );
@@ -87,7 +84,7 @@ const makeSqlOrderQueries = Effect.gen(function* () {
   const list = Effect.fn("SqlOrderRepository.list")(function* (
     filters: ListOrdersFilters = {},
   ): Effect.fn.Return<ReadonlyArray<CoffeeOrder>, SqlRepositoryError> {
-    const orders = yield* queries.list(filters);
+    const orders = yield* listRecords(filters);
     return orders.map(toCoffeeOrder);
   });
 

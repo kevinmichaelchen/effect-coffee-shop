@@ -1,5 +1,5 @@
 import * as Effect from "effect/Effect";
-import type { Menu } from "../../domain/menu.ts";
+import type { Menu } from "#domain/menu";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 
 export const listMenu = Effect.fn("CoffeeOrders.listMenu")(function* (): Effect.fn.Return<

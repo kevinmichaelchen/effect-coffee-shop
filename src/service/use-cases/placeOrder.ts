@@ -1,6 +1,6 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import { DrinkNotFoundError, InvalidOrderInputError } from "../../domain/errors.ts";
+import { DrinkNotFoundError, InvalidOrderInputError } from "#domain/errors";
 import {
   availableValues,
   calculatePriceCents,
@@ -17,8 +17,8 @@ import {
   type DrinkSize,
   type Milk,
   type Temperature,
-} from "../../domain/menu.ts";
-import { type CoffeeOrder, type PlaceOrderRequest } from "../../domain/order.ts";
+} from "#domain/menu";
+import { type CoffeeOrder, type PlaceOrderRequest } from "#domain/order";
 import { OrderIdGenerator } from "../ports/OrderIdGenerator.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";

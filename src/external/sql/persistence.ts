@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { SqlClient, type SqlError } from "effect/unstable/sql";
-import { menuItems } from "../../domain/menu.ts";
+import { menuItems } from "#domain/menu";
 import { toSqlMenuItemSeed } from "./models.ts";
 
 export const bootstrapSqlPersistence = Effect.fn("CoffeeSql.bootstrapSqlPersistence")(

@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
-import { OrderNotFoundError } from "../../domain/errors.ts";
-import type { CoffeeOrder, OrderId } from "../../domain/order.ts";
+import { OrderNotFoundError } from "#domain/errors";
+import type { CoffeeOrder, OrderId } from "#domain/order";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
 export const getOrder = Effect.fn("CoffeeOrders.getOrder")(function* (

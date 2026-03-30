@@ -9,10 +9,11 @@ import * as McpServer from "effect/unstable/ai/McpServer";
 import * as Tool from "effect/unstable/ai/Tool";
 import * as Toolkit from "effect/unstable/ai/Toolkit";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import { InMemoryCoffeeAppLive } from "../../external/live.ts";
-import { OrderIdGenerator } from "../../service/ports/OrderIdGenerator.ts";
-import { MenuRepository } from "../../service/ports/MenuRepository.ts";
-import { OrderRepository } from "../../service/ports/OrderRepository.ts";
+import { CoffeeOrderSchema, OrderIdSchema, PlaceOrderRequestSchema } from "#domain/order";
+import { InMemoryCoffeeAppLive } from "#external/live";
+import { OrderIdGenerator } from "#service/ports/OrderIdGenerator";
+import { MenuRepository } from "#service/ports/MenuRepository";
+import { OrderRepository } from "#service/ports/OrderRepository";
 import {
   cancelOrder,
   getOrder,
@@ -22,9 +23,8 @@ import {
   pickUpOrder,
   placeOrder,
   startBrewing,
-} from "../../service/use-cases/index.ts";
+} from "#service/use-cases/index";
 import { prettyJson } from "../shared/json.ts";
-import { CoffeeOrderSchema, OrderIdSchema, PlaceOrderRequestSchema } from "../../domain/order.ts";
 import { AppErrorSchema } from "./schemas.ts";
 
 const PlaceOrderTool = Tool.make("place_order", {

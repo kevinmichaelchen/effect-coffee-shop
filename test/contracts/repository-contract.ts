@@ -2,10 +2,10 @@ import { assert, describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
-import { menuItems } from "../../src/domain/menu.ts";
-import type { CoffeeOrder } from "../../src/domain/order.ts";
-import { MenuRepository } from "../../src/service/ports/MenuRepository.ts";
-import { OrderRepository } from "../../src/service/ports/OrderRepository.ts";
+import { menuItems } from "#domain/menu";
+import type { CoffeeOrder } from "#domain/order";
+import { MenuRepository } from "#service/ports/MenuRepository";
+import { OrderRepository } from "#service/ports/OrderRepository";
 
 type RepositoryServices = MenuRepository | OrderRepository;
 type RunTest = <A>(effect: Effect.Effect<A, never, RepositoryServices>) => Effect.Effect<A>;

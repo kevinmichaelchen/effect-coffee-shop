@@ -12,10 +12,10 @@ import {
   InvalidOrderInputError,
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
-} from "../../src/domain/errors.ts";
-import { OrderIdSchema } from "../../src/domain/order.ts";
-import { InMemoryCoffeeAppLive } from "../../src/external/live.ts";
-import { CoffeeHttpApi, CoffeeHttpApiLive } from "../../src/presentation/http/api.ts";
+} from "#domain/errors";
+import { OrderIdSchema } from "#domain/order";
+import { InMemoryCoffeeAppLive } from "#external/live";
+import { CoffeeHttpApi, CoffeeHttpApiLive } from "#presentation/http/api";
 
 const CreatedOrderResponseSchema = Schema.Struct({
   id: OrderIdSchema,

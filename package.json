@@ -4,7 +4,11 @@
   "private": true,
   "type": "module",
   "imports": {
-    "#effect-smol/sql/d1": "./vendor/effect-smol/packages/sql/d1/src/index.ts"
+    "#domain/*": "./src/domain/*.ts",
+    "#external/*": "./src/external/*.ts",
+    "#effect-smol/sql/d1": "./vendor/effect-smol/packages/sql/d1/src/index.ts",
+    "#presentation/*": "./src/presentation/*.ts",
+    "#service/*": "./src/service/*.ts"
   },
   "scripts": {
     "http": "bun run src/presentation/http/main.ts",

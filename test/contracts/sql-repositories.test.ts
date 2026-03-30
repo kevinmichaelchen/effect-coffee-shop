@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
-import type { MenuRepository } from "../../src/service/ports/MenuRepository.ts";
-import type { OrderRepository } from "../../src/service/ports/OrderRepository.ts";
+import type { MenuRepository } from "#service/ports/MenuRepository";
+import type { OrderRepository } from "#service/ports/OrderRepository";
 import { SqlCoffeeRepositoriesTestLive } from "../support/D1Miniflare.ts";
 import { defineRepositoryContract } from "./repository-contract.ts";
 

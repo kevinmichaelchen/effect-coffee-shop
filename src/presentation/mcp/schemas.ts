@@ -4,7 +4,7 @@ import {
   InvalidOrderInputError,
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
-} from "../../domain/errors.ts";
+} from "#domain/errors";
 
 export const AppErrorSchema = Schema.Union([
   DrinkNotFoundError,

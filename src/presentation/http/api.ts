@@ -10,15 +10,15 @@ import {
   InvalidOrderInputError,
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
-} from "../../domain/errors.ts";
-import { MenuSchema } from "../../domain/menu.ts";
+} from "#domain/errors";
+import { MenuSchema } from "#domain/menu";
 import {
   CoffeeOrderSchema,
   CoffeeOrdersSchema,
   ListOrdersRequestSchema,
   OrderIdSchema,
   PlaceOrderRequestSchema,
-} from "../../domain/order.ts";
+} from "#domain/order";
 import {
   cancelOrder,
   getOrder,
@@ -28,7 +28,7 @@ import {
   pickUpOrder,
   placeOrder,
   startBrewing,
-} from "../../service/use-cases/index.ts";
+} from "#service/use-cases/index";
 
 const HealthStatusSchema = Schema.Struct({
   status: Schema.Literal("ok"),

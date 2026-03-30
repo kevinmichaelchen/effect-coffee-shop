@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
-import { InvalidOrderInputError } from "../../domain/errors.ts";
-import { isOrderStatus, type CoffeeOrders, type ListOrdersRequest } from "../../domain/order.ts";
+import { InvalidOrderInputError } from "#domain/errors";
+import { isOrderStatus, type CoffeeOrders, type ListOrdersRequest } from "#domain/order";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
 export const listOrders = Effect.fn("CoffeeOrders.listOrders")(function* (

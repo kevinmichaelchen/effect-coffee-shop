@@ -1,6 +1,6 @@
 import type * as Effect from "effect/Effect";
 import * as ServiceMap from "effect/ServiceMap";
-import type { Menu, MenuItem } from "../../domain/menu.ts";
+import type { Menu, MenuItem } from "#domain/menu";
 
 export class MenuRepository extends ServiceMap.Service<
   MenuRepository,

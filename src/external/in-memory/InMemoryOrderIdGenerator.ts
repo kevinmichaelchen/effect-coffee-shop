@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import type { OrderId } from "../../domain/order.ts";
-import { OrderIdGenerator } from "../../service/ports/OrderIdGenerator.ts";
+import type { OrderId } from "#domain/order";
+import { OrderIdGenerator } from "#service/ports/OrderIdGenerator";
 
 const formatOrderId = (currentId: number): OrderId => `order-${String(currentId).padStart(4, "0")}`;
 

@@ -3,8 +3,8 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { SqlClient, SqlSchema, type SqlError } from "effect/unstable/sql";
-import type { MenuItem } from "../../domain/menu.ts";
-import { MenuRepository } from "../../service/ports/MenuRepository.ts";
+import type { MenuItem } from "#domain/menu";
+import { MenuRepository } from "#service/ports/MenuRepository";
 import { SqlMenuItemModel } from "./models.ts";
 
 type SqlRepositoryError = Schema.SchemaError | SqlError.SqlError;
@@ -26,7 +26,7 @@ const toMenuItem = (item: SqlMenuItemModel): MenuItem => ({
 const makeSqlMenuQueries = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient;
 
-  const list = (
+  const listRows = (): Effect.Effect<ReadonlyArray<SqlMenuItemModel>, SqlRepositoryError> =>
     SqlSchema.findAll({
       Request: Schema.Void,
       Result: SqlMenuItemModel,
@@ -42,15 +42,15 @@ const makeSqlMenuQueries = Effect.gen(function* () {
       FROM menu_items
       ORDER BY sortOrder, id
     `,
-    })(undefined) as unknown as Effect.Effect<ReadonlyArray<SqlMenuItemModel>, SqlRepositoryError>
-  ).pipe(Effect.map((items) => items.map(toMenuItem))) satisfies ReturnType<ListMenuQuery>;
+    })(undefined);
 
-  const findById = ((drinkId: string) =>
-    (
-      SqlSchema.findOneOption({
-        Request: Schema.String,
-        Result: SqlMenuItemModel,
-        execute: (id) => sql`
+  const findByIdRow = (
+    drinkId: string,
+  ): Effect.Effect<Option.Option<SqlMenuItemModel>, SqlRepositoryError> =>
+    SqlSchema.findOneOption({
+      Request: Schema.String,
+      Result: SqlMenuItemModel,
+      execute: (id) => sql`
       SELECT
         id,
         name,
@@ -62,8 +62,14 @@ const makeSqlMenuQueries = Effect.gen(function* () {
       FROM menu_items
       WHERE id = ${id}
     `,
-      })(drinkId) as unknown as Effect.Effect<Option.Option<SqlMenuItemModel>, SqlRepositoryError>
-    ).pipe(
+    })(drinkId);
+
+  const list = listRows().pipe(
+    Effect.map((items) => items.map(toMenuItem)),
+  ) satisfies ReturnType<ListMenuQuery>;
+
+  const findById = ((drinkId: string) =>
+    findByIdRow(drinkId).pipe(
       Effect.map((menuItem) => {
         const item = Option.getOrUndefined(menuItem);
         return item === undefined ? undefined : toMenuItem(item);

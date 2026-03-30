@@ -1,11 +1,6 @@
 import * as Effect from "effect/Effect";
-import { InvalidOrderStatusTransitionError, OrderNotFoundError } from "../../domain/errors.ts";
-import {
-  canTransitionTo,
-  type CoffeeOrder,
-  type OrderId,
-  type OrderStatus,
-} from "../../domain/order.ts";
+import { InvalidOrderStatusTransitionError, OrderNotFoundError } from "#domain/errors";
+import { canTransitionTo, type CoffeeOrder, type OrderId, type OrderStatus } from "#domain/order";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
 const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* (

@@ -1,6 +1,6 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
-import { InMemoryCoffeeAppLive } from "../../src/external/live.ts";
+import { InMemoryCoffeeAppLive } from "#external/live";
 import {
   cancelOrder,
   listOrders,
@@ -8,7 +8,7 @@ import {
   pickUpOrder,
   placeOrder,
   startBrewing,
-} from "../../src/service/use-cases/index.ts";
+} from "#service/use-cases/index";
 
 const withApp = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
   effect.pipe(Effect.provide(InMemoryCoffeeAppLive));

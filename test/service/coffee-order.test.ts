@@ -1,7 +1,7 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import { InMemoryCoffeeAppLive } from "../../src/external/live.ts";
+import { InMemoryCoffeeAppLive } from "#external/live";
 import {
   getOrder,
   listOrders,
@@ -9,7 +9,7 @@ import {
   pickUpOrder,
   placeOrder,
   startBrewing,
-} from "../../src/service/use-cases/index.ts";
+} from "#service/use-cases/index";
 
 describe("coffee order workflow", () => {
   it.effect("runs a full happy-path lifecycle in memory", () =>
