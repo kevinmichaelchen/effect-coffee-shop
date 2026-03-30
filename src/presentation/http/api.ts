@@ -35,15 +35,6 @@ const HealthStatusSchema = Schema.Struct({
 }).annotate({ identifier: "HealthStatus" });
 const HEALTH_STATUS: typeof HealthStatusSchema.Type = { status: "ok" };
 
-const PlaceOrderErrorSchema = Schema.Union([DrinkNotFoundError, InvalidOrderInputError]).annotate({
-  identifier: "PlaceOrderError",
-});
-
-const UpdateOrderErrorSchema = Schema.Union([
-  OrderNotFoundError,
-  InvalidOrderStatusTransitionError,
-]).annotate({ identifier: "UpdateOrderError" });
-
 class HealthApi extends HttpApiGroup.make("health", { topLevel: true }).add(
   HttpApiEndpoint.get("check", "/health", {
     success: HealthStatusSchema,
@@ -63,7 +54,7 @@ class OrdersApi extends HttpApiGroup.make("orders")
     HttpApiEndpoint.post("create", "/", {
       payload: PlaceOrderRequestSchema,
       success: CoffeeOrderSchema,
-      error: PlaceOrderErrorSchema,
+      error: [DrinkNotFoundError, InvalidOrderInputError],
     }),
     HttpApiEndpoint.get("list", "/", {
       query: ListOrdersRequestSchema,
@@ -82,28 +73,28 @@ class OrdersApi extends HttpApiGroup.make("orders")
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: UpdateOrderErrorSchema,
+      error: [OrderNotFoundError, InvalidOrderStatusTransitionError],
     }),
     HttpApiEndpoint.post("markReady", "/:orderId/mark-ready", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: UpdateOrderErrorSchema,
+      error: [OrderNotFoundError, InvalidOrderStatusTransitionError],
     }),
     HttpApiEndpoint.post("pickUp", "/:orderId/pick-up", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: UpdateOrderErrorSchema,
+      error: [OrderNotFoundError, InvalidOrderStatusTransitionError],
     }),
     HttpApiEndpoint.post("cancel", "/:orderId/cancel", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: UpdateOrderErrorSchema,
+      error: [OrderNotFoundError, InvalidOrderStatusTransitionError],
     }),
   )
   .prefix("/orders") {}
