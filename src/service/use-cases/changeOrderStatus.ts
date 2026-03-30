@@ -1,4 +1,5 @@
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import { InvalidOrderStatusTransitionError, OrderNotFoundError } from "#domain/errors";
 import { canTransitionTo, type CoffeeOrder, type OrderId, type OrderStatus } from "#domain/order";
 import { OrderRepository } from "../ports/OrderRepository.ts";
@@ -12,11 +13,13 @@ const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* 
   OrderRepository
 > {
   const orderRepository = yield* OrderRepository;
-  const order = yield* orderRepository.getById(orderId);
+  const maybeOrder = yield* orderRepository.getById(orderId);
 
-  if (order === undefined) {
+  if (Option.isNone(maybeOrder)) {
     return yield* new OrderNotFoundError({ orderId });
   }
+
+  const order = maybeOrder.value;
 
   if (!canTransitionTo(order.status, to)) {
     return yield* new InvalidOrderStatusTransitionError({

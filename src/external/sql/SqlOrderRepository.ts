@@ -1,5 +1,6 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { SqlClient, SqlModel, SqlSchema, type SqlError } from "effect/unstable/sql";
 import type * as Cause from "effect/Cause";
@@ -74,10 +75,10 @@ const makeSqlOrderQueries = Effect.gen(function* () {
 
   const getById = Effect.fn("SqlOrderRepository.getById")(function* (
     orderId: OrderId,
-  ): Effect.fn.Return<CoffeeOrder | undefined, SqlRepositoryError> {
+  ): Effect.fn.Return<Option.Option<CoffeeOrder>, SqlRepositoryError> {
     return yield* findById(orderId).pipe(
-      Effect.map(toCoffeeOrder),
-      Effect.catchTag("NoSuchElementError", () => Effect.succeed(undefined)),
+      Effect.map((order) => Option.some(toCoffeeOrder(order))),
+      Effect.catchTag("NoSuchElementError", () => Effect.succeed(Option.none())),
     );
   });
 

@@ -43,9 +43,9 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
           assert.deepStrictEqual(menu, menuItems);
           assert.deepStrictEqual(
             latte,
-            menuItems.find((item) => item.id === "latte"),
+            Option.fromUndefinedOr(menuItems.find((item) => item.id === "latte")),
           );
-          assert.strictEqual(missing, undefined);
+          assert.deepStrictEqual(missing, Option.none());
         }),
       ),
     );
@@ -63,7 +63,7 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
           const loaded = yield* orderRepository.getById(order.id);
 
           assert.deepStrictEqual(saved, order);
-          assert.deepStrictEqual(loaded, order);
+          assert.deepStrictEqual(loaded, Option.some(order));
         }),
       ),
     );
@@ -86,7 +86,7 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
           const allOrders = yield* orderRepository.list();
 
           assert.deepStrictEqual(saved, updated);
-          assert.deepStrictEqual(loaded, updated);
+          assert.deepStrictEqual(loaded, Option.some(updated));
           assert.deepStrictEqual(allOrders, [updated]);
         }),
       ),

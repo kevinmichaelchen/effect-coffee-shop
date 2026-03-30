@@ -1,6 +1,7 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import type { CoffeeOrder, ListOrdersFilters } from "#domain/order";
 import { OrderRepository } from "#service/ports/OrderRepository";
 
@@ -15,7 +16,7 @@ export const InMemoryOrderRepositoryLive = Layer.effect(
           orders.set(order.id, order);
           return order;
         }),
-      getById: (orderId) => Effect.succeed(orders.get(orderId)),
+      getById: (orderId) => Effect.succeed(Option.fromUndefinedOr(orders.get(orderId))),
       list: (filters: ListOrdersFilters = {}) =>
         Effect.succeed(
           Array.from(orders.values())

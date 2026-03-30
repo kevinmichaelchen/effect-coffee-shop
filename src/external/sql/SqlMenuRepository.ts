@@ -11,7 +11,7 @@ type SqlRepositoryError = Schema.SchemaError | SqlError.SqlError;
 type ListMenuQuery = () => Effect.Effect<ReadonlyArray<MenuItem>, SqlRepositoryError>;
 type FindMenuItemByIdQuery = (
   drinkId: string,
-) => Effect.Effect<MenuItem | undefined, SqlRepositoryError>;
+) => Effect.Effect<Option.Option<MenuItem>, SqlRepositoryError>;
 
 const toMenuItem = (item: SqlMenuItemModel): MenuItem => ({
   id: item.id,
@@ -70,10 +70,9 @@ const makeSqlMenuQueries = Effect.gen(function* () {
 
   const findById = ((drinkId: string) =>
     findByIdRow(drinkId).pipe(
-      Effect.map((menuItem) => {
-        const item = Option.getOrUndefined(menuItem);
-        return item === undefined ? undefined : toMenuItem(item);
-      }),
+      Effect.map((menuItem) =>
+        Option.isSome(menuItem) ? Option.some(toMenuItem(menuItem.value)) : Option.none(),
+      ),
     )) satisfies FindMenuItemByIdQuery;
 
   return { list, findById } as const;

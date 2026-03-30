@@ -1,5 +1,6 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import { DrinkNotFoundError, InvalidOrderInputError } from "#domain/errors";
 import {
   availableValues,
@@ -129,12 +130,13 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
 
   const customerName = yield* validateCustomerName(request.customerName);
 
-  const menuItem = yield* menuRepository.findById(request.drinkId);
-  if (menuItem === undefined) {
+  const maybeMenuItem = yield* menuRepository.findById(request.drinkId);
+  if (Option.isNone(maybeMenuItem)) {
     return yield* new DrinkNotFoundError({
       drinkId: request.drinkId,
     });
   }
+  const menuItem = maybeMenuItem.value;
 
   const size = yield* validateSize(request.size);
   const milk = yield* resolveMilk(menuItem, request.milk);
