@@ -132,9 +132,9 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
 
   const customerName = yield* validateCustomerName(request.customerName);
 
-  const maybeMenuItem = yield* menuRepository.findById(request.drinkId).pipe(
-    Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")),
-  );
+  const maybeMenuItem = yield* menuRepository
+    .findById(request.drinkId)
+    .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")));
   if (Option.isNone(maybeMenuItem)) {
     return yield* new DrinkNotFoundError({
       drinkId: request.drinkId,
@@ -166,7 +166,7 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
     ...(notes === undefined ? {} : { notes }),
   };
 
-  return yield* orderRepository.save(order).pipe(
-    Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")),
-  );
+  return yield* orderRepository
+    .save(order)
+    .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")));
 });

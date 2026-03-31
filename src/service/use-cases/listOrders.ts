@@ -11,9 +11,9 @@ export const listOrders = Effect.fn("CoffeeOrders.listOrders")(function* (
   const orderRepository = yield* OrderRepository;
 
   if (request.status === undefined) {
-    return yield* orderRepository.list().pipe(
-      Effect.mapError(internalAppErrorFromPersistence("Unable to list orders right now")),
-    );
+    return yield* orderRepository
+      .list()
+      .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to list orders right now")));
   }
 
   if (!isOrderStatus(request.status)) {
@@ -22,7 +22,7 @@ export const listOrders = Effect.fn("CoffeeOrders.listOrders")(function* (
     });
   }
 
-  return yield* orderRepository.list({ status: request.status }).pipe(
-    Effect.mapError(internalAppErrorFromPersistence("Unable to list orders right now")),
-  );
+  return yield* orderRepository
+    .list({ status: request.status })
+    .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to list orders right now")));
 });

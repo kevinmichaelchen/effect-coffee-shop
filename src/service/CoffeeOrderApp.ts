@@ -8,11 +8,7 @@ import {
   OrderNotFoundError,
 } from "#domain/errors";
 import type { Menu } from "#domain/menu";
-import type {
-  CoffeeOrder,
-  CoffeeOrders,
-  OrderId,
-} from "#domain/order";
+import type { CoffeeOrder, CoffeeOrders, OrderId } from "#domain/order";
 import type { ListOrdersRequest, PlaceOrderRequest } from "#service/contracts";
 import { InternalAppError } from "./errors.ts";
 import { MenuRepository } from "./ports/MenuRepository.ts";

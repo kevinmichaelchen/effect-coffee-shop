@@ -87,9 +87,9 @@ export const SqlMenuRepositoryLive = Layer.effect(
     return MenuRepository.of({
       list: queries.list.pipe(PersistenceError.refail("Failed to load the coffee menu")),
       findById: (drinkId) =>
-        queries.findById(drinkId).pipe(
-          PersistenceError.refail(`Failed to load menu item "${drinkId}"`),
-        ),
+        queries
+          .findById(drinkId)
+          .pipe(PersistenceError.refail(`Failed to load menu item "${drinkId}"`)),
     });
   }),
 );

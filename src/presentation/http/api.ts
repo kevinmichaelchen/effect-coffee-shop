@@ -12,11 +12,7 @@ import {
   OrderNotFoundError,
 } from "#domain/errors";
 import { MenuSchema } from "#domain/menu";
-import {
-  CoffeeOrderSchema,
-  CoffeeOrdersSchema,
-  OrderIdSchema,
-} from "#domain/order";
+import { CoffeeOrderSchema, CoffeeOrdersSchema, OrderIdSchema } from "#domain/order";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 import { ListOrdersRequestSchema, PlaceOrderRequestSchema } from "#service/contracts";
 import { InternalAppError } from "#service/errors";

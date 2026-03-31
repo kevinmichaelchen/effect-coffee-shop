@@ -39,7 +39,8 @@ const HttpApiTestLive = HttpRouter.serve(CoffeeHttpApiLive, {
 
 const FailingMenuRepositoryLive = Layer.succeed(MenuRepository)({
   list: Effect.fail(new PersistenceError({ message: "Failed to load the coffee menu" })),
-  findById: () => Effect.fail(new PersistenceError({ message: 'Failed to load menu item "latte"' })),
+  findById: () =>
+    Effect.fail(new PersistenceError({ message: 'Failed to load menu item "latte"' })),
 });
 
 const PersistenceFailureHttpApiTestLive = HttpRouter.serve(CoffeeHttpApiLive, {

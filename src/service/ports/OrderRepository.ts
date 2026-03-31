@@ -8,7 +8,11 @@ export class OrderRepository extends ServiceMap.Service<
   OrderRepository,
   {
     readonly save: (order: CoffeeOrder) => Effect.Effect<CoffeeOrder, PersistenceError>;
-    readonly getById: (orderId: OrderId) => Effect.Effect<Option.Option<CoffeeOrder>, PersistenceError>;
-    readonly list: (filters?: ListOrdersFilters) => Effect.Effect<ReadonlyArray<CoffeeOrder>, PersistenceError>;
+    readonly getById: (
+      orderId: OrderId,
+    ) => Effect.Effect<Option.Option<CoffeeOrder>, PersistenceError>;
+    readonly list: (
+      filters?: ListOrdersFilters,
+    ) => Effect.Effect<ReadonlyArray<CoffeeOrder>, PersistenceError>;
   }
 >()("effect-v4-onion/service/OrderRepository") {}

@@ -14,9 +14,11 @@ const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* 
   OrderRepository
 > {
   const orderRepository = yield* OrderRepository;
-  const maybeOrder = yield* orderRepository.getById(orderId).pipe(
-    Effect.mapError(internalAppErrorFromPersistence("Unable to update order status right now")),
-  );
+  const maybeOrder = yield* orderRepository
+    .getById(orderId)
+    .pipe(
+      Effect.mapError(internalAppErrorFromPersistence("Unable to update order status right now")),
+    );
 
   if (Option.isNone(maybeOrder)) {
     return yield* new OrderNotFoundError({ orderId });
@@ -37,7 +39,9 @@ const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* 
       ...order,
       status: to,
     })
-    .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to update order status right now")));
+    .pipe(
+      Effect.mapError(internalAppErrorFromPersistence("Unable to update order status right now")),
+    );
 });
 
 export const startBrewing = Effect.fn("CoffeeOrders.startBrewing")(function* (

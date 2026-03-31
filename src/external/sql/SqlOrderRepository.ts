@@ -102,9 +102,7 @@ export const SqlOrderRepositoryLive = Layer.effect(
       save: (order) =>
         queries.save(order).pipe(PersistenceError.refail(`Failed to save order "${order.id}"`)),
       getById: (orderId) =>
-        queries.getById(orderId).pipe(
-          PersistenceError.refail(`Failed to load order "${orderId}"`),
-        ),
+        queries.getById(orderId).pipe(PersistenceError.refail(`Failed to load order "${orderId}"`)),
       list: (filters) =>
         queries.list(filters).pipe(PersistenceError.refail("Failed to list coffee orders")),
     });

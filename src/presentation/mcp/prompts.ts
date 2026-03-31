@@ -31,11 +31,13 @@ export const SummarizeOpenOrdersPrompt = McpServer.prompt({
   },
   content: Effect.fn("CoffeeMcp.summarizeOpenOrdersPrompt")(function* ({ focus }) {
     const app = yield* CoffeeOrderApp;
-    const openOrders = yield* app.listOrders({}).pipe(
-      Effect.map((orders) =>
-        orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
-      ),
-    );
+    const openOrders = yield* app
+      .listOrders({})
+      .pipe(
+        Effect.map((orders) =>
+          orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
+        ),
+      );
     return `Summarize the open order queue for ${focus}:\n${prettyJson(openOrders)}`;
   }),
 });
