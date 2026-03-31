@@ -2,6 +2,11 @@
 
 Coffee-order application used to explore Onion Architecture with TypeScript, Bun, and Effect v4.
 
+This repo is split into two Bun workspaces:
+
+- `backend/` for the Effect-based HTTP, CLI, and MCP server
+- `ui/` for the standalone browser frontend
+
 The backend now lives in `backend/` and keeps the boundaries explicit:
 
 - `backend/src/domain` for business types and rules
@@ -22,7 +27,7 @@ bun install
 bun run hooks:install
 ```
 
-This repo uses a Bun workspace for [`backend/`](./backend), so the root `bun install` covers the backend package.
+This repo uses Bun workspaces. The root `bun install` covers both [`backend/`](./backend) and [`ui/`](./ui).
 
 Run the app:
 
@@ -74,3 +79,33 @@ Run the configured Git hooks without committing or pushing:
 bun run hooks:run:pre-commit
 bun run hooks:run:pre-push
 ```
+
+## UI
+
+A standalone browser UI lives in [`ui/`](./ui).
+
+Run the backend from the repo root:
+
+```bash
+bun run http
+```
+
+Then start the frontend:
+
+```bash
+bun run --cwd ui dev
+```
+
+For HTTP-only subdomain-based local development with [`portless`](https://github.com/vercel-labs/portless):
+
+```bash
+bun add -g portless
+
+bun run dev:onion:api
+bun run dev:onion:ui
+```
+
+This repo runs Portless on a dedicated HTTP-only proxy at port `1365` with an isolated state directory at `/tmp/effect-v4-onion-portless`, so it does not interfere with any other Portless daemon you already have running.
+That serves an in-memory backend with the REST API plus MCP HTTP endpoint on `http://api.onion.localhost:1365`, and the frontend UI on `http://onion.localhost:1365`.
+
+This HTTP flow avoids HTTPS trust prompts and does not require `sudo`. It relies on `.localhost` resolution in the browser. It works on Chrome, Firefox, and Edge. Safari may still require host syncing, which Portless documents as a privileged operation.

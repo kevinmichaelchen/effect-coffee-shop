@@ -1,0 +1,163 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-head: "Archivo Black", sans-serif;
+  --font-sans: "Space Grotesk", sans-serif;
+  --radius: 0px;
+
+  --shadow-xs: 1px 1px 0 0 var(--border);
+  --shadow-sm: 2px 2px 0 0 var(--border);
+  --shadow: 3px 3px 0 0 var(--border);
+  --shadow-md: 5px 5px 0 0 var(--border);
+  --shadow-lg: 8px 8px 0 0 var(--border);
+  --shadow-xl: 12px 12px 0 0 var(--border);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-ring: var(--ring);
+}
+
+:root {
+  --background: #f8f3e8;
+  --foreground: #111111;
+  --card: #fff9ef;
+  --card-foreground: #111111;
+  --primary: #ffd84d;
+  --primary-hover: #f2cb32;
+  --primary-foreground: #111111;
+  --secondary: #111111;
+  --secondary-hover: #2b2b2b;
+  --secondary-foreground: #fff7e6;
+  --muted: #d8cfbf;
+  --muted-foreground: #4f4b42;
+  --accent: #79f0d5;
+  --accent-foreground: #111111;
+  --destructive: #ef476f;
+  --destructive-foreground: #fff7e6;
+  --border: #111111;
+  --input: #111111;
+  --popover: #fff9ef;
+  --popover-foreground: #111111;
+  --ring: #79f0d5;
+}
+
+.dark {
+  --background: #121212;
+  --foreground: #f8f3e8;
+  --card: #1d1d1d;
+  --card-foreground: #f8f3e8;
+  --primary: #ffd84d;
+  --primary-hover: #f2cb32;
+  --primary-foreground: #111111;
+  --secondary: #2d2d2d;
+  --secondary-hover: #454545;
+  --secondary-foreground: #f8f3e8;
+  --muted: #313131;
+  --muted-foreground: #c4bdaf;
+  --accent: #79f0d5;
+  --accent-foreground: #111111;
+  --destructive: #ef476f;
+  --destructive-foreground: #fff7e6;
+  --border: #f8f3e8;
+  --input: #f8f3e8;
+  --popover: #1d1d1d;
+  --popover-foreground: #f8f3e8;
+  --ring: #ffd84d;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background:
+    radial-gradient(circle at top right, rgb(255 216 77 / 35%), transparent 28%),
+    radial-gradient(circle at bottom left, rgb(121 240 213 / 26%), transparent 24%),
+    linear-gradient(180deg, rgb(17 17 17 / 3%) 0, transparent 100%),
+    var(--background);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.12;
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  html {
+    @apply font-sans;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
