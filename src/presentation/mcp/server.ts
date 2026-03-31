@@ -1,7 +1,7 @@
 import * as Layer from "effect/Layer";
 import * as McpServer from "effect/unstable/ai/McpServer";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
-import { CoffeeCodeModeToolsLive } from "./code-mode.ts";
+import { CoffeeActionToolsLive } from "./action-tools.ts";
 import { MenuResource, OpenOrdersResource, OrderResource } from "./resources.ts";
 import { RecommendDrinkPrompt, SummarizeOpenOrdersPrompt } from "./prompts.ts";
 
@@ -20,7 +20,7 @@ const CoffeeMcpSharedFeaturesLive = Layer.mergeAll(
 
 export const CoffeeMcpFeaturesLive = Layer.mergeAll(
   CoffeeMcpSharedFeaturesLive,
-  CoffeeCodeModeToolsLive,
+  CoffeeActionToolsLive,
 );
 
 export const CoffeeMcpStdioLive = CoffeeMcpFeaturesLive.pipe(
