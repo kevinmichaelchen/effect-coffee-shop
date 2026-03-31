@@ -11,10 +11,9 @@ import type { Menu } from "#domain/menu";
 import type {
   CoffeeOrder,
   CoffeeOrders,
-  ListOrdersRequest,
   OrderId,
-  PlaceOrderRequest,
 } from "#domain/order";
+import type { ListOrdersRequest, PlaceOrderRequest } from "#service/contracts";
 import { InternalAppError } from "./errors.ts";
 import { MenuRepository } from "./ports/MenuRepository.ts";
 import { OrderIdGenerator } from "./ports/OrderIdGenerator.ts";

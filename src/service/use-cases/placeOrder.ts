@@ -19,11 +19,12 @@ import {
   type Milk,
   type Temperature,
 } from "#domain/menu";
-import { type CoffeeOrder, type PlaceOrderRequest } from "#domain/order";
 import { InternalAppError, internalAppErrorFromPersistence } from "#service/errors";
+import { type CoffeeOrder } from "#domain/order";
 import { OrderIdGenerator } from "../ports/OrderIdGenerator.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
+import { type PlaceOrderRequest } from "../contracts.ts";
 
 const trimmedOrUndefined = (value: string | undefined): string | undefined => {
   const trimmed = value?.trim();

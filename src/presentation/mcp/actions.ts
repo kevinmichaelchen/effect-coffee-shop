@@ -6,16 +6,18 @@ import { MenuSchema, type Menu } from "#domain/menu";
 import {
   CoffeeOrderSchema,
   CoffeeOrdersSchema,
-  ListOrdersRequestSchema,
   type CoffeeOrder,
   type CoffeeOrders,
-  type ListOrdersRequest,
   type OrderId,
   OrderIdSchema,
-  type PlaceOrderRequest,
-  PlaceOrderRequestSchema,
 } from "#domain/order";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
+import {
+  ListOrdersRequestSchema,
+  type ListOrdersRequest,
+  type PlaceOrderRequest,
+  PlaceOrderRequestSchema,
+} from "#service/contracts";
 import { AppErrorSchema, type AppError } from "./schemas.ts";
 
 const EmptyParamsSchema = Schema.Struct({});

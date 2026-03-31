@@ -1,8 +1,9 @@
 import * as Effect from "effect/Effect";
 import { InvalidOrderInputError } from "#domain/errors";
-import { isOrderStatus, type CoffeeOrders, type ListOrdersRequest } from "#domain/order";
+import { isOrderStatus, type CoffeeOrders } from "#domain/order";
 import { InternalAppError, internalAppErrorFromPersistence } from "#service/errors";
 import { OrderRepository } from "../ports/OrderRepository.ts";
+import { type ListOrdersRequest } from "../contracts.ts";
 
 export const listOrders = Effect.fn("CoffeeOrders.listOrders")(function* (
   request: ListOrdersRequest,

@@ -15,10 +15,9 @@ import { MenuSchema } from "#domain/menu";
 import {
   CoffeeOrderSchema,
   CoffeeOrdersSchema,
-  ListOrdersRequestSchema,
   OrderIdSchema,
-  PlaceOrderRequestSchema,
 } from "#domain/order";
+import { ListOrdersRequestSchema, PlaceOrderRequestSchema } from "#service/contracts";
 import {
   cancelOrder,
   getOrder,
