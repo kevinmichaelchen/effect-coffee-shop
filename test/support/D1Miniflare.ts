@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ServiceMap from "effect/ServiceMap";
 import { D1Client } from "#effect-smol/sql/d1";
-import { SqlCoffeeAppLive, SqlCoffeeRepositoriesLive } from "#external/live";
+import { SqlCoffeeRepositoriesLive } from "#external/live";
 
 class D1Miniflare extends ServiceMap.Service<D1Miniflare, Miniflare>()("test/D1Miniflare") {
   static readonly layer = Layer.effect(this)(
@@ -35,5 +35,3 @@ class D1Miniflare extends ServiceMap.Service<D1Miniflare, Miniflare>()("test/D1M
 export const SqlCoffeeRepositoriesTestLive = SqlCoffeeRepositoriesLive.pipe(
   Layer.provide(D1Miniflare.layerClient),
 );
-
-export const SqlCoffeeAppTestLive = SqlCoffeeAppLive.pipe(Layer.provide(D1Miniflare.layerClient));

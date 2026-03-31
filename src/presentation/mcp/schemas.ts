@@ -14,5 +14,3 @@ export const AppErrorSchema = Schema.Union([
   InvalidOrderStatusTransitionError,
   InternalAppError,
 ]).annotate({ identifier: "AppError" });
-
-export type AppError = typeof AppErrorSchema.Type;

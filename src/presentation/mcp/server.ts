@@ -18,10 +18,7 @@ const CoffeeMcpSharedFeaturesLive = Layer.mergeAll(
   SummarizeOpenOrdersPrompt,
 ).pipe(Layer.provide(CoffeeOrderApp.layer));
 
-export const CoffeeMcpFeaturesLive = Layer.mergeAll(
-  CoffeeMcpSharedFeaturesLive,
-  CoffeeActionToolsLive,
-);
+const CoffeeMcpFeaturesLive = Layer.mergeAll(CoffeeMcpSharedFeaturesLive, CoffeeActionToolsLive);
 
 export const CoffeeMcpStdioLive = CoffeeMcpFeaturesLive.pipe(
   Layer.provide(McpServer.layerStdio(mcpServerInfo)),

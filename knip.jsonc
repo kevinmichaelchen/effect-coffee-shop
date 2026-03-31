@@ -1,0 +1,26 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+
+  // Focus on application and test code only.
+  "entry": [
+    "src/presentation/http/main.ts!",
+    "src/presentation/cli/main.ts!",
+    "src/presentation/mcp/stdio-main.ts!",
+    "src/presentation/mcp/http-main.ts!",
+    "src/presentation/mcp/miniflare.worker.ts",
+    "test/**/*.test.ts",
+  ],
+
+  "project": ["src/**/*.ts!", "test/**/*.ts"],
+
+  // These are only referenced by out-of-scope vendor/alchemy tooling.
+  "ignoreDependencies": [
+    "@distilled.cloud/cloudflare",
+    "@distilled.cloud/cloudflare-bundler",
+    "cloudflare",
+    "find-up",
+    "ink",
+    "react",
+    "tar",
+  ],
+}

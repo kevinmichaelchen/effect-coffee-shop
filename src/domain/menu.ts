@@ -8,11 +8,9 @@ export const drinkIds = [
   "cold-brew",
   "tea",
 ] as const;
-export type DrinkId = (typeof drinkIds)[number];
 export const DrinkIdSchema = Schema.Literals(drinkIds);
 
-export const drinkKinds = ["espresso", "tea"] as const;
-export type DrinkKind = (typeof drinkKinds)[number];
+const drinkKinds = ["espresso", "tea"] as const;
 export const DrinkKindSchema = Schema.Literals(drinkKinds);
 
 export const drinkSizes = ["small", "medium", "large"] as const;
@@ -27,7 +25,7 @@ export const temperatures = ["hot", "iced", "extra-hot"] as const;
 export type Temperature = (typeof temperatures)[number];
 export const TemperatureSchema = Schema.Literals(temperatures);
 
-export const MenuItemSchema = Schema.Struct({
+const MenuItemSchema = Schema.Struct({
   id: DrinkIdSchema,
   name: Schema.String,
   kind: DrinkKindSchema,
@@ -43,8 +41,6 @@ export type Menu = typeof MenuSchema.Type;
 
 const matches = <T extends string>(choices: readonly T[], value: string): value is T =>
   choices.some((choice) => choice === value);
-
-export const isDrinkId = (value: string): value is DrinkId => matches(drinkIds, value);
 export const isDrinkSize = (value: string): value is DrinkSize => matches(drinkSizes, value);
 export const isMilk = (value: string): value is Milk => matches(milks, value);
 export const isTemperature = (value: string): value is Temperature => matches(temperatures, value);

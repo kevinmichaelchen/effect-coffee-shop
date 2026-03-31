@@ -10,7 +10,7 @@ const MCP_WORKER_ENTRYPOINT = path.resolve(
 
 const COMPATIBILITY_DATE = "2026-03-31";
 
-const bundleMcpWorker = Effect.promise(async () => {
+const bundleMcpWorker = Effect.tryPromise(async () => {
   const result = await build({
     bundle: true,
     entryPoints: [MCP_WORKER_ENTRYPOINT],

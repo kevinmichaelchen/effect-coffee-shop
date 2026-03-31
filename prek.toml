@@ -42,6 +42,15 @@ pass_filenames = false
 stages = ["pre-commit"]
 
 [[repos.hooks]]
+id = "knip"
+name = "knip"
+entry = "bun run knip"
+language = "system"
+always_run = true
+pass_filenames = false
+stages = ["pre-commit"]
+
+[[repos.hooks]]
 id = "test"
 name = "vitest"
 entry = "bun run test"

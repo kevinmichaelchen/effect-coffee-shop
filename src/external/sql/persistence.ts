@@ -4,7 +4,7 @@ import { SqlClient, type SqlError } from "effect/unstable/sql";
 import { menuItems } from "#domain/menu";
 import { toSqlMenuItemSeed } from "./models.ts";
 
-export const bootstrapSqlPersistence = Effect.fn("CoffeeSql.bootstrapSqlPersistence")(
+const bootstrapSqlPersistence = Effect.fn("CoffeeSql.bootstrapSqlPersistence")(
   function* (): Effect.fn.Return<void, SqlError.SqlError, SqlClient.SqlClient> {
     const sql = yield* SqlClient.SqlClient;
 

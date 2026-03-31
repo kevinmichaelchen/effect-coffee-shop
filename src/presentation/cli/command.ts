@@ -152,7 +152,7 @@ const barista = Command.make("barista").pipe(
   Command.withSubcommands([startCommand, readyCommand, pickupCommand]),
 );
 
-export const coffeeCli = Command.make("coffee").pipe(
+const coffeeCli = Command.make("coffee").pipe(
   Command.withDescription("Coffee order demo application"),
   Command.withSubcommands([menu, order, barista]),
 );

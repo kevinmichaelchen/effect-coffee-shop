@@ -21,8 +21,6 @@ export class SqlMenuItemModel extends Model.Class<SqlMenuItemModel>("SqlMenuItem
   maxShots: Schema.Int,
 }) {}
 
-export type SqlMenuItem = typeof SqlMenuItemModel.Type;
-
 export class SqlOrderModel extends Model.Class<SqlOrderModel>("SqlOrderModel")({
   id: OrderIdSchema,
   customerName: Schema.String,
@@ -38,8 +36,8 @@ export class SqlOrderModel extends Model.Class<SqlOrderModel>("SqlOrderModel")({
   createdAt: Schema.DateTimeUtcFromString,
 }) {}
 
-export type SqlOrder = typeof SqlOrderModel.Type;
-export type SqlOrderInsert = typeof SqlOrderModel.insert.Type;
+type SqlOrder = typeof SqlOrderModel.Type;
+type SqlOrderInsert = typeof SqlOrderModel.insert.Type;
 
 export const toSqlOrderInsert = (order: CoffeeOrder): SqlOrderInsert => ({
   ...order,
