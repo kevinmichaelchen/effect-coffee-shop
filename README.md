@@ -2,16 +2,16 @@
 
 Coffee-order application used to explore Onion Architecture with TypeScript, Bun, and Effect v4.
 
-The app keeps the boundaries explicit:
+The backend now lives in `backend/` and keeps the boundaries explicit:
 
-- `src/domain` for business types and rules
-- `src/service` for use cases and ports
-- `src/external` for adapter implementations
-- `src/presentation` for HTTP, CLI, and MCP entrypoints
+- `backend/src/domain` for business types and rules
+- `backend/src/service` for use cases and ports
+- `backend/src/external` for adapter implementations
+- `backend/src/presentation` for HTTP, CLI, and MCP entrypoints
 
 Most tests run against in-memory adapters. A small contract suite also runs against the SQL-backed repositories.
 
-`vendor/effect-smol` is the local source of truth for Effect v4 APIs and conventions when examples drift.
+`vendor/effect-smol` remains at the repo root as a git submodule and is the local source of truth for Effect v4 APIs and conventions when examples drift.
 
 ## Commands
 
@@ -21,6 +21,8 @@ Install dependencies:
 bun install
 bun run hooks:install
 ```
+
+This repo uses a Bun workspace for [`backend/`](./backend), so the root `bun install` covers the backend package.
 
 Run the app:
 
@@ -37,7 +39,7 @@ bun run mcp:http
 Run the Worker-safe MCP contract locally on Miniflare:
 
 ```bash
-bun run test test/presentation/mcp/miniflare-http.test.ts
+bun run --cwd backend test test/presentation/mcp/miniflare-http.test.ts
 ```
 
 This exercises the MCP HTTP surface end-to-end on Miniflare against a Worker entrypoint.
