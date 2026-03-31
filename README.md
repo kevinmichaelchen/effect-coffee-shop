@@ -28,12 +28,11 @@ Run the app:
 bun run http
 bun run cli -- menu list
 bun run mcp:stdio
-bun run mcp:stdio:classic
 bun run mcp:http
 ```
 
-`bun run mcp:stdio` starts the Code Mode MCP server with a single `code` tool.
-`bun run mcp:stdio:classic` and `bun run mcp:http` keep the classic multi-tool surface.
+`bun run mcp:stdio` starts the Code Mode MCP server over stdio with a single `code` tool.
+`bun run mcp:http` serves the same Code Mode MCP surface over HTTP at `/mcp`.
 
 Check the repo:
 

@@ -16,7 +16,6 @@
     "http": "bun run src/presentation/http/main.ts",
     "cli": "bun run src/presentation/cli/main.ts",
     "mcp:stdio": "bun run src/presentation/mcp/stdio-main.ts",
-    "mcp:stdio:classic": "bun run src/presentation/mcp/classic-stdio-main.ts",
     "mcp:http": "bun run src/presentation/mcp/http-main.ts",
     "typecheck": "tsgo --noEmit",
     "lint": "oxlint --disable-nested-config .",
