@@ -1,10 +1,14 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "ignorePatterns": ["vendor/**"],
+  "plugins": ["oxc", "typescript", "unicorn", "node"],
   "options": {
     "typeAware": true,
     "typeCheck": true,
     "maxWarnings": 0
+  },
+  "rules": {
+    "typescript/no-floating-promises": "error"
   },
   "overrides": [
     {
@@ -19,7 +23,60 @@
         ],
         "max-params": ["error", { "max": 5 }],
         "max-statements": ["error", { "max": 18 }],
+        "node/no-process-env": "error",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "@effect/platform-bun",
+              "@effect/platform-bun/*",
+              "@effect/platform-node",
+              "@effect/platform-node/*",
+              "bun:*",
+              "node:*",
+              "#effect-smol/sql/*"
+            ]
+          }
+        ],
         "promise-function-async": "error"
+      }
+    },
+    {
+      "files": ["src/presentation/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "@effect/platform-bun",
+              "@effect/platform-bun/*",
+              "@effect/platform-node",
+              "@effect/platform-node/*",
+              "bun:*",
+              "node:*",
+              "#effect-smol/sql/*",
+              "#service/use-cases/*",
+              "#service/ports/*"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/runtime/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": ["src/presentation/**/main.ts", "src/presentation/**/*-main.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["#service/use-cases/*", "#service/ports/*"]
+          }
+        ]
       }
     },
     {
