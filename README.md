@@ -28,16 +28,19 @@ bun run hooks:install
 ```
 
 This repo uses Bun workspaces. The root `bun install` covers both [`backend/`](./backend) and [`ui/`](./ui).
+Turborepo is the canonical root task runner for dev, build, and quality checks, so repeated runs can reuse the `.turbo` cache across workspaces and `--affected` can skip unrelated work.
 
 Run the app:
 
 ```bash
+bun run dev
 bun run http
 bun run cli -- menu list
 bun run mcp:stdio
 bun run mcp:http
 ```
 
+`bun run dev` starts the backend HTTP server and the frontend Vite dev server together through Turborepo.
 `bun run mcp:stdio` starts the classic MCP server over stdio with direct coffee action tools, prompts, and resources.
 `bun run mcp:http` serves the same classic MCP surface over HTTP at `/mcp`.
 
@@ -71,6 +74,22 @@ bun run lint
 bun run lint:custom
 bun run fmt:check
 bun run test
+bun run check
+```
+
+Build workspace artifacts from the repo root:
+
+```bash
+bun run build
+```
+
+Run only the tasks affected by the current branch:
+
+```bash
+bun run check:affected
+bun run build:affected
+bun run test:affected
+bun run affected:packages
 ```
 
 Run the configured Git hooks without committing or pushing:

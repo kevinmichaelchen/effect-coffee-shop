@@ -12,7 +12,8 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsgo --noEmit -p tsconfig.app.json && tsgo --noEmit -p tsconfig.node.json",
-    "build": "bun run typecheck && vite build",
+    "build": "vite build",
+    "check": "bun run typecheck && bun run lint && bun run build",
     "lint": "oxlint -c .oxlintrc.json . && eslint .",
     "preview": "vite preview"
   },

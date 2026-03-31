@@ -13,6 +13,7 @@
     "#service/*": "./src/service/*.ts"
   },
   "scripts": {
+    "dev": "bun run http",
     "http": "bun run src/presentation/http/main.ts",
     "cli": "bun run src/presentation/cli/main.ts",
     "mcp:stdio": "bun run src/presentation/mcp/stdio-main.ts",

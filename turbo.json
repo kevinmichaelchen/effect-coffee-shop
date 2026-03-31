@@ -1,0 +1,60 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "futureFlags": {
+    "affectedUsingTaskInputs": true,
+    "watchUsingTaskInputs": true
+  },
+  "tasks": {
+    "build": {
+      "description": "Build distributable workspace artifacts.",
+      "dependsOn": ["^build", "typecheck"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*", "!README.md"],
+      "outputs": ["dist/**"],
+      "outputLogs": "new-only"
+    },
+    "typecheck": {
+      "description": "Type-check each workspace.",
+      "dependsOn": ["^typecheck"],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "lint": {
+      "description": "Run standard workspace lint checks.",
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "lint:custom": {
+      "description": "Run backend-only custom lint rules.",
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "fmt:check": {
+      "description": "Verify formatting without modifying files.",
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "knip": {
+      "description": "Detect unused files and exports.",
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "test": {
+      "description": "Run workspace test suites.",
+      "dependsOn": ["typecheck"],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "dev": {
+      "description": "Run long-lived local development servers.",
+      "cache": false,
+      "persistent": true,
+      "interruptible": true
+    }
+  }
+}
