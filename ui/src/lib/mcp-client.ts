@@ -66,9 +66,10 @@ export class CoffeeMcpClient {
   }
 
   async callTool(name: string, arguments_: Record<string, unknown>): Promise<McpToolCallResult> {
-    await this.initialize();
+    const tool = await this.getToolDefinition(name);
+    const sanitizedArguments = sanitizeToolArguments(tool?.parameters, arguments_);
     return this.request<McpToolCallResult>("tools/call", {
-      arguments: compactToolArguments(arguments_),
+      arguments: sanitizedArguments,
       name,
     });
   }
@@ -90,6 +91,11 @@ export class CoffeeMcpClient {
     if (result.protocolVersion !== protocolVersion) {
       throw new Error(`Unsupported MCP protocol version: ${result.protocolVersion}`);
     }
+  }
+
+  private async getToolDefinition(name: string): Promise<PromptToolDefinition | undefined> {
+    const tools = await this.getPromptTools();
+    return tools.find((tool) => tool.name === name);
   }
 
   private async request<Result>(method: string, params?: unknown): Promise<Result> {
@@ -138,4 +144,36 @@ function compactToolArguments(arguments_: Record<string, unknown>): Record<strin
   return Object.fromEntries(
     Object.entries(arguments_).filter(([, value]) => value !== null && value !== undefined),
   );
+}
+
+export function sanitizeToolArguments(
+  schema: unknown,
+  arguments_: Record<string, unknown>,
+): Record<string, unknown> {
+  const compactedArguments = compactToolArguments(arguments_);
+  const allowedKeys = getAllowedSchemaKeys(schema);
+  if (allowedKeys === null) {
+    return compactedArguments;
+  }
+
+  return Object.fromEntries(
+    Object.entries(compactedArguments).filter(([key]) => allowedKeys.has(key)),
+  );
+}
+
+function getAllowedSchemaKeys(schema: unknown): ReadonlySet<string> | null {
+  if (!isRecord(schema)) {
+    return null;
+  }
+
+  const properties = schema.properties;
+  if (isRecord(properties)) {
+    return new Set(Object.keys(properties));
+  }
+
+  return schema.type === "object" ? new Set() : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }

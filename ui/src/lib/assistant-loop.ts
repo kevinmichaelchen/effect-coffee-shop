@@ -3,10 +3,12 @@ import { CoffeeMcpClient, type McpToolCallResult, type PromptToolDefinition } fr
 import {
   createDirectToolAnswer,
   createToolResultContext,
+  formatToolArgumentsDetail,
   formatSyntheticToolCall,
   formatToolCatalog,
+  formatToolResultDetail,
   inferForcedToolCall,
-  summarizeToolResult,
+  normalizeToolCall,
 } from "#lib/assistantTooling";
 import { extractToolCall, sanitizeAssistantText } from "#lib/tool-call-parser";
 
@@ -68,6 +70,7 @@ function buildSystemPrompt(tools: readonly PromptToolDefinition[]): string {
     "For order status, queue, ready-ticket, or pickup questions, call list_orders or get_order before answering.",
     "For order creation or updates, use Coffee Shop tools instead of saying you lack access.",
     "Call at most one tool at a time.",
+    "Only send arguments that exist in the selected tool schema. Never invent extra fields.",
     "When you call a tool, answer with one Pythonic tool list between <|tool_call_start|> and <|tool_call_end|> in this exact shape: [tool_name(arg=\"value\")]. Use [list_menu()] for empty arguments.",
     "After you receive a tool result, explain the outcome in plain English with no markdown tables.",
     "Never say you do not have real-time access when a matching tool exists.",
@@ -77,7 +80,7 @@ function buildSystemPrompt(tools: readonly PromptToolDefinition[]): string {
 
 function createToolCallEvent(name: string, arguments_: Record<string, unknown>): AssistantEvent {
   return {
-    detail: JSON.stringify(arguments_),
+    detail: formatToolArgumentsDetail(arguments_),
     kind: "tool-call",
     label: name,
   };
@@ -85,7 +88,7 @@ function createToolCallEvent(name: string, arguments_: Record<string, unknown>):
 
 function createToolResultEvent(name: string, result: McpToolCallResult): AssistantEvent {
   return {
-    detail: summarizeToolResult(result),
+    detail: formatToolResultDetail(result),
     kind: "tool-result",
     label: name,
   };
@@ -120,17 +123,18 @@ async function runAssistantStep(input: {
 }): Promise<AssistantTurnResult | null> {
   const { client, events, history, model, onDraft, step, tools } = input;
   const generation = await generateAssistantMessage({ history, model, onDraft, step, tools });
-  const toolCall = generation.toolCall ?? inferForcedToolCall(history, step);
-  if (toolCall === null) {
+  const rawToolCall = generation.toolCall ?? inferForcedToolCall(history, step);
+  if (rawToolCall === null) {
     history.push({ content: generation.rawAssistant, role: "assistant" });
     return { assistantText: generation.assistantText, conversation: history, events };
   }
 
+  const toolCall = normalizeToolCall(rawToolCall, tools);
   const toolResult = await appendToolRound({
     client,
     events,
     history,
-    rawAssistant: generation.toolCall === null ? formatSyntheticToolCall(toolCall) : generation.rawAssistant,
+    rawAssistant: formatSyntheticToolCall(toolCall),
     toolCall,
   });
   return finalizeToolRound({ events, history, onDraft, toolCall, toolResult });

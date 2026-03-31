@@ -1,5 +1,5 @@
 import type { BrowserChatMessage } from "#lib/lfm-browser";
-import type { McpToolCallResult, PromptToolDefinition } from "#lib/mcp-client";
+import { sanitizeToolArguments, type McpToolCallResult, type PromptToolDefinition } from "#lib/mcp-client";
 import type { ParsedToolCall } from "#lib/tool-call-parser";
 
 export function inferForcedToolCall(
@@ -29,9 +29,23 @@ export function formatToolCatalog(tools: readonly PromptToolDefinition[]): strin
     .join("\n");
 }
 
-export function summarizeToolResult(result: McpToolCallResult): string {
-  const summary = stringifyToolResult(result);
-  return summary.length <= 180 ? summary : `${summary.slice(0, 177)}...`;
+export function normalizeToolCall(
+  toolCall: ParsedToolCall,
+  tools: readonly PromptToolDefinition[],
+): ParsedToolCall {
+  const tool = tools.find((candidate) => candidate.name === toolCall.name);
+  return {
+    ...toolCall,
+    arguments: sanitizeToolArguments(tool?.parameters, toolCall.arguments),
+  };
+}
+
+export function formatToolArgumentsDetail(arguments_: Record<string, unknown>): string {
+  return formatToolPayload(arguments_);
+}
+
+export function formatToolResultDetail(result: McpToolCallResult): string {
+  return formatToolPayload(result.structuredContent ?? result.content ?? []);
 }
 
 export function createToolResultContext(name: string, result: McpToolCallResult): string {
@@ -61,6 +75,14 @@ function stringifyToolResult(result: McpToolCallResult): string {
   }
 
   return JSON.stringify(result.content ?? []);
+}
+
+function formatToolPayload(payload: unknown): string {
+  if (typeof payload === "string") {
+    return payload;
+  }
+
+  return JSON.stringify(payload, null, 2) ?? String(payload);
 }
 
 function isMenuItem(value: unknown): value is {

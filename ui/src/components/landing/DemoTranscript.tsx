@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Alert } from "#components/retroui/Alert";
 import { Button } from "#components/retroui/Button";
 import { Card } from "#components/retroui/Card";
@@ -7,6 +8,7 @@ import { DemoComposer } from "#components/landing/DemoComposer";
 import type { DemoCacheStatus, DemoMessage, DemoStatus } from "#hooks/lfmAssistantSupport";
 
 interface DemoTranscriptProps {
+  activityControl: ReactNode;
   assistantDraft: string;
   cacheStatus: DemoCacheStatus;
   errorMessage: string | null;
@@ -24,12 +26,12 @@ interface DemoTranscriptProps {
 }
 
 export function DemoTranscript(inputProps: DemoTranscriptProps) {
-  const { assistantDraft, cacheStatus, errorMessage, hasLoadedModel, input, isBusy, messages, onInputChange, onPromptClick, onReset, onSubmit, onWarmUp, prompts, status } = inputProps;
+  const { activityControl, assistantDraft, cacheStatus, errorMessage, hasLoadedModel, input, isBusy, messages, onInputChange, onPromptClick, onReset, onSubmit, onWarmUp, prompts, status } = inputProps;
 
   return (
     <Card className="w-full border-border bg-card">
       <Card.Content className="grid gap-4 p-5">
-        <TranscriptHeader onReset={onReset} onWarmUp={onWarmUp} />
+        <TranscriptHeader activityControl={activityControl} onReset={onReset} onWarmUp={onWarmUp} />
         <DemoStatusPanel cacheStatus={cacheStatus} hasLoadedModel={hasLoadedModel} isBusy={isBusy} status={status} />
         {errorMessage !== null ? (
           <Alert status="warning">
@@ -68,11 +70,12 @@ export function DemoTranscript(inputProps: DemoTranscriptProps) {
 }
 
 interface TranscriptHeaderProps {
+  activityControl: ReactNode;
   onReset: () => void;
   onWarmUp: () => void;
 }
 
-function TranscriptHeader({ onReset, onWarmUp }: TranscriptHeaderProps) {
+function TranscriptHeader({ activityControl, onReset, onWarmUp }: TranscriptHeaderProps) {
   return (
     <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
       <div className="grid gap-2">
@@ -85,6 +88,7 @@ function TranscriptHeader({ onReset, onWarmUp }: TranscriptHeaderProps) {
         </Text>
       </div>
       <div className="flex flex-wrap gap-3">
+        {activityControl}
         <Button onClick={onWarmUp}>Preload browser model</Button>
         <Button variant="outline" onClick={onReset}>
           Clear transcript

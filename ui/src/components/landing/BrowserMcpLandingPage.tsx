@@ -3,7 +3,7 @@ import { Button } from "#components/retroui/Button";
 import { Card } from "#components/retroui/Card";
 import { Text } from "#components/retroui/Text";
 import { DemoTranscript } from "#components/landing/DemoTranscript";
-import { ToolActivityCard } from "#components/landing/ToolActivityCard";
+import { ToolActivityDrawer } from "#components/landing/ToolActivityDrawer";
 import { ThemeToggle } from "#components/shared/ThemeToggle";
 import { type AssistantEvent } from "#lib/assistant-loop";
 import { type DemoCacheStatus, type DemoMessage, type DemoStatus } from "#hooks/lfmAssistantSupport";
@@ -118,8 +118,9 @@ function LandingPanels(inputProps: LandingPanelsProps) {
   const { assistantDraft, cacheStatus, errorMessage, events, hasLoadedModel, input, isBusy, messages, onInputChange, onPromptClick, onReset, onSubmit, onWarmUp, prompts, status } = inputProps;
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_22rem]">
+    <section className="grid gap-5">
       <DemoTranscript
+        activityControl={<ToolActivityDrawer events={events} />}
         assistantDraft={assistantDraft}
         cacheStatus={cacheStatus}
         errorMessage={errorMessage}
@@ -135,7 +136,6 @@ function LandingPanels(inputProps: LandingPanelsProps) {
         onSubmit={onSubmit}
         onWarmUp={onWarmUp}
       />
-      <ToolActivityCard events={events} />
     </section>
   );
 }
