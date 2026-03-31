@@ -5,16 +5,7 @@ import * as Command from "effect/unstable/cli/Command";
 import * as Flag from "effect/unstable/cli/Flag";
 import { drinkIds, drinkSizes, milks, temperatures } from "#domain/menu";
 import { orderStatuses } from "#domain/order";
-import {
-  cancelOrder,
-  getOrder,
-  listMenu,
-  listOrders,
-  markReady,
-  pickUpOrder,
-  placeOrder,
-  startBrewing,
-} from "#service/use-cases/index";
+import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 import { prettyJson } from "../shared/json.ts";
 
 const customerName = Flag.string("customer-name").pipe(
@@ -42,7 +33,8 @@ const createOrder = Command.make("create", {
       shots,
       notes,
     }) {
-      const order = yield* placeOrder({
+      const app = yield* CoffeeOrderApp;
+      const order = yield* app.placeOrder({
         customerName,
         drinkId: drink,
         size,
@@ -62,7 +54,8 @@ const getOrderCommand = Command.make("get", {
   Command.withDescription("Fetch an order by id"),
   Command.withHandler(
     Effect.fn("CoffeeCli.getOrder")(function* ({ orderId }) {
-      const order = yield* getOrder(orderId);
+      const app = yield* CoffeeOrderApp;
+      const order = yield* app.getOrder(orderId);
       yield* Console.log(prettyJson(order));
     }),
   ),
@@ -74,7 +67,8 @@ const listOrdersCommand = Command.make("list", {
   Command.withDescription("List orders"),
   Command.withHandler(
     Effect.fn("CoffeeCli.listOrders")(function* ({ status }) {
-      const orders = yield* listOrders(Option.isSome(status) ? { status: status.value } : {});
+      const app = yield* CoffeeOrderApp;
+      const orders = yield* app.listOrders(Option.isSome(status) ? { status: status.value } : {});
       yield* Console.log(prettyJson(orders));
     }),
   ),
@@ -86,7 +80,8 @@ const cancelOrderCommand = Command.make("cancel", {
   Command.withDescription("Cancel an order"),
   Command.withHandler(
     Effect.fn("CoffeeCli.cancelOrder")(function* ({ orderId }) {
-      const order = yield* cancelOrder(orderId);
+      const app = yield* CoffeeOrderApp;
+      const order = yield* app.cancelOrder(orderId);
       yield* Console.log(prettyJson(order));
     }),
   ),
@@ -101,7 +96,8 @@ const listMenuCommand = Command.make("list").pipe(
   Command.withDescription("Show the menu"),
   Command.withHandler(
     Effect.fn("CoffeeCli.listMenu")(function* () {
-      const menu = yield* listMenu();
+      const app = yield* CoffeeOrderApp;
+      const menu = yield* app.listMenu();
       yield* Console.log(prettyJson(menu));
     }),
   ),
@@ -118,7 +114,8 @@ const startCommand = Command.make("start", {
   Command.withDescription("Move an order into brewing"),
   Command.withHandler(
     Effect.fn("CoffeeCli.startBrewing")(function* ({ orderId }) {
-      const order = yield* startBrewing(orderId);
+      const app = yield* CoffeeOrderApp;
+      const order = yield* app.startBrewing(orderId);
       yield* Console.log(prettyJson(order));
     }),
   ),
@@ -130,7 +127,8 @@ const readyCommand = Command.make("ready", {
   Command.withDescription("Mark an order as ready"),
   Command.withHandler(
     Effect.fn("CoffeeCli.markReady")(function* ({ orderId }) {
-      const order = yield* markReady(orderId);
+      const app = yield* CoffeeOrderApp;
+      const order = yield* app.markReady(orderId);
       yield* Console.log(prettyJson(order));
     }),
   ),
@@ -142,7 +140,8 @@ const pickupCommand = Command.make("pickup", {
   Command.withDescription("Mark an order as picked up"),
   Command.withHandler(
     Effect.fn("CoffeeCli.pickUpOrder")(function* ({ orderId }) {
-      const order = yield* pickUpOrder(orderId);
+      const app = yield* CoffeeOrderApp;
+      const order = yield* app.pickUpOrder(orderId);
       yield* Console.log(prettyJson(order));
     }),
   ),

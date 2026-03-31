@@ -18,6 +18,7 @@ import { InMemoryCoffeeAppLive } from "#external/live";
 import { InMemoryOrderIdGeneratorLive } from "#external/in-memory/InMemoryOrderIdGenerator";
 import { InMemoryOrderRepositoryLive } from "#external/in-memory/InMemoryOrderRepository";
 import { CoffeeHttpApi, CoffeeHttpApiLive } from "#presentation/http/api";
+import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 import { InternalAppError, PersistenceError } from "#service/errors";
 import { MenuRepository } from "#service/ports/MenuRepository";
 
@@ -30,7 +31,11 @@ const CreatedOrderResponseSchema = Schema.Struct({
 const HttpApiTestLive = HttpRouter.serve(CoffeeHttpApiLive, {
   disableListenLog: true,
   disableLogger: true,
-}).pipe(Layer.provide(InMemoryCoffeeAppLive), Layer.provideMerge(NodeHttpServer.layerTest));
+}).pipe(
+  Layer.provide(CoffeeOrderApp.layer),
+  Layer.provide(InMemoryCoffeeAppLive),
+  Layer.provideMerge(NodeHttpServer.layerTest),
+);
 
 const FailingMenuRepositoryLive = Layer.succeed(MenuRepository)({
   list: Effect.fail(new PersistenceError({ message: "Failed to load the coffee menu" })),
@@ -41,6 +46,7 @@ const PersistenceFailureHttpApiTestLive = HttpRouter.serve(CoffeeHttpApiLive, {
   disableListenLog: true,
   disableLogger: true,
 }).pipe(
+  Layer.provide(CoffeeOrderApp.layer),
   Layer.provide(
     Layer.mergeAll(
       FailingMenuRepositoryLive,

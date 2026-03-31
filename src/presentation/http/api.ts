@@ -17,17 +17,8 @@ import {
   CoffeeOrdersSchema,
   OrderIdSchema,
 } from "#domain/order";
+import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 import { ListOrdersRequestSchema, PlaceOrderRequestSchema } from "#service/contracts";
-import {
-  cancelOrder,
-  getOrder,
-  listMenu,
-  listOrders,
-  markReady,
-  pickUpOrder,
-  placeOrder,
-  startBrewing,
-} from "#service/use-cases/index";
 import { InternalAppError } from "#service/errors";
 
 const HealthStatusSchema = Schema.Struct({
@@ -110,21 +101,23 @@ const HealthApiLive = HttpApiBuilder.group(CoffeeHttpApi, "health", (handlers) =
 );
 
 const MenuApiLive = HttpApiBuilder.group(CoffeeHttpApi, "menu", (handlers) =>
-  handlers.handle("list", () => listMenu()),
+  handlers.handle("list", () => CoffeeOrderApp.use((app) => app.listMenu())),
 );
 
 const OrdersApiLive = HttpApiBuilder.group(CoffeeHttpApi, "orders", (handlers) =>
   handlers
-    .handle("create", ({ payload }) => placeOrder(payload))
-    .handle("list", ({ query }) => listOrders(query))
-    .handle("getById", ({ params }) => getOrder(params.orderId))
-    .handle("startBrewing", ({ params }) => startBrewing(params.orderId))
-    .handle("markReady", ({ params }) => markReady(params.orderId))
-    .handle("pickUp", ({ params }) => pickUpOrder(params.orderId))
-    .handle("cancel", ({ params }) => cancelOrder(params.orderId)),
+    .handle("create", ({ payload }) => CoffeeOrderApp.use((app) => app.placeOrder(payload)))
+    .handle("list", ({ query }) => CoffeeOrderApp.use((app) => app.listOrders(query)))
+    .handle("getById", ({ params }) => CoffeeOrderApp.use((app) => app.getOrder(params.orderId)))
+    .handle("startBrewing", ({ params }) =>
+      CoffeeOrderApp.use((app) => app.startBrewing(params.orderId)),
+    )
+    .handle("markReady", ({ params }) => CoffeeOrderApp.use((app) => app.markReady(params.orderId)))
+    .handle("pickUp", ({ params }) => CoffeeOrderApp.use((app) => app.pickUpOrder(params.orderId)))
+    .handle("cancel", ({ params }) => CoffeeOrderApp.use((app) => app.cancelOrder(params.orderId))),
 );
 
 export const CoffeeHttpApiLive = Layer.provide(
   HttpApiBuilder.layer(CoffeeHttpApi, { openapiPath: "/openapi.json" }),
   [HealthApiLive, MenuApiLive, OrdersApiLive],
-);
+).pipe(Layer.provide(CoffeeOrderApp.layer));

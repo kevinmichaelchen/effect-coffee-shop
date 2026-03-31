@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import * as McpServer from "effect/unstable/ai/McpServer";
-import { listMenu, listOrders } from "#service/use-cases/index";
+import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 import { prettyJson } from "../shared/json.ts";
 
 export const RecommendDrinkPrompt = McpServer.prompt({
@@ -14,7 +14,8 @@ export const RecommendDrinkPrompt = McpServer.prompt({
     occasion: () => Effect.succeed(["morning rush", "afternoon break", "late night", "decaf"]),
   },
   content: Effect.fn("CoffeeMcp.recommendDrinkPrompt")(function* ({ occasion }) {
-    const menu = yield* listMenu();
+    const app = yield* CoffeeOrderApp;
+    const menu = yield* app.listMenu();
     return `Recommend one drink for "${occasion}" from this menu:\n${prettyJson(menu)}`;
   }),
 });
@@ -29,7 +30,8 @@ export const SummarizeOpenOrdersPrompt = McpServer.prompt({
     focus: () => Effect.succeed(["kitchen", "pickup", "operations"]),
   },
   content: Effect.fn("CoffeeMcp.summarizeOpenOrdersPrompt")(function* ({ focus }) {
-    const openOrders = yield* listOrders({}).pipe(
+    const app = yield* CoffeeOrderApp;
+    const openOrders = yield* app.listOrders({}).pipe(
       Effect.map((orders) =>
         orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
       ),
