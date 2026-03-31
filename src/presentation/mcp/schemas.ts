@@ -5,12 +5,14 @@ import {
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
 } from "#domain/errors";
+import { InternalAppError } from "#service/errors";
 
 export const AppErrorSchema = Schema.Union([
   DrinkNotFoundError,
   InvalidOrderInputError,
   OrderNotFoundError,
   InvalidOrderStatusTransitionError,
+  InternalAppError,
 ]).annotate({ identifier: "AppError" });
 
 export type AppError = typeof AppErrorSchema.Type;

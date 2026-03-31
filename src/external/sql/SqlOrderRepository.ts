@@ -10,6 +10,7 @@ import {
   type ListOrdersFilters,
   type OrderId,
 } from "#domain/order";
+import { PersistenceError } from "#service/errors";
 import { OrderRepository } from "#service/ports/OrderRepository";
 import { SqlOrderModel, toCoffeeOrder, toSqlOrderInsert } from "./models.ts";
 
@@ -98,9 +99,14 @@ export const SqlOrderRepositoryLive = Layer.effect(
     const queries = yield* makeSqlOrderQueries;
 
     return OrderRepository.of({
-      save: (order) => queries.save(order).pipe(Effect.orDie),
-      getById: (orderId) => queries.getById(orderId).pipe(Effect.orDie),
-      list: (filters) => queries.list(filters).pipe(Effect.orDie),
+      save: (order) =>
+        queries.save(order).pipe(PersistenceError.refail(`Failed to save order "${order.id}"`)),
+      getById: (orderId) =>
+        queries.getById(orderId).pipe(
+          PersistenceError.refail(`Failed to load order "${orderId}"`),
+        ),
+      list: (filters) =>
+        queries.list(filters).pipe(PersistenceError.refail("Failed to list coffee orders")),
     });
   }),
 );

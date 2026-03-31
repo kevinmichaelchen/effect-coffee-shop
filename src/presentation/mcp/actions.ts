@@ -37,6 +37,7 @@ export const coffeeMcpActionSpecs = {
     description: "List the current coffee menu",
     parameters: EmptyParamsSchema,
     success: MenuSchema,
+    failure: AppErrorSchema,
   },
   place_order: {
     description: "Create a new coffee order",
@@ -95,7 +96,7 @@ export const coffeeMcpActionSpecs = {
 export class CoffeeMcpActions extends ServiceMap.Service<
   CoffeeMcpActions,
   {
-    readonly list_menu: () => Effect.Effect<Menu, never>;
+    readonly list_menu: () => Effect.Effect<Menu, AppError>;
     readonly place_order: (input: PlaceOrderRequest) => Effect.Effect<CoffeeOrder, AppError>;
     readonly get_order: (input: {
       readonly orderId: OrderId;

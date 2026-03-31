@@ -29,6 +29,7 @@ import {
   placeOrder,
   startBrewing,
 } from "#service/use-cases/index";
+import { InternalAppError } from "#service/errors";
 
 const HealthStatusSchema = Schema.Struct({
   status: Schema.Literal("ok"),
@@ -45,6 +46,7 @@ class MenuApi extends HttpApiGroup.make("menu")
   .add(
     HttpApiEndpoint.get("list", "/", {
       success: MenuSchema,
+      error: InternalAppError,
     }),
   )
   .prefix("/menu") {}
@@ -54,47 +56,47 @@ class OrdersApi extends HttpApiGroup.make("orders")
     HttpApiEndpoint.post("create", "/", {
       payload: PlaceOrderRequestSchema,
       success: CoffeeOrderSchema,
-      error: [DrinkNotFoundError, InvalidOrderInputError],
+      error: [DrinkNotFoundError, InvalidOrderInputError, InternalAppError],
     }),
     HttpApiEndpoint.get("list", "/", {
       query: ListOrdersRequestSchema,
       success: CoffeeOrdersSchema,
-      error: InvalidOrderInputError,
+      error: [InvalidOrderInputError, InternalAppError],
     }),
     HttpApiEndpoint.get("getById", "/:orderId", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: OrderNotFoundError,
+      error: [OrderNotFoundError, InternalAppError],
     }),
     HttpApiEndpoint.post("startBrewing", "/:orderId/start-brewing", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: [OrderNotFoundError, InvalidOrderStatusTransitionError],
+      error: [OrderNotFoundError, InvalidOrderStatusTransitionError, InternalAppError],
     }),
     HttpApiEndpoint.post("markReady", "/:orderId/mark-ready", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: [OrderNotFoundError, InvalidOrderStatusTransitionError],
+      error: [OrderNotFoundError, InvalidOrderStatusTransitionError, InternalAppError],
     }),
     HttpApiEndpoint.post("pickUp", "/:orderId/pick-up", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: [OrderNotFoundError, InvalidOrderStatusTransitionError],
+      error: [OrderNotFoundError, InvalidOrderStatusTransitionError, InternalAppError],
     }),
     HttpApiEndpoint.post("cancel", "/:orderId/cancel", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: [OrderNotFoundError, InvalidOrderStatusTransitionError],
+      error: [OrderNotFoundError, InvalidOrderStatusTransitionError, InternalAppError],
     }),
   )
   .prefix("/orders") {}

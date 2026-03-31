@@ -4,6 +4,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { SqlClient, SqlSchema, type SqlError } from "effect/unstable/sql";
 import type { MenuItem } from "#domain/menu";
+import { PersistenceError } from "#service/errors";
 import { MenuRepository } from "#service/ports/MenuRepository";
 import { SqlMenuItemModel } from "./models.ts";
 
@@ -84,8 +85,11 @@ export const SqlMenuRepositoryLive = Layer.effect(
     const queries = yield* makeSqlMenuQueries;
 
     return MenuRepository.of({
-      list: queries.list.pipe(Effect.orDie),
-      findById: (drinkId) => queries.findById(drinkId).pipe(Effect.orDie),
+      list: queries.list.pipe(PersistenceError.refail("Failed to load the coffee menu")),
+      findById: (drinkId) =>
+        queries.findById(drinkId).pipe(
+          PersistenceError.refail(`Failed to load menu item "${drinkId}"`),
+        ),
     });
   }),
 );

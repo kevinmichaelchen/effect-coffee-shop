@@ -4,11 +4,14 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import { menuItems } from "#domain/menu";
 import type { CoffeeOrder } from "#domain/order";
+import type { PersistenceError } from "#service/errors";
 import { MenuRepository } from "#service/ports/MenuRepository";
 import { OrderRepository } from "#service/ports/OrderRepository";
 
 type RepositoryServices = MenuRepository | OrderRepository;
-type RunTest = <A>(effect: Effect.Effect<A, never, RepositoryServices>) => Effect.Effect<A>;
+type RunTest = <A>(
+  effect: Effect.Effect<A, PersistenceError, RepositoryServices>,
+) => Effect.Effect<A, PersistenceError>;
 
 const utc = (iso: string) => Option.getOrThrow(DateTime.make(iso));
 

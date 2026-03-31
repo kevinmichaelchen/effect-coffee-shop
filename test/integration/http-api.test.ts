@@ -15,7 +15,11 @@ import {
 } from "#domain/errors";
 import { OrderIdSchema } from "#domain/order";
 import { InMemoryCoffeeAppLive } from "#external/live";
+import { InMemoryOrderIdGeneratorLive } from "#external/in-memory/InMemoryOrderIdGenerator";
+import { InMemoryOrderRepositoryLive } from "#external/in-memory/InMemoryOrderRepository";
 import { CoffeeHttpApi, CoffeeHttpApiLive } from "#presentation/http/api";
+import { InternalAppError, PersistenceError } from "#service/errors";
+import { MenuRepository } from "#service/ports/MenuRepository";
 
 const CreatedOrderResponseSchema = Schema.Struct({
   id: OrderIdSchema,
@@ -27,6 +31,25 @@ const HttpApiTestLive = HttpRouter.serve(CoffeeHttpApiLive, {
   disableListenLog: true,
   disableLogger: true,
 }).pipe(Layer.provide(InMemoryCoffeeAppLive), Layer.provideMerge(NodeHttpServer.layerTest));
+
+const FailingMenuRepositoryLive = Layer.succeed(MenuRepository)({
+  list: Effect.fail(new PersistenceError({ message: "Failed to load the coffee menu" })),
+  findById: () => Effect.fail(new PersistenceError({ message: 'Failed to load menu item "latte"' })),
+});
+
+const PersistenceFailureHttpApiTestLive = HttpRouter.serve(CoffeeHttpApiLive, {
+  disableListenLog: true,
+  disableLogger: true,
+}).pipe(
+  Layer.provide(
+    Layer.mergeAll(
+      FailingMenuRepositoryLive,
+      InMemoryOrderRepositoryLive,
+      InMemoryOrderIdGeneratorLive,
+    ),
+  ),
+  Layer.provideMerge(NodeHttpServer.layerTest),
+);
 
 describe("http api", () => {
   it.effect("creates orders through the typed client", () =>
@@ -115,5 +138,22 @@ describe("http api", () => {
       assert.strictEqual(body.from, "pending");
       assert.strictEqual(body.to, "ready");
     }).pipe(Effect.provide(HttpApiTestLive)),
+  );
+
+  it.effect("maps persistence failures to 500 instead of defecting", () =>
+    Effect.gen(function* () {
+      const response = yield* HttpClient.post("/orders", {
+        body: HttpBody.jsonUnsafe({
+          customerName: "Avery",
+          drinkId: "latte",
+          size: "medium",
+        }),
+      });
+      const body = Schema.decodeUnknownSync(InternalAppError)(yield* response.json);
+
+      assert.strictEqual(response.status, 500);
+      assert.strictEqual(body._tag, "InternalAppError");
+      assert.strictEqual(body.message, "Unable to place order right now");
+    }).pipe(Effect.provide(PersistenceFailureHttpApiTestLive)),
   );
 });

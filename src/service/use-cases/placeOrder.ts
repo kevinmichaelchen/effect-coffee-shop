@@ -20,6 +20,7 @@ import {
   type Temperature,
 } from "#domain/menu";
 import { type CoffeeOrder, type PlaceOrderRequest } from "#domain/order";
+import { InternalAppError, internalAppErrorFromPersistence } from "#service/errors";
 import { OrderIdGenerator } from "../ports/OrderIdGenerator.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
@@ -121,7 +122,7 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
   request: PlaceOrderRequest,
 ): Effect.fn.Return<
   CoffeeOrder,
-  DrinkNotFoundError | InvalidOrderInputError,
+  DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
   MenuRepository | OrderIdGenerator | OrderRepository
 > {
   const orderIdGenerator = yield* OrderIdGenerator;
@@ -130,7 +131,9 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
 
   const customerName = yield* validateCustomerName(request.customerName);
 
-  const maybeMenuItem = yield* menuRepository.findById(request.drinkId);
+  const maybeMenuItem = yield* menuRepository.findById(request.drinkId).pipe(
+    Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")),
+  );
   if (Option.isNone(maybeMenuItem)) {
     return yield* new DrinkNotFoundError({
       drinkId: request.drinkId,
@@ -162,5 +165,7 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
     ...(notes === undefined ? {} : { notes }),
   };
 
-  return yield* orderRepository.save(order);
+  return yield* orderRepository.save(order).pipe(
+    Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")),
+  );
 });
