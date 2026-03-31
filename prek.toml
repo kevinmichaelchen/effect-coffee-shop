@@ -1,0 +1,51 @@
+#:schema https://www.schemastore.org/prek.json
+
+default_install_hook_types = ["pre-commit", "pre-push"]
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "fmt-check"
+name = "oxfmt check"
+entry = "bun run fmt:check"
+language = "system"
+always_run = true
+pass_filenames = false
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "oxlint"
+name = "oxlint"
+entry = "bun run lint"
+language = "system"
+always_run = true
+pass_filenames = false
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "lintcn"
+name = "lintcn"
+entry = "bun run lint:custom"
+language = "system"
+always_run = true
+pass_filenames = false
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "typecheck"
+name = "typecheck"
+entry = "bun run typecheck"
+language = "system"
+always_run = true
+pass_filenames = false
+stages = ["pre-commit"]
+
+[[repos.hooks]]
+id = "test"
+name = "vitest"
+entry = "bun run test"
+language = "system"
+always_run = true
+pass_filenames = false
+stages = ["pre-push"]

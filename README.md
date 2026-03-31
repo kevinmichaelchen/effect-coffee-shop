@@ -19,6 +19,7 @@ Install dependencies:
 
 ```bash
 bun install
+bun run hooks:install
 ```
 
 Run the app:
@@ -42,4 +43,11 @@ bun run lint
 bun run lint:custom
 bun run fmt:check
 bun run test
+```
+
+Run the configured Git hooks without committing or pushing:
+
+```bash
+bun run hooks:run:pre-commit
+bun run hooks:run:pre-push
 ```
