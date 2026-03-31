@@ -15,19 +15,7 @@ import {
   type PlaceOrderRequest,
   PlaceOrderRequestSchema,
 } from "#domain/order";
-import { MenuRepository } from "#service/ports/MenuRepository";
-import { OrderIdGenerator } from "#service/ports/OrderIdGenerator";
-import { OrderRepository } from "#service/ports/OrderRepository";
-import {
-  cancelOrder,
-  getOrder,
-  listMenu,
-  listOrders,
-  markReady,
-  pickUpOrder,
-  placeOrder,
-  startBrewing,
-} from "#service/use-cases/index";
+import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 import { AppErrorSchema, type AppError } from "./schemas.ts";
 
 const EmptyParamsSchema = Schema.Struct({});
@@ -119,31 +107,18 @@ export class CoffeeMcpActions extends ServiceMap.Service<
   static readonly layer = Layer.effect(
     CoffeeMcpActions,
     Effect.gen(function* () {
-      const menuRepository = yield* MenuRepository;
-      const orderIdGenerator = yield* OrderIdGenerator;
-      const orderRepository = yield* OrderRepository;
+      const app = yield* CoffeeOrderApp;
 
       return CoffeeMcpActions.of({
-        list_menu: () => listMenu().pipe(Effect.provideService(MenuRepository, menuRepository)),
-        place_order: (input) =>
-          placeOrder(input).pipe(
-            Effect.provideService(MenuRepository, menuRepository),
-            Effect.provideService(OrderIdGenerator, orderIdGenerator),
-            Effect.provideService(OrderRepository, orderRepository),
-          ),
-        get_order: ({ orderId }) =>
-          getOrder(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
-        list_orders: (input) =>
-          listOrders(input).pipe(Effect.provideService(OrderRepository, orderRepository)),
-        start_brewing: ({ orderId }) =>
-          startBrewing(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
-        mark_ready: ({ orderId }) =>
-          markReady(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
-        pick_up_order: ({ orderId }) =>
-          pickUpOrder(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
-        cancel_order: ({ orderId }) =>
-          cancelOrder(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
+        list_menu: () => app.listMenu(),
+        place_order: (input) => app.placeOrder(input),
+        get_order: ({ orderId }) => app.getOrder(orderId),
+        list_orders: (input) => app.listOrders(input),
+        start_brewing: ({ orderId }) => app.startBrewing(orderId),
+        mark_ready: ({ orderId }) => app.markReady(orderId),
+        pick_up_order: ({ orderId }) => app.pickUpOrder(orderId),
+        cancel_order: ({ orderId }) => app.cancelOrder(orderId),
       });
     }),
-  );
+  ).pipe(Layer.provide(CoffeeOrderApp.layer));
 }
