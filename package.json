@@ -6,6 +6,9 @@
   "workspaces": ["backend", "ui"],
   "scripts": {
     "dev": "turbo run dev --filter=ui",
+    "storybook": "turbo run storybook --filter=ui",
+    "build-storybook": "turbo run build-storybook --filter=ui",
+    "test:storybook": "turbo run test --filter=ui",
     "http": "bun run --cwd backend http",
     "cli": "bun run --cwd backend cli",
     "mcp:stdio": "bun run --cwd backend mcp:stdio",
@@ -23,6 +26,7 @@
     "knip": "turbo run knip",
     "build": "turbo run build",
     "build:affected": "turbo run build --affected",
+    "build-storybook:affected": "turbo run build-storybook --affected",
     "check": "turbo run typecheck lint lint:custom fmt:check test",
     "check:affected": "turbo run typecheck lint lint:custom fmt:check test --affected",
     "test": "turbo run test",

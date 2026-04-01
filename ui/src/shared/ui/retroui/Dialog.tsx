@@ -4,7 +4,6 @@ import * as ReactDialog from "@radix-ui/react-dialog";
 import { cn } from "#shared/lib/utils.ts";
 import { cva, type VariantProps } from "class-variance-authority";
 import React, { type HTMLAttributes, type ReactNode } from "react";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { X } from "lucide-react";
 
 const Dialog = ReactDialog.Root;
@@ -101,9 +100,6 @@ const DialogContent = React.forwardRef<HTMLDivElement, IDialogContentProps>(
           ref={forwardedRef}
           {...props}
         >
-          <VisuallyHidden>
-            <ReactDialog.Title />
-          </VisuallyHidden>
           <div className="flex flex-col relative">{children}</div>
         </ReactDialog.Content>
       </ReactDialog.Portal>
@@ -113,15 +109,20 @@ const DialogContent = React.forwardRef<HTMLDivElement, IDialogContentProps>(
 DialogContent.displayName = "DialogContent";
 
 type IDialogDescriptionProps = HTMLAttributes<HTMLDivElement>;
-const DialogDescription = ({
-  children,
-  className,
-  ...props
-}: IDialogDescriptionProps) => {
+const DialogDescription = ({ children, className, ...props }: IDialogDescriptionProps) => {
   return (
     <ReactDialog.Description className={cn(className)} {...props}>
       {children}
     </ReactDialog.Description>
+  );
+};
+
+type IDialogTitleProps = HTMLAttributes<HTMLHeadingElement>;
+const DialogTitle = ({ children, className, ...props }: IDialogTitleProps) => {
+  return (
+    <ReactDialog.Title className={cn("font-head text-lg font-medium", className)} {...props}>
+      {children}
+    </ReactDialog.Title>
   );
 };
 
@@ -143,9 +144,7 @@ const dialogFooterVariants = cva(
   },
 );
 
-export interface IDialogFooterProps
-  extends HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof dialogFooterVariants> {}
+export interface IDialogFooterProps extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof dialogFooterVariants> {}
 
 const DialogFooter = ({
   children,
@@ -186,7 +185,7 @@ const dialogHeaderVariants = cva(
 const DialogHeaderDefaultLayout = ({ children }: { children: ReactNode }) => {
   return (
     <>
-      {children}
+      <DialogTitle>{children}</DialogTitle>
       <DialogTrigger title="Close pop-up" className="cursor-pointer" asChild>
         <X />
       </DialogTrigger>
@@ -226,6 +225,7 @@ const DialogComponent = Object.assign(Dialog, {
   Trigger: DialogTrigger,
   Header: DialogHeader,
   Content: DialogContent,
+  Title: DialogTitle,
   Description: DialogDescription,
   Footer: DialogFooter,
 });

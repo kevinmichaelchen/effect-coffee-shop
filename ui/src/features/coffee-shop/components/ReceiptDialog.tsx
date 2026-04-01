@@ -19,6 +19,9 @@ export function ReceiptDialog(inputProps: ReceiptDialogProps) {
       {order !== null ? (
         <Dialog.Content className="max-w-xl" size="lg">
           <Dialog.Header>Order sent to the queue</Dialog.Header>
+          <Dialog.Description className="px-4 pt-3 text-sm text-muted-foreground">
+            Review the new ticket details, then keep ordering or jump to the active queue.
+          </Dialog.Description>
           <div className="grid gap-5 px-4 pb-5 pt-1">
             <div className="flex flex-wrap items-center gap-3">
               <StatusBadge status={order.status} />

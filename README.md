@@ -99,6 +99,15 @@ bun run hooks:run:pre-commit
 bun run hooks:run:pre-push
 ```
 
+Run Storybook from the repo root:
+
+```bash
+bun run storybook
+bun run build-storybook
+```
+
+`bun run storybook` serves the UI stories through Turborepo on port `6006` by default, and `bun run build-storybook` writes the static output to [`ui/storybook-static`](./ui/storybook-static).
+
 ## UI
 
 A standalone browser UI lives in [`ui/`](./ui).
@@ -113,6 +122,13 @@ Then start the frontend:
 
 ```bash
 bun run --cwd ui dev
+```
+
+Run Storybook only for the UI workspace:
+
+```bash
+bun run --cwd ui storybook
+bun run --cwd ui build-storybook
 ```
 
 For HTTP-only subdomain-based local development with [`portless`](https://github.com/vercel-labs/portless):

@@ -12,6 +12,13 @@
       "outputs": ["dist/**"],
       "outputLogs": "new-only"
     },
+    "build-storybook": {
+      "description": "Build Storybook static assets.",
+      "dependsOn": ["typecheck"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*", "!README.md"],
+      "outputs": ["storybook-static/**"],
+      "outputLogs": "new-only"
+    },
     "typecheck": {
       "description": "Type-check each workspace.",
       "dependsOn": ["^typecheck"],
@@ -52,6 +59,12 @@
     },
     "dev": {
       "description": "Run long-lived local development servers.",
+      "cache": false,
+      "persistent": true,
+      "interruptible": true
+    },
+    "storybook": {
+      "description": "Run Storybook development servers.",
       "cache": false,
       "persistent": true,
       "interruptible": true
