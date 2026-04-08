@@ -1,9 +1,0 @@
-[submodule "vendor/effect-smol"]
-	path = vendor/effect-smol
-	url = https://github.com/Effect-TS/effect-smol.git
-[submodule "vendor/lintcn"]
-	path = vendor/lintcn
-	url = https://github.com/remorses/lintcn.git
-[submodule "vendor/alchemy-effect"]
-	path = vendor/alchemy-effect
-	url = https://github.com/alchemy-run/alchemy-effect.git

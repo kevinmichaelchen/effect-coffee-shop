@@ -1,6 +1,5 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": ["vendor/**"],
   "plugins": ["oxc", "typescript", "unicorn", "node"],
   "options": {
     "typeAware": true,
@@ -34,7 +33,6 @@
               "@effect/platform-node/*",
               "bun:*",
               "node:*",
-              "#effect-smol/sql/*"
             ]
           }
         ],
@@ -54,7 +52,6 @@
               "@effect/platform-node/*",
               "bun:*",
               "node:*",
-              "#effect-smol/sql/*",
               "#service/use-cases/*",
               "#service/ports/*"
             ]
