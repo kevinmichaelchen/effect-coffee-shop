@@ -32,7 +32,7 @@
               "@effect/platform-node",
               "@effect/platform-node/*",
               "bun:*",
-              "node:*",
+              "node:*"
             ]
           }
         ],

@@ -13,10 +13,5 @@
 
   "project": ["src/**/*.ts!", "test/**/*.ts"],
 
-  "ignoreDependencies": [
-    "find-up",
-    "ink",
-    "react",
-    "tar",
-  ],
+  "ignoreDependencies": ["find-up", "ink", "react", "tar"],
 }
