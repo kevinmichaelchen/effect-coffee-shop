@@ -38,10 +38,13 @@ const createOrder = Command.make("create", {
         customerName,
         drinkId: drink,
         size,
-        ...(Option.isSome(milk) ? { milk: milk.value } : {}),
-        ...(Option.isSome(temperature) ? { temperature: temperature.value } : {}),
-        ...(Option.isSome(shots) ? { shots: shots.value } : {}),
-        ...(Option.isSome(notes) ? { notes: notes.value } : {}),
+        ...Option.match(milk, { onNone: () => ({}), onSome: (milk) => ({ milk }) }),
+        ...Option.match(temperature, {
+          onNone: () => ({}),
+          onSome: (temperature) => ({ temperature }),
+        }),
+        ...Option.match(shots, { onNone: () => ({}), onSome: (shots) => ({ shots }) }),
+        ...Option.match(notes, { onNone: () => ({}), onSome: (notes) => ({ notes }) }),
       });
       yield* Console.log(prettyJson(order));
     }),
@@ -68,7 +71,9 @@ const listOrdersCommand = Command.make("list", {
   Command.withHandler(
     Effect.fn("CoffeeCli.listOrders")(function* ({ status }) {
       const app = yield* CoffeeOrderApp;
-      const orders = yield* app.listOrders(Option.isSome(status) ? { status: status.value } : {});
+      const orders = yield* app.listOrders(
+        Option.match(status, { onNone: () => ({}), onSome: (status) => ({ status }) }),
+      );
       yield* Console.log(prettyJson(orders));
     }),
   ),

@@ -3,7 +3,6 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { SqlClient, SqlModel, SqlSchema, type SqlError } from "effect/unstable/sql";
-import type * as Cause from "effect/Cause";
 import {
   OrderStatusSchema,
   type CoffeeOrder,
@@ -15,7 +14,6 @@ import { OrderRepository } from "#service/ports/OrderRepository";
 import { SqlOrderModel, toCoffeeOrder, toSqlOrderInsert } from "./models.ts";
 
 type SqlRepositoryError = Schema.SchemaError | SqlError.SqlError;
-type SqlRepositoryMaybeMissingError = SqlRepositoryError | Cause.NoSuchElementError;
 
 const ListOrdersFiltersSchema = Schema.Struct({
   status: Schema.optionalKey(OrderStatusSchema),
@@ -29,22 +27,13 @@ const makeSqlOrderQueries = Effect.gen(function* () {
     idColumn: "id",
   });
 
-  const findById = (
-    orderId: OrderId,
-  ): Effect.Effect<typeof SqlOrderModel.Type, SqlRepositoryMaybeMissingError> =>
-    repository.findById(orderId);
+  const findById = (orderId: OrderId) => repository.findById(orderId);
 
-  const insert = (
-    order: typeof SqlOrderModel.insert.Type,
-  ): Effect.Effect<typeof SqlOrderModel.Type, SqlRepositoryError> => repository.insert(order);
+  const insert = (order: typeof SqlOrderModel.insert.Type) => repository.insert(order);
 
-  const update = (
-    order: typeof SqlOrderModel.update.Type,
-  ): Effect.Effect<typeof SqlOrderModel.Type, SqlRepositoryError> => repository.update(order);
+  const update = (order: typeof SqlOrderModel.update.Type) => repository.update(order);
 
-  const listRecords = (
-    filters: ListOrdersFilters,
-  ): Effect.Effect<ReadonlyArray<typeof SqlOrderModel.Type>, SqlRepositoryError> =>
+  const listRecords = (filters: ListOrdersFilters) =>
     SqlSchema.findAll({
       Request: ListOrdersFiltersSchema,
       Result: SqlOrderModel,

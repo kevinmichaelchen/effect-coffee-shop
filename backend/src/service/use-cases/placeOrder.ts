@@ -56,12 +56,15 @@ const resolveMilk = Effect.fnUntraced(function* (
   menuItem: MenuItem,
   milk: string | undefined,
 ): Effect.fn.Return<Milk, InvalidOrderInputError> {
-  const selectedMilk =
-    milk === undefined
-      ? defaultMilkFor(menuItem)
-      : isMilk(milk)
-        ? milk
-        : yield* invalidOrderInput(`milk must be one of: ${availableValues(milks)}`);
+  const selectedMilk = yield* Option.fromNullishOr(milk).pipe(
+    Option.match({
+      onNone: () => Effect.succeed(defaultMilkFor(menuItem)),
+      onSome: (m) =>
+        isMilk(m)
+          ? Effect.succeed(m)
+          : Effect.fail(invalidOrderInput(`milk must be one of: ${availableValues(milks)}`)),
+    }),
+  );
 
   if (!menuItem.availableMilks.some((availableMilk) => availableMilk === selectedMilk)) {
     return yield* invalidOrderInput(
@@ -76,12 +79,17 @@ const resolveTemperature = Effect.fnUntraced(function* (
   menuItem: MenuItem,
   temperature: string | undefined,
 ): Effect.fn.Return<Temperature, InvalidOrderInputError> {
-  const selectedTemperature =
-    temperature === undefined
-      ? defaultTemperatureFor(menuItem)
-      : isTemperature(temperature)
-        ? temperature
-        : yield* invalidOrderInput(`temperature must be one of: ${availableValues(temperatures)}`);
+  const selectedTemperature = yield* Option.fromNullishOr(temperature).pipe(
+    Option.match({
+      onNone: () => Effect.succeed(defaultTemperatureFor(menuItem)),
+      onSome: (t) =>
+        isTemperature(t)
+          ? Effect.succeed(t)
+          : Effect.fail(
+              invalidOrderInput(`temperature must be one of: ${availableValues(temperatures)}`),
+            ),
+    }),
+  );
 
   if (
     !menuItem.availableTemperatures.some(
@@ -132,15 +140,15 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
 
   const customerName = yield* validateCustomerName(request.customerName);
 
-  const maybeMenuItem = yield* menuRepository
-    .findById(request.drinkId)
-    .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")));
-  if (Option.isNone(maybeMenuItem)) {
-    return yield* new DrinkNotFoundError({
-      drinkId: request.drinkId,
-    });
-  }
-  const menuItem = maybeMenuItem.value;
+  const menuItem = yield* menuRepository.findById(request.drinkId).pipe(
+    Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")),
+    Effect.flatMap(
+      Option.match({
+        onNone: () => Effect.fail(new DrinkNotFoundError({ drinkId: request.drinkId })),
+        onSome: Effect.succeed,
+      }),
+    ),
+  );
 
   const size = yield* validateSize(request.size);
   const milk = yield* resolveMilk(menuItem, request.milk);
