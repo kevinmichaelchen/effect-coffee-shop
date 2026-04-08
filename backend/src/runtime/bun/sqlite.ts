@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
-import { SqliteClient } from "#effect-smol/sql/sqlite-bun";
+import { SqliteClient } from "@effect/sql-sqlite-bun";
 
 const coffeeSqliteConfig = Config.all({
   filename: Config.string("COFFEE_SQLITE_PATH").pipe(Config.withDefault(".data/coffee.sqlite")),

@@ -3,7 +3,7 @@ import { Miniflare } from "miniflare";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ServiceMap from "effect/ServiceMap";
-import { D1Client } from "#effect-smol/sql/d1";
+import { D1Client } from "@effect/sql-d1";
 import { SqlCoffeeRepositoriesLive } from "#external/live";
 
 class D1Miniflare extends ServiceMap.Service<D1Miniflare, Miniflare>()("test/D1Miniflare") {
