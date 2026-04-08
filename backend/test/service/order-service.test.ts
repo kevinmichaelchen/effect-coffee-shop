@@ -57,13 +57,13 @@ describe("order service", () => {
     },
   ])("applies menu-driven defaults %#", ({ request, expected }) =>
     Effect.gen(function* () {
-      const order = yield* placeOrder(request).pipe(Effect.provide(InMemoryCoffeeAppLive));
+      const order = yield* placeOrder(request);
 
       assert.strictEqual(order.customerName, expected.customerName);
       assert.strictEqual(order.milk, expected.milk);
       assert.strictEqual(order.temperature, expected.temperature);
       assert.strictEqual(order.shots, expected.shots);
-    }),
+    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
   );
 
   it.effect("trims customer names and drops blank notes", () =>
@@ -73,11 +73,11 @@ describe("order service", () => {
         drinkId: "latte",
         size: "medium",
         notes: "   ",
-      }).pipe(Effect.provide(InMemoryCoffeeAppLive));
+      });
 
       assert.strictEqual(order.customerName, "Avery");
       assert.strictEqual(order.notes, undefined);
-    }),
+    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
   );
 
   it.effect.each([
@@ -197,22 +197,18 @@ describe("order service", () => {
     },
   ])("rejects invalid order input %#", ({ request, verify }) =>
     Effect.gen(function* () {
-      const error = yield* Effect.flip(
-        placeOrder(request).pipe(Effect.provide(InMemoryCoffeeAppLive)),
-      );
+      const error = yield* Effect.flip(placeOrder(request));
       verify(error);
-    }),
+    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
   );
 
   it.effect("rejects unsupported order status filters", () =>
     Effect.gen(function* () {
-      const error = yield* Effect.flip(
-        listOrders({ status: "queued" }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
-      );
+      const error = yield* Effect.flip(listOrders({ status: "queued" }));
 
       assert.strictEqual(error._tag, "InvalidOrderInputError");
       assert.strictEqual(error.message, 'status "queued" is not supported');
-    }),
+    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
   );
 
   it.effect.each([

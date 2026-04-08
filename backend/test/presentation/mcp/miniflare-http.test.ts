@@ -106,6 +106,6 @@ describe("mcp http on miniflare", () => {
       assert.strictEqual(responses[0]?.headers.get("Mcp-Protocol-Version"), "2025-06-18");
     });
 
-    await Effect.runPromise(Effect.scoped(program));
+    await program.pipe(Effect.scoped, Effect.runPromise);
   });
 });

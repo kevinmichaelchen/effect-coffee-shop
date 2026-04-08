@@ -27,17 +27,18 @@ const bundleMcpWorker = Effect.tryPromise(async () => {
   return output.text;
 });
 
-const miniflareLayer = Effect.acquireRelease(
-  Effect.gen(function* () {
-    const workerScript = yield* bundleMcpWorker;
+const acquireMiniflare = Effect.gen(function* () {
+  const workerScript = yield* bundleMcpWorker;
 
-    return new Miniflare({
-      compatibilityDate: "2026-03-31",
-      modules: true,
-      script: workerScript,
-    });
-  }),
-  (miniflare) => Effect.tryPromise(() => miniflare.dispose()),
+  return new Miniflare({
+    compatibilityDate: "2026-03-31",
+    modules: true,
+    script: workerScript,
+  });
+});
+
+const miniflareLayer = Effect.acquireRelease(acquireMiniflare, (miniflare) =>
+  Effect.tryPromise(() => miniflare.dispose()),
 );
 
 export const makeMcpMiniflareClient = Effect.gen(function* () {

@@ -47,11 +47,11 @@ describe("coffee order workflow", () => {
           drinkId: "tea",
           size: "small",
           shots: 1,
-        }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
+        }),
       );
 
       assert.strictEqual(error.message, "Tea drinks do not support extra shots");
-    }),
+    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
   );
 
   it.effect("generates human-readable ids while keeping createdAt serializable", () =>

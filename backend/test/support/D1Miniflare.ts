@@ -6,20 +6,21 @@ import * as ServiceMap from "effect/ServiceMap";
 import { D1Client } from "@effect/sql-d1";
 import { SqlCoffeeRepositoriesLive } from "#external/live";
 
+const acquireD1Miniflare = Effect.sync(
+  () =>
+    new Miniflare({
+      modules: true,
+      d1Databases: {
+        DB: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      },
+      script: "",
+    }),
+);
+
 class D1Miniflare extends ServiceMap.Service<D1Miniflare, Miniflare>()("test/D1Miniflare") {
   static readonly layer = Layer.effect(this)(
-    Effect.acquireRelease(
-      Effect.sync(
-        () =>
-          new Miniflare({
-            modules: true,
-            d1Databases: {
-              DB: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-            },
-            script: "",
-          }),
-      ),
-      (miniflare) => Effect.tryPromise(() => miniflare.dispose()),
+    Effect.acquireRelease(acquireD1Miniflare, (miniflare) =>
+      Effect.tryPromise(() => miniflare.dispose()),
     ),
   );
 
