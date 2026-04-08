@@ -6,8 +6,6 @@
   "imports": {
     "#domain/*": "./src/domain/*.ts",
     "#external/*": "./src/external/*.ts",
-    "#effect-smol/sql/d1": "./vendor/effect-smol/packages/sql/d1/src/index.ts",
-    "#effect-smol/sql/sqlite-bun": "./vendor/effect-smol/packages/sql/sqlite-bun/src/index.ts",
     "#presentation/*": "./src/presentation/*.ts",
     "#runtime/*": "./src/runtime/*.ts",
     "#service/*": "./src/service/*.ts"
@@ -22,9 +20,9 @@
     "typecheck": "tsgo --noEmit",
     "lint": "oxlint --disable-nested-config .",
     "lint:fix": "oxlint --disable-nested-config --fix .",
-    "lint:custom": "bun run vendor/lintcn/src/cli.ts lint --tsconfig tsconfig.json",
-    "lint:custom:build": "bun run vendor/lintcn/src/cli.ts build",
-    "lint:custom:list": "bun run vendor/lintcn/src/cli.ts list",
+    "lint:custom": "lintcn lint --tsconfig tsconfig.json",
+    "lint:custom:build": "lintcn build",
+    "lint:custom:list": "lintcn list",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "knip": "knip --files --exports --no-config-hints",
@@ -33,7 +31,10 @@
   },
   "dependencies": {
     "@effect/platform-bun": "4.0.0-beta.43",
-    "effect": "4.0.0-beta.43"
+    "@effect/sql-d1": "4.0.0-beta.43",
+    "@effect/sql-sqlite-bun": "4.0.0-beta.43",
+    "effect": "4.0.0-beta.43",
+    "lintcn": "^0.7.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260131.0",

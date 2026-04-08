@@ -14,17 +14,15 @@ const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* 
   OrderRepository
 > {
   const orderRepository = yield* OrderRepository;
-  const maybeOrder = yield* orderRepository
-    .getById(orderId)
-    .pipe(
-      Effect.mapError(internalAppErrorFromPersistence("Unable to update order status right now")),
-    );
-
-  if (Option.isNone(maybeOrder)) {
-    return yield* new OrderNotFoundError({ orderId });
-  }
-
-  const order = maybeOrder.value;
+  const order = yield* orderRepository.getById(orderId).pipe(
+    Effect.mapError(internalAppErrorFromPersistence("Unable to update order status right now")),
+    Effect.flatMap(
+      Option.match({
+        onNone: () => Effect.fail(new OrderNotFoundError({ orderId })),
+        onSome: Effect.succeed,
+      }),
+    ),
+  );
 
   if (!canTransitionTo(order.status, to)) {
     return yield* new InvalidOrderStatusTransitionError({

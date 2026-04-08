@@ -13,14 +13,5 @@
 
   "project": ["src/**/*.ts!", "test/**/*.ts"],
 
-  // These are only referenced by out-of-scope vendor/alchemy tooling.
-  "ignoreDependencies": [
-    "@distilled.cloud/cloudflare",
-    "@distilled.cloud/cloudflare-bundler",
-    "cloudflare",
-    "find-up",
-    "ink",
-    "react",
-    "tar",
-  ],
+  "ignoreDependencies": ["find-up", "ink", "react", "tar"],
 }
