@@ -10,9 +10,6 @@ import {
   startBrewing,
 } from "#service/use-cases/index";
 
-const withApp = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-  effect.pipe(Effect.provide(InMemoryCoffeeAppLive));
-
 const baseOrderRequest = {
   customerName: "Avery",
   drinkId: "latte",
@@ -60,7 +57,7 @@ describe("order service", () => {
     },
   ])("applies menu-driven defaults %#", ({ request, expected }) =>
     Effect.gen(function* () {
-      const order = yield* withApp(placeOrder(request));
+      const order = yield* placeOrder(request).pipe(Effect.provide(InMemoryCoffeeAppLive));
 
       assert.strictEqual(order.customerName, expected.customerName);
       assert.strictEqual(order.milk, expected.milk);
@@ -71,14 +68,12 @@ describe("order service", () => {
 
   it.effect("trims customer names and drops blank notes", () =>
     Effect.gen(function* () {
-      const order = yield* withApp(
-        placeOrder({
-          customerName: "  Avery  ",
-          drinkId: "latte",
-          size: "medium",
-          notes: "   ",
-        }),
-      );
+      const order = yield* placeOrder({
+        customerName: "  Avery  ",
+        drinkId: "latte",
+        size: "medium",
+        notes: "   ",
+      }).pipe(Effect.provide(InMemoryCoffeeAppLive));
 
       assert.strictEqual(order.customerName, "Avery");
       assert.strictEqual(order.notes, undefined);
@@ -202,14 +197,18 @@ describe("order service", () => {
     },
   ])("rejects invalid order input %#", ({ request, verify }) =>
     Effect.gen(function* () {
-      const error = yield* Effect.flip(withApp(placeOrder(request)));
+      const error = yield* Effect.flip(
+        placeOrder(request).pipe(Effect.provide(InMemoryCoffeeAppLive)),
+      );
       verify(error);
     }),
   );
 
   it.effect("rejects unsupported order status filters", () =>
     Effect.gen(function* () {
-      const error = yield* Effect.flip(withApp(listOrders({ status: "queued" })));
+      const error = yield* Effect.flip(
+        listOrders({ status: "queued" }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
+      );
 
       assert.strictEqual(error._tag, "InvalidOrderInputError");
       assert.strictEqual(error.message, 'status "queued" is not supported');
@@ -256,5 +255,7 @@ describe("order service", () => {
         assert.strictEqual(updated.status, "picked-up");
       }),
     },
-  ])("allows valid status transitions %#", ({ program }) => withApp(program));
+  ])("allows valid status transitions %#", ({ program }) =>
+    program.pipe(Effect.provide(InMemoryCoffeeAppLive)),
+  );
 });

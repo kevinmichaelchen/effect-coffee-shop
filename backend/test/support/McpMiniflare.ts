@@ -8,8 +8,6 @@ const MCP_WORKER_ENTRYPOINT = path.resolve(
   "src/presentation/mcp/miniflare.worker.ts",
 );
 
-const COMPATIBILITY_DATE = "2026-03-31";
-
 const bundleMcpWorker = Effect.tryPromise(async () => {
   const result = await build({
     bundle: true,
@@ -34,7 +32,7 @@ const miniflareLayer = Effect.acquireRelease(
     const workerScript = yield* bundleMcpWorker;
 
     return new Miniflare({
-      compatibilityDate: COMPATIBILITY_DATE,
+      compatibilityDate: "2026-03-31",
       modules: true,
       script: workerScript,
     });
@@ -75,15 +73,13 @@ export const makeMcpMiniflareClient = Effect.gen(function* () {
         sessionId = response.headers.get("Mcp-Session-Id") ?? sessionId;
         responses.push(response.clone());
 
-        const json = (await response.json()) as
-          | { readonly error: unknown; readonly result?: never }
-          | { readonly error?: never; readonly result: Result };
+        const json: Record<string, unknown> = await response.json();
 
         if ("error" in json) {
           throw new Error(JSON.stringify(json.error));
         }
 
-        return json.result;
+        return json.result as Result;
       },
       catch: (cause) => cause,
     });

@@ -14,40 +14,29 @@ import {
 describe("coffee order workflow", () => {
   it.effect("runs a full happy-path lifecycle in memory", () =>
     Effect.gen(function* () {
-      const result = yield* Effect.gen(function* () {
-        const created = yield* placeOrder({
-          customerName: "Avery",
-          drinkId: "latte",
-          size: "large",
-          milk: "oat",
-          temperature: "extra-hot",
-          shots: 2,
-        });
-        const loaded = yield* getOrder(created.id);
-        const brewing = yield* startBrewing(created.id);
-        const ready = yield* markReady(created.id);
-        const pickedUp = yield* pickUpOrder(created.id);
-        const pickedUpOrders = yield* listOrders({ status: "picked-up" });
+      const created = yield* placeOrder({
+        customerName: "Avery",
+        drinkId: "latte",
+        size: "large",
+        milk: "oat",
+        temperature: "extra-hot",
+        shots: 2,
+      });
+      const loaded = yield* getOrder(created.id);
+      const brewing = yield* startBrewing(created.id);
+      const ready = yield* markReady(created.id);
+      const pickedUp = yield* pickUpOrder(created.id);
+      const pickedUpOrders = yield* listOrders({ status: "picked-up" });
 
-        return {
-          created,
-          loaded,
-          brewing,
-          ready,
-          pickedUp,
-          pickedUpOrders,
-        };
-      }).pipe(Effect.provide(InMemoryCoffeeAppLive));
-
-      assert.strictEqual(result.created.status, "pending");
-      assert.isTrue(DateTime.isUtc(result.created.createdAt));
-      assert.strictEqual(result.loaded.id, result.created.id);
-      assert.strictEqual(result.brewing.status, "brewing");
-      assert.strictEqual(result.ready.status, "ready");
-      assert.strictEqual(result.pickedUp.status, "picked-up");
-      assert.strictEqual(result.pickedUpOrders.length, 1);
-      assert.strictEqual(result.pickedUpOrders[0]?.id, result.created.id);
-    }),
+      assert.strictEqual(created.status, "pending");
+      assert.isTrue(DateTime.isUtc(created.createdAt));
+      assert.strictEqual(loaded.id, created.id);
+      assert.strictEqual(brewing.status, "brewing");
+      assert.strictEqual(ready.status, "ready");
+      assert.strictEqual(pickedUp.status, "picked-up");
+      assert.strictEqual(pickedUpOrders.length, 1);
+      assert.strictEqual(pickedUpOrders[0]?.id, created.id);
+    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
   );
 
   it.effect("rejects tea shots that violate the domain rules", () =>
@@ -67,29 +56,22 @@ describe("coffee order workflow", () => {
 
   it.effect("generates human-readable ids while keeping createdAt serializable", () =>
     Effect.gen(function* () {
-      const result = yield* Effect.gen(function* () {
-        const first = yield* placeOrder({
-          customerName: "Avery",
-          drinkId: "latte",
-          size: "medium",
-        });
-        const second = yield* placeOrder({
-          customerName: "Morgan",
-          drinkId: "tea",
-          size: "small",
-        });
+      const first = yield* placeOrder({
+        customerName: "Avery",
+        drinkId: "latte",
+        size: "medium",
+      });
+      const second = yield* placeOrder({
+        customerName: "Morgan",
+        drinkId: "tea",
+        size: "small",
+      });
+      const encodedFirst = JSON.parse(JSON.stringify(first));
 
-        return {
-          first,
-          second,
-          encodedFirst: JSON.parse(JSON.stringify(first)),
-        };
-      }).pipe(Effect.provide(InMemoryCoffeeAppLive));
-
-      assert.strictEqual(result.first.id, "order-0001");
-      assert.strictEqual(result.second.id, "order-0002");
-      assert.isTrue(DateTime.isUtc(result.first.createdAt));
-      assert.match(result.encodedFirst.createdAt, /^\d{4}-\d{2}-\d{2}T/);
-    }),
+      assert.strictEqual(first.id, "order-0001");
+      assert.strictEqual(second.id, "order-0002");
+      assert.isTrue(DateTime.isUtc(first.createdAt));
+      assert.match(encodedFirst.createdAt, /^\d{4}-\d{2}-\d{2}T/);
+    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
   );
 });
