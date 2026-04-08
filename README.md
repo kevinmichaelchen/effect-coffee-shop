@@ -56,6 +56,7 @@ Check the repo:
 ```bash
 bun run typecheck
 bun run lint
+bun run lint:custom
 bun run fmt:check
 bun run test
 bun run check

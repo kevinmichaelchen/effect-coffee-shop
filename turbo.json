@@ -32,6 +32,12 @@
       "outputs": [],
       "outputLogs": "new-only"
     },
+    "lint:custom": {
+      "description": "Run backend-only custom lint rules.",
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
     "fmt:check": {
       "description": "Verify formatting without modifying files.",
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],

@@ -17,6 +17,7 @@
         "@effect/sql-d1": "4.0.0-beta.43",
         "@effect/sql-sqlite-bun": "4.0.0-beta.43",
         "effect": "4.0.0-beta.43",
+        "lintcn": "^0.7.1",
       },
       "devDependencies": {
         "@cloudflare/workers-types": "^4.20260131.0",
@@ -1230,6 +1231,8 @@
     "lightningcss-win32-arm64-msvc": ["lightningcss-win32-arm64-msvc@1.32.0", "", { "os": "win32", "cpu": "arm64" }, "sha512-8SbC8BR40pS6baCM8sbtYDSwEVQd4JlFTOlaD3gWGHfThTcABnNDBda6eTZeqbofalIJhFx0qKzgHJmcPTnGdw=="],
 
     "lightningcss-win32-x64-msvc": ["lightningcss-win32-x64-msvc@1.32.0", "", { "os": "win32", "cpu": "x64" }, "sha512-Amq9B/SoZYdDi1kFrojnoqPLxYhQ4Wo5XiL8EVJrVsB8ARoC1PWW6VGtT0WKCemjy8aC+louJnjS7U18x3b06Q=="],
+
+    "lintcn": ["lintcn@0.7.1", "", { "dependencies": { "find-up": "^8.0.0", "goke": "^6.3.0", "tar": "^7.5.12" }, "bin": { "lintcn": "dist/cli.js" } }, "sha512-MLVhSLCAOnyWZjKfFAXUG5Qx+FxG78BrGzLk6MPhRwPtOhQuK1UxwK1uTGqIlvDzhG/DSfU6yqtxk6WPo2oSJQ=="],
 
     "locate-path": ["locate-path@8.0.0", "", { "dependencies": { "p-locate": "^6.0.0" } }, "sha512-XT9ewWAC43tiAV7xDAPflMkG0qOPn2QjHqlgX8FOqmWa/rxnyYDulF9T0F7tRy1u+TVTmK/M//6VIOye+2zDXg=="],
 

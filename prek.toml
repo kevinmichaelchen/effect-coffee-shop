@@ -24,6 +24,15 @@ pass_filenames = false
 stages = ["pre-commit"]
 
 [[repos.hooks]]
+id = "lintcn"
+name = "lintcn"
+entry = "bun run lint:custom"
+language = "system"
+always_run = true
+pass_filenames = false
+stages = ["pre-commit"]
+
+[[repos.hooks]]
 id = "typecheck"
 name = "typecheck"
 entry = "bun run typecheck"

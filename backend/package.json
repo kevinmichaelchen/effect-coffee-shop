@@ -20,17 +20,21 @@
     "typecheck": "tsgo --noEmit",
     "lint": "oxlint --disable-nested-config .",
     "lint:fix": "oxlint --disable-nested-config --fix .",
+    "lint:custom": "lintcn lint --tsconfig tsconfig.json",
+    "lint:custom:build": "lintcn build",
+    "lint:custom:list": "lintcn list",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "knip": "knip --files --exports --no-config-hints",
-    "check": "bun run typecheck && bun run lint && bun run fmt:check && bun run test",
+    "check": "bun run typecheck && bun run lint && bun run lint:custom && bun run fmt:check && bun run test",
     "test": "vitest run"
   },
   "dependencies": {
     "@effect/platform-bun": "4.0.0-beta.43",
     "@effect/sql-d1": "4.0.0-beta.43",
     "@effect/sql-sqlite-bun": "4.0.0-beta.43",
-    "effect": "4.0.0-beta.43"
+    "effect": "4.0.0-beta.43",
+    "lintcn": "^0.7.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260131.0",
