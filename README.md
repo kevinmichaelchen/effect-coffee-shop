@@ -15,7 +15,7 @@ The backend now lives in `backend/` and keeps the boundaries explicit:
 - `backend/src/presentation` for HTTP, CLI, and MCP entrypoints
 
 Most tests run against in-memory adapters. A small contract suite also runs against the SQL-backed repositories.
-Backend tests use a hybrid layout: source-owned unit tests live beside the code in `backend/src/**/*.test.ts`, while shared support, contract, and integration suites stay centralized under `backend/test`.
+Backend tests use a hybrid layout: source-owned tests live beside the code in `backend/src/**/*.test.ts`, while shared support, contracts, and cross-boundary integration workflows stay centralized under `backend/test`.
 
 ## Commands
 
@@ -46,7 +46,7 @@ bun run mcp:http
 Run the Worker-safe MCP contract locally on Miniflare:
 
 ```bash
-bun run --cwd backend test test/presentation/mcp/miniflare-http.test.ts
+bun run --cwd backend test src/presentation/mcp/miniflare.worker.test.ts
 ```
 
 This exercises the MCP HTTP surface end-to-end on Miniflare against a Worker entrypoint.

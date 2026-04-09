@@ -1,12 +1,9 @@
-import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import { assert, describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import * as HttpBody from "effect/unstable/http/HttpBody";
 import * as HttpClient from "effect/unstable/http/HttpClient";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import {
   InvalidOrderInputError,
@@ -14,13 +11,12 @@ import {
   OrderNotFoundError,
 } from "#domain/errors";
 import { OrderIdSchema } from "#domain/order";
-import { InMemoryCoffeeAppLive } from "#external/live";
-import { InMemoryOrderIdGeneratorLive } from "#external/in-memory/InMemoryOrderIdGenerator";
-import { InMemoryOrderRepositoryLive } from "#external/in-memory/InMemoryOrderRepository";
-import { CoffeeHttpApi, CoffeeHttpApiLive } from "#presentation/http/api";
-import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
-import { InternalAppError, PersistenceError } from "#service/errors";
-import { MenuRepository } from "#service/ports/MenuRepository";
+import { InternalAppError } from "#service/errors";
+import {
+  HttpApiPersistenceFailureTestLive,
+  HttpApiTestLive,
+} from "../../../test/support/HttpApiTest.ts";
+import { CoffeeHttpApi } from "./api.ts";
 
 const CreatedOrderResponseSchema = Schema.Struct({
   id: OrderIdSchema,
@@ -28,46 +24,18 @@ const CreatedOrderResponseSchema = Schema.Struct({
   createdAt: Schema.String,
 });
 
-const HttpApiTestLive = HttpRouter.serve(CoffeeHttpApiLive, {
-  disableListenLog: true,
-  disableLogger: true,
-}).pipe(
-  Layer.provide(CoffeeOrderApp.layer),
-  Layer.provide(InMemoryCoffeeAppLive),
-  Layer.provideMerge(NodeHttpServer.layerTest),
-);
+const orderPayload = {
+  customerName: "Avery",
+  drinkId: "latte",
+  size: "medium",
+} as const;
 
-const FailingMenuRepositoryLive = Layer.succeed(MenuRepository)({
-  list: Effect.fail(new PersistenceError({ message: "Failed to load the coffee menu" })),
-  findById: () =>
-    Effect.fail(new PersistenceError({ message: 'Failed to load menu item "latte"' })),
-});
-
-const PersistenceFailureHttpApiTestLive = HttpRouter.serve(CoffeeHttpApiLive, {
-  disableListenLog: true,
-  disableLogger: true,
-}).pipe(
-  Layer.provide(CoffeeOrderApp.layer),
-  Layer.provide(
-    Layer.mergeAll(
-      FailingMenuRepositoryLive,
-      InMemoryOrderRepositoryLive,
-      InMemoryOrderIdGeneratorLive,
-    ),
-  ),
-  Layer.provideMerge(NodeHttpServer.layerTest),
-);
-
-describe("http api", () => {
+describe("http api success responses", () => {
   it.effect("creates orders through the typed client", () =>
     Effect.gen(function* () {
       const client = yield* HttpApiClient.make(CoffeeHttpApi);
       const [order, response] = yield* client.orders.create({
-        payload: {
-          customerName: "Avery",
-          drinkId: "latte",
-          size: "medium",
-        },
+        payload: orderPayload,
         responseMode: "decoded-and-response",
       });
 
@@ -81,11 +49,7 @@ describe("http api", () => {
   it.effect("encodes createdAt as ISO JSON over HTTP", () =>
     Effect.gen(function* () {
       const response = yield* HttpClient.post("/orders", {
-        body: HttpBody.jsonUnsafe({
-          customerName: "Avery",
-          drinkId: "latte",
-          size: "medium",
-        }),
+        body: HttpBody.jsonUnsafe(orderPayload),
       });
       const body = Schema.decodeUnknownSync(CreatedOrderResponseSchema)(yield* response.json);
 
@@ -95,7 +59,9 @@ describe("http api", () => {
       assert.match(body.createdAt, /^\d{4}-\d{2}-\d{2}T/);
     }).pipe(Effect.provide(HttpApiTestLive)),
   );
+});
 
+describe("http api error responses", () => {
   it.effect("maps invalid order input to 400", () =>
     Effect.gen(function* () {
       const response = yield* HttpClient.post("/orders", {
@@ -128,11 +94,7 @@ describe("http api", () => {
     Effect.gen(function* () {
       const client = yield* HttpApiClient.make(CoffeeHttpApi);
       const created = yield* client.orders.create({
-        payload: {
-          customerName: "Avery",
-          drinkId: "latte",
-          size: "medium",
-        },
+        payload: orderPayload,
       });
       const response = yield* HttpClient.post(`/orders/${created.id}/mark-ready`);
       const body = Schema.decodeUnknownSync(InvalidOrderStatusTransitionError)(
@@ -150,17 +112,13 @@ describe("http api", () => {
   it.effect("maps persistence failures to 500 instead of defecting", () =>
     Effect.gen(function* () {
       const response = yield* HttpClient.post("/orders", {
-        body: HttpBody.jsonUnsafe({
-          customerName: "Avery",
-          drinkId: "latte",
-          size: "medium",
-        }),
+        body: HttpBody.jsonUnsafe(orderPayload),
       });
       const body = Schema.decodeUnknownSync(InternalAppError)(yield* response.json);
 
       assert.strictEqual(response.status, 500);
       assert.strictEqual(body._tag, "InternalAppError");
       assert.strictEqual(body.message, "Unable to place order right now");
-    }).pipe(Effect.provide(PersistenceFailureHttpApiTestLive)),
+    }).pipe(Effect.provide(HttpApiPersistenceFailureTestLive)),
   );
 });
