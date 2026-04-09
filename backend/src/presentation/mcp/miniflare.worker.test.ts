@@ -1,9 +1,11 @@
 import { assert } from "@effect/vitest";
 import * as Effect from "effect/Effect";
-import { describe, it } from "vitest";
-import { makeMcpMiniflareClient } from "../../../test/support/McpMiniflare.ts";
-
-type McpRequest = <Result>(method: string, params?: unknown) => Effect.Effect<Result, unknown>;
+import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
+import {
+  createMcpMiniflareClient,
+  type McpMiniflareClient,
+  type McpRequest,
+} from "../../../test/support/McpMiniflare.ts";
 
 const initializeClient = (request: McpRequest) =>
   request<{
@@ -71,6 +73,7 @@ const verifyOrderResource = (request: McpRequest) =>
   Effect.gen(function* () {
     yield* initializeClient(request);
     const created = yield* placeLatteOrder(request);
+    const orderId = created.structuredContent.id;
     const order = yield* request<{
       readonly contents: ReadonlyArray<{
         readonly uri?: string;
@@ -78,16 +81,16 @@ const verifyOrderResource = (request: McpRequest) =>
         readonly text?: string;
       }>;
     }>("resources/read", {
-      uri: "coffee://orders/order-0001",
+      uri: `coffee://orders/${orderId}`,
     });
     const orderContent = order.contents[0];
 
     assert.isFalse(created.isError === true);
-    assert.strictEqual(created.structuredContent.id, "order-0001");
+    assert.match(orderId, /^order-\d{4}$/);
     assert.strictEqual(order.contents.length, 1);
-    assert.strictEqual(orderContent?.uri, "coffee://orders/order-0001");
+    assert.strictEqual(orderContent?.uri, `coffee://orders/${orderId}`);
     assert.ok(orderContent !== undefined && "text" in orderContent);
-    assert.include(String(orderContent.text), "order-0001");
+    assert.include(String(orderContent.text), orderId);
   });
 
 const verifyPromptAndProtocol = (request: McpRequest, responses: ReadonlyArray<Response>) =>
@@ -121,21 +124,40 @@ const runMcpTest = async (
     responses: ReadonlyArray<Response>,
   ) => Effect.Effect<unknown, unknown, never>,
 ) =>
-  Effect.gen(function* () {
-    const { request, responses } = yield* makeMcpMiniflareClient;
-    yield* verify(request, responses);
-  }).pipe(Effect.scoped, Effect.runPromise);
+  Effect.runPromise(verify(getClient().request, getClient().responses));
+
+let client: McpMiniflareClient | undefined;
+
+const getClient = () => {
+  if (client === undefined) {
+    throw new Error("MCP Miniflare client is not initialized");
+  }
+
+  return client;
+};
 
 describe("mcp http on miniflare", () => {
+  beforeAll(async () => {
+    client = await createMcpMiniflareClient();
+  });
+
+  beforeEach(() => {
+    getClient().resetSession();
+  });
+
+  afterAll(async () => {
+    await getClient().dispose();
+  });
+
   it("lists tools, resources, and prompts", async () => {
     await runMcpTest((request) => verifyCatalogSurface(request));
   });
 
-  it("serves placed orders through MCP resources", async () => {
-    await runMcpTest((request) => verifyOrderResource(request));
-  });
-
   it("serves prompts and protocol headers", async () => {
     await runMcpTest((request, responses) => verifyPromptAndProtocol(request, responses));
+  });
+
+  it("serves placed orders through MCP resources", async () => {
+    await runMcpTest((request) => verifyOrderResource(request));
   });
 });

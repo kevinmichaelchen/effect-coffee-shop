@@ -3,13 +3,24 @@ import { build } from "esbuild";
 import { Miniflare } from "miniflare";
 import * as Effect from "effect/Effect";
 
+export type McpRequest = <Result>(method: string, params?: unknown) => Effect.Effect<Result, unknown>;
+
+export type McpMiniflareClient = {
+  readonly request: McpRequest;
+  readonly responses: ReadonlyArray<Response>;
+  readonly resetSession: () => void;
+  readonly dispose: () => Promise<void>;
+};
+
 const MCP_WORKER_ENTRYPOINT = path.resolve(
   process.cwd(),
   "src/presentation/mcp/miniflare.worker.ts",
 );
 
-const bundleMcpWorker = Effect.tryPromise(async () => {
-  const result = await build({
+let bundledWorkerScriptPromise: Promise<string> | undefined;
+
+const getBundledWorkerScript = () =>
+  (bundledWorkerScriptPromise ??= build({
     bundle: true,
     entryPoints: [MCP_WORKER_ENTRYPOINT],
     format: "esm",
@@ -17,39 +28,29 @@ const bundleMcpWorker = Effect.tryPromise(async () => {
     platform: "browser",
     target: "esnext",
     write: false,
-  });
+  }).then((result) => {
+    const output = result.outputFiles[0];
+    if (output === undefined) {
+      throw new Error("Miniflare worker bundle did not produce an output file");
+    }
 
-  const output = result.outputFiles[0];
-  if (output === undefined) {
-    throw new Error("Miniflare worker bundle did not produce an output file");
-  }
+    return output.text;
+  }));
 
-  return output.text;
-});
-
-const acquireMiniflare = Effect.gen(function* () {
-  const workerScript = yield* bundleMcpWorker;
-
-  return new Miniflare({
+export const createMcpMiniflareClient = async (): Promise<McpMiniflareClient> => {
+  const script = await getBundledWorkerScript();
+  const miniflare = new Miniflare({
     compatibilityDate: "2026-03-31",
     modules: true,
-    script: workerScript,
+    script,
   });
-});
-
-const miniflareLayer = Effect.acquireRelease(acquireMiniflare, (miniflare) =>
-  Effect.tryPromise(() => miniflare.dispose()),
-);
-
-export const makeMcpMiniflareClient = Effect.gen(function* () {
-  const miniflare = yield* miniflareLayer;
-  const baseUrl = new URL("/mcp", yield* Effect.tryPromise(() => miniflare.ready)).toString();
+  const baseUrl = new URL("/mcp", await miniflare.ready).toString();
   const responses: Array<Response> = [];
 
   let sessionId: string | null = null;
   let requestId = 1;
 
-  const request = <Result>(method: string, params?: unknown) =>
+  const request: McpRequest = <Result>(method: string, params?: unknown) =>
     Effect.tryPromise({
       try: async () => {
         const headers = new Headers({
@@ -86,8 +87,13 @@ export const makeMcpMiniflareClient = Effect.gen(function* () {
     });
 
   return {
-    baseUrl,
     request,
     responses,
+    resetSession: () => {
+      sessionId = null;
+      requestId = 1;
+      responses.length = 0;
+    },
+    dispose: () => miniflare.dispose(),
   };
-});
+};
