@@ -1,7 +1,8 @@
-import { assert, describe, it } from "@effect/vitest";
+import { assert } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import { describe, it } from "vitest";
 import { menuItems } from "#domain/menu";
 import type { CoffeeOrder } from "#domain/order";
 import type { PersistenceError } from "#service/errors";
@@ -11,7 +12,7 @@ import { OrderRepository } from "#service/ports/OrderRepository";
 type RepositoryServices = MenuRepository | OrderRepository;
 type RunTest = <A>(
   effect: Effect.Effect<A, PersistenceError, RepositoryServices>,
-) => Effect.Effect<A, PersistenceError>;
+) => Promise<A>;
 
 const utc = (iso: string) => Option.getOrThrow(DateTime.make(iso));
 
@@ -35,8 +36,8 @@ const makeOrder = ({
 
 export const defineRepositoryContract = (name: string, run: RunTest) => {
   describe(name, () => {
-    it.effect("lists the seeded menu and supports id lookups", () =>
-      run(
+    it("lists the seeded menu and supports id lookups", async () => {
+      await run(
         Effect.gen(function* () {
           const menuRepository = yield* MenuRepository;
           const menu = yield* menuRepository.list;
@@ -50,11 +51,11 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
           );
           assert.deepStrictEqual(missing, Option.none());
         }),
-      ),
-    );
+      );
+    });
 
-    it.effect("round-trips saved orders", () =>
-      run(
+    it("round-trips saved orders", async () => {
+      await run(
         Effect.gen(function* () {
           const orderRepository = yield* OrderRepository;
           const order = makeOrder({
@@ -68,11 +69,11 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
           assert.deepStrictEqual(saved, order);
           assert.deepStrictEqual(loaded, Option.some(order));
         }),
-      ),
-    );
+      );
+    });
 
-    it.effect("replaces existing orders when saving the same id again", () =>
-      run(
+    it("replaces existing orders when saving the same id again", async () => {
+      await run(
         Effect.gen(function* () {
           const orderRepository = yield* OrderRepository;
           const original = makeOrder({ id: "order-0001" });
@@ -92,11 +93,11 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
           assert.deepStrictEqual(loaded, Option.some(updated));
           assert.deepStrictEqual(allOrders, [updated]);
         }),
-      ),
-    );
+      );
+    });
 
-    it.effect("lists orders in createdAt order and filters by status", () =>
-      run(
+    it("lists orders in createdAt order and filters by status", async () => {
+      await run(
         Effect.gen(function* () {
           const orderRepository = yield* OrderRepository;
           const laterReady = makeOrder({
@@ -119,7 +120,7 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
           assert.deepStrictEqual(allOrders, [earlierPending, laterReady]);
           assert.deepStrictEqual(readyOrders, [laterReady]);
         }),
-      ),
-    );
+      );
+    });
   });
 };

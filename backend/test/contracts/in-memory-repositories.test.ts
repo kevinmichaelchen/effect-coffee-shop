@@ -3,5 +3,5 @@ import { InMemoryCoffeeRepositoriesLive } from "#external/live";
 import { defineRepositoryContract } from "./repository-contract.ts";
 
 defineRepositoryContract("in-memory repositories", (effect) =>
-  effect.pipe(Effect.provide(InMemoryCoffeeRepositoriesLive)),
+  Effect.runPromise(effect.pipe(Effect.provide(InMemoryCoffeeRepositoriesLive))),
 );

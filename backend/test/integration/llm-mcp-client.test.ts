@@ -1,13 +1,17 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
-import { makeMcpMiniflareClient } from "../support/McpMiniflare.ts";
+import { afterAll, beforeAll } from "vitest";
+import {
+  createMcpMiniflareClient,
+  type McpMiniflareClient,
+} from "../support/McpMiniflare.ts";
 
 /**
  * Test workflow where MCP tools place an order and we verify persistence
  */
 const llmMcpWorkflow = () =>
   Effect.gen(function* () {
-    const { request } = yield* makeMcpMiniflareClient;
+    const request = getClient().request;
 
     // Initialize MCP session
     yield* request("initialize", {
@@ -42,11 +46,29 @@ const llmMcpWorkflow = () =>
       success: true,
       orderId,
       placeOrderResult,
-      getOrderResult,
+      getOrderResult: getOrderResult as { structuredContent: { id: string } },
     };
   });
 
+let client: McpMiniflareClient | undefined;
+
+const getClient = () => {
+  if (client === undefined) {
+    throw new Error("MCP Miniflare client is not initialized");
+  }
+
+  return client;
+};
+
 describe("MCP tools with persistence verification", () => {
+  beforeAll(async () => {
+    client = await createMcpMiniflareClient();
+  });
+
+  afterAll(async () => {
+    await getClient().dispose();
+  });
+
   it.effect(
     "places order and verifies persistence",
     () =>
@@ -56,7 +78,8 @@ describe("MCP tools with persistence verification", () => {
 
         assert.ok(result.success, `Expected success but got: ${JSON.stringify(result)}`);
         assert.ok(result.orderId, `Expected order ID to be set`);
-        assert.strictEqual(result.orderId, "order-0001");
+        assert.match(result.orderId, /^order-\d{4}$/);
+        assert.strictEqual(result.getOrderResult.structuredContent.id, result.orderId);
       }),
     90000, // Vitest timeout
   );
