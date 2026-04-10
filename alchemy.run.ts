@@ -29,7 +29,13 @@ export const website = await Website("onion", {
   },
   assets: {
     directory: "./ui/dist",
-    run_worker_first: ["/api", "/api/*", "/mcp", "/mcp/*"],
+    run_worker_first: [
+      "/.well-known/agent-configuration",
+      "/api",
+      "/api/*",
+      "/mcp",
+      "/mcp/*",
+    ],
   },
   bindings: {
     AI: ai,

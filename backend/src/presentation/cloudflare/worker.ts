@@ -45,12 +45,21 @@ const isMcpRequest = (pathname: string) => pathname === "/mcp" || pathname.start
 const isAssistantRequest = (pathname: string) =>
   pathname === "/api/assistant" || pathname === "/api/assistant/";
 
+const isAgentDiscoveryRequest = (pathname: string) =>
+  pathname === "/.well-known/agent-configuration";
+
 const isAuthRequest = (pathname: string) =>
   pathname === "/api/auth" || pathname.startsWith("/api/auth/");
 
 const rewriteApiRequest = (request: Request) => {
   const url = new URL(request.url);
   url.pathname = url.pathname.replace(/^\/api(?=\/|$)/, "") || "/";
+  return new Request(url, request);
+};
+
+const rewriteToAuthPath = (request: Request, pathname: string) => {
+  const url = new URL(request.url);
+  url.pathname = pathname;
   return new Request(url, request);
 };
 
@@ -93,6 +102,13 @@ const getBackendHandler = (db: D1Database): WorkerHandler => {
 
 const notFoundResponse = () => new Response("Not Found", { status: 404 });
 
+const betterAuthUnavailableResponse = () =>
+  new Response("Better Auth is unavailable. Configure BETTER_AUTH_SECRET.", {
+    status: 503,
+  });
+
+const hasBetterAuthSecret = (secret: string | undefined) => (secret?.trim() ?? "") !== "";
+
 const getAssistantAiConfig = (env: OnionCloudflareWorkerEnv) => {
   switch (env.AI) {
     case undefined:
@@ -112,6 +128,7 @@ const ensureWorkerPersistence = async (
   const pathname = new URL(request.url).pathname;
 
   if (
+    !isAgentDiscoveryRequest(pathname) &&
     !isAuthRequest(pathname) &&
     !isApiRequest(pathname) &&
     !isAssistantRequest(pathname) &&
@@ -137,41 +154,65 @@ const resolveRequestActor = async (
     staffUserIds: env.COFFEE_STAFF_USER_IDS,
   });
 
+const handleBetterAuthRequest = (
+  request: Request,
+  env: OnionCloudflareWorkerEnv,
+  pathname: string,
+): Response | Promise<Response> | undefined => {
+  if (!isAuthRequest(pathname) && !isAgentDiscoveryRequest(pathname)) {
+    return undefined;
+  }
+
+  if (!hasBetterAuthSecret(env.BETTER_AUTH_SECRET)) {
+    return betterAuthUnavailableResponse();
+  }
+
+  const auth = createCloudflareAuth({
+    db: env.DB,
+    request,
+    secret: env.BETTER_AUTH_SECRET,
+  });
+
+  return isAuthRequest(pathname)
+    ? auth.handler(request)
+    : auth.handler(rewriteToAuthPath(request, "/api/auth/agent-configuration"));
+};
+
 const routeRequest = async (request: Request, env: OnionCloudflareWorkerEnv): Promise<Response> => {
   const pathname = new URL(request.url).pathname;
   await ensureWorkerPersistence(request, env);
 
-  switch (true) {
-    case isAuthRequest(pathname):
-      if ((env.BETTER_AUTH_SECRET?.trim() ?? "") === "") {
-        return new Response("Better Auth is unavailable. Configure BETTER_AUTH_SECRET.", {
-          status: 503,
-        });
-      }
-      return createCloudflareAuth({
-        db: env.DB,
-        request,
-        secret: env.BETTER_AUTH_SECRET,
-      }).handler(request);
-    case isAssistantRequest(pathname):
-      return handleAssistantRequest(rewriteApiRequest(request), {
-        actor: await resolveRequestActor(request, env),
-        ai: getAssistantAiConfig(env),
-        appLayer: makeCloudflareCoffeeAppLive(env.DB),
-        model: getAssistantModel(),
-      });
-    case isApiRequest(pathname):
-      return getBackendHandler(env.DB)(
-        rewriteApiRequest(request),
-        createRequestServices(await resolveRequestActor(request, env)),
-      );
-    case isMcpRequest(pathname):
-      return getBackendHandler(env.DB)(request, createRequestServices(systemActor));
-    case env.ASSETS !== undefined:
-      return env.ASSETS.fetch(request);
-    default:
-      return notFoundResponse();
+  const betterAuthResponse = handleBetterAuthRequest(request, env, pathname);
+
+  if (betterAuthResponse !== undefined) {
+    return betterAuthResponse;
   }
+
+  if (isAssistantRequest(pathname)) {
+    return handleAssistantRequest(rewriteApiRequest(request), {
+      actor: await resolveRequestActor(request, env),
+      ai: getAssistantAiConfig(env),
+      appLayer: makeCloudflareCoffeeAppLive(env.DB),
+      model: getAssistantModel(),
+    });
+  }
+
+  if (isApiRequest(pathname)) {
+    return getBackendHandler(env.DB)(
+      rewriteApiRequest(request),
+      createRequestServices(await resolveRequestActor(request, env)),
+    );
+  }
+
+  if (isMcpRequest(pathname)) {
+    return getBackendHandler(env.DB)(request, createRequestServices(systemActor));
+  }
+
+  if (env.ASSETS !== undefined) {
+    return env.ASSETS.fetch(request);
+  }
+
+  return notFoundResponse();
 };
 
 export default {

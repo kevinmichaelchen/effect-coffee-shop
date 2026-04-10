@@ -1,8 +1,10 @@
 import type { D1Database } from "@cloudflare/workers-types";
+import { agentAuth } from "@better-auth/agent-auth";
 import { passkey } from "@better-auth/passkey";
 import { getMigrations } from "better-auth/db/migration";
 import { betterAuth } from "better-auth";
 import * as Schema from "effect/Schema";
+import { createCoffeeAgentAuthOptions } from "#presentation/auth/agent-auth";
 import { AppActorSchema, anonymousActor, type AppActor } from "#service/CurrentActor";
 
 const syntheticEmailDomain = "users.onion.invalid";
@@ -81,6 +83,7 @@ function buildAuthOptions(input: {
     database: input.db,
     ...(origin === undefined ? {} : { baseURL: origin }),
     plugins: [
+      agentAuth(createCoffeeAgentAuthOptions({ db: input.db })),
       passkey({
         registration: {
           afterVerification: async ({ ctx, context, user }) => {
