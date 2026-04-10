@@ -3,7 +3,10 @@ import { build } from "esbuild";
 import { Miniflare } from "miniflare";
 import * as Effect from "effect/Effect";
 
-export type McpRequest = <Result>(method: string, params?: unknown) => Effect.Effect<Result, unknown>;
+export type McpRequest = <Result>(
+  method: string,
+  params?: unknown,
+) => Effect.Effect<Result, unknown>;
 
 export type McpMiniflareClient = {
   readonly request: McpRequest;
