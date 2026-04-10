@@ -20,7 +20,7 @@ const decodeResolvedActor = Schema.decodeUnknownSync(AppActorSchema);
 
 const authBootstrapCache = new WeakMap<D1Database, Promise<void>>();
 
-function getDisplayName(context: string | null | undefined): string {
+export function getDisplayName(context: string | null | undefined): string {
   const parsed = decodePasskeyRegistrationShape(decodeJsonString(context ?? '{"displayName":""}'));
   const displayName = parsed.displayName.trim();
 
@@ -35,12 +35,23 @@ function createSyntheticEmail(userId: string): string {
   return `${userId}@${syntheticEmailDomain}`;
 }
 
-function createProvisionalUser(displayName: string) {
+export function createProvisionalUser(displayName: string) {
   const userId = `${provisionalUserPrefix}${crypto.randomUUID()}`;
   return {
     displayName,
     id: userId,
-    name: createSyntheticEmail(userId),
+    name: displayName,
+  };
+}
+
+export function createRegisteredUser(input: {
+  readonly context: string | null | undefined;
+  readonly userId: string;
+}) {
+  return {
+    email: createSyntheticEmail(input.userId),
+    id: input.userId,
+    name: getDisplayName(input.context),
   };
 }
 
@@ -72,17 +83,14 @@ function buildAuthOptions(input: {
     plugins: [
       passkey({
         registration: {
-          afterVerification: async ({ ctx, user }) => {
+          afterVerification: async ({ ctx, context, user }) => {
             if (!user.id.startsWith(provisionalUserPrefix)) {
               return;
             }
 
-            const displayName = getDisplayName(ctx.query?.context ?? null);
-            await ctx.context.internalAdapter.createUser({
-              email: createSyntheticEmail(user.id),
-              id: user.id,
-              name: displayName,
-            });
+            await ctx.context.internalAdapter.createUser(
+              createRegisteredUser({ context, userId: user.id }),
+            );
             return { userId: user.id };
           },
           requireSession: false,
