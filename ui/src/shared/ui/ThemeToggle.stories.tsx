@@ -7,7 +7,12 @@ import type { ThemePreference } from "#shared/hooks/useThemePreference.ts";
 function ThemeToggleStory() {
   const [theme, setTheme] = useState<ThemePreference>("light");
 
-  return <ThemeToggle theme={theme} onToggle={() => setTheme((current) => (current === "light" ? "dark" : "light"))} />;
+  return (
+    <ThemeToggle
+      theme={theme}
+      onToggle={() => setTheme((current) => (current === "light" ? "dark" : "light"))}
+    />
+  );
 }
 
 function CompactThemeToggleStory() {

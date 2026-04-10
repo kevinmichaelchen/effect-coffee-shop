@@ -27,7 +27,10 @@ export function OrderDetailsDrawer(inputProps: OrderDetailsDrawerProps) {
             <StatusBadge status={order.status} />
             <DetailLine label="Customer" value={order.customerName} />
             <DetailLine label="Opened" value={formatOrderTime(order.createdAt)} />
-            <DetailLine label="Build" value={`${order.size} · ${order.temperature} · ${order.milk}`} />
+            <DetailLine
+              label="Build"
+              value={`${order.size} · ${order.temperature} · ${order.milk}`}
+            />
             <DetailLine label="Shots" value={String(order.shots)} />
             <DetailLine label="Total" value={formatPrice(order.priceCents)} />
             {order.notes !== undefined ? <DetailLine label="Notes" value={order.notes} /> : null}

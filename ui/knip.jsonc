@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+
+  "entry": [
+    "src/main.tsx!",
+    "src/**/*.stories.tsx",
+    ".storybook/**/*.ts",
+    ".storybook/**/*.tsx",
+    "vite.config.ts",
+    "vite.shared.ts",
+    "vitest.config.ts",
+  ],
+
+  "project": ["src/**/*.{ts,tsx}!", ".storybook/**/*.{ts,tsx}", "*.ts"],
+
+  "ignoreDependencies": ["@types/node", "@vitest/browser", "@vitest/browser-playwright"],
+}

@@ -16,11 +16,7 @@ const TabsPanels = TabPanels;
 interface ITabsTriggerList extends TabListProps {
   className?: string;
 }
-const TabsTriggerList = ({
-  children,
-  className,
-  ...props
-}: ITabsTriggerList) => {
+const TabsTriggerList = ({ children, className, ...props }: ITabsTriggerList) => {
   return (
     <TabList className={cn("flex flex-row space-x-2", className)} {...props}>
       {children}
@@ -50,10 +46,7 @@ interface ITabsContent extends TabPanelProps {
 }
 const TabsContent = ({ children, className, ...props }: ITabsContent) => {
   return (
-    <TabPanel
-      className={cn("border-2 border-border mt-2 p-4", className)}
-      {...props}
-    >
+    <TabPanel className={cn("border-2 border-border mt-2 p-4", className)} {...props}>
       {children}
     </TabPanel>
   );

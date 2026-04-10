@@ -33,8 +33,14 @@
       "outputLogs": "new-only"
     },
     "lint:custom": {
-      "description": "Run backend-only custom lint rules.",
+      "description": "Run workspace-specific custom lint rules.",
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "fmt": {
+      "description": "Format workspace files in place.",
+      "cache": false,
       "outputs": [],
       "outputLogs": "new-only"
     },

@@ -1,3 +1,4 @@
+import * as Schema from "effect/Schema";
 import type {
   CoffeeApiError,
   CoffeeOrder,
@@ -5,6 +6,12 @@ import type {
   OrderAction,
   PlaceOrderRequest,
 } from "#features/coffee-shop/lib/coffee.ts";
+import {
+  CoffeeApiErrorSchema,
+  CoffeeOrderSchema,
+  CoffeeOrdersSchema,
+  MenuSchema,
+} from "#features/coffee-shop/lib/coffee-schemas.ts";
 
 const apiBaseUrl = import.meta.env.VITE_COFFEE_API_URL ?? "/api";
 
@@ -12,32 +19,39 @@ function toRequestUrl(path: string): string {
   return `${apiBaseUrl}${path}`;
 }
 
-async function readJson<T>(response: Response): Promise<T> {
-  return (await response.json()) as T;
+async function readJson<S extends Schema.Decoder<unknown>>(
+  response: Response,
+  schema: S,
+): Promise<S["Type"]> {
+  const value = Schema.decodeUnknownSync(Schema.UnknownFromJsonString)(await response.text());
+  return Schema.decodeUnknownPromise(schema)(value);
 }
 
 async function throwResponseError(response: Response): Promise<never> {
   const fallback = `${response.status} ${response.statusText}`;
-  let message = fallback;
-
-  try {
-    const error = await readJson<CoffeeApiError>(response);
-    message = error.message ?? error._tag ?? fallback;
-  } catch {
-    message = fallback;
-  }
+  const message = await readJson(response, CoffeeApiErrorSchema)
+    .then(readApiErrorMessage)
+    .catch(() => fallback);
 
   throw new Error(message);
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+function readApiErrorMessage(error: CoffeeApiError): string {
+  return error.message ?? error._tag ?? "Unknown API error";
+}
+
+async function request<S extends Schema.Decoder<unknown>>(
+  path: string,
+  schema: S,
+  init?: RequestInit,
+): Promise<S["Type"]> {
   const response = await fetch(toRequestUrl(path), init);
 
   if (!response.ok) {
     return throwResponseError(response);
   }
 
-  return readJson<T>(response);
+  return readJson(response, schema);
 }
 
 function getActionPath(orderId: string, action: OrderAction): string {
@@ -51,22 +65,25 @@ function getActionPath(orderId: string, action: OrderAction): string {
   return `/orders/${orderId}/${actionPaths[action]}`;
 }
 
-export async function fetchMenu(): Promise<MenuItem[]> {
-  return request<MenuItem[]>("/menu");
+export async function fetchMenu(): Promise<readonly MenuItem[]> {
+  return request("/menu", MenuSchema);
 }
 
-export async function fetchOrders(): Promise<CoffeeOrder[]> {
-  return request<CoffeeOrder[]>("/orders");
+export async function fetchOrders(): Promise<readonly CoffeeOrder[]> {
+  return request("/orders", CoffeeOrdersSchema);
 }
 
 export async function createOrder(payload: PlaceOrderRequest): Promise<CoffeeOrder> {
-  return request<CoffeeOrder>("/orders", {
+  return request("/orders", CoffeeOrderSchema, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload),
   });
 }
 
-export async function updateOrderStatus(orderId: string, action: OrderAction): Promise<CoffeeOrder> {
-  return request<CoffeeOrder>(getActionPath(orderId, action), { method: "POST" });
+export async function updateOrderStatus(
+  orderId: string,
+  action: OrderAction,
+): Promise<CoffeeOrder> {
+  return request(getActionPath(orderId, action), CoffeeOrderSchema, { method: "POST" });
 }

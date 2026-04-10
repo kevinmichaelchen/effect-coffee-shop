@@ -32,7 +32,8 @@ export function RecentActivityCard({ orders, onInspect }: RecentActivityCardProp
               <StatusBadge status={order.status} />
             </div>
             <Text as="p" className="text-sm text-muted-foreground">
-              {order.drinkName} · {formatPrice(order.priceCents)} · {formatOrderTime(order.createdAt)}
+              {order.drinkName} · {formatPrice(order.priceCents)} ·{" "}
+              {formatOrderTime(order.createdAt)}
             </Text>
           </button>
         ))}

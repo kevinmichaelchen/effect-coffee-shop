@@ -1,13 +1,7 @@
 export const drinkSizes = ["small", "medium", "large"] as const;
 export const milks = ["whole", "oat", "almond", "none"] as const;
 export const temperatures = ["hot", "iced", "extra-hot"] as const;
-export const orderStatuses = [
-  "pending",
-  "brewing",
-  "ready",
-  "picked-up",
-  "cancelled",
-] as const;
+export const orderStatuses = ["pending", "brewing", "ready", "picked-up", "cancelled"] as const;
 
 export type DrinkSize = (typeof drinkSizes)[number];
 export type Milk = (typeof milks)[number];
@@ -16,28 +10,28 @@ export type OrderStatus = (typeof orderStatuses)[number];
 export type OrderAction = "start-brewing" | "mark-ready" | "pick-up" | "cancel";
 
 export interface MenuItem {
-  id: string;
-  name: string;
-  kind: "espresso" | "tea";
-  basePriceCents: number;
-  availableMilks: Milk[];
-  availableTemperatures: Temperature[];
-  maxShots: number;
+  readonly id: string;
+  readonly name: string;
+  readonly kind: "espresso" | "tea";
+  readonly basePriceCents: number;
+  readonly availableMilks: readonly Milk[];
+  readonly availableTemperatures: readonly Temperature[];
+  readonly maxShots: number;
 }
 
 export interface CoffeeOrder {
-  id: string;
-  customerName: string;
-  drinkId: string;
-  drinkName: string;
-  size: DrinkSize;
-  milk: Milk;
-  temperature: Temperature;
-  shots: number;
-  notes?: string;
-  status: OrderStatus;
-  priceCents: number;
-  createdAt: string;
+  readonly id: string;
+  readonly customerName: string;
+  readonly drinkId: string;
+  readonly drinkName: string;
+  readonly size: DrinkSize;
+  readonly milk: Milk;
+  readonly temperature: Temperature;
+  readonly shots: number;
+  readonly notes?: string | undefined;
+  readonly status: OrderStatus;
+  readonly priceCents: number;
+  readonly createdAt: string;
 }
 
 export interface PlaceOrderRequest {
@@ -61,11 +55,11 @@ export interface OrderDraft {
 }
 
 export interface CoffeeApiError {
-  _tag?: string;
-  message?: string;
+  readonly _tag?: string | undefined;
+  readonly message?: string | undefined;
 }
 
-export interface OrderActionOption {
+interface OrderActionOption {
   action: OrderAction;
   label: string;
 }
@@ -94,14 +88,6 @@ const statusLabels: Record<OrderStatus, string> = {
   cancelled: "Cancelled",
 };
 
-const statusProgress: Record<OrderStatus, number> = {
-  pending: 20,
-  brewing: 55,
-  ready: 100,
-  "picked-up": 100,
-  cancelled: 100,
-};
-
 const actionOptions: Record<OrderStatus, readonly OrderActionOption[]> = {
   pending: [
     { action: "start-brewing", label: "Start" },
@@ -116,15 +102,15 @@ const actionOptions: Record<OrderStatus, readonly OrderActionOption[]> = {
   cancelled: [],
 };
 
-export function defaultMilkFor(item: MenuItem): Milk {
+function defaultMilkFor(item: MenuItem): Milk {
   return item.availableMilks.includes("whole") ? "whole" : (item.availableMilks[0] ?? "none");
 }
 
-export function defaultTemperatureFor(item: MenuItem): Temperature {
+function defaultTemperatureFor(item: MenuItem): Temperature {
   return item.availableTemperatures[0] ?? "hot";
 }
 
-export function defaultShotsFor(item: MenuItem): number {
+function defaultShotsFor(item: MenuItem): number {
   return item.kind === "tea" ? 0 : 1;
 }
 
@@ -144,10 +130,6 @@ export function formatOrderTime(createdAt: string): string {
 
 export function getStatusLabel(status: OrderStatus): string {
   return statusLabels[status];
-}
-
-export function getStatusProgress(status: OrderStatus): number {
-  return statusProgress[status];
 }
 
 export function getOrderActions(status: OrderStatus): readonly OrderActionOption[] {

@@ -30,8 +30,7 @@ const overlayVariants = cva(
 );
 
 interface IDialogBackgroupProps
-  extends HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof overlayVariants> {}
+  extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof overlayVariants> {}
 
 const DialogBackdrop = React.forwardRef<HTMLDivElement, IDialogBackgroupProps>(
   function DialogBackdrop(inputProps: IDialogBackgroupProps, forwardedRef) {
@@ -77,35 +76,29 @@ const dialogVariants = cva(
 );
 
 interface IDialogContentProps
-  extends HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof dialogVariants> {
+  extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof dialogVariants> {
   overlay?: IDialogBackgroupProps;
 }
 
-const DialogContent = React.forwardRef<HTMLDivElement, IDialogContentProps>(
-  function DialogContent(inputProps: IDialogContentProps, forwardedRef) {
-    const {
-      children,
-      size = "auto",
-      className,
-      overlay,
-      ...props
-    } = inputProps;
+const DialogContent = React.forwardRef<HTMLDivElement, IDialogContentProps>(function DialogContent(
+  inputProps: IDialogContentProps,
+  forwardedRef,
+) {
+  const { children, size = "auto", className, overlay, ...props } = inputProps;
 
-    return (
-      <ReactDialog.Portal>
-        <DialogBackdrop {...overlay} />
-        <ReactDialog.Content
-          className={cn(dialogVariants({ size }), className)}
-          ref={forwardedRef}
-          {...props}
-        >
-          <div className="flex flex-col relative">{children}</div>
-        </ReactDialog.Content>
-      </ReactDialog.Portal>
-    );
-  },
-);
+  return (
+    <ReactDialog.Portal>
+      <DialogBackdrop {...overlay} />
+      <ReactDialog.Content
+        className={cn(dialogVariants({ size }), className)}
+        ref={forwardedRef}
+        {...props}
+      >
+        <div className="flex flex-col relative">{children}</div>
+      </ReactDialog.Content>
+    </ReactDialog.Portal>
+  );
+});
 DialogContent.displayName = "DialogContent";
 
 type IDialogDescriptionProps = HTMLAttributes<HTMLDivElement>;
@@ -144,43 +137,32 @@ const dialogFooterVariants = cva(
   },
 );
 
-export interface IDialogFooterProps extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof dialogFooterVariants> {}
+interface IDialogFooterProps
+  extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof dialogFooterVariants> {}
 
-const DialogFooter = ({
-  children,
-  className,
-  position,
-  variant,
-  ...props
-}: IDialogFooterProps) => {
+const DialogFooter = ({ children, className, position, variant, ...props }: IDialogFooterProps) => {
   return (
-    <div
-      className={cn(dialogFooterVariants({ position, variant }), className)}
-      {...props}
-    >
+    <div className={cn(dialogFooterVariants({ position, variant }), className)} {...props}>
       {children}
     </div>
   );
 };
 
-const dialogHeaderVariants = cva(
-  "flex items-center justify-between border-b-2 px-4 min-h-12",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground",
-      },
-      position: {
-        fixed: "sticky top-0",
-        static: "static",
-      },
+const dialogHeaderVariants = cva("flex items-center justify-between border-b-2 px-4 min-h-12", {
+  variants: {
+    variant: {
+      default: "bg-primary text-primary-foreground",
     },
-    defaultVariants: {
-      variant: "default",
-      position: "static",
+    position: {
+      fixed: "sticky top-0",
+      static: "static",
     },
   },
-);
+  defaultVariants: {
+    variant: "default",
+    position: "static",
+  },
+});
 
 const DialogHeaderDefaultLayout = ({ children }: { children: ReactNode }) => {
   return (
@@ -194,8 +176,7 @@ const DialogHeaderDefaultLayout = ({ children }: { children: ReactNode }) => {
 };
 
 interface IDialogHeaderProps
-  extends HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof dialogHeaderVariants> {
+  extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof dialogHeaderVariants> {
   asChild?: boolean;
 }
 
@@ -208,15 +189,8 @@ const DialogHeader = ({
   ...props
 }: IDialogHeaderProps) => {
   return (
-    <div
-      className={cn(dialogHeaderVariants({ position, variant }), className)}
-      {...props}
-    >
-      {asChild ? (
-        children
-      ) : (
-        <DialogHeaderDefaultLayout>{children}</DialogHeaderDefaultLayout>
-      )}
+    <div className={cn(dialogHeaderVariants({ position, variant }), className)} {...props}>
+      {asChild ? children : <DialogHeaderDefaultLayout>{children}</DialogHeaderDefaultLayout>}
     </div>
   );
 };

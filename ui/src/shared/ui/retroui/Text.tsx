@@ -22,8 +22,7 @@ const textVariants = cva("font-head", {
 });
 
 interface TextProps
-  extends Omit<HTMLAttributes<HTMLElement>, "className">,
-    VariantProps<typeof textVariants> {
+  extends Omit<HTMLAttributes<HTMLElement>, "className">, VariantProps<typeof textVariants> {
   className?: string;
 }
 
@@ -31,7 +30,5 @@ export const Text = (props: TextProps) => {
   const { className, as, ...otherProps } = props;
   const Tag: ElementType = as || "p";
 
-  return (
-    <Tag className={cn(textVariants({ as }), className)} {...otherProps} />
-  );
+  return <Tag className={cn(textVariants({ as }), className)} {...otherProps} />;
 };

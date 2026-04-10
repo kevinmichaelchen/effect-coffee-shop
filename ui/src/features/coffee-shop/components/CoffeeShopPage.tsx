@@ -5,7 +5,20 @@ import { useCoffeeShopState } from "#features/coffee-shop/hooks/useCoffeeShopSta
 
 export function CoffeeShopPage() {
   const state = useCoffeeShopState();
-  const { actions, createOrderMutation, draftState, errorMessage, menu, menuCount, orders, ordersQuery, queue, theme, toggleTheme, workspace } = state;
+  const {
+    actions,
+    createOrderMutation,
+    draftState,
+    errorMessage,
+    menu,
+    menuCount,
+    orders,
+    ordersQuery,
+    queue,
+    theme,
+    toggleTheme,
+    workspace,
+  } = state;
 
   return (
     <CoffeeShopLayout

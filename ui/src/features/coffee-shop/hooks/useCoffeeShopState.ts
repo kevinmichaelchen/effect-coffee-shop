@@ -1,10 +1,19 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { type ViewMode } from "#features/coffee-shop/components/view-mode.ts";
-import { useCreateOrderMutation, useMenuQuery, useOrderActionMutation, useOrdersQuery } from "#features/coffee-shop/hooks/useCoffeeQueries.ts";
+import {
+  useCreateOrderMutation,
+  useMenuQuery,
+  useOrderActionMutation,
+  useOrdersQuery,
+} from "#features/coffee-shop/hooks/useCoffeeQueries.ts";
 import { useOrderDraft } from "#features/coffee-shop/hooks/useOrderDraft.ts";
 import { useThemePreference } from "#shared/hooks/useThemePreference.ts";
-import { getQueueLoad, isActiveOrder, toPlaceOrderRequest } from "#features/coffee-shop/lib/coffee.ts";
+import {
+  getQueueLoad,
+  isActiveOrder,
+  toPlaceOrderRequest,
+} from "#features/coffee-shop/lib/coffee.ts";
 import type { CoffeeOrder, MenuItem, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
 const emptyMenu: MenuItem[] = [];
@@ -30,19 +39,37 @@ function getPendingOrderId(mutation: ReturnType<typeof useOrderActionMutation>):
   return mutation.variables?.orderId ?? null;
 }
 
-function getQueueSnapshot(orders: readonly CoffeeOrder[], selectedOrderId: string | null, pendingOrderId: string | null) {
+function getQueueSnapshot(
+  orders: readonly CoffeeOrder[],
+  selectedOrderId: string | null,
+  pendingOrderId: string | null,
+) {
   const activeOrders = orders.filter(isActiveOrder);
   const historyOrders = orders.filter((order) => !isActiveOrder(order)).reverse();
   const readyCount = activeOrders.filter((order) => order.status === "ready").length;
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
-  return { activeOrders, historyOrders, pendingOrderId, queueLoad: getQueueLoad(activeOrders.length), readyCount, selectedOrder };
+  return {
+    activeOrders,
+    historyOrders,
+    pendingOrderId,
+    queueLoad: getQueueLoad(activeOrders.length),
+    readyCount,
+    selectedOrder,
+  };
 }
 
 function useWorkspaceControls() {
   const [receiptOrder, setReceiptOrder] = useState<CoffeeOrder | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("dual");
-  return { receiptOrder, selectedOrderId, setReceiptOrder, setSelectedOrderId, setViewMode, viewMode };
+  return {
+    receiptOrder,
+    selectedOrderId,
+    setReceiptOrder,
+    setSelectedOrderId,
+    setViewMode,
+    viewMode,
+  };
 }
 
 function useOrderHandlers(inputProps: {
@@ -53,7 +80,14 @@ function useOrderHandlers(inputProps: {
   setReceiptOrder: (order: CoffeeOrder | null) => void;
   setSelectedOrderId: (orderId: string | null) => void;
 }) {
-  const { draft, createOrderMutation, orderActionMutation, resetDraft, setReceiptOrder, setSelectedOrderId } = inputProps;
+  const {
+    draft,
+    createOrderMutation,
+    orderActionMutation,
+    resetDraft,
+    setReceiptOrder,
+    setSelectedOrderId,
+  } = inputProps;
 
   async function handleSubmit(): Promise<void> {
     try {

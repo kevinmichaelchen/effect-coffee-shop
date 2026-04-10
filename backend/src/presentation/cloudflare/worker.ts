@@ -1,18 +1,30 @@
-import type { D1Database } from "@cloudflare/workers-types";
+import type {
+  AiTextGenerationInput,
+  AiTextGenerationOutput,
+  D1Database,
+} from "@cloudflare/workers-types";
 import * as Layer from "effect/Layer";
-import * as ServiceMap from "effect/ServiceMap";
-import * as HttpServer from "effect/unstable/http/HttpServer";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
+import { getAssistantModel, handleAssistantRequest } from "#presentation/assistant/handler";
 import { CoffeeHttpApiLive } from "#presentation/http/api";
+import { createCoffeeWebHandler } from "#presentation/http/web-handler";
 import { CoffeeMcpHttpLive } from "#presentation/mcp/server";
 import { makeCloudflareCoffeeAppLive } from "#runtime/cloudflare/live";
-import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 
 type AssetFetcher = {
   fetch(request: Request): Promise<Response>;
 };
 
+interface WorkersAiBinding {
+  run(
+    model: string,
+    inputs: AiTextGenerationInput,
+    options?: Record<string, unknown>,
+  ): Promise<AiTextGenerationOutput>;
+  gateway(gatewayId: string): unknown;
+}
+
 export interface OnionCloudflareWorkerEnv {
+  AI?: WorkersAiBinding;
   DB: D1Database;
   ASSETS?: AssetFetcher;
 }
@@ -21,6 +33,9 @@ const isApiRequest = (pathname: string) => pathname === "/api" || pathname.start
 
 const isMcpRequest = (pathname: string) => pathname === "/mcp" || pathname.startsWith("/mcp/");
 
+const isAssistantRequest = (pathname: string) =>
+  pathname === "/api/assistant" || pathname === "/api/assistant/";
+
 const rewriteApiRequest = (request: Request) => {
   const url = new URL(request.url);
   url.pathname = url.pathname.replace(/^\/api(?=\/|$)/, "") || "/";
@@ -28,21 +43,10 @@ const rewriteApiRequest = (request: Request) => {
 };
 
 const makeBackendHandler = (db: D1Database) => {
-  const { dispose, handler } = HttpRouter.toWebHandler(
-    Layer.mergeAll(CoffeeHttpApiLive, CoffeeMcpHttpLive).pipe(
-      Layer.provide(CoffeeOrderApp.layer),
-      Layer.provide(makeCloudflareCoffeeAppLive(db)),
-      Layer.provide(HttpServer.layerServices),
-    ),
-    {
-      disableLogger: true,
-    },
+  return createCoffeeWebHandler(
+    Layer.mergeAll(CoffeeHttpApiLive, CoffeeMcpHttpLive),
+    makeCloudflareCoffeeAppLive(db),
   );
-  return {
-    dispose,
-    handler: async (request: Request) =>
-      handler(request, ServiceMap.empty() as ServiceMap.ServiceMap<CoffeeOrderApp>),
-  };
 };
 
 type WorkerHandler = ReturnType<typeof makeBackendHandler>["handler"];
@@ -56,8 +60,11 @@ let cachedHandler:
   | undefined;
 
 const getBackendHandler = (db: D1Database): WorkerHandler => {
-  if (cachedHandler?.db === db) {
-    return cachedHandler.handler;
+  switch (cachedHandler?.db) {
+    case db:
+      return cachedHandler.handler;
+    default:
+      break;
   }
 
   void cachedHandler?.dispose();
@@ -74,22 +81,38 @@ const getBackendHandler = (db: D1Database): WorkerHandler => {
 
 const notFoundResponse = () => new Response("Not Found", { status: 404 });
 
+const getAssistantAiConfig = (env: OnionCloudflareWorkerEnv) => {
+  switch (env.AI) {
+    case undefined:
+      return undefined;
+    default:
+      return { binding: env.AI };
+  }
+};
+
+const routeRequest = async (request: Request, env: OnionCloudflareWorkerEnv): Promise<Response> => {
+  const pathname = new URL(request.url).pathname;
+
+  switch (true) {
+    case isAssistantRequest(pathname):
+      return handleAssistantRequest(rewriteApiRequest(request), {
+        ai: getAssistantAiConfig(env),
+        appLayer: makeCloudflareCoffeeAppLive(env.DB),
+        model: getAssistantModel(),
+      });
+    case isApiRequest(pathname):
+      return getBackendHandler(env.DB)(rewriteApiRequest(request));
+    case isMcpRequest(pathname):
+      return getBackendHandler(env.DB)(request);
+    case env.ASSETS !== undefined:
+      return env.ASSETS.fetch(request);
+    default:
+      return notFoundResponse();
+  }
+};
+
 export default {
   async fetch(request: Request, env: OnionCloudflareWorkerEnv) {
-    const pathname = new URL(request.url).pathname;
-
-    if (isApiRequest(pathname)) {
-      return getBackendHandler(env.DB)(rewriteApiRequest(request));
-    }
-
-    if (isMcpRequest(pathname)) {
-      return getBackendHandler(env.DB)(request);
-    }
-
-    if (env.ASSETS) {
-      return env.ASSETS.fetch(request);
-    }
-
-    return notFoundResponse();
+    return routeRequest(request, env);
   },
 };

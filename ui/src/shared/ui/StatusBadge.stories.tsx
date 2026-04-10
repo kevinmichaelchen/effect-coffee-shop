@@ -3,7 +3,13 @@ import { StatusBadge } from "#shared/ui/StatusBadge.tsx";
 import type { OrderStatus } from "#features/coffee-shop/lib/coffee.ts";
 
 function StatusBadgeMatrix() {
-  const statuses: readonly OrderStatus[] = ["pending", "brewing", "ready", "picked-up", "cancelled"];
+  const statuses: readonly OrderStatus[] = [
+    "pending",
+    "brewing",
+    "ready",
+    "picked-up",
+    "cancelled",
+  ];
 
   return (
     <div className="flex flex-wrap gap-3">

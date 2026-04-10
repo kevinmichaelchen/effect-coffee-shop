@@ -1,5 +1,11 @@
 import type { ReactNode } from "react";
-import { Tabs, TabsContent, TabsPanels, TabsTrigger, TabsTriggerList } from "#shared/ui/retroui/Tab.tsx";
+import {
+  Tabs,
+  TabsContent,
+  TabsPanels,
+  TabsTrigger,
+  TabsTriggerList,
+} from "#shared/ui/retroui/Tab.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 import { viewModes, type ViewMode } from "#features/coffee-shop/components/view-mode.ts";
 
@@ -21,7 +27,10 @@ export function ViewModeTabs(inputProps: ViewModeTabsProps) {
   const selectedIndex = viewModes.indexOf(viewMode);
 
   return (
-    <Tabs selectedIndex={selectedIndex} onChange={(index) => onViewModeChange(viewModes[index] ?? "dual")}>
+    <Tabs
+      selectedIndex={selectedIndex}
+      onChange={(index) => onViewModeChange(viewModes[index] ?? "dual")}
+    >
       <div className="grid gap-2">
         <Text as="p" className="text-sm uppercase tracking-[0.08em] text-muted-foreground">
           Workspace mode

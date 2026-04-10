@@ -32,7 +32,9 @@ export function QueueTable(inputProps: QueueTableProps) {
           <Table.Row key={order.id}>
             <Table.Cell className="font-head">{order.id}</Table.Cell>
             <Table.Cell>{order.drinkName}</Table.Cell>
-            <Table.Cell><StatusBadge status={order.status} /></Table.Cell>
+            <Table.Cell>
+              <StatusBadge status={order.status} />
+            </Table.Cell>
             <Table.Cell>{formatOrderTime(order.createdAt)}</Table.Cell>
             <Table.Cell>{formatPrice(order.priceCents)}</Table.Cell>
             <Table.Cell className="space-y-2">

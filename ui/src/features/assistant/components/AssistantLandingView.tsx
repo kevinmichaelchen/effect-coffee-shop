@@ -1,42 +1,41 @@
+import type { ThemePreference } from "#shared/hooks/useThemePreference.ts";
+import { appRoutes } from "#app/routes.ts";
+import { AssistantTranscript } from "#features/assistant/components/AssistantTranscript.tsx";
+import { ToolActivityDrawer } from "#features/assistant/components/ToolActivityDrawer.tsx";
+import type {
+  AssistantDisplayMessage,
+  AssistantStatus,
+  AssistantToolActivity,
+} from "#features/assistant/lib/assistant-chat.ts";
+import type { ConnectionStatus } from "@tanstack/ai-client";
+import { ThemeToggle } from "#shared/ui/ThemeToggle.tsx";
 import { Badge } from "#shared/ui/retroui/Badge.tsx";
 import { Button } from "#shared/ui/retroui/Button.tsx";
 import { Card } from "#shared/ui/retroui/Card.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
-import { DemoTranscript } from "#features/assistant/components/DemoTranscript.tsx";
-import { ToolActivityDrawer } from "#features/assistant/components/ToolActivityDrawer.tsx";
-import { ThemeToggle } from "#shared/ui/ThemeToggle.tsx";
-import { type AssistantEvent } from "#features/assistant/lib/assistant-loop.ts";
-import { type DemoCacheStatus, type DemoMessage, type DemoStatus } from "#features/assistant/hooks/lfmAssistantSupport.ts";
-import type { ThemePreference } from "#shared/hooks/useThemePreference.ts";
-import { appRoutes } from "#app/routes.ts";
 
-export interface BrowserMcpLandingViewProps {
-  assistantDraft: string;
-  cacheStatus: DemoCacheStatus;
+interface AssistantLandingViewProps {
+  connectionStatus: ConnectionStatus;
   errorMessage: string | null;
-  events: readonly AssistantEvent[];
-  hasLoadedModel: boolean;
+  events: readonly AssistantToolActivity[];
   input: string;
   isBusy: boolean;
-  messages: readonly DemoMessage[];
+  messages: readonly AssistantDisplayMessage[];
   prompts: readonly string[];
-  status: DemoStatus;
+  status: AssistantStatus;
   theme: ThemePreference;
   onInputChange: (value: string) => void;
   onPromptClick: (prompt: string) => void;
   onReset: () => void;
   onSubmit: () => void;
   onToggleTheme: () => void;
-  onWarmUp: () => void;
 }
 
-export function BrowserMcpLandingView(inputProps: BrowserMcpLandingViewProps) {
+export function AssistantLandingView(inputProps: AssistantLandingViewProps) {
   const {
-    assistantDraft,
-    cacheStatus,
+    connectionStatus,
     errorMessage,
     events,
-    hasLoadedModel,
     input,
     isBusy,
     messages,
@@ -45,7 +44,6 @@ export function BrowserMcpLandingView(inputProps: BrowserMcpLandingViewProps) {
     onReset,
     onSubmit,
     onToggleTheme,
-    onWarmUp,
     prompts,
     status,
     theme,
@@ -54,16 +52,14 @@ export function BrowserMcpLandingView(inputProps: BrowserMcpLandingViewProps) {
   return (
     <main className="mx-auto grid min-h-screen w-full max-w-7xl gap-5 px-4 py-4 lg:px-6">
       <section className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <LandingHero theme={theme} onToggleTheme={onToggleTheme} onWarmUp={onWarmUp} />
+        <LandingHero theme={theme} onToggleTheme={onToggleTheme} />
         <LandingFactsCard />
       </section>
       <section className="grid gap-5">
-        <DemoTranscript
+        <AssistantTranscript
           activityControl={<ToolActivityDrawer events={events} />}
-          assistantDraft={assistantDraft}
-          cacheStatus={cacheStatus}
+          connectionStatus={connectionStatus}
           errorMessage={errorMessage}
-          hasLoadedModel={hasLoadedModel}
           input={input}
           isBusy={isBusy}
           messages={messages}
@@ -73,7 +69,6 @@ export function BrowserMcpLandingView(inputProps: BrowserMcpLandingViewProps) {
           onPromptClick={onPromptClick}
           onReset={onReset}
           onSubmit={onSubmit}
-          onWarmUp={onWarmUp}
         />
       </section>
     </main>
@@ -82,36 +77,34 @@ export function BrowserMcpLandingView(inputProps: BrowserMcpLandingViewProps) {
 
 interface LandingHeroProps {
   onToggleTheme: () => void;
-  onWarmUp: () => void;
   theme: ThemePreference;
 }
 
-function LandingHero({ onToggleTheme, onWarmUp, theme }: LandingHeroProps) {
+function LandingHero({ onToggleTheme, theme }: LandingHeroProps) {
   return (
     <Card className="w-full border-border bg-primary text-primary-foreground">
       <Card.Content className="grid gap-5 p-5 lg:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-wrap gap-2">
             <Badge className="rounded-none bg-black px-2.5 py-1 text-white" size="sm">
-              LiquidAI + WebGPU
+              Cloudflare Workers AI
             </Badge>
             <Badge className="rounded-none px-2.5 py-1" size="sm" variant="outline">
-              MCP-native coffee actions
+              D1-backed coffee tools
             </Badge>
           </div>
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         </div>
         <div className="grid gap-3">
           <Text as="h1" className="max-w-4xl text-4xl leading-none md:text-6xl">
-            Browser Barista Brain
+            Beanline Control Surface
           </Text>
           <Text as="p" className="max-w-3xl text-base text-primary-foreground/80 md:text-lg">
-            Load LiquidAI&apos;s LFM2.5-350M in the browser, let it decide when to call your Coffee
-            Shop MCP server, and keep the original customer-plus-barista control room one click away.
+            The landing assistant now runs through your same-origin Cloudflare Worker, executes
+            coffee tools server-side, and shares the same live state as the control room.
           </Text>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button onClick={onWarmUp}>Preload browser model</Button>
           <Button asChild variant="secondary">
             <a href={appRoutes.controlRoom}>Open control room</a>
           </Button>
@@ -125,10 +118,10 @@ function LandingFactsCard() {
   return (
     <Card className="w-full border-border bg-card">
       <Card.Content className="grid gap-4 p-5">
-        <MetricStrip label="Browser runtime" value="LiquidAI/LFM2.5-350M-ONNX q4" />
-        <MetricStrip label="Inference stack" value="onnxruntime-web + Transformers.js" />
-        <MetricStrip label="Tool transport" value="POST /mcp on the Onion backend" />
-        <MetricStrip label="Why this route" value="Local inference, live coffee actions" />
+        <MetricStrip label="Assistant runtime" value="Workers AI via same-origin Worker" />
+        <MetricStrip label="Tool orchestration" value="TanStack AI server tools + SSE stream" />
+        <MetricStrip label="Coffee state" value="Shared D1 database for orders and queue" />
+        <MetricStrip label="Deployment shape" value="Static UI + Worker + D1 on Cloudflare" />
       </Card.Content>
     </Card>
   );

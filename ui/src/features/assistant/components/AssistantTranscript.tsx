@@ -2,40 +2,54 @@ import type { ReactNode } from "react";
 import { Alert } from "#shared/ui/retroui/Alert.tsx";
 import { Button } from "#shared/ui/retroui/Button.tsx";
 import { Card } from "#shared/ui/retroui/Card.tsx";
-import { DemoStatusPanel } from "#features/assistant/components/DemoStatusPanel.tsx";
+import { AssistantComposer } from "#features/assistant/components/AssistantComposer.tsx";
+import { AssistantStatusPanel } from "#features/assistant/components/AssistantStatusPanel.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
-import { DemoComposer } from "#features/assistant/components/DemoComposer.tsx";
-import type { DemoCacheStatus, DemoMessage, DemoStatus } from "#features/assistant/hooks/lfmAssistantSupport.ts";
+import type {
+  AssistantDisplayMessage,
+  AssistantStatus,
+} from "#features/assistant/lib/assistant-chat.ts";
+import type { ConnectionStatus } from "@tanstack/ai-client";
 
-interface DemoTranscriptProps {
+interface AssistantTranscriptProps {
   activityControl: ReactNode;
-  assistantDraft: string;
-  cacheStatus: DemoCacheStatus;
+  connectionStatus: ConnectionStatus;
   errorMessage: string | null;
-  hasLoadedModel: boolean;
   input: string;
   isBusy: boolean;
-  messages: readonly DemoMessage[];
+  messages: readonly AssistantDisplayMessage[];
   prompts: readonly string[];
-  status: DemoStatus;
+  status: AssistantStatus;
   onInputChange: (value: string) => void;
   onPromptClick: (prompt: string) => void;
   onReset: () => void;
   onSubmit: () => void;
-  onWarmUp: () => void;
 }
 
-export function DemoTranscript(inputProps: DemoTranscriptProps) {
-  const { activityControl, assistantDraft, cacheStatus, errorMessage, hasLoadedModel, input, isBusy, messages, onInputChange, onPromptClick, onReset, onSubmit, onWarmUp, prompts, status } = inputProps;
+export function AssistantTranscript(inputProps: AssistantTranscriptProps) {
+  const {
+    activityControl,
+    connectionStatus,
+    errorMessage,
+    input,
+    isBusy,
+    messages,
+    onInputChange,
+    onPromptClick,
+    onReset,
+    onSubmit,
+    prompts,
+    status,
+  } = inputProps;
 
   return (
     <Card className="w-full border-border bg-card">
       <Card.Content className="grid gap-4 p-5">
-        <TranscriptHeader activityControl={activityControl} onReset={onReset} onWarmUp={onWarmUp} />
-        <DemoStatusPanel cacheStatus={cacheStatus} hasLoadedModel={hasLoadedModel} isBusy={isBusy} status={status} />
+        <TranscriptHeader activityControl={activityControl} onReset={onReset} />
+        <AssistantStatusPanel connectionStatus={connectionStatus} isBusy={isBusy} status={status} />
         {errorMessage !== null ? (
           <Alert status="warning">
-            <Alert.Title>Local demo warning</Alert.Title>
+            <Alert.Title>Assistant warning</Alert.Title>
             <Alert.Description>{errorMessage}</Alert.Description>
           </Alert>
         ) : null}
@@ -48,19 +62,18 @@ export function DemoTranscript(inputProps: DemoTranscriptProps) {
         </div>
         <div className="grid min-h-80 gap-3 border-2 border-border bg-background p-4">
           {messages.length === 0 ? (
-            <EmptyTranscript cacheStatus={cacheStatus} hasLoadedModel={hasLoadedModel} />
+            <EmptyTranscript />
           ) : (
             messages.map((message) => (
               <TranscriptBubble key={message.id} content={message.content} speaker={message.role} />
             ))
           )}
-          {assistantDraft !== "" ? <TranscriptBubble content={assistantDraft} speaker="assistant" /> : null}
         </div>
-        <DemoComposer
-          helpText={getComposerHint(cacheStatus)}
+        <AssistantComposer
+          helpText="Cmd/Ctrl + Enter sends the prompt to the same-origin Worker."
           input={input}
           isBusy={isBusy}
-          submitLabel={getComposerLabel(cacheStatus, isBusy)}
+          submitLabel={isBusy ? "Calling live tools…" : "Send"}
           onInputChange={onInputChange}
           onSubmit={onSubmit}
         />
@@ -72,24 +85,22 @@ export function DemoTranscript(inputProps: DemoTranscriptProps) {
 interface TranscriptHeaderProps {
   activityControl: ReactNode;
   onReset: () => void;
-  onWarmUp: () => void;
 }
 
-function TranscriptHeader({ activityControl, onReset, onWarmUp }: TranscriptHeaderProps) {
+function TranscriptHeader({ activityControl, onReset }: TranscriptHeaderProps) {
   return (
     <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
       <div className="grid gap-2">
         <Text as="h2" className="text-3xl leading-none md:text-4xl">
-          Chat with LFM2.5-350M in your browser.
+          Chat with Beanline over Workers AI.
         </Text>
         <Text as="p" className="max-w-3xl text-sm text-muted-foreground md:text-base">
-          The model runs locally over WebGPU and decides when to call the Coffee Shop MCP server
-          for live menu, order, and queue actions.
+          The assistant runs through your Cloudflare Worker, calls coffee tools server-side, and
+          shares the same D1-backed state as the control room.
         </Text>
       </div>
       <div className="flex flex-wrap gap-3">
         {activityControl}
-        <Button onClick={onWarmUp}>Preload browser model</Button>
         <Button variant="outline" onClick={onReset}>
           Clear transcript
         </Button>
@@ -98,23 +109,15 @@ function TranscriptHeader({ activityControl, onReset, onWarmUp }: TranscriptHead
   );
 }
 
-interface EmptyTranscriptProps {
-  cacheStatus: DemoCacheStatus;
-  hasLoadedModel: boolean;
-}
-
-function EmptyTranscript({ cacheStatus, hasLoadedModel }: EmptyTranscriptProps) {
+function EmptyTranscript() {
   return (
     <div className="grid content-center gap-3 text-center">
       <Text as="h3" className="text-2xl leading-none">
         No messages yet.
       </Text>
       <Text as="p" className="mx-auto max-w-xl text-sm text-muted-foreground">
-        {hasLoadedModel
-          ? "The local model is ready in this tab. Ask it to list the menu, place an order, or inspect the queue."
-          : cacheStatus.phase === "cold"
-          ? "Send a prompt or preload the model. The first run downloads the local browser assets before replying."
-          : "Ask it to place an order, inspect the queue, or explain what it just changed in the Coffee Shop backend."}
+        Ask Beanline to list the menu, place an order, inspect the queue, or explain what just
+        changed in the coffee shop.
       </Text>
     </div>
   );
@@ -122,7 +125,7 @@ function EmptyTranscript({ cacheStatus, hasLoadedModel }: EmptyTranscriptProps) 
 
 interface TranscriptBubbleProps {
   content: string;
-  speaker: DemoMessage["role"];
+  speaker: AssistantDisplayMessage["role"];
 }
 
 function TranscriptBubble({ content, speaker }: TranscriptBubbleProps) {
@@ -130,7 +133,8 @@ function TranscriptBubble({ content, speaker }: TranscriptBubbleProps) {
     speaker === "assistant"
       ? "border-border bg-card text-card-foreground"
       : "border-black bg-primary text-primary-foreground";
-  const labelTone = speaker === "assistant" ? "text-muted-foreground" : "text-primary-foreground/70";
+  const labelTone =
+    speaker === "assistant" ? "text-muted-foreground" : "text-primary-foreground/70";
 
   return (
     <div className={`ml-0 grid gap-2 border-2 p-3 shadow-sm ${bubbleTone}`}>
@@ -142,26 +146,4 @@ function TranscriptBubble({ content, speaker }: TranscriptBubbleProps) {
       </Text>
     </div>
   );
-}
-
-function getComposerHint(cacheStatus: DemoCacheStatus): string {
-  if (cacheStatus.phase === "cold") {
-    return "Cmd/Ctrl + Enter sends the prompt. First use downloads the model.";
-  }
-
-  if (cacheStatus.phase === "partial") {
-    return "Cmd/Ctrl + Enter sends the prompt. This browser already has part of the model.";
-  }
-
-  return "Cmd/Ctrl + Enter sends the prompt.";
-}
-
-function getComposerLabel(cacheStatus: DemoCacheStatus, isBusy: boolean): string {
-  if (isBusy) {
-    return "Running local loop…";
-  }
-
-  return cacheStatus.phase === "cold" || cacheStatus.phase === "partial"
-    ? "Download + chat"
-    : "Send to local model";
 }

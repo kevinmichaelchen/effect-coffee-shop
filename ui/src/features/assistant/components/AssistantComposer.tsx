@@ -2,7 +2,7 @@ import type { ChangeEvent, KeyboardEvent } from "react";
 import { Button } from "#shared/ui/retroui/Button.tsx";
 import { Textarea } from "#shared/ui/retroui/Textarea.tsx";
 
-interface DemoComposerProps {
+interface AssistantComposerProps {
   helpText?: string;
   input: string;
   isBusy: boolean;
@@ -11,7 +11,7 @@ interface DemoComposerProps {
   submitLabel?: string;
 }
 
-export function DemoComposer(inputProps: DemoComposerProps) {
+export function AssistantComposer(inputProps: AssistantComposerProps) {
   const { helpText, input, isBusy, onInputChange, onSubmit, submitLabel } = inputProps;
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>): void {
@@ -36,10 +36,10 @@ export function DemoComposer(inputProps: DemoComposerProps) {
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {helpText ?? "Cmd/Ctrl + Enter sends the prompt."}
+          {helpText ?? "Cmd/Ctrl + Enter sends the prompt to the Cloudflare Worker."}
         </p>
         <Button disabled={isBusy || input.trim() === ""} onClick={onSubmit}>
-          {isBusy ? "Running local loop…" : (submitLabel ?? "Send to local model")}
+          {isBusy ? "Calling live tools…" : (submitLabel ?? "Send")}
         </Button>
       </div>
     </div>

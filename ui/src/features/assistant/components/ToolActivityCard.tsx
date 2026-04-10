@@ -1,21 +1,9 @@
 import { Badge } from "#shared/ui/retroui/Badge.tsx";
-import { Card } from "#shared/ui/retroui/Card.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
-import type { AssistantEvent } from "#features/assistant/lib/assistant-loop.ts";
+import type { AssistantToolActivity } from "#features/assistant/lib/assistant-chat.ts";
 
 interface ToolActivityCardProps {
-  events: readonly AssistantEvent[];
-}
-
-export function ToolActivityCard({ events }: ToolActivityCardProps) {
-  return (
-    <Card className="w-full border-border bg-card">
-      <Card.Content className="grid gap-3 p-5">
-        <ToolActivityHeading />
-        <ToolActivityFeed events={events} />
-      </Card.Content>
-    </Card>
-  );
+  events: readonly AssistantToolActivity[];
 }
 
 export function ToolActivityFeed({ events }: ToolActivityCardProps) {
@@ -23,7 +11,7 @@ export function ToolActivityFeed({ events }: ToolActivityCardProps) {
     <div className="grid gap-3">
       {events.length === 0 ? (
         <Text as="p" className="text-sm text-muted-foreground">
-          No MCP calls yet. Ask about menu items, order status, or placing a drink.
+          No tool calls yet. Ask about menu items, order status, or placing a drink.
         </Text>
       ) : (
         events.map((event, index) => (
@@ -39,17 +27,9 @@ export function ToolActivityFeed({ events }: ToolActivityCardProps) {
   );
 }
 
-function ToolActivityHeading() {
-  return (
-    <Text as="h3" className="text-2xl leading-none">
-      Tool activity
-    </Text>
-  );
-}
-
 interface ToolEventRowProps {
   detail: string;
-  kind: AssistantEvent["kind"];
+  kind: AssistantToolActivity["kind"];
   label: string;
 }
 
@@ -60,7 +40,11 @@ function ToolEventRow({ detail, kind, label }: ToolEventRowProps) {
         <Text as="p" className="text-sm uppercase tracking-[0.08em] text-muted-foreground">
           {label}
         </Text>
-        <Badge className="rounded-none px-2 py-1" size="sm" variant={kind === "tool-call" ? "surface" : "solid"}>
+        <Badge
+          className="rounded-none px-2 py-1"
+          size="sm"
+          variant={kind === "tool-call" ? "surface" : "solid"}
+        >
           {kind === "tool-call" ? "call" : "result"}
         </Badge>
       </div>

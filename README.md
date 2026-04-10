@@ -62,7 +62,7 @@ bun run cf:deploy -- --profile default
 ```
 
 This candidate stack is defined in [`alchemy.run.ts`](./alchemy.run.ts) and deploys one Cloudflare Website resource that serves the built UI, the Effect HTTP API under `/api/*`, and the MCP HTTP surface under `/mcp`.
-The deployed Worker uses a D1 binding, so the browser app, API, and remote MCP server share the same origin and runtime.
+The deployed Worker uses both `D1` and `AI` bindings, so the browser app, assistant route, API, and remote MCP server share the same origin and runtime.
 Classic stdio MCP is still Bun-only and is not part of the Cloudflare deployment.
 
 Alchemy state stays local under `.alchemy/` by default.
@@ -75,6 +75,7 @@ bun run typecheck
 bun run lint
 bun run lint:custom
 bun run fmt:check
+bun run knip
 bun run test
 bun run check
 ```
@@ -147,6 +148,8 @@ That serves an in-memory backend with the REST API plus MCP HTTP endpoint on `ht
 
 This HTTP flow avoids HTTPS trust prompts and does not require `sudo`. It relies on `.localhost` resolution in the browser. It works on Chrome, Firefox, and Edge. Safari may still require host syncing, which Portless documents as a privileged operation.
 
+For the assistant to work against the local Bun backend, set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. The deployed Worker uses the Cloudflare `AI` binding instead.
+
 ## Cloudflare candidate
 
 This branch includes a candidate Cloudflare deployment scaffold using upstream Alchemy instead of the vendored `alchemy-effect` package.
@@ -155,9 +158,10 @@ The current shape is:
 
 - one Alchemy `Website` resource
 - `ui/dist` served as static assets
+- `/api/assistant` handled by a Workers AI-backed Beanline route
 - `/api/*` rewritten into the existing Effect `HttpApi`
 - `/mcp` handled by the existing MCP HTTP server
-- `D1` provisioned and bound into the Worker
+- `D1` and `AI` provisioned and bound into the Worker
 
 Expected workflow:
 

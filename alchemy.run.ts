@@ -1,5 +1,5 @@
 import alchemy from "alchemy";
-import { D1Database, Website } from "alchemy/cloudflare";
+import { Ai, D1Database, Website } from "alchemy/cloudflare";
 import { CloudflareStateStore } from "alchemy/state";
 
 const app = await alchemy("effect-v4-onion", {
@@ -15,22 +15,13 @@ export const coffeeDb = await D1Database("coffee-db", {
   },
 });
 
+export const ai = Ai();
+
 export const website = await Website("onion", {
   url: true,
   entrypoint: "./backend/src/presentation/cloudflare/worker.ts",
   build: {
     command: "bun run --cwd ui build",
-    memoize: process.env.CI
-      ? false
-      : {
-          patterns: [
-            "./ui/index.html",
-            "./ui/package.json",
-            "./ui/src/**",
-            "./ui/vite.config.ts",
-            "./ui/vite.shared.ts",
-          ],
-        },
   },
   dev: {
     command: "bun run --cwd ui dev -- --host 127.0.0.1 --port 5173",
@@ -40,6 +31,7 @@ export const website = await Website("onion", {
     run_worker_first: ["/api", "/api/*", "/mcp", "/mcp/*"],
   },
   bindings: {
+    AI: ai,
     DB: coffeeDb,
   },
 });
