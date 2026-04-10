@@ -8,6 +8,11 @@ import {
   requireStaffActor,
 } from "#service/CurrentActor";
 import { InternalAppError, internalAppErrorFromPersistence } from "#service/errors";
+import {
+  actorObservabilityAttributes,
+  annotateObservabilitySpan,
+  logInfoWithAttributes,
+} from "#service/observability";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
 const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* (
@@ -22,8 +27,17 @@ const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* 
   | InternalAppError,
   OrderRepository
 > {
-  yield* requireStaffActor();
+  const actor = yield* requireStaffActor();
   const orderRepository = yield* OrderRepository;
+  const observabilityAttributes = {
+    ...actorObservabilityAttributes(actor),
+    next_order_status: to,
+    order_action: "change-status",
+    order_id: orderId,
+  };
+
+  yield* annotateObservabilitySpan(observabilityAttributes);
+
   const order = yield* orderRepository.getById(orderId).pipe(
     Effect.mapError(internalAppErrorFromPersistence("Unable to update order status right now")),
     Effect.flatMap(
@@ -42,7 +56,7 @@ const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* 
     });
   }
 
-  return yield* orderRepository
+  const updatedOrder = yield* orderRepository
     .save({
       ...order,
       status: to,
@@ -50,6 +64,14 @@ const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* 
     .pipe(
       Effect.mapError(internalAppErrorFromPersistence("Unable to update order status right now")),
     );
+
+  yield* logInfoWithAttributes("updated coffee order status", {
+    ...observabilityAttributes,
+    order_status: updatedOrder.status,
+    previous_order_status: order.status,
+  });
+
+  return updatedOrder;
 });
 
 export const startBrewing = Effect.fn("CoffeeOrders.startBrewing")(function* (

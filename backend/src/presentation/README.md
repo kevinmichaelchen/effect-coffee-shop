@@ -71,7 +71,10 @@ Why this exists:
 ### `assistant/`
 
 - [handler.ts](./assistant/handler.ts): `/api/assistant` boundary. Decodes request bodies, starts the run, and emits SSE back to the UI.
+- [messages.ts](./assistant/messages.ts): assistant request decoding and message-shape conversion from TanStack chat payloads into model messages.
+- [observability.ts](./assistant/observability.ts): assistant run and tool-activity logging helpers.
 - [runtime.ts](./assistant/runtime.ts): Runs the Workers AI conversation loop, including tool-call rounds and model selection.
+- [runtime.ts](./assistant/runtime.ts): Runs the Workers AI conversation loop, including tool-call rounds, model selection, and optional AI Gateway metadata.
 - [tools.ts](./assistant/tools.ts): Exposes coffee shop actions as assistant-callable tools and emits tool activity for the UI.
 - [tool-data.ts](./assistant/tool-data.ts): Tool parameter schemas and decoders.
 - [tool-format.ts](./assistant/tool-format.ts): Human-readable formatting for tool payloads and failures.
@@ -134,13 +137,19 @@ That file is a good example of accidental complexity:
 
 ### `cloudflare/`
 
-- [worker.ts](./cloudflare/worker.ts): Production Cloudflare Worker entrypoint. Routes `/api/*`, `/api/assistant`, `/mcp`, and static asset fetches. Binds D1 and Workers AI.
+- [worker.ts](./cloudflare/worker.ts): Thin production Worker entrypoint.
+- [router.ts](./cloudflare/router.ts): Cloudflare request routing, auth bootstrap, assistant/API/MCP dispatch, and structured request logging.
+
+### `observability/`
+
+- [logging.ts](./observability/logging.ts): shared structured request/event logging helpers for Cloudflare-facing presentation code.
 
 Why this exists:
 
 - Cloudflare deploys want a single Worker fetch entrypoint.
 - Our local Bun entrypoints and production Cloudflare entrypoint are not the same runtime shape.
 - We want the Worker to reuse the shared REST and MCP surfaces instead of reimplementing them.
+- We now also want one place to emit request-level structured logs and keep the Worker entrypoint itself small.
 
 ### `cli/`
 
@@ -182,6 +191,7 @@ This is thicker because it combines:
 - model/runtime selection
 - tool orchestration
 - progress event emission
+- assistant-specific run and tool observability
 
 ### Auth
 
@@ -204,7 +214,11 @@ On HTTP, the flow is:
 
 ### Cloudflare
 
-`Worker fetch -> [worker.ts](./cloudflare/worker.ts) -> shared web handler or assistant handler -> D1 / Workers AI / ASSETS`
+`Worker fetch -> [worker.ts](./cloudflare/worker.ts) -> [router.ts](./cloudflare/router.ts) -> shared web handler or assistant handler -> D1 / Workers AI / ASSETS`
+
+### Observability
+
+`request or assistant event -> [logging.ts](./observability/logging.ts) / [assistant/observability.ts](./assistant/observability.ts) -> Cloudflare Workers Logs`
 
 ## What Is Truly Necessary vs. Compensating Glue
 
@@ -216,6 +230,7 @@ On HTTP, the flow is:
 - Cloudflare Worker entrypoint
 - assistant tool definitions and assistant-specific request decoding
 - auth/session boundary handling and delegated capability execution
+- structured request and assistant event logging
 - tests at the protocol boundary
 
 ### Compensating For Library / Platform Seams
@@ -228,6 +243,8 @@ On HTTP, the flow is:
   Why: TanStack chat messages, Workers AI message formats, and our service/tool model do not align 1:1.
 - parts of [chunks.ts](./assistant/chunks.ts)
   Why: the UI wants structured progress over SSE, but our current assistant runtime returns a final text blob after the tool loop.
+- parts of [router.ts](./cloudflare/router.ts)
+  Why: Cloudflare needs a single fetch entrypoint, but we also want route-aware request logging, auth bootstrap, and shared handler reuse without cramming all of that into `worker.ts`.
 
 This is the code most likely to shrink over time.
 
@@ -247,6 +264,9 @@ Those bugs do not belong in domain tests. They belong next to the boundary code 
 - The assistant still emits the final answer as a single text chunk after model completion. We surface progress events immediately, but we do not yet token-stream the final answer.
 - [http-jsonrpc-ids.ts](./mcp/http-jsonrpc-ids.ts) is a real shim, not an ideal abstraction.
 - The assistant path still contains format-bridging logic between TanStack AI, our SSE events, and Workers AI.
+- Better Auth experimental OpenTelemetry spans are still not wired because we do not yet provide a Worker-side tracer/export pipeline.
+- AI Gateway support is implemented in the assistant runtime, but provisioning is currently opt-in because the active Cloudflare profile on this machine cannot manage AI Gateway resources.
+- Even when AI Gateway is enabled, payload-suppression and external OTel export configuration still need a follow-up hardening pass.
 
 ## What Could Simplify Later
 

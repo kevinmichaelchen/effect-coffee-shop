@@ -1,7 +1,6 @@
-import { toServerSentEventsResponse, type ModelMessage } from "@tanstack/ai";
+import { toServerSentEventsResponse } from "@tanstack/ai";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Schema from "effect/Schema";
 import * as ServiceMap from "effect/ServiceMap";
 import { emptyWebHandlerServices } from "#presentation/http/web-handler";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
@@ -18,6 +17,18 @@ import {
   createAssistantTextEndChunk,
   createAssistantTextStartChunk,
 } from "./chunks.ts";
+import {
+  type AssistantRequestBody,
+  parseAssistantRequestBody,
+  toAssistantModelMessages,
+} from "./messages.ts";
+import {
+  createAssistantGatewayMetadata,
+  logAssistantRunCompleted,
+  logAssistantRunFailed,
+  logAssistantRunStarted,
+  logAssistantToolActivity,
+} from "./observability.ts";
 import {
   type AssistantAiConfig,
   getAssistantModel,
@@ -42,39 +53,11 @@ interface AssistantHandlerOptions {
   readonly appLayer: Layer.Layer<never, any, any>;
   readonly model?: string;
 }
-
-const AssistantContentTextPartSchema = Schema.Struct({
-  type: Schema.Literal("text"),
-  content: Schema.String,
-});
-
-const AssistantThinkingPartSchema = Schema.Struct({
-  type: Schema.Literal("thinking"),
-  content: Schema.String,
-});
-
-const AssistantModelMessageSchema = Schema.Struct({
-  role: Schema.Literals(["user", "assistant", "tool"] as const),
-  content: Schema.Union([Schema.String, Schema.Null, Schema.Array(AssistantContentTextPartSchema)]),
-});
-
-const AssistantUiMessageSchema = Schema.Struct({
-  id: Schema.String,
-  role: Schema.Literals(["system", "user", "assistant"] as const),
-  parts: Schema.Array(Schema.Union([AssistantContentTextPartSchema, AssistantThinkingPartSchema])),
-});
-
-const AssistantRequestBodySchema = Schema.Struct({
-  messages: Schema.Array(Schema.Union([AssistantModelMessageSchema, AssistantUiMessageSchema])),
-});
-
-type AssistantModelMessageInput = typeof AssistantModelMessageSchema.Type;
-type AssistantRequestBody = typeof AssistantRequestBodySchema.Type;
-type AssistantRequestMessage = (typeof AssistantRequestBodySchema.Type.messages)[number];
-type AssistantUiMessageInput = typeof AssistantUiMessageSchema.Type;
-
-const decodeAssistantRequestBody = Schema.decodeUnknownPromise(AssistantRequestBodySchema);
-const isAssistantUiMessage = Schema.is(AssistantUiMessageSchema);
+type AssistantToolActivityRecordInput = {
+  readonly detail: string;
+  readonly kind: "tool-call" | "tool-result";
+  readonly label: string;
+};
 
 export async function handleAssistantRequest(
   request: Request,
@@ -129,26 +112,66 @@ async function streamAssistantResponse(input: {
   const messageId = createAssistantStreamId("msg");
   const runId = createAssistantStreamId("chat");
   const runApp = createCoffeeAppRunner(input.appLayer, input.actor);
+  const startedAt = performance.now();
+  let toolCallCount = 0;
+  const emitActivity = (activity: AssistantToolActivityRecordInput) => {
+    if (activity.kind === "tool-call") {
+      toolCallCount += 1;
+    }
+
+    logAssistantToolActivity({
+      activity,
+      actor: input.actor,
+      model: input.model,
+      runId,
+    });
+    input.queue.push(
+      createAssistantCustomChunk(input.model, getAssistantToolActivityEvent(), activity),
+    );
+  };
 
   input.queue.push(createAssistantRunStartedChunk(runId, input.model));
-
-  const response = await runAssistantConversation({
-    ai: input.ai,
-    messages: toAssistantModelMessages(input.body.messages),
+  logAssistantRunStarted({
+    actor: input.actor,
+    gatewayEnabled: input.ai.kind === "binding" && input.ai.gatewayId !== undefined,
     model: input.model,
-    systemPrompt: coffeeAssistantSystemPrompt,
-    tools: createCoffeeAssistantTools(runApp, (activity) =>
-      input.queue.push(
-        createAssistantCustomChunk(input.model, getAssistantToolActivityEvent(), activity),
-      ),
-    ),
+    runId,
   });
 
-  input.queue.push(createAssistantTextStartChunk(messageId, input.model));
-  input.queue.push(createAssistantTextContentChunk(messageId, input.model, response));
-  input.queue.push(createAssistantTextEndChunk(messageId, input.model));
-  input.queue.push(createAssistantRunFinishedChunk(runId, input.model));
-  input.queue.close();
+  try {
+    const response = await runAssistantConversation({
+      ai: input.ai,
+      gatewayEventId: runId,
+      gatewayMetadata: createAssistantGatewayMetadata(input.actor, runId),
+      messages: toAssistantModelMessages(input.body.messages),
+      model: input.model,
+      systemPrompt: coffeeAssistantSystemPrompt,
+      tools: createCoffeeAssistantTools(runApp, emitActivity),
+    });
+
+    input.queue.push(createAssistantTextStartChunk(messageId, input.model));
+    input.queue.push(createAssistantTextContentChunk(messageId, input.model, response));
+    input.queue.push(createAssistantTextEndChunk(messageId, input.model));
+    input.queue.push(createAssistantRunFinishedChunk(runId, input.model));
+    input.queue.close();
+
+    logAssistantRunCompleted({
+      actor: input.actor,
+      durationMs: performance.now() - startedAt,
+      model: input.model,
+      runId,
+      toolCallCount,
+    });
+  } catch (error) {
+    logAssistantRunFailed({
+      actor: input.actor,
+      durationMs: performance.now() - startedAt,
+      error,
+      model: input.model,
+      runId,
+    });
+    throw error;
+  }
 }
 
 function createCoffeeAppRunner<TAppLayer extends Layer.Layer<never, any, any>>(
@@ -160,64 +183,6 @@ function createCoffeeAppRunner<TAppLayer extends Layer.Layer<never, any, any>>(
 
   return async <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) =>
     Effect.runPromiseWith(services)(effect.pipe(Effect.provide(liveLayer)));
-}
-
-async function parseAssistantRequestBody(request: Request): Promise<AssistantRequestBody | null> {
-  return request
-    .json()
-    .then(decodeAssistantRequestBody)
-    .catch(() => null);
-}
-
-function toAssistantModelMessages(
-  messages: readonly AssistantRequestMessage[],
-): readonly ModelMessage[] {
-  return messages.flatMap((message) =>
-    isAssistantUiMessage(message)
-      ? toAssistantModelMessagesFromUiMessage(message)
-      : [toAssistantModelMessage(message)],
-  );
-}
-
-function toAssistantModelMessage(message: AssistantModelMessageInput): ModelMessage {
-  if (typeof message.content === "string" || message.content === null) {
-    return {
-      role: message.role,
-      content: message.content,
-    };
-  }
-
-  return {
-    role: message.role,
-    content: message.content.map((part) => ({
-      type: part.type,
-      content: part.content,
-    })),
-  };
-}
-
-function toAssistantModelMessagesFromUiMessage(
-  message: AssistantUiMessageInput,
-): readonly ModelMessage[] {
-  if (message.role === "system") {
-    return [];
-  }
-
-  const content = message.parts
-    .map((part) => part.content)
-    .join("")
-    .trim();
-
-  if (content === "") {
-    return [];
-  }
-
-  return [
-    {
-      role: message.role,
-      content,
-    } satisfies AssistantModelMessageInput,
-  ];
 }
 
 function connectAbortSignal(signal: AbortSignal): AbortController {

@@ -11,6 +11,8 @@ import type { AssistantToolDefinition } from "./tools.ts";
 const maxAssistantToolRounds = 4;
 const assistantMaxTokens = 256;
 
+type AssistantGatewayMetadata = Readonly<Record<string, boolean | number | string | null | bigint>>;
+
 interface WorkersAiBinding {
   run(
     model: string,
@@ -21,15 +23,23 @@ interface WorkersAiBinding {
 
 export type AssistantAiConfig =
   | {
+      readonly kind: "binding";
       readonly binding: WorkersAiBinding;
+      readonly gatewayId?: string;
     }
   | {
+      readonly kind: "rest";
       readonly accountId: string;
       readonly apiKey: string;
     };
 
 interface AssistantAiRunner {
-  readonly run: (model: string, inputs: AiTextGenerationInput) => Promise<AiTextGenerationOutput>;
+  readonly run: (
+    model: string,
+    inputs: AiTextGenerationInput,
+    metadata?: AssistantGatewayMetadata,
+    eventId?: string,
+  ) => Promise<AiTextGenerationOutput>;
 }
 
 export function getBunAssistantAiConfig(
@@ -43,6 +53,7 @@ export function getBunAssistantAiConfig(
   }
 
   return {
+    kind: "rest",
     accountId,
     apiKey,
   };
@@ -55,6 +66,8 @@ export function getAssistantModel(env?: Record<string, string | undefined>): str
 
 export async function runAssistantConversation(input: {
   readonly ai: AssistantAiConfig;
+  readonly gatewayEventId?: string;
+  readonly gatewayMetadata?: AssistantGatewayMetadata;
   readonly messages: readonly ModelMessage[];
   readonly model: string;
   readonly systemPrompt: string;
@@ -65,11 +78,16 @@ export async function runAssistantConversation(input: {
   const availableTools = input.tools.map(stripToolExecutor);
 
   for (let round = 0; round <= maxAssistantToolRounds; round++) {
-    const response = await runner.run(input.model, {
-      max_tokens: assistantMaxTokens,
-      messages: conversation,
-      tools: availableTools,
-    });
+    const response = await runner.run(
+      input.model,
+      {
+        max_tokens: assistantMaxTokens,
+        messages: conversation,
+        tools: availableTools,
+      },
+      input.gatewayMetadata,
+      input.gatewayEventId,
+    );
     const toolCalls = response.tool_calls?.filter(isToolCall) ?? [];
 
     if (toolCalls.length === 0) {
@@ -87,9 +105,14 @@ export async function runAssistantConversation(input: {
 }
 
 function createAssistantAiRunner(config: AssistantAiConfig): AssistantAiRunner {
-  if ("binding" in config) {
+  if (config.kind === "binding") {
     return {
-      run: async (model, inputs) => config.binding.run(model, inputs),
+      run: async (model, inputs, metadata, eventId) => {
+        const options = createGatewayOptions(config.gatewayId, metadata, eventId);
+        return options === undefined
+          ? config.binding.run(model, inputs)
+          : config.binding.run(model, inputs, options);
+      },
     };
   }
 
@@ -206,6 +229,25 @@ function extractAssistantText(output: AiTextGenerationOutput): string {
 
 function exhaustedToolLoopMessage(): string {
   return "I couldn't finish the request because the tool loop did not converge.";
+}
+
+function createGatewayOptions(
+  gatewayId: string | undefined,
+  metadata: AssistantGatewayMetadata | undefined,
+  eventId: string | undefined,
+): Record<string, unknown> | undefined {
+  if ((gatewayId?.trim() ?? "") === "") {
+    return undefined;
+  }
+
+  return {
+    gateway: {
+      collectLog: true,
+      ...(eventId === undefined ? {} : { eventId }),
+      id: gatewayId,
+      ...(metadata === undefined ? {} : { metadata }),
+    },
+  };
 }
 
 function getDefaultAssistantModel(): string {
