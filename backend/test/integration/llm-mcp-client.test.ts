@@ -1,10 +1,7 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import { afterAll, beforeAll } from "vitest";
-import {
-  createMcpMiniflareClient,
-  type McpMiniflareClient,
-} from "../support/McpMiniflare.ts";
+import { createMcpMiniflareClient, type McpMiniflareClient } from "../support/McpMiniflare.ts";
 
 /**
  * Test workflow where MCP tools place an order and we verify persistence
