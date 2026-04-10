@@ -9,13 +9,12 @@ export const storyAssistantMessages: readonly AssistantDisplayMessage[] = [
   {
     id: "user-1",
     role: "user",
-    content: "Place a medium oat latte for Maya with one extra shot.",
+    content: "Place a medium oat latte for me with one extra shot.",
   },
   {
     id: "assistant-1",
     role: "assistant",
-    content:
-      "Placed a medium oat latte for Maya with two total shots. It is now in the queue as ticket C-104.",
+    content: "Placed a medium oat latte with two total shots. It is now in the queue as C-104.",
   },
 ];
 
@@ -23,8 +22,7 @@ export const storyAssistantEvents: readonly AssistantToolActivity[] = [
   {
     kind: "tool-call",
     label: "place_order",
-    detail:
-      '{\n  "customerName": "Maya",\n  "drinkId": "latte",\n  "size": "medium",\n  "milk": "oat",\n  "shots": 2\n}',
+    detail: '{\n  "drinkId": "latte",\n  "size": "medium",\n  "milk": "oat",\n  "shots": 2\n}',
   },
   {
     kind: "tool-result",

@@ -4,11 +4,18 @@ import type {
   D1Database,
 } from "@cloudflare/workers-types";
 import * as Layer from "effect/Layer";
+import * as ServiceMap from "effect/ServiceMap";
 import { getAssistantModel, handleAssistantRequest } from "#presentation/assistant/handler";
+import {
+  createCloudflareAuth,
+  ensureCloudflareAuthPersistence,
+  resolveCloudflareActor,
+} from "#presentation/auth/server";
 import { CoffeeHttpApiLive } from "#presentation/http/api";
-import { createCoffeeWebHandler } from "#presentation/http/web-handler";
+import { createCoffeeWebHandler, emptyWebHandlerServices } from "#presentation/http/web-handler";
 import { CoffeeMcpHttpLive } from "#presentation/mcp/server";
 import { makeCloudflareCoffeeAppLive } from "#runtime/cloudflare/live";
+import { CurrentActor, type AppActor, systemActor } from "#service/CurrentActor";
 
 type AssetFetcher = {
   fetch(request: Request): Promise<Response>;
@@ -25,6 +32,8 @@ interface WorkersAiBinding {
 
 export interface OnionCloudflareWorkerEnv {
   AI?: WorkersAiBinding;
+  BETTER_AUTH_SECRET?: string;
+  COFFEE_STAFF_USER_IDS?: string;
   DB: D1Database;
   ASSETS?: AssetFetcher;
 }
@@ -35,6 +44,9 @@ const isMcpRequest = (pathname: string) => pathname === "/mcp" || pathname.start
 
 const isAssistantRequest = (pathname: string) =>
   pathname === "/api/assistant" || pathname === "/api/assistant/";
+
+const isAuthRequest = (pathname: string) =>
+  pathname === "/api/auth" || pathname.startsWith("/api/auth/");
 
 const rewriteApiRequest = (request: Request) => {
   const url = new URL(request.url);
@@ -90,20 +102,71 @@ const getAssistantAiConfig = (env: OnionCloudflareWorkerEnv) => {
   }
 };
 
-const routeRequest = async (request: Request, env: OnionCloudflareWorkerEnv): Promise<Response> => {
+const createRequestServices = (actor: AppActor) =>
+  emptyWebHandlerServices().pipe(ServiceMap.add(CurrentActor, actor));
+
+const ensureWorkerPersistence = async (
+  request: Request,
+  env: OnionCloudflareWorkerEnv,
+): Promise<void> => {
   const pathname = new URL(request.url).pathname;
 
+  if (
+    !isAuthRequest(pathname) &&
+    !isApiRequest(pathname) &&
+    !isAssistantRequest(pathname) &&
+    !isMcpRequest(pathname)
+  ) {
+    return;
+  }
+
+  await ensureCloudflareAuthPersistence({
+    db: env.DB,
+    secret: env.BETTER_AUTH_SECRET,
+  });
+};
+
+const resolveRequestActor = async (
+  request: Request,
+  env: OnionCloudflareWorkerEnv,
+): Promise<AppActor> =>
+  resolveCloudflareActor({
+    db: env.DB,
+    request,
+    secret: env.BETTER_AUTH_SECRET,
+    staffUserIds: env.COFFEE_STAFF_USER_IDS,
+  });
+
+const routeRequest = async (request: Request, env: OnionCloudflareWorkerEnv): Promise<Response> => {
+  const pathname = new URL(request.url).pathname;
+  await ensureWorkerPersistence(request, env);
+
   switch (true) {
+    case isAuthRequest(pathname):
+      if ((env.BETTER_AUTH_SECRET?.trim() ?? "") === "") {
+        return new Response("Better Auth is unavailable. Configure BETTER_AUTH_SECRET.", {
+          status: 503,
+        });
+      }
+      return createCloudflareAuth({
+        db: env.DB,
+        request,
+        secret: env.BETTER_AUTH_SECRET,
+      }).handler(request);
     case isAssistantRequest(pathname):
       return handleAssistantRequest(rewriteApiRequest(request), {
+        actor: await resolveRequestActor(request, env),
         ai: getAssistantAiConfig(env),
         appLayer: makeCloudflareCoffeeAppLive(env.DB),
         model: getAssistantModel(),
       });
     case isApiRequest(pathname):
-      return getBackendHandler(env.DB)(rewriteApiRequest(request));
+      return getBackendHandler(env.DB)(
+        rewriteApiRequest(request),
+        createRequestServices(await resolveRequestActor(request, env)),
+      );
     case isMcpRequest(pathname):
-      return getBackendHandler(env.DB)(request);
+      return getBackendHandler(env.DB)(request, createRequestServices(systemActor));
     case env.ASSETS !== undefined:
       return env.ASSETS.fetch(request);
     default:

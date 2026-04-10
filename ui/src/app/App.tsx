@@ -1,7 +1,8 @@
-import { CoffeeShopPage } from "#features/coffee-shop/components/CoffeeShopPage.tsx";
 import { NotFoundPage } from "#app/NotFoundPage.tsx";
 import { AssistantLandingPage } from "#features/assistant/components/AssistantLandingPage.tsx";
-import { appRoutes, isControlRoomPath } from "#app/routes.ts";
+import { CoffeeCustomerPage } from "#features/coffee-shop/components/CoffeeCustomerPage.tsx";
+import { CoffeeStaffPage } from "#features/coffee-shop/components/CoffeeStaffPage.tsx";
+import { appRoutes, isShopPath } from "#app/routes.ts";
 
 export default function App() {
   const pathname = window.location.pathname;
@@ -9,8 +10,12 @@ export default function App() {
     return <AssistantLandingPage />;
   }
 
-  if (isControlRoomPath(pathname)) {
-    return <CoffeeShopPage />;
+  if (isShopPath(pathname)) {
+    return <CoffeeCustomerPage />;
+  }
+
+  if (pathname === appRoutes.staff) {
+    return <CoffeeStaffPage />;
   }
 
   return <NotFoundPage />;

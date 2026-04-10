@@ -1,10 +1,12 @@
 import * as Layer from "effect/Layer";
+import * as ServiceMap from "effect/ServiceMap";
 import {
   getAssistantModel,
   getBunAssistantAiConfig,
   handleAssistantRequest,
 } from "#presentation/assistant/handler";
-import { createCoffeeWebHandler } from "./web-handler.ts";
+import { CurrentActor, systemActor } from "#service/CurrentActor";
+import { createCoffeeWebHandler, emptyWebHandlerServices } from "./web-handler.ts";
 
 export async function startCoffeeBunServer<
   TAppLayer extends Layer.Layer<never, any, any>,
@@ -22,13 +24,17 @@ export async function startCoffeeBunServer<
       const pathname = new URL(request.url).pathname;
       if (pathname === "/assistant") {
         return handleAssistantRequest(request, {
+          actor: systemActor,
           ai: getBunAssistantAiConfig(Bun.env),
           appLayer: input.appLayer,
           model: getAssistantModel(Bun.env),
         });
       }
 
-      return handler(request);
+      return handler(
+        request,
+        emptyWebHandlerServices().pipe(ServiceMap.add(CurrentActor, systemActor)),
+      );
     },
   });
 

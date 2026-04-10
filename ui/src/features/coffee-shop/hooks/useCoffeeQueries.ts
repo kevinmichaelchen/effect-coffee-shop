@@ -5,26 +5,36 @@ import {
   fetchOrders,
   updateOrderStatus,
 } from "#features/coffee-shop/api/coffee.ts";
-import type { OrderAction, PlaceOrderRequest } from "#features/coffee-shop/lib/coffee.ts";
+import type {
+  CoffeeOrder,
+  MenuItem,
+  OrderAction,
+  PlaceOrderRequest,
+} from "#features/coffee-shop/lib/coffee.ts";
 
-const menuKey = ["menu"] as const;
-const ordersKey = ["orders"] as const;
+const menuQueryKey = ["menu"] as const;
+export const ordersQueryKey = ["orders"] as const;
+
+interface OrdersQueryOptions {
+  enabled?: boolean;
+}
 
 async function refreshOrders(queryClient: ReturnType<typeof useQueryClient>): Promise<void> {
-  await queryClient.invalidateQueries({ queryKey: ordersKey });
+  await queryClient.invalidateQueries({ queryKey: ordersQueryKey });
 }
 
 export function useMenuQuery() {
-  return useQuery({
-    queryKey: menuKey,
+  return useQuery<readonly MenuItem[]>({
+    queryKey: menuQueryKey,
     queryFn: fetchMenu,
     staleTime: 60_000,
   });
 }
 
-export function useOrdersQuery() {
-  return useQuery({
-    queryKey: ordersKey,
+export function useOrdersQuery(options: OrdersQueryOptions = {}) {
+  return useQuery<readonly CoffeeOrder[]>({
+    enabled: options.enabled ?? true,
+    queryKey: ordersQueryKey,
     queryFn: fetchOrders,
     refetchInterval: 4_000,
   });

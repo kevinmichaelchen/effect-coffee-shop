@@ -2,6 +2,7 @@ import { assert, describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import { InMemoryCoffeeAppLive } from "#external/live";
+import { CurrentActor, systemActor } from "#service/CurrentActor";
 import {
   getOrder,
   listOrders,
@@ -10,6 +11,8 @@ import {
   placeOrder,
   startBrewing,
 } from "#service/use-cases/index";
+
+const provideSystemActor = Effect.provideService(CurrentActor, systemActor);
 
 describe("coffee order workflow", () => {
   it.effect("runs a full happy-path lifecycle in memory", () =>
@@ -36,7 +39,7 @@ describe("coffee order workflow", () => {
       assert.strictEqual(pickedUp.status, "picked-up");
       assert.strictEqual(pickedUpOrders.length, 1);
       assert.strictEqual(pickedUpOrders[0]?.id, created.id);
-    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
+    }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 
   it.effect("rejects tea shots that violate the domain rules", () =>
@@ -51,7 +54,7 @@ describe("coffee order workflow", () => {
       );
 
       assert.strictEqual(error.message, "Tea drinks do not support extra shots");
-    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
+    }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 
   it.effect("generates human-readable ids while keeping createdAt serializable", () =>
@@ -72,6 +75,6 @@ describe("coffee order workflow", () => {
       assert.strictEqual(second.id, "order-0002");
       assert.isTrue(DateTime.isUtc(first.createdAt));
       assert.match(encodedFirst.createdAt, /^\d{4}-\d{2}-\d{2}T/);
-    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
+    }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 });

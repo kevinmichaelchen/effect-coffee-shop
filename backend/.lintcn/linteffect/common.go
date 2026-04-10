@@ -1,6 +1,7 @@
 package linteffect
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -19,6 +20,24 @@ var reactHookNames = map[string]struct{}{
 }
 
 func isEffectFile(ctx rule.RuleContext) bool {
+	fileName := filepath.ToSlash(ctx.SourceFile.FileName())
+	if strings.Contains(fileName, "/vendor/") || strings.Contains(fileName, "/node_modules/") {
+		return false
+	}
+
+	excludedPaths := []string{
+		"/src/presentation/",
+		"/src/external/",
+		"/src/service/use-cases/",
+		"/src/service/CoffeeOrderApp.ts",
+		"/test/",
+	}
+	for _, excludedPath := range excludedPaths {
+		if strings.Contains(fileName, excludedPath) {
+			return false
+		}
+	}
+
 	text := ctx.SourceFile.Text()
 	return strings.Contains(text, "\"effect\"") ||
 		strings.Contains(text, "'effect'") ||

@@ -22,6 +22,7 @@ export interface MenuItem {
 export interface CoffeeOrder {
   readonly id: string;
   readonly customerName: string;
+  readonly ownerUserId: string;
   readonly drinkId: string;
   readonly drinkName: string;
   readonly size: DrinkSize;
@@ -35,7 +36,6 @@ export interface CoffeeOrder {
 }
 
 export interface PlaceOrderRequest {
-  customerName: string;
   drinkId: string;
   size: DrinkSize;
   milk?: Milk;
@@ -45,7 +45,6 @@ export interface PlaceOrderRequest {
 }
 
 export interface OrderDraft {
-  customerName: string;
   drinkId: string;
   size: DrinkSize;
   milk: Milk;
@@ -142,7 +141,6 @@ export function isActiveOrder(order: CoffeeOrder): boolean {
 
 export function createOrderDraft(item: MenuItem): OrderDraft {
   return {
-    customerName: "",
     drinkId: item.id,
     size: "medium",
     milk: defaultMilkFor(item),
@@ -170,7 +168,6 @@ export function normalizeDraftForItem(draft: OrderDraft, item: MenuItem): OrderD
 
 export function toPlaceOrderRequest(draft: OrderDraft): PlaceOrderRequest {
   return {
-    customerName: draft.customerName,
     drinkId: draft.drinkId,
     size: draft.size,
     milk: draft.milk,

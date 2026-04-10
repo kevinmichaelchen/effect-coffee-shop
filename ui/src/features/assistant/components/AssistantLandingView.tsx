@@ -102,12 +102,16 @@ function LandingHero({ onToggleTheme, theme }: LandingHeroProps) {
           </Text>
           <Text as="p" className="max-w-3xl text-base text-primary-foreground/80 md:text-lg">
             The landing assistant now runs through your same-origin Cloudflare Worker, executes
-            coffee tools server-side, and shares the same live state as the control room.
+            coffee tools server-side, and shares the same live state as the customer and staff
+            workspaces.
           </Text>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button asChild variant="secondary">
-            <a href={appRoutes.controlRoom}>Open control room</a>
+            <a href={appRoutes.shop}>Open customer workspace</a>
+          </Button>
+          <Button asChild variant="outline">
+            <a href={appRoutes.staff}>Open staff workspace</a>
           </Button>
         </div>
       </Card.Content>

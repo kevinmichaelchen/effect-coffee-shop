@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { SelectField } from "#shared/ui/SelectField.tsx";
-import { TextAreaField } from "#shared/ui/TextAreaField.tsx";
 import { TextField } from "#shared/ui/TextField.tsx";
+import { TextAreaField } from "#shared/ui/TextAreaField.tsx";
 import { drinkSizes } from "#features/coffee-shop/lib/coffee.ts";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 
@@ -77,7 +77,9 @@ function CustomizationFields(inputProps: CustomizationFieldsProps) {
             min={0}
             type="number"
             value={draft.shots}
-            onChange={(value) => onUpdateDraft("shots", Number.parseInt(value || "0", 10) || 0)}
+            onChange={(value: string) =>
+              onUpdateDraft("shots", Number.parseInt(value || "0", 10) || 0)
+            }
           />
         </FieldCell>
       </FieldRow>
@@ -90,12 +92,6 @@ export function OrderFields(inputProps: OrderFieldsProps) {
 
   return (
     <div className="grid gap-4">
-      <TextField
-        label="Customer name"
-        placeholder="Taylor"
-        value={draft.customerName}
-        onChange={(value) => onUpdateDraft("customerName", value)}
-      />
       <SelectField
         label="Drink"
         options={menu.map((menuItem) => ({ label: menuItem.name, value: menuItem.id }))}

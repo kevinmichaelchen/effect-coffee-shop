@@ -30,10 +30,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@better-auth/passkey": "^1.6.2",
     "@effect/platform-bun": "4.0.0-beta.43",
     "@effect/sql-d1": "4.0.0-beta.43",
     "@effect/sql-sqlite-bun": "4.0.0-beta.43",
     "@tanstack/ai": "0.10.1",
+    "better-auth": "^1.6.2",
     "effect": "4.0.0-beta.43",
     "lintcn": "^0.7.1"
   },

@@ -10,6 +10,7 @@ import {
 import type { Menu } from "#domain/menu";
 import type { CoffeeOrder, CoffeeOrders, OrderId } from "#domain/order";
 import type { ListOrdersRequest, PlaceOrderRequest } from "#service/contracts";
+import { AuthenticationRequiredError, StaffRoleRequiredError } from "#service/CurrentActor";
 import { InternalAppError } from "./errors.ts";
 import { MenuRepository } from "./ports/MenuRepository.ts";
 import { OrderIdGenerator } from "./ports/OrderIdGenerator.ts";
@@ -31,36 +32,61 @@ export class CoffeeOrderApp extends ServiceMap.Service<
     readonly listMenu: () => Effect.Effect<Menu, InternalAppError>;
     readonly placeOrder: (
       input: PlaceOrderRequest,
-    ) => Effect.Effect<CoffeeOrder, DrinkNotFoundError | InvalidOrderInputError | InternalAppError>;
+    ) => Effect.Effect<
+      CoffeeOrder,
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
     readonly getOrder: (
       orderId: OrderId,
-    ) => Effect.Effect<CoffeeOrder, OrderNotFoundError | InternalAppError>;
+    ) => Effect.Effect<
+      CoffeeOrder,
+      AuthenticationRequiredError | OrderNotFoundError | InternalAppError
+    >;
     readonly listOrders: (
       input: ListOrdersRequest,
-    ) => Effect.Effect<CoffeeOrders, InvalidOrderInputError | InternalAppError>;
+    ) => Effect.Effect<
+      CoffeeOrders,
+      AuthenticationRequiredError | InvalidOrderInputError | InternalAppError
+    >;
     readonly startBrewing: (
       orderId: OrderId,
     ) => Effect.Effect<
       CoffeeOrder,
-      InvalidOrderStatusTransitionError | OrderNotFoundError | InternalAppError
+      | AuthenticationRequiredError
+      | InvalidOrderStatusTransitionError
+      | OrderNotFoundError
+      | StaffRoleRequiredError
+      | InternalAppError
     >;
     readonly markReady: (
       orderId: OrderId,
     ) => Effect.Effect<
       CoffeeOrder,
-      InvalidOrderStatusTransitionError | OrderNotFoundError | InternalAppError
+      | AuthenticationRequiredError
+      | InvalidOrderStatusTransitionError
+      | OrderNotFoundError
+      | StaffRoleRequiredError
+      | InternalAppError
     >;
     readonly pickUpOrder: (
       orderId: OrderId,
     ) => Effect.Effect<
       CoffeeOrder,
-      InvalidOrderStatusTransitionError | OrderNotFoundError | InternalAppError
+      | AuthenticationRequiredError
+      | InvalidOrderStatusTransitionError
+      | OrderNotFoundError
+      | StaffRoleRequiredError
+      | InternalAppError
     >;
     readonly cancelOrder: (
       orderId: OrderId,
     ) => Effect.Effect<
       CoffeeOrder,
-      InvalidOrderStatusTransitionError | OrderNotFoundError | InternalAppError
+      | AuthenticationRequiredError
+      | InvalidOrderStatusTransitionError
+      | OrderNotFoundError
+      | StaffRoleRequiredError
+      | InternalAppError
     >;
   }
 >()("effect-v4-onion/service/CoffeeOrderApp") {

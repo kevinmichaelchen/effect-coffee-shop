@@ -1,5 +1,6 @@
 import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
 import { InMemoryCoffeeAppLive } from "#external/live";
+import { systemActor } from "#service/CurrentActor";
 import { describe, expect, it, vi } from "vitest";
 import { handleAssistantRequest } from "./handler.ts";
 
@@ -24,6 +25,7 @@ const createAssistantRequest = (messages: unknown) =>
   });
 
 const createAssistantHandlerOptions = (aiRun: ReturnType<typeof createAiRunMock>) => ({
+  actor: systemActor,
   ai: {
     binding: {
       run: aiRun,

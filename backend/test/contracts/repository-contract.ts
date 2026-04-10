@@ -20,6 +20,7 @@ const makeOrder = ({
 }: Partial<CoffeeOrder> & Pick<CoffeeOrder, "id">): CoffeeOrder => ({
   id,
   customerName: "Avery",
+  ownerUserId: "user-avery",
   drinkId: "latte",
   drinkName: "Latte",
   size: "medium",

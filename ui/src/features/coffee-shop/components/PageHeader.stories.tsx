@@ -8,7 +8,14 @@ const meta = {
   tags: ["autodocs"],
   args: {
     activeOrders: 3,
+    badgeLabel: "Coffee shop",
+    footerLabel: "Workspace navigation and live queue summary",
+    navLinks: [
+      { href: "/", label: "Beanline Assistant", variant: "outline" },
+      { href: "/shop", label: "Customer workspace", variant: "outline" },
+    ],
     theme: "light",
+    title: "Customer workspace",
     totalOrders: 9,
     onToggleTheme: () => {},
   },
@@ -33,6 +40,6 @@ export const Mobile: Story = {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole("button", { name: /open navigation menu/i }));
     await expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    await expect(screen.getByText(/control room menu/i)).toBeInTheDocument();
+    await expect(screen.getByText(/workspace menu/i)).toBeInTheDocument();
   },
 };

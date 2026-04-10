@@ -10,12 +10,18 @@ import {
 
 interface CoffeeWebHandler {
   readonly dispose: () => Promise<void>;
-  readonly handler: (request: Request) => Promise<Response>;
+  readonly handler: (
+    request: Request,
+    services?: ServiceMap.ServiceMap<unknown>,
+  ) => Promise<Response>;
 }
 
 const UnusedWebHandlerService = ServiceMap.Service<unknown>(
   "presentation/http/UnusedWebHandlerService",
 );
+
+export const emptyWebHandlerServices = (): ServiceMap.ServiceMap<unknown> =>
+  ServiceMap.make(UnusedWebHandlerService, undefined);
 
 export function createCoffeeWebHandler<
   TRoutes extends Layer.Layer<never, any, any>,
@@ -34,9 +40,8 @@ export function createCoffeeWebHandler<
 
   return {
     dispose,
-    handler: async (request: Request) => {
+    handler: async (request: Request, services = emptyWebHandlerServices()) => {
       const normalized = await normalizeMcpHttpRequestIds(request);
-      const services = ServiceMap.make(UnusedWebHandlerService, undefined);
       const response = await handler(normalized.request, services);
       return restoreMcpHttpResponseIds(response, normalized.surrogateIdMap);
     },

@@ -25,6 +25,7 @@ const bootstrapSqlPersistence = Effect.fn("CoffeeSql.bootstrapSqlPersistence")(
     CREATE TABLE IF NOT EXISTS orders (
       id TEXT PRIMARY KEY,
       customerName TEXT NOT NULL,
+      ownerUserId TEXT NOT NULL,
       drinkId TEXT NOT NULL,
       drinkName TEXT NOT NULL,
       size TEXT NOT NULL,
@@ -46,6 +47,16 @@ const bootstrapSqlPersistence = Effect.fn("CoffeeSql.bootstrapSqlPersistence")(
     yield* sql`
     CREATE INDEX IF NOT EXISTS orders_status_created_at_idx
     ON orders (status, createdAt, id)
+  `;
+
+    yield* sql`
+    CREATE INDEX IF NOT EXISTS orders_owner_user_id_created_at_idx
+    ON orders (ownerUserId, createdAt, id)
+  `;
+
+    yield* sql`
+    CREATE INDEX IF NOT EXISTS orders_owner_user_id_status_created_at_idx
+    ON orders (ownerUserId, status, createdAt, id)
   `;
 
     yield* Effect.forEach(

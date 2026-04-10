@@ -1,6 +1,7 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import { InMemoryCoffeeAppLive } from "#external/live";
+import { CurrentActor, systemActor } from "#service/CurrentActor";
 import type { PlaceOrderRequest } from "#service/contracts";
 import { placeOrder } from "#service/use-cases/index";
 
@@ -176,6 +177,8 @@ const invalidInputCases: ReadonlyArray<{
   },
 ];
 
+const provideSystemActor = Effect.provideService(CurrentActor, systemActor);
+
 describe("place order", () => {
   it.effect.each(defaultCases)("applies menu-driven defaults %#", ({ request, expected }) =>
     Effect.gen(function* () {
@@ -185,7 +188,7 @@ describe("place order", () => {
       assert.strictEqual(order.milk, expected.milk);
       assert.strictEqual(order.temperature, expected.temperature);
       assert.strictEqual(order.shots, expected.shots);
-    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
+    }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 
   it.effect("trims customer names and drops blank notes", () =>
@@ -199,13 +202,13 @@ describe("place order", () => {
 
       assert.strictEqual(order.customerName, "Avery");
       assert.strictEqual(order.notes, undefined);
-    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
+    }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 
   it.effect.each(invalidInputCases)("rejects invalid order input %#", ({ request, verify }) =>
     Effect.gen(function* () {
       const error = yield* Effect.flip(placeOrder(request));
       verify(error);
-    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
+    }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 });

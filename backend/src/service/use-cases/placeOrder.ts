@@ -21,6 +21,7 @@ import {
 } from "#domain/menu";
 import { InternalAppError, internalAppErrorFromPersistence } from "#service/errors";
 import { type CoffeeOrder } from "#domain/order";
+import { AuthenticationRequiredError, requireSignedInActor } from "#service/CurrentActor";
 import { OrderIdGenerator } from "../ports/OrderIdGenerator.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
@@ -131,14 +132,17 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
   request: PlaceOrderRequest,
 ): Effect.fn.Return<
   CoffeeOrder,
-  DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
+  AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
   MenuRepository | OrderIdGenerator | OrderRepository
 > {
+  const actor = yield* requireSignedInActor();
   const orderIdGenerator = yield* OrderIdGenerator;
   const menuRepository = yield* MenuRepository;
   const orderRepository = yield* OrderRepository;
-
-  const customerName = yield* validateCustomerName(request.customerName);
+  const customerName =
+    actor.kind === "system"
+      ? yield* validateCustomerName(request.customerName ?? actor.displayName)
+      : actor.displayName;
 
   const menuItem = yield* menuRepository.findById(request.drinkId).pipe(
     Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")),
@@ -162,6 +166,7 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
   const order: CoffeeOrder = {
     id,
     customerName,
+    ownerUserId: actor.userId,
     drinkId: menuItem.id,
     drinkName: menuItem.name,
     size,
