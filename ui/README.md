@@ -10,6 +10,7 @@ This repo uses Bun workspaces, so install dependencies once from the repo root w
 - RetroUI components from `retroui.dev`
 - TanStack AI React client over a same-origin Worker route
 - TanStack Query for API state
+- Better Auth passkey sign-in for customer and staff workspaces
 - strict `oxlint` + `lintcn` + ESLint checks with complexity, function-length, and size limits
 
 ## Run it
@@ -75,6 +76,12 @@ CLOUDFLARE_API_TOKEN=...
 ```
 
 The deployed Cloudflare Worker uses its `AI` binding instead and does not need those local REST credentials.
+
+If you want the local UI to exercise passkey auth through the Bun backend, also set:
+
+```bash
+BETTER_AUTH_SECRET=...
+```
 
 ## Checks
 

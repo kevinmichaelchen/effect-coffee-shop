@@ -65,6 +65,13 @@ This candidate stack is defined in [`alchemy.run.ts`](./alchemy.run.ts) and depl
 The deployed Worker uses both `D1` and `AI` bindings, so the browser app, assistant route, API, and remote MCP server share the same origin and runtime.
 Classic stdio MCP is still Bun-only and is not part of the Cloudflare deployment.
 
+For passkey auth on the Cloudflare path, also set:
+
+```bash
+BETTER_AUTH_SECRET=...
+COFFEE_STAFF_USER_IDS=user-id-1,user-id-2 # optional
+```
+
 Alchemy state stays local under `.alchemy/` by default.
 If you want remote shared state later, set `ALCHEMY_STATE_TOKEN` and the stack will switch to `CloudflareStateStore`.
 If you start binding secret values with `alchemy.secret(...)`, set `ALCHEMY_PASSWORD` so Alchemy can encrypt them in state.
@@ -158,10 +165,14 @@ The current shape is:
 
 - one Alchemy `Website` resource
 - `ui/dist` served as static assets
+- `/api/auth/*` handled by Better Auth with passkey registration and sign-in
+- `/api/me` exposes the resolved actor as `anonymous | customer | staff`
 - `/api/assistant` handled by a Workers AI-backed Beanline route
+- `/api/orders` scoped by authenticated order ownership
 - `/api/*` rewritten into the existing Effect `HttpApi`
 - `/mcp` handled by the existing MCP HTTP server
 - `D1` and `AI` provisioned and bound into the Worker
+- `BETTER_AUTH_SECRET` bound into the Worker as a Cloudflare secret
 
 Expected workflow:
 
