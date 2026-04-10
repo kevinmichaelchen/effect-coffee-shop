@@ -165,7 +165,10 @@ The current shape is:
 
 - one Alchemy `Website` resource
 - `ui/dist` served as static assets
+- `/.well-known/agent-configuration` exposed for Better Auth Agent Auth discovery
 - `/api/auth/*` handled by Better Auth with passkey registration and sign-in
+- `/api/auth/capability/*` and `/api/auth/agent/*` handled by Better Auth Agent Auth
+- `/device/capabilities` serves the delegated capability approval UI
 - `/api/me` exposes the resolved actor as `anonymous | customer | staff`
 - `/api/assistant` handled by a Workers AI-backed Beanline route
 - `/api/orders` scoped by authenticated order ownership

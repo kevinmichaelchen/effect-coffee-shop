@@ -93,6 +93,19 @@ This is one of the main places where the layer feels "adapter-heavy". That is re
 - Workers AI request/response shapes
 - coffee service methods
 
+### `auth/`
+
+- [server.ts](./auth/server.ts): Better Auth setup for passkeys, session resolution, D1 persistence bootstrap, and Cloudflare request integration.
+- [agent-auth.ts](./auth/agent-auth.ts): Better Auth Agent Auth capability definitions and the execution bridge from delegated agent calls into `CoffeeOrderApp`.
+- [server.test.ts](./auth/server.test.ts): Passkey registration regression coverage.
+- [agent-auth.test.ts](./auth/agent-auth.test.ts): Delegated capability execution coverage against the D1-backed app wiring.
+
+Why this exists:
+
+- passkey auth, session cookies, and staff/customer actor resolution are presentation-boundary concerns
+- Agent Auth adds another public protocol surface with discovery, approval, and capability execution
+- Better Auth needs Cloudflare-specific setup and persistence bootstrapping that should not leak into the domain or service layers
+
 ### `mcp/`
 
 - [server.ts](./mcp/server.ts): Assembles the MCP server surface.
@@ -170,6 +183,17 @@ This is thicker because it combines:
 - tool orchestration
 - progress event emission
 
+### Auth
+
+`browser or agent -> [server.ts](./auth/server.ts) / [agent-auth.ts](./auth/agent-auth.ts) -> CurrentActor or delegated capability execution -> CoffeeOrderApp`
+
+This path owns:
+
+- passkey registration and session lookup
+- actor projection into `anonymous | customer | staff`
+- delegated capability discovery and execution
+- approval-flow integration for `/device/capabilities`
+
 ### MCP
 
 `MCP client -> [server.ts](./mcp/server.ts) -> tools/resources/prompts -> CoffeeOrderApp`
@@ -191,6 +215,7 @@ On HTTP, the flow is:
 - CLI command definitions
 - Cloudflare Worker entrypoint
 - assistant tool definitions and assistant-specific request decoding
+- auth/session boundary handling and delegated capability execution
 - tests at the protocol boundary
 
 ### Compensating For Library / Platform Seams
@@ -246,6 +271,12 @@ ElectricSQL's newer Durable Streams / Durable Sessions / StreamDB work looks rel
 
 That would be a product-level architecture choice, not a cleanup exercise. It is promising, but not yet justified for the current single-user assistant surface.
 
+### 4. Revisit MCP-Specific Agent Auth When The Published Package Catches Up
+
+The current Better Auth Agent Auth package gives us discovery, approval, and delegated capability execution, but not the MCP adapter shape described in newer docs.
+
+That means [agent-auth.ts](./auth/agent-auth.ts) currently aligns capability names with our MCP actions instead of making `/mcp` itself an Agent Auth transport.
+
 ## Reading Order
 
 If you are new to this directory, read in this order:
@@ -255,8 +286,10 @@ If you are new to this directory, read in this order:
 3. [mcp/server.ts](./mcp/server.ts)
 4. [assistant/handler.ts](./assistant/handler.ts)
 5. [assistant/runtime.ts](./assistant/runtime.ts)
-6. [http/web-handler.ts](./http/web-handler.ts)
-7. [mcp/http-jsonrpc-ids.ts](./mcp/http-jsonrpc-ids.ts)
+6. [auth/server.ts](./auth/server.ts)
+7. [auth/agent-auth.ts](./auth/agent-auth.ts)
+8. [http/web-handler.ts](./http/web-handler.ts)
+9. [mcp/http-jsonrpc-ids.ts](./mcp/http-jsonrpc-ids.ts)
 
 That order shows the normal architecture first, then the shims.
 
