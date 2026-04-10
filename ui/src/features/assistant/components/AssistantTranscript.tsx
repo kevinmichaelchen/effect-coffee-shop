@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 import { Alert } from "#shared/ui/retroui/Alert.tsx";
 import { Button } from "#shared/ui/retroui/Button.tsx";
 import { Card } from "#shared/ui/retroui/Card.tsx";
@@ -8,6 +8,7 @@ import { Text } from "#shared/ui/retroui/Text.tsx";
 import type {
   AssistantDisplayMessage,
   AssistantStatus,
+  AssistantToolActivity,
 } from "#features/assistant/lib/assistant-chat.ts";
 import type { ConnectionStatus } from "@tanstack/ai-client";
 
@@ -17,6 +18,7 @@ interface AssistantTranscriptProps {
   errorMessage: string | null;
   input: string;
   isBusy: boolean;
+  latestActivity: AssistantToolActivity | null;
   messages: readonly AssistantDisplayMessage[];
   prompts: readonly string[];
   status: AssistantStatus;
@@ -33,6 +35,7 @@ export function AssistantTranscript(inputProps: AssistantTranscriptProps) {
     errorMessage,
     input,
     isBusy,
+    latestActivity,
     messages,
     onInputChange,
     onPromptClick,
@@ -41,6 +44,16 @@ export function AssistantTranscript(inputProps: AssistantTranscriptProps) {
     prompts,
     status,
   } = inputProps;
+  const transcriptViewportRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const viewport = transcriptViewportRef.current;
+    if (viewport === null) {
+      return;
+    }
+
+    viewport.scrollTop = viewport.scrollHeight;
+  }, [isBusy, messages.length]);
 
   return (
     <Card className="w-full border-border bg-card">
@@ -53,23 +66,10 @@ export function AssistantTranscript(inputProps: AssistantTranscriptProps) {
             <Alert.Description>{errorMessage}</Alert.Description>
           </Alert>
         ) : null}
-        <div className="flex flex-wrap gap-2">
-          {prompts.map((prompt) => (
-            <Button key={prompt} size="sm" variant="outline" onClick={() => onPromptClick(prompt)}>
-              {prompt}
-            </Button>
-          ))}
-        </div>
-        <div className="grid min-h-80 gap-3 border-2 border-border bg-background p-4">
-          {messages.length === 0 ? (
-            <EmptyTranscript />
-          ) : (
-            messages.map((message) => (
-              <TranscriptBubble key={message.id} content={message.content} speaker={message.role} />
-            ))
-          )}
-        </div>
+        <PromptStrip prompts={prompts} onPromptClick={onPromptClick} />
+        <TranscriptViewport messages={messages} viewportRef={transcriptViewportRef} />
         <AssistantComposer
+          {...getBusyDetailProp(status, latestActivity)}
           helpText="Cmd/Ctrl + Enter sends the prompt to the same-origin Worker."
           input={input}
           isBusy={isBusy}
@@ -79,6 +79,68 @@ export function AssistantTranscript(inputProps: AssistantTranscriptProps) {
         />
       </Card.Content>
     </Card>
+  );
+}
+
+function getComposerBusyDetail(
+  status: AssistantStatus,
+  latestActivity: AssistantToolActivity | null,
+): string | undefined {
+  if (latestActivity?.kind === "tool-call") {
+    return `Running ${latestActivity.label} on the Worker.`;
+  }
+
+  if (latestActivity?.kind === "tool-result") {
+    return `${latestActivity.label} finished. Waiting on the final answer.`;
+  }
+
+  return status.phase === "running" ? status.detail : undefined;
+}
+
+function getBusyDetailProp(
+  status: AssistantStatus,
+  latestActivity: AssistantToolActivity | null,
+): Record<string, never> | { busyDetail: string } {
+  const busyDetail = getComposerBusyDetail(status, latestActivity);
+  return busyDetail === undefined ? {} : { busyDetail };
+}
+
+interface PromptStripProps {
+  onPromptClick: (prompt: string) => void;
+  prompts: readonly string[];
+}
+
+function PromptStrip({ onPromptClick, prompts }: PromptStripProps) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {prompts.map((prompt) => (
+        <Button key={prompt} size="sm" variant="outline" onClick={() => onPromptClick(prompt)}>
+          {prompt}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
+interface TranscriptViewportProps {
+  messages: readonly AssistantDisplayMessage[];
+  viewportRef: RefObject<HTMLDivElement | null>;
+}
+
+function TranscriptViewport({ messages, viewportRef }: TranscriptViewportProps) {
+  return (
+    <div
+      ref={viewportRef}
+      className="grid min-h-80 max-h-[32rem] gap-3 overflow-y-auto border-2 border-border bg-background p-4 pr-3"
+    >
+      {messages.length === 0 ? (
+        <EmptyTranscript />
+      ) : (
+        messages.map((message) => (
+          <TranscriptBubble key={message.id} content={message.content} speaker={message.role} />
+        ))
+      )}
+    </div>
   );
 }
 

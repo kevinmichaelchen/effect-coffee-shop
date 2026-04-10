@@ -62,6 +62,7 @@ export function AssistantLandingView(inputProps: AssistantLandingViewProps) {
           errorMessage={errorMessage}
           input={input}
           isBusy={isBusy}
+          latestActivity={events.length === 0 ? null : (events[events.length - 1] ?? null)}
           messages={messages}
           prompts={prompts}
           status={status}

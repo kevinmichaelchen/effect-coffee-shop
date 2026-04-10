@@ -21,6 +21,7 @@ export const Idle: Story = {};
 
 export const Busy: Story = {
   args: {
+    busyDetail: "list_menu finished. Waiting on the final answer.",
     isBusy: true,
     submitLabel: "Calling live tools…",
   },

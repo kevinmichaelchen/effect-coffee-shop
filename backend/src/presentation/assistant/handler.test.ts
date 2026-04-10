@@ -3,7 +3,7 @@ import { InMemoryCoffeeAppLive } from "#external/live";
 import { describe, expect, it, vi } from "vitest";
 import { handleAssistantRequest } from "./handler.ts";
 
-const assistantModel = "@hf/nousresearch/hermes-2-pro-mistral-7b";
+const assistantModel = "@cf/meta/llama-3.1-8b-instruct-fast";
 
 const createAiRunMock = () =>
   vi.fn<

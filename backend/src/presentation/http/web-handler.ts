@@ -3,11 +3,19 @@ import * as ServiceMap from "effect/ServiceMap";
 import * as HttpServer from "effect/unstable/http/HttpServer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
+import {
+  normalizeMcpHttpRequestIds,
+  restoreMcpHttpResponseIds,
+} from "#presentation/mcp/http-jsonrpc-ids";
 
 interface CoffeeWebHandler {
   readonly dispose: () => Promise<void>;
   readonly handler: (request: Request) => Promise<Response>;
 }
+
+const UnusedWebHandlerService = ServiceMap.Service<unknown>(
+  "presentation/http/UnusedWebHandlerService",
+);
 
 export function createCoffeeWebHandler<
   TRoutes extends Layer.Layer<never, any, any>,
@@ -26,7 +34,11 @@ export function createCoffeeWebHandler<
 
   return {
     dispose,
-    handler: async (request: Request) =>
-      handler(request, ServiceMap.empty() as ServiceMap.ServiceMap<unknown>),
+    handler: async (request: Request) => {
+      const normalized = await normalizeMcpHttpRequestIds(request);
+      const services = ServiceMap.make(UnusedWebHandlerService, undefined);
+      const response = await handler(normalized.request, services);
+      return restoreMcpHttpResponseIds(response, normalized.surrogateIdMap);
+    },
   };
 }

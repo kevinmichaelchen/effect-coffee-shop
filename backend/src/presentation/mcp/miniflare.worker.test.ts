@@ -1,11 +1,16 @@
 import { assert } from "@effect/vitest";
 import * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
 import {
   createMcpMiniflareClient,
   type McpMiniflareClient,
   type McpRequest,
 } from "../../../test/support/McpMiniflare.ts";
+
+const StringIdResponseSchema = Schema.Struct({
+  id: Schema.String,
+});
 
 const initializeClient = (request: McpRequest) =>
   request<{
@@ -118,6 +123,43 @@ const verifyPromptAndProtocol = (request: McpRequest, responses: ReadonlyArray<R
     assert.strictEqual(responses[0]?.headers.get("Mcp-Protocol-Version"), "2025-06-18");
   });
 
+const verifyStringRequestIds = (request: McpRequest, responses: ReadonlyArray<Response>) =>
+  Effect.gen(function* () {
+    const initialize = yield* request<{
+      readonly protocolVersion: string;
+      readonly serverInfo: {
+        readonly name: string;
+      };
+    }>(
+      "initialize",
+      {
+        protocolVersion: "2025-06-18",
+        capabilities: {},
+        clientInfo: {
+          name: "vitest",
+          version: "1.0.0",
+        },
+      },
+      {
+        id: "init",
+      },
+    );
+    const response = responses[0];
+    const json =
+      response === undefined
+        ? null
+        : Schema.decodeUnknownSync(StringIdResponseSchema)(
+            yield* Effect.tryPromise({
+              try: async () => response.json(),
+              catch: (cause) => cause,
+            }),
+          );
+
+    assert.strictEqual(initialize.protocolVersion, "2025-06-18");
+    assert.strictEqual(initialize.serverInfo.name, "Coffee Orders MCP");
+    assert.strictEqual(json?.id, "init");
+  });
+
 const runMcpTest = async (
   verify: (
     request: McpRequest,
@@ -158,5 +200,9 @@ describe("mcp http on miniflare", () => {
 
   it("serves placed orders through MCP resources", async () => {
     await runMcpTest((request) => verifyOrderResource(request));
+  });
+
+  it("preserves string JSON-RPC ids over MCP HTTP", async () => {
+    await runMcpTest((request, responses) => verifyStringRequestIds(request, responses));
   });
 });

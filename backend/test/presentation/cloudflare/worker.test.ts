@@ -102,6 +102,49 @@ describe("cloudflare worker", () => {
     }
   });
 
+  it("preserves string JSON-RPC ids on the MCP HTTP surface", async () => {
+    const { assetsFetch, dispose, env } = await makeTestEnv();
+
+    try {
+      const response = await worker.fetch(
+        new Request("http://example.com/mcp", {
+          body: JSON.stringify({
+            id: "init",
+            jsonrpc: "2.0",
+            method: "initialize",
+            params: {
+              protocolVersion: "2025-06-18",
+              capabilities: {},
+              clientInfo: {
+                name: "vitest",
+                version: "1.0.0",
+              },
+            },
+          }),
+          headers: {
+            "content-type": "application/json",
+          },
+          method: "POST",
+        }),
+        env,
+      );
+
+      const json = (await response.json()) as {
+        readonly id: string;
+        readonly result: {
+          readonly protocolVersion: string;
+        };
+      };
+
+      expect(response.status).toBe(200);
+      expect(json.id).toBe("init");
+      expect(json.result.protocolVersion).toBe("2025-06-18");
+      expect(assetsFetch).not.toHaveBeenCalled();
+    } finally {
+      await dispose();
+    }
+  });
+
   it("falls back to static assets for non-api routes", async () => {
     const { assetsFetch, dispose, env } = await makeTestEnv();
 

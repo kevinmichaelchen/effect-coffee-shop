@@ -9,7 +9,7 @@ import { runWorkersAiOverRest } from "./rest.ts";
 import type { AssistantToolDefinition } from "./tools.ts";
 
 const maxAssistantToolRounds = 4;
-const assistantMaxTokens = 384;
+const assistantMaxTokens = 256;
 
 interface WorkersAiBinding {
   run(
@@ -209,5 +209,5 @@ function exhaustedToolLoopMessage(): string {
 }
 
 function getDefaultAssistantModel(): string {
-  return "@hf/nousresearch/hermes-2-pro-mistral-7b";
+  return "@cf/meta/llama-3.1-8b-instruct-fast";
 }

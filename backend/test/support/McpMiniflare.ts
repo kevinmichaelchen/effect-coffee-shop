@@ -6,6 +6,9 @@ import * as Effect from "effect/Effect";
 export type McpRequest = <Result>(
   method: string,
   params?: unknown,
+  options?: {
+    readonly id?: number | string;
+  },
 ) => Effect.Effect<Result, unknown>;
 
 export type McpMiniflareClient = {
@@ -53,7 +56,13 @@ export const createMcpMiniflareClient = async (): Promise<McpMiniflareClient> =>
   let sessionId: string | null = null;
   let requestId = 1;
 
-  const request: McpRequest = <Result>(method: string, params?: unknown) =>
+  const request: McpRequest = <Result>(
+    method: string,
+    params?: unknown,
+    options?: {
+      readonly id?: number | string;
+    },
+  ) =>
     Effect.tryPromise({
       try: async () => {
         const headers = new Headers({
@@ -68,7 +77,7 @@ export const createMcpMiniflareClient = async (): Promise<McpMiniflareClient> =>
           method: "POST",
           headers,
           body: JSON.stringify({
-            id: requestId++,
+            id: options?.id ?? requestId++,
             jsonrpc: "2.0",
             method,
             params,
