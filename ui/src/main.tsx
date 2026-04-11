@@ -4,7 +4,13 @@ import App from "#App";
 import { AppProviders } from "#app/AppProviders.tsx";
 import "./index.css";
 
-createRoot(document.getElementById("root")!).render(
+const rootElement = document.getElementById("root");
+
+if (rootElement === null) {
+  throw new Error("Missing #root element.");
+}
+
+createRoot(rootElement).render(
   <StrictMode>
     <AppProviders>
       <App />

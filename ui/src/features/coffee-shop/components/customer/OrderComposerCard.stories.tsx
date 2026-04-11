@@ -19,11 +19,11 @@ interface OrderComposerStoryProps {
 }
 
 function createNextDraft(
-  menu: readonly MenuItem[],
+  menu: readonly [MenuItem, ...MenuItem[]],
   currentDraft: OrderDraft,
   drinkId: string,
 ): { draft: OrderDraft; item: MenuItem } {
-  const item = menu.find((entry) => entry.id === drinkId) ?? menu[0]!;
+  const item = menu.find((entry) => entry.id === drinkId) ?? menu[0];
   return {
     draft: normalizeDraftForItem(currentDraft, item),
     item,
