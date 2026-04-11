@@ -1,4 +1,4 @@
-package no_effect_promise
+package no_classic_for_loop
 
 import (
 	"testing"
@@ -7,13 +7,13 @@ import (
 	"github.com/typescript-eslint/tsgolint/internal/rules/fixtures"
 )
 
-func TestNoEffectPromise(t *testing.T) {
+func TestNoClassicForLoop(t *testing.T) {
 	t.Parallel()
 	rule_tester.RunRuleTester(
 		fixtures.GetRootDir(),
 		"tsconfig.minimal.json",
 		t,
-		&NoEffectPromiseRule,
+		&NoClassicForLoopRule,
 		validCases,
 		invalidCases,
 	)
@@ -22,14 +22,16 @@ func TestNoEffectPromise(t *testing.T) {
 var validCases = []rule_tester.ValidTestCase{
 	{
 		Code: `
-declare const Effect: { tryPromise(fn: () => Promise<unknown>): unknown };
-Effect.tryPromise(() => Promise.resolve());
+const values = [1, 2, 3];
+for (const value of values) {
+	console.log(value);
+}
 		`,
 	},
 	{
 		Code: `
-declare const Fx: { promise(fn: () => Promise<unknown>): unknown };
-Fx.promise(() => Promise.resolve());
+const walk = (index: number): number =>
+	index >= 3 ? index : walk(index + 1);
 		`,
 	},
 }
@@ -37,11 +39,12 @@ Fx.promise(() => Promise.resolve());
 var invalidCases = []rule_tester.InvalidTestCase{
 	{
 		Code: `
-declare const Effect: { promise(fn: () => Promise<unknown>): unknown };
-Effect.promise(() => Promise.resolve());
+for (let index = 0; index < 3; index += 1) {
+	console.log(index);
+}
 		`,
 		Errors: []rule_tester.InvalidTestCaseError{
-			{MessageId: "preferTryPromise"},
+			{MessageId: "noClassicForLoop"},
 		},
 	},
 }
