@@ -1,33 +1,7 @@
 import type { AppActor } from "#service/CurrentActor";
 
-export type RequestRouteKind = "agent-discovery" | "api" | "assistant" | "assets" | "auth" | "mcp";
-
 type StructuredLogValue = boolean | number | string | null;
-type StructuredLogRecord = Readonly<Record<string, StructuredLogValue>>;
-
-export function routeKindFromPathname(pathname: string): RequestRouteKind {
-  if (pathname === "/.well-known/agent-configuration") {
-    return "agent-discovery";
-  }
-
-  if (pathname === "/api/assistant" || pathname === "/api/assistant/") {
-    return "assistant";
-  }
-
-  if (pathname === "/api/auth" || pathname.startsWith("/api/auth/")) {
-    return "auth";
-  }
-
-  if (pathname === "/api" || pathname.startsWith("/api/")) {
-    return "api";
-  }
-
-  if (pathname === "/mcp" || pathname.startsWith("/mcp/")) {
-    return "mcp";
-  }
-
-  return "assets";
-}
+export type StructuredLogRecord = Readonly<Record<string, StructuredLogValue>>;
 
 export function actorLogFields(actor: AppActor | undefined): StructuredLogRecord {
   if (actor === undefined) {
@@ -51,38 +25,38 @@ export function logStructuredEvent(record: StructuredLogRecord): void {
 }
 
 export function logRequestCompleted(input: {
-  readonly actor: AppActor | undefined;
   readonly durationMs: number;
+  readonly extraFields?: StructuredLogRecord;
   readonly request: Request;
   readonly response: Response;
-  readonly routeKind: RequestRouteKind;
+  readonly routeKind: string;
 }): void {
   logStructuredEvent({
     event: "worker.request.complete",
     ...requestLogFields(input.request, input.routeKind),
-    ...actorLogFields(input.actor),
+    ...input.extraFields,
     duration_ms: roundDurationMs(input.durationMs),
     http_status: input.response.status,
   });
 }
 
 export function logRequestFailed(input: {
-  readonly actor: AppActor | undefined;
   readonly durationMs: number;
   readonly error: unknown;
+  readonly extraFields?: StructuredLogRecord;
   readonly request: Request;
-  readonly routeKind: RequestRouteKind;
+  readonly routeKind: string;
 }): void {
   logStructuredEvent({
     event: "worker.request.error",
     ...requestLogFields(input.request, input.routeKind),
-    ...actorLogFields(input.actor),
+    ...input.extraFields,
     duration_ms: roundDurationMs(input.durationMs),
     error_message: String(input.error),
   });
 }
 
-function requestLogFields(request: Request, routeKind: RequestRouteKind): StructuredLogRecord {
+function requestLogFields(request: Request, routeKind: string): StructuredLogRecord {
   return {
     cf_ray: request.headers.get("cf-ray"),
     http_method: request.method,

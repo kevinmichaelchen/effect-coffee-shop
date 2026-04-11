@@ -59,6 +59,8 @@ If this directory were smaller, one of two things would be happening:
 
 - [api.ts](./http/api.ts): Defines the public REST API shape using Effect `HttpApi`, including endpoint schemas and error projections.
 - [bun-server.ts](./http/bun-server.ts): Starts the local Bun server and mounts the assistant route for non-Cloudflare runs.
+- [cloudflare-handler.ts](./http/cloudflare-handler.ts): Shared cached Effect web handler for the Cloudflare API and MCP mounts.
+- [cloudflare-mount.ts](./http/cloudflare-mount.ts): Cloudflare API mount that resolves actor state and rewrites `/api/*` requests onto the shared web handler.
 - [main.ts](./http/main.ts): Minimal local REST entrypoint.
 - [web-handler.ts](./http/web-handler.ts): Shared "turn a layered Effect router into a web handler" adapter used by Bun and Cloudflare.
 - [api.test.ts](./http/api.test.ts): Boundary tests for REST behavior.
@@ -70,6 +72,7 @@ Why this exists:
 
 ### `assistant/`
 
+- [cloudflare-mount.ts](./assistant/cloudflare-mount.ts): Cloudflare-specific assistant mount that resolves actor/runtime state before calling the shared handler.
 - [handler.ts](./assistant/handler.ts): `/api/assistant` boundary. Decodes request bodies, starts the run, and emits SSE back to the UI.
 - [messages.ts](./assistant/messages.ts): assistant request decoding and message-shape conversion from TanStack chat payloads into model messages.
 - [observability.ts](./assistant/observability.ts): assistant run and tool-activity logging helpers.
@@ -98,6 +101,7 @@ This is one of the main places where the layer feels "adapter-heavy". That is re
 
 ### `auth/`
 
+- [cloudflare-mount.ts](./auth/cloudflare-mount.ts): Auth and agent-discovery mounts for the Cloudflare host.
 - [server.ts](./auth/server.ts): Better Auth setup for passkeys, session resolution, D1 persistence bootstrap, and Cloudflare request integration.
 - [agent-auth.ts](./auth/agent-auth.ts): Better Auth Agent Auth capability definitions and the execution bridge from delegated agent calls into `CoffeeOrderApp`.
 - [server.test.ts](./auth/server.test.ts): Passkey registration regression coverage.
@@ -111,6 +115,7 @@ Why this exists:
 
 ### `mcp/`
 
+- [cloudflare-mount.ts](./mcp/cloudflare-mount.ts): Cloudflare MCP mount that keeps `/mcp` passthrough out of the generic Worker host.
 - [server.ts](./mcp/server.ts): Assembles the MCP server surface.
 - [actions.ts](./mcp/actions.ts): Shared MCP action specs for tool names, schemas, and success/failure contracts.
 - [action-tools.ts](./mcp/action-tools.ts): Projects service methods into MCP tools.
@@ -138,7 +143,11 @@ That file is a good example of accidental complexity:
 ### `cloudflare/`
 
 - [worker.ts](./cloudflare/worker.ts): Thin production Worker entrypoint.
-- [router.ts](./cloudflare/router.ts): Cloudflare request routing, auth bootstrap, assistant/API/MCP dispatch, and structured request logging.
+- [router.ts](./cloudflare/router.ts): Assembly-only route ordering for Cloudflare mounts.
+- [host.ts](./cloudflare/host.ts): Generic Worker host that handles ordered mount dispatch plus request-level logging/error logging.
+- [mount.ts](./cloudflare/mount.ts): Small Cloudflare mount and request-context primitives shared across presentation surfaces.
+- [context.ts](./cloudflare/context.ts): Typed Cloudflare env/binding surface used by the Worker entrypoint and feature mounts.
+- [assets-mount.ts](./cloudflare/assets-mount.ts): Static asset fallback mount for non-API requests.
 
 ### `observability/`
 
@@ -243,10 +252,12 @@ On HTTP, the flow is:
   Why: TanStack chat messages, Workers AI message formats, and our service/tool model do not align 1:1.
 - parts of [chunks.ts](./assistant/chunks.ts)
   Why: the UI wants structured progress over SSE, but our current assistant runtime returns a final text blob after the tool loop.
-- parts of [router.ts](./cloudflare/router.ts)
-  Why: Cloudflare needs a single fetch entrypoint, but we also want route-aware request logging, auth bootstrap, and shared handler reuse without cramming all of that into `worker.ts`.
+- parts of [router.ts](./cloudflare/router.ts) and the feature-specific `cloudflare-mount.ts` files
+  Why: Cloudflare needs a single fetch entrypoint, but we also want request logging, auth bootstrap, and shared handler reuse without hard-coupling the generic Worker host to coffee-shop-specific route policy.
 
 This is the code most likely to shrink over time.
+
+One recent cleanup in that direction: the Worker-specific glue now lives in a generic Cloudflare host/mount layer, while auth, assistant, HTTP, and MCP each own their own Cloudflare mount. That keeps the Cloudflare utility code aware of `Request`, `env`, and logging, but not aware of coffee-shop-specific route policy.
 
 ## Why The Tests Live Here
 
