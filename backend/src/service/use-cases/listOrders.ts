@@ -3,6 +3,11 @@ import { InvalidOrderInputError } from "#domain/errors";
 import { isOrderStatus, type CoffeeOrders } from "#domain/order";
 import { AuthenticationRequiredError, requireSignedInActor } from "#service/CurrentActor";
 import { InternalAppError, internalAppErrorFromPersistence } from "#service/errors";
+import {
+  actorObservabilityAttributes,
+  annotateObservabilitySpan,
+  logInfoWithAttributes,
+} from "#service/observability";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 import { type ListOrdersRequest } from "../contracts.ts";
 
@@ -16,11 +21,25 @@ export const listOrders = Effect.fn("CoffeeOrders.listOrders")(function* (
   const actor = yield* requireSignedInActor();
   const orderRepository = yield* OrderRepository;
   const ownerFilter = actor.kind === "customer" ? { ownerUserId: actor.userId } : {};
+  const observabilityAttributes = {
+    ...actorObservabilityAttributes(actor),
+    order_action: "list",
+    ...(request.status === undefined ? {} : { order_status: request.status }),
+  };
+
+  yield* annotateObservabilitySpan(observabilityAttributes);
 
   if (request.status === undefined) {
-    return yield* orderRepository
+    const orders = yield* orderRepository
       .list(ownerFilter)
       .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to list orders right now")));
+
+    yield* logInfoWithAttributes("listed coffee orders", {
+      ...observabilityAttributes,
+      order_count: orders.length,
+    });
+
+    return orders;
   }
 
   if (!isOrderStatus(request.status)) {
@@ -29,10 +48,17 @@ export const listOrders = Effect.fn("CoffeeOrders.listOrders")(function* (
     });
   }
 
-  return yield* orderRepository
+  const orders = yield* orderRepository
     .list({
       ...ownerFilter,
       status: request.status,
     })
     .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to list orders right now")));
+
+  yield* logInfoWithAttributes("listed coffee orders", {
+    ...observabilityAttributes,
+    order_count: orders.length,
+  });
+
+  return orders;
 });

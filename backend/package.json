@@ -30,6 +30,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@better-auth/agent-auth": "0.4.5",
     "@better-auth/passkey": "^1.6.2",
     "@effect/platform-bun": "4.0.0-beta.43",
     "@effect/sql-d1": "4.0.0-beta.43",

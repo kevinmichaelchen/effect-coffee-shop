@@ -22,6 +22,11 @@ import {
 import { InternalAppError, internalAppErrorFromPersistence } from "#service/errors";
 import { type CoffeeOrder } from "#domain/order";
 import { AuthenticationRequiredError, requireSignedInActor } from "#service/CurrentActor";
+import {
+  actorObservabilityAttributes,
+  annotateObservabilitySpan,
+  logInfoWithAttributes,
+} from "#service/observability";
 import { OrderIdGenerator } from "../ports/OrderIdGenerator.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
@@ -144,6 +149,12 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
       ? yield* validateCustomerName(request.customerName ?? actor.displayName)
       : actor.displayName;
 
+  yield* annotateObservabilitySpan({
+    ...actorObservabilityAttributes(actor),
+    drink_id: request.drinkId,
+    order_action: "place",
+  });
+
   const menuItem = yield* menuRepository.findById(request.drinkId).pipe(
     Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")),
     Effect.flatMap(
@@ -179,7 +190,17 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
     ...(notes === undefined ? {} : { notes }),
   };
 
-  return yield* orderRepository
+  const savedOrder = yield* orderRepository
     .save(order)
     .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")));
+
+  yield* logInfoWithAttributes("coffee order placed", {
+    ...actorObservabilityAttributes(actor),
+    drink_id: request.drinkId,
+    order_action: "place",
+    order_id: savedOrder.id,
+    order_status: savedOrder.status,
+  });
+
+  return savedOrder;
 });

@@ -1,5 +1,5 @@
 import alchemy from "alchemy";
-import { Ai, D1Database, Website } from "alchemy/cloudflare";
+import { Ai, AiGateway, D1Database, Website } from "alchemy/cloudflare";
 import { CloudflareStateStore } from "alchemy/state";
 
 const app = await alchemy("effect-v4-onion", {
@@ -8,6 +8,7 @@ const app = await alchemy("effect-v4-onion", {
     ? (scope) => new CloudflareStateStore(scope)
     : undefined,
 });
+const aiGatewayEnabled = process.env.COFFEE_ASSISTANT_AI_GATEWAY === "1";
 
 export const coffeeDb = await D1Database("coffee-db", {
   dev: {
@@ -17,10 +18,33 @@ export const coffeeDb = await D1Database("coffee-db", {
 
 export const ai = Ai();
 
+export const assistantGateway = aiGatewayEnabled
+  ? await AiGateway("assistant", {
+      authentication: true,
+      collectLogs: true,
+    })
+  : undefined;
+
 export const website = await Website("onion", {
   url: true,
   compatibility: "node",
   entrypoint: "./backend/src/presentation/cloudflare/worker.ts",
+  observability: {
+    enabled: true,
+    headSamplingRate: 1,
+    logs: {
+      enabled: true,
+      headSamplingRate: 1,
+      invocationLogs: true,
+      persist: true,
+    },
+    traces: {
+      enabled: true,
+      headSamplingRate: 1,
+      persist: true,
+    },
+  },
+  sourceMap: true,
   build: {
     command: "bun run --cwd ui build",
   },
@@ -29,10 +53,17 @@ export const website = await Website("onion", {
   },
   assets: {
     directory: "./ui/dist",
-    run_worker_first: ["/api", "/api/*", "/mcp", "/mcp/*"],
+    run_worker_first: [
+      "/.well-known/agent-configuration",
+      "/api",
+      "/api/*",
+      "/mcp",
+      "/mcp/*",
+    ],
   },
   bindings: {
     AI: ai,
+    AI_GATEWAY_ID: assistantGateway?.id ?? "",
     BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET,
     COFFEE_STAFF_USER_IDS: process.env.COFFEE_STAFF_USER_IDS ?? "",
     DB: coffeeDb,
@@ -40,6 +71,7 @@ export const website = await Website("onion", {
 });
 
 console.log({
+  assistantGateway: assistantGateway?.id ?? null,
   database: coffeeDb.name,
   url: website.url,
 });

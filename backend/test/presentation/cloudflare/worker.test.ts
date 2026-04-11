@@ -158,4 +158,34 @@ describe("cloudflare worker", () => {
       await dispose();
     }
   });
+
+  it("exposes the agent discovery document from the well-known path", async () => {
+    const { assetsFetch, dispose, env } = await makeTestEnv();
+
+    try {
+      const response = await worker.fetch(
+        new Request("http://example.com/.well-known/agent-configuration"),
+        {
+          ...env,
+          BETTER_AUTH_SECRET: "test-secret-please-change-me-0001",
+        },
+      );
+
+      const json = (await response.json()) as {
+        readonly default_location: string;
+        readonly endpoints: {
+          readonly execute: string;
+        };
+        readonly provider_name: string;
+      };
+
+      expect(response.status).toBe(200);
+      expect(json.provider_name).toBe("Onion Coffee Shop");
+      expect(json.default_location).toBe("http://example.com/api/auth/capability/execute");
+      expect(json.endpoints.execute).toBe("http://example.com/api/auth/capability/execute");
+      expect(assetsFetch).not.toHaveBeenCalled();
+    } finally {
+      await dispose();
+    }
+  });
 });

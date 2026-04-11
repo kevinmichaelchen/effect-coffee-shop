@@ -64,6 +64,8 @@ bun run cf:deploy -- --profile default
 This candidate stack is defined in [`alchemy.run.ts`](./alchemy.run.ts) and deploys one Cloudflare Website resource that serves the built UI, the Effect HTTP API under `/api/*`, and the MCP HTTP surface under `/mcp`.
 The deployed Worker uses both `D1` and `AI` bindings, so the browser app, assistant route, API, and remote MCP server share the same origin and runtime.
 Classic stdio MCP is still Bun-only and is not part of the Cloudflare deployment.
+The Worker now also enables native Cloudflare traces/logs with uploaded source maps.
+The assistant path can be wired through an optional Alchemy-managed AI Gateway for model-side metadata and request logging when the deploying Cloudflare profile has AI Gateway permissions.
 
 For passkey auth on the Cloudflare path, also set:
 
@@ -165,14 +167,33 @@ The current shape is:
 
 - one Alchemy `Website` resource
 - `ui/dist` served as static assets
+- `/.well-known/agent-configuration` exposed for Better Auth Agent Auth discovery
 - `/api/auth/*` handled by Better Auth with passkey registration and sign-in
+- `/api/auth/capability/*` and `/api/auth/agent/*` handled by Better Auth Agent Auth
+- `/device/capabilities` serves the delegated capability approval UI
 - `/api/me` exposes the resolved actor as `anonymous | customer | staff`
 - `/api/assistant` handled by a Workers AI-backed Beanline route
 - `/api/orders` scoped by authenticated order ownership
 - `/api/*` rewritten into the existing Effect `HttpApi`
 - `/mcp` handled by the existing MCP HTTP server
 - `D1` and `AI` provisioned and bound into the Worker
+- optional `AI_GATEWAY_ID` binding when `COFFEE_ASSISTANT_AI_GATEWAY=1` and the Cloudflare profile can manage AI Gateway resources
 - `BETTER_AUTH_SECRET` bound into the Worker as a Cloudflare secret
+- Cloudflare Worker observability enabled with persisted logs/traces and source maps
+
+Current observability shape:
+
+- Cloudflare native request, binding, and D1 traces/logs are enabled on the deployed Worker.
+- The presentation layer emits structured request logs for `/api/*`, `/api/auth/*`, `/api/assistant`, `/mcp`, and asset fallbacks.
+- The assistant route emits run-start, run-finish, run-error, and tool-activity logs.
+- Order use cases emit Effect log events annotated with actor and order attributes.
+- Better Auth anonymous telemetry stays disabled.
+- AI Gateway support is implemented in the assistant runtime, but provisioning is opt-in.
+
+Current limitation:
+
+- The current Cloudflare profile on this machine cannot manage AI Gateway resources, so `COFFEE_ASSISTANT_AI_GATEWAY=1` is not deployable here yet.
+- Even once that permission issue is fixed, payload-suppression and OTel-export destination setup still need a later pass before we should treat model logging as fully production-hardened.
 
 Expected workflow:
 

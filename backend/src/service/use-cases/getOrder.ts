@@ -4,6 +4,11 @@ import { OrderNotFoundError } from "#domain/errors";
 import type { CoffeeOrder, OrderId } from "#domain/order";
 import { AuthenticationRequiredError, requireSignedInActor } from "#service/CurrentActor";
 import { InternalAppError, internalAppErrorFromPersistence } from "#service/errors";
+import {
+  actorObservabilityAttributes,
+  annotateObservabilitySpan,
+  logInfoWithAttributes,
+} from "#service/observability";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
 export const getOrder = Effect.fn("CoffeeOrders.getOrder")(function* (
@@ -15,6 +20,14 @@ export const getOrder = Effect.fn("CoffeeOrders.getOrder")(function* (
 > {
   const actor = yield* requireSignedInActor();
   const orderRepository = yield* OrderRepository;
+  const observabilityAttributes = {
+    ...actorObservabilityAttributes(actor),
+    order_action: "get",
+    order_id: orderId,
+  };
+
+  yield* annotateObservabilitySpan(observabilityAttributes);
+
   const order = yield* orderRepository.getById(orderId).pipe(
     Effect.mapError(internalAppErrorFromPersistence("Unable to load order right now")),
     Effect.flatMap(
@@ -28,6 +41,11 @@ export const getOrder = Effect.fn("CoffeeOrders.getOrder")(function* (
   if (actor.kind === "customer" && order.ownerUserId !== actor.userId) {
     return yield* new OrderNotFoundError({ orderId });
   }
+
+  yield* logInfoWithAttributes("loaded coffee order", {
+    ...observabilityAttributes,
+    order_status: order.status,
+  });
 
   return order;
 });

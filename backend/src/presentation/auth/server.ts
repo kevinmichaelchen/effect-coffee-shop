@@ -1,8 +1,11 @@
 import type { D1Database } from "@cloudflare/workers-types";
+import { agentAuth } from "@better-auth/agent-auth";
 import { passkey } from "@better-auth/passkey";
 import { getMigrations } from "better-auth/db/migration";
 import { betterAuth } from "better-auth";
 import * as Schema from "effect/Schema";
+import { createCoffeeAgentAuthOptions } from "#presentation/auth/agent-auth";
+import { logStructuredEvent } from "#presentation/observability/logging";
 import { AppActorSchema, anonymousActor, type AppActor } from "#service/CurrentActor";
 
 const syntheticEmailDomain = "users.onion.invalid";
@@ -80,7 +83,22 @@ function buildAuthOptions(input: {
     basePath: "/api/auth",
     database: input.db,
     ...(origin === undefined ? {} : { baseURL: origin }),
+    logger: {
+      level: "warn",
+      log: (
+        level: "debug" | "error" | "info" | "warn",
+        message: string,
+        ...args: readonly unknown[]
+      ) =>
+        logStructuredEvent({
+          event: "auth.better_auth.log",
+          auth_log_arity: args.length,
+          auth_log_level: level,
+          auth_message: message,
+        }),
+    },
     plugins: [
+      agentAuth(createCoffeeAgentAuthOptions({ db: input.db })),
       passkey({
         registration: {
           afterVerification: async ({ ctx, context, user }) => {
@@ -102,6 +120,9 @@ function buildAuthOptions(input: {
       }),
     ],
     secret: getBetterAuthSecret(input.secret),
+    telemetry: {
+      enabled: false,
+    },
   };
 }
 
