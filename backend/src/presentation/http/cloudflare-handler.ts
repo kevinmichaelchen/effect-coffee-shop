@@ -1,6 +1,6 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import * as Layer from "effect/Layer";
-import * as ServiceMap from "effect/ServiceMap";
+import * as Context from "effect/Context";
 import { CoffeeHttpApiLive } from "#presentation/http/api";
 import { createCoffeeWebHandler, emptyWebHandlerServices } from "#presentation/http/web-handler";
 import { CoffeeMcpHttpLive } from "#presentation/mcp/server";
@@ -41,5 +41,5 @@ export const getCloudflareBackendHandler = (db: D1Database): WorkerHandler => {
   return next.handler;
 };
 
-export const createCloudflareRequestServices = (actor: AppActor): ServiceMap.ServiceMap<unknown> =>
-  emptyWebHandlerServices().pipe(ServiceMap.add(CurrentActor, actor));
+export const createCloudflareRequestServices = (actor: AppActor): Context.Context<unknown> =>
+  emptyWebHandlerServices().pipe(Context.add(CurrentActor, actor));

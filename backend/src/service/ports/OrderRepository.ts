@@ -1,10 +1,10 @@
 import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
-import * as ServiceMap from "effect/ServiceMap";
+import * as Context from "effect/Context";
 import type { CoffeeOrder, ListOrdersFilters, OrderId } from "#domain/order";
 import type { PersistenceError } from "#service/errors";
 
-export class OrderRepository extends ServiceMap.Service<
+export class OrderRepository extends Context.Service<
   OrderRepository,
   {
     readonly save: (order: CoffeeOrder) => Effect.Effect<CoffeeOrder, PersistenceError>;

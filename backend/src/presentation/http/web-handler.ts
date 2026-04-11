@@ -1,5 +1,5 @@
 import * as Layer from "effect/Layer";
-import * as ServiceMap from "effect/ServiceMap";
+import * as Context from "effect/Context";
 import * as HttpServer from "effect/unstable/http/HttpServer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
@@ -10,18 +10,15 @@ import {
 
 interface CoffeeWebHandler {
   readonly dispose: () => Promise<void>;
-  readonly handler: (
-    request: Request,
-    services?: ServiceMap.ServiceMap<unknown>,
-  ) => Promise<Response>;
+  readonly handler: (request: Request, services?: Context.Context<unknown>) => Promise<Response>;
 }
 
-const UnusedWebHandlerService = ServiceMap.Service<unknown>(
+const UnusedWebHandlerService = Context.Service<unknown>(
   "presentation/http/UnusedWebHandlerService",
 );
 
-export const emptyWebHandlerServices = (): ServiceMap.ServiceMap<unknown> =>
-  ServiceMap.make(UnusedWebHandlerService, undefined);
+export const emptyWebHandlerServices = (): Context.Context<unknown> =>
+  Context.make(UnusedWebHandlerService, undefined);
 
 export function createCoffeeWebHandler<
   TRoutes extends Layer.Layer<never, any, any>,

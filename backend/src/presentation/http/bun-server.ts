@@ -1,5 +1,5 @@
 import * as Layer from "effect/Layer";
-import * as ServiceMap from "effect/ServiceMap";
+import * as Context from "effect/Context";
 import {
   getAssistantModel,
   getBunAssistantAiConfig,
@@ -33,7 +33,7 @@ export async function startCoffeeBunServer<
 
       return handler(
         request,
-        emptyWebHandlerServices().pipe(ServiceMap.add(CurrentActor, systemActor)),
+        emptyWebHandlerServices().pipe(Context.add(CurrentActor, systemActor)),
       );
     },
   });
