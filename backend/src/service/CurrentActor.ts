@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
-import * as ServiceMap from "effect/ServiceMap";
+import * as Context from "effect/Context";
 
 const AnonymousActorSchema = Schema.Struct({
   kind: Schema.Literal("anonymous"),
@@ -31,7 +31,7 @@ export const systemActor: AuthenticatedActor = {
   userId: "system",
 };
 
-export const CurrentActor = ServiceMap.Reference<AppActor>("effect-v4-onion/service/CurrentActor", {
+export const CurrentActor = Context.Reference<AppActor>("effect-v4-onion/service/CurrentActor", {
   defaultValue: () => anonymousActor,
 });
 

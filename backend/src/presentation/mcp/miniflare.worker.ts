@@ -1,4 +1,4 @@
-import * as ServiceMap from "effect/ServiceMap";
+import * as Context from "effect/Context";
 import { InMemoryCoffeeAppLive } from "#external/live";
 import { createCoffeeWebHandler, emptyWebHandlerServices } from "#presentation/http/web-handler";
 import { CurrentActor, systemActor } from "#service/CurrentActor";
@@ -8,5 +8,5 @@ const { handler } = createCoffeeWebHandler(CoffeeMcpHttpLive, InMemoryCoffeeAppL
 
 export default {
   fetch: async (request: Request) =>
-    handler(request, emptyWebHandlerServices().pipe(ServiceMap.add(CurrentActor, systemActor))),
+    handler(request, emptyWebHandlerServices().pipe(Context.add(CurrentActor, systemActor))),
 };

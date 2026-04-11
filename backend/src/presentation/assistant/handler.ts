@@ -1,7 +1,7 @@
 import { toServerSentEventsResponse } from "@tanstack/ai";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as ServiceMap from "effect/ServiceMap";
+import * as Context from "effect/Context";
 import { emptyWebHandlerServices } from "#presentation/http/web-handler";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 import { CurrentActor, type AppActor } from "#service/CurrentActor";
@@ -179,7 +179,7 @@ function createCoffeeAppRunner<TAppLayer extends Layer.Layer<never, any, any>>(
   actor: AppActor,
 ): CoffeeAppRunner {
   const liveLayer = CoffeeOrderApp.layer.pipe(Layer.provide(appLayer));
-  const services = emptyWebHandlerServices().pipe(ServiceMap.add(CurrentActor, actor));
+  const services = emptyWebHandlerServices().pipe(Context.add(CurrentActor, actor));
 
   return async <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) =>
     Effect.runPromiseWith(services)(effect.pipe(Effect.provide(liveLayer)));

@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as ServiceMap from "effect/ServiceMap";
+import * as Context from "effect/Context";
 import {
   DrinkNotFoundError,
   InvalidOrderInputError,
@@ -26,7 +26,7 @@ import {
   startBrewing,
 } from "./use-cases/index.ts";
 
-export class CoffeeOrderApp extends ServiceMap.Service<
+export class CoffeeOrderApp extends Context.Service<
   CoffeeOrderApp,
   {
     readonly listMenu: () => Effect.Effect<Menu, InternalAppError>;
