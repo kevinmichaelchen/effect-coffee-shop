@@ -7,13 +7,13 @@ import "./index.css";
 const rootElement = document.getElementById("root");
 
 if (rootElement === null) {
-  throw new Error("Missing #root element.");
+  console.error("Missing #root element.");
+} else {
+  createRoot(rootElement).render(
+    <StrictMode>
+      <AppProviders>
+        <App />
+      </AppProviders>
+    </StrictMode>,
+  );
 }
-
-createRoot(rootElement).render(
-  <StrictMode>
-    <AppProviders>
-      <App />
-    </AppProviders>
-  </StrictMode>,
-);
