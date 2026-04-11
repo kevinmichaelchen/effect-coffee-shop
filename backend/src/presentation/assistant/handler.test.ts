@@ -4,6 +4,7 @@ import { systemActor } from "#service/CurrentActor";
 import { describe, expect, it, vi } from "vitest";
 import { handleAssistantRequest } from "./handler.ts";
 import type { AssistantAiConfig } from "./runtime.ts";
+import type { AssistantGatewayOptions } from "./workers-ai-format.ts";
 
 const assistantModel = "@cf/meta/llama-3.1-8b-instruct-fast";
 
@@ -12,7 +13,7 @@ const createAiRunMock = () =>
     (
       model: string,
       inputs: AiTextGenerationInput,
-      options?: Record<string, unknown>,
+      options?: AssistantGatewayOptions,
     ) => Promise<AiTextGenerationOutput>
   >();
 

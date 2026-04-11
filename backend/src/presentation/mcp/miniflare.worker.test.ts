@@ -12,14 +12,68 @@ const StringIdResponseSchema = Schema.Struct({
   id: Schema.String,
 });
 
+const InitializeResponseSchema = Schema.Struct({
+  protocolVersion: Schema.String,
+  serverInfo: Schema.Struct({
+    name: Schema.String,
+    version: Schema.String,
+  }),
+});
+
+const ToolListResponseSchema = Schema.Struct({
+  tools: Schema.Array(
+    Schema.Struct({
+      name: Schema.String,
+    }),
+  ),
+});
+
+const ResourceListResponseSchema = Schema.Struct({
+  resources: Schema.Array(
+    Schema.Struct({
+      uri: Schema.String,
+    }),
+  ),
+});
+
+const PromptListResponseSchema = Schema.Struct({
+  prompts: Schema.Array(
+    Schema.Struct({
+      name: Schema.String,
+    }),
+  ),
+});
+
+const ToolCallOrderResponseSchema = Schema.Struct({
+  isError: Schema.optionalKey(Schema.Boolean),
+  structuredContent: Schema.Struct({
+    id: Schema.String,
+  }),
+});
+
+const ResourceReadResponseSchema = Schema.Struct({
+  contents: Schema.Array(
+    Schema.Struct({
+      mimeType: Schema.optionalKey(Schema.String),
+      text: Schema.optionalKey(Schema.String),
+      uri: Schema.optionalKey(Schema.String),
+    }),
+  ),
+});
+
+const PromptGetResponseSchema = Schema.Struct({
+  messages: Schema.Array(
+    Schema.Struct({
+      content: Schema.Struct({
+        text: Schema.optionalKey(Schema.String),
+        type: Schema.optionalKey(Schema.String),
+      }),
+    }),
+  ),
+});
+
 const initializeClient = (request: McpRequest) =>
-  request<{
-    readonly protocolVersion: string;
-    readonly serverInfo: {
-      readonly name: string;
-      readonly version: string;
-    };
-  }>("initialize", {
+  request(InitializeResponseSchema, "initialize", {
     protocolVersion: "2025-06-18",
     capabilities: {},
     clientInfo: {
@@ -29,10 +83,7 @@ const initializeClient = (request: McpRequest) =>
   });
 
 const placeLatteOrder = (request: McpRequest) =>
-  request<{
-    readonly isError?: boolean;
-    readonly structuredContent: { readonly id: string };
-  }>("tools/call", {
+  request(ToolCallOrderResponseSchema, "tools/call", {
     name: "place_order",
     arguments: {
       customerName: "Avery",
@@ -44,15 +95,9 @@ const placeLatteOrder = (request: McpRequest) =>
 const verifyCatalogSurface = (request: McpRequest) =>
   Effect.gen(function* () {
     const initialize = yield* initializeClient(request);
-    const tools = yield* request<{
-      readonly tools: ReadonlyArray<{ readonly name: string }>;
-    }>("tools/list");
-    const resources = yield* request<{
-      readonly resources: ReadonlyArray<{ readonly uri: string }>;
-    }>("resources/list");
-    const prompts = yield* request<{
-      readonly prompts: ReadonlyArray<{ readonly name: string }>;
-    }>("prompts/list");
+    const tools = yield* request(ToolListResponseSchema, "tools/list");
+    const resources = yield* request(ResourceListResponseSchema, "resources/list");
+    const prompts = yield* request(PromptListResponseSchema, "prompts/list");
 
     const toolNames = tools.tools.map((tool) => tool.name).sort();
     const resourceUris = resources.resources.map((resource) => resource.uri).sort();
@@ -79,13 +124,7 @@ const verifyOrderResource = (request: McpRequest) =>
     yield* initializeClient(request);
     const created = yield* placeLatteOrder(request);
     const orderId = created.structuredContent.id;
-    const order = yield* request<{
-      readonly contents: ReadonlyArray<{
-        readonly uri?: string;
-        readonly mimeType?: string;
-        readonly text?: string;
-      }>;
-    }>("resources/read", {
+    const order = yield* request(ResourceReadResponseSchema, "resources/read", {
       uri: `coffee://orders/${orderId}`,
     });
     const orderContent = order.contents[0];
@@ -94,21 +133,14 @@ const verifyOrderResource = (request: McpRequest) =>
     assert.match(orderId, /^order-\d{4}$/);
     assert.strictEqual(order.contents.length, 1);
     assert.strictEqual(orderContent?.uri, `coffee://orders/${orderId}`);
-    assert.ok(orderContent !== undefined && "text" in orderContent);
+    assert.ok(orderContent?.text !== undefined);
     assert.include(String(orderContent.text), orderId);
   });
 
 const verifyPromptAndProtocol = (request: McpRequest, responses: ReadonlyArray<Response>) =>
   Effect.gen(function* () {
     yield* initializeClient(request);
-    const prompt = yield* request<{
-      readonly messages: ReadonlyArray<{
-        readonly content: {
-          readonly type?: string;
-          readonly text?: string;
-        };
-      }>;
-    }>("prompts/get", {
+    const prompt = yield* request(PromptGetResponseSchema, "prompts/get", {
       name: "recommend-drink",
       arguments: {
         occasion: "morning rush",
@@ -117,7 +149,7 @@ const verifyPromptAndProtocol = (request: McpRequest, responses: ReadonlyArray<R
     const promptContent = prompt.messages[0]?.content;
 
     assert.strictEqual(prompt.messages.length, 1);
-    assert.ok(promptContent !== undefined && "text" in promptContent);
+    assert.ok(promptContent?.text !== undefined);
     assert.strictEqual(prompt.messages[0]?.content.type, "text");
     assert.include(String(promptContent.text), "morning rush");
     assert.strictEqual(responses[0]?.headers.get("Mcp-Protocol-Version"), "2025-06-18");
@@ -125,12 +157,8 @@ const verifyPromptAndProtocol = (request: McpRequest, responses: ReadonlyArray<R
 
 const verifyStringRequestIds = (request: McpRequest, responses: ReadonlyArray<Response>) =>
   Effect.gen(function* () {
-    const initialize = yield* request<{
-      readonly protocolVersion: string;
-      readonly serverInfo: {
-        readonly name: string;
-      };
-    }>(
+    const initialize = yield* request(
+      InitializeResponseSchema,
       "initialize",
       {
         protocolVersion: "2025-06-18",
@@ -145,15 +173,13 @@ const verifyStringRequestIds = (request: McpRequest, responses: ReadonlyArray<Re
       },
     );
     const response = responses[0];
-    const json =
-      response === undefined
-        ? null
-        : Schema.decodeUnknownSync(StringIdResponseSchema)(
-            yield* Effect.tryPromise({
-              try: async () => response.json(),
-              catch: (cause) => cause,
-            }),
-          );
+    let json: Schema.Schema.Type<typeof StringIdResponseSchema> | null = null;
+
+    if (response !== undefined) {
+      json = Schema.decodeUnknownSync(StringIdResponseSchema)(
+        yield* Effect.promise(async () => response.json()),
+      );
+    }
 
     assert.strictEqual(initialize.protocolVersion, "2025-06-18");
     assert.strictEqual(initialize.serverInfo.name, "Coffee Orders MCP");
@@ -170,9 +196,7 @@ const runMcpTest = async (
 let client: McpMiniflareClient | undefined;
 
 const getClient = () => {
-  if (client === undefined) {
-    throw new Error("MCP Miniflare client is not initialized");
-  }
+  assert.ok(client !== undefined);
 
   return client;
 };

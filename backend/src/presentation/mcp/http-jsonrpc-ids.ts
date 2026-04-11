@@ -15,10 +15,18 @@ const JsonRpcResponseEnvelopeSchema = Schema.Struct({
   jsonrpc: Schema.Literal("2.0"),
 });
 
+type JsonObject = {
+  readonly [key: string]: unknown;
+};
+
+type JsonRpcRequestEnvelope = JsonObject & Schema.Schema.Type<typeof JsonRpcRequestEnvelopeSchema>;
+type JsonRpcRequestBody = JsonRpcRequestEnvelope | ReadonlyArray<JsonRpcRequestEnvelope>;
+type JsonRpcResponseEnvelope = JsonObject &
+  Schema.Schema.Type<typeof JsonRpcResponseEnvelopeSchema>;
+type JsonRpcResponseBody = JsonRpcResponseEnvelope | ReadonlyArray<JsonRpcResponseEnvelope>;
+
 const isJsonRpcRequestEnvelope = Schema.is(JsonRpcRequestEnvelopeSchema);
 const isJsonRpcResponseEnvelope = Schema.is(JsonRpcResponseEnvelopeSchema);
-
-type JsonRpcBody = readonly unknown[] | Record<string, unknown>;
 
 interface JsonRpcRequestNormalization {
   readonly request: Request;
@@ -26,7 +34,7 @@ interface JsonRpcRequestNormalization {
 }
 
 interface JsonRpcRequestRewrite {
-  readonly body: JsonRpcBody;
+  readonly body: JsonRpcRequestBody;
   readonly surrogateIdMap: ReadonlyMap<number, string>;
 }
 
@@ -40,8 +48,8 @@ export async function normalizeMcpHttpRequestIds(
     };
   }
 
-  const body = await readJsonBody(request);
-  if (body === null) {
+  const body = await readJsonBody(request, isJsonRpcRequestBody);
+  if (body === undefined) {
     return {
       request,
       surrogateIdMap: new Map(),
@@ -70,8 +78,8 @@ export async function restoreMcpHttpResponseIds(
     return response;
   }
 
-  const body = await readJsonBody(response);
-  if (body === null) {
+  const body = await readJsonBody(response, isJsonRpcResponseBody);
+  if (body === undefined) {
     return response;
   }
 
@@ -93,23 +101,25 @@ function isMcpJsonRequest(request: Request): boolean {
   );
 }
 
-async function readJsonBody(message: Request | Response): Promise<JsonRpcBody | null> {
+async function readJsonBody<A>(
+  message: Request | Response,
+  isBody: (value: unknown) => value is A,
+): Promise<A | undefined> {
   const body = await message
     .clone()
     .json()
     .catch(() => null);
 
-  return isJsonRpcBody(body) ? body : null;
+  return isBody(body) ? body : undefined;
 }
 
-function rewriteJsonRpcRequestIds(body: JsonRpcBody): JsonRpcRequestRewrite | null {
+function rewriteJsonRpcRequestIds(body: JsonRpcRequestBody): JsonRpcRequestRewrite | null {
   const surrogateIdMap = new Map<number, string>();
-  let nextSurrogateId = maxSurrogateRequestId;
-  const nextId = () => nextSurrogateId--;
+  const nextId = () => maxSurrogateRequestId - surrogateIdMap.size;
 
-  if (isJsonRpcArray(body)) {
+  if (isJsonRpcRequestBatch(body)) {
     const rewrittenBody = body.map((value) =>
-      rewriteJsonRpcRequestValue(value, surrogateIdMap, nextId),
+      rewriteJsonRpcRequestEnvelope(value, surrogateIdMap, nextId),
     );
 
     if (surrogateIdMap.size === 0) {
@@ -122,7 +132,7 @@ function rewriteJsonRpcRequestIds(body: JsonRpcBody): JsonRpcRequestRewrite | nu
     };
   }
 
-  const rewrittenBody = rewriteJsonRpcRequestObject(body, surrogateIdMap, nextId);
+  const rewrittenBody = rewriteJsonRpcRequestEnvelope(body, surrogateIdMap, nextId);
   if (surrogateIdMap.size === 0) {
     return null;
   }
@@ -134,14 +144,14 @@ function rewriteJsonRpcRequestIds(body: JsonRpcBody): JsonRpcRequestRewrite | nu
 }
 
 function rewriteJsonRpcResponseIds(
-  body: JsonRpcBody,
+  body: JsonRpcResponseBody,
   surrogateIdMap: ReadonlyMap<number, string>,
-): JsonRpcBody | null {
+): JsonRpcResponseBody | null {
   let changed = false;
 
-  if (isJsonRpcArray(body)) {
+  if (isJsonRpcResponseBatch(body)) {
     const rewrittenBody = body.map((value) =>
-      rewriteJsonRpcResponseValue(value, surrogateIdMap, () => {
+      rewriteJsonRpcResponseEnvelope(value, surrogateIdMap, () => {
         changed = true;
       }),
     );
@@ -149,40 +159,45 @@ function rewriteJsonRpcResponseIds(
     return changed ? rewrittenBody : null;
   }
 
-  const rewrittenBody = rewriteJsonRpcResponseObject(body, surrogateIdMap, () => {
+  const rewrittenBody = rewriteJsonRpcResponseEnvelope(body, surrogateIdMap, () => {
     changed = true;
   });
   return changed ? rewrittenBody : null;
 }
 
-function isJsonRpcBody(value: unknown): value is JsonRpcBody {
-  return isJsonRpcArray(value) || isJsonObject(value);
+function isJsonRpcRequestBatch(
+  body: JsonRpcRequestBody,
+): body is ReadonlyArray<JsonRpcRequestEnvelope> {
+  return Array.isArray(body);
 }
 
-function isJsonRpcArray(value: unknown): value is readonly unknown[] {
-  return Array.isArray(value);
+function isJsonRpcResponseBatch(
+  body: JsonRpcResponseBody,
+): body is ReadonlyArray<JsonRpcResponseEnvelope> {
+  return Array.isArray(body);
 }
 
-function isJsonObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+function isJsonRpcRequestBody(value: unknown): value is JsonRpcRequestBody {
+  return isJsonRpcRequestEnvelope(value) || isJsonRpcBatch(value, isJsonRpcRequestEnvelope);
 }
 
-function rewriteJsonRpcRequestValue(
+function isJsonRpcResponseBody(value: unknown): value is JsonRpcResponseBody {
+  return isJsonRpcResponseEnvelope(value) || isJsonRpcBatch(value, isJsonRpcResponseEnvelope);
+}
+
+function isJsonRpcBatch<A>(
   value: unknown,
-  surrogateIdMap: Map<number, string>,
-  nextSurrogateId: () => number,
-): unknown {
-  return isJsonObject(value)
-    ? rewriteJsonRpcRequestObject(value, surrogateIdMap, nextSurrogateId)
-    : value;
+  isEnvelope: (value: unknown) => value is A,
+): value is ReadonlyArray<A> {
+  return Array.isArray(value) && value.every(isEnvelope);
 }
 
-function rewriteJsonRpcRequestObject(
-  value: Record<string, unknown>,
+function rewriteJsonRpcRequestEnvelope(
+  value: JsonRpcRequestEnvelope,
   surrogateIdMap: Map<number, string>,
   nextSurrogateId: () => number,
-): Record<string, unknown> {
-  if (!isJsonRpcRequestEnvelope(value) || typeof value.id !== "string") {
+): JsonRpcRequestEnvelope {
+  if (typeof value.id !== "string") {
     return value;
   }
 
@@ -195,22 +210,12 @@ function rewriteJsonRpcRequestObject(
   };
 }
 
-function rewriteJsonRpcResponseValue(
-  value: unknown,
+function rewriteJsonRpcResponseEnvelope(
+  value: JsonRpcResponseEnvelope,
   surrogateIdMap: ReadonlyMap<number, string>,
   onRewrite: () => void,
-): unknown {
-  return isJsonObject(value)
-    ? rewriteJsonRpcResponseObject(value, surrogateIdMap, onRewrite)
-    : value;
-}
-
-function rewriteJsonRpcResponseObject(
-  value: Record<string, unknown>,
-  surrogateIdMap: ReadonlyMap<number, string>,
-  onRewrite: () => void,
-): Record<string, unknown> {
-  if (!isJsonRpcResponseEnvelope(value) || typeof value.id !== "number") {
+): JsonRpcResponseEnvelope {
+  if (typeof value.id !== "number") {
     return value;
   }
 
@@ -227,19 +232,18 @@ function rewriteJsonRpcResponseObject(
   };
 }
 
-function createJsonRequest(request: Request, body: JsonRpcBody): Request {
+function createJsonRequest(request: Request, body: JsonRpcRequestBody): Request {
   return new Request(request, {
     body: JSON.stringify(body),
     method: "POST",
   });
 }
 
-function createJsonResponse(response: Response, body: JsonRpcBody): Response {
-  const headers = new Headers(response.headers);
-  headers.delete("content-length");
-
+function createJsonResponse(response: Response, body: JsonRpcResponseBody): Response {
   return new Response(JSON.stringify(body), {
-    headers,
+    headers: Object.fromEntries(
+      Array.from(response.headers).filter(([name]) => name.toLowerCase() !== "content-length"),
+    ),
     status: response.status,
     statusText: response.statusText,
   });
