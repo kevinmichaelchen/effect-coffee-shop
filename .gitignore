@@ -15,6 +15,7 @@ dist
 coverage
 .turbo
 storybook-static
+.wrangler
 
 # Fiberplane local issue tracking
 .fp/
