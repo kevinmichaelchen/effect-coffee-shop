@@ -1,4 +1,10 @@
-import { calculatePriceCents, createOrderDraft, getQueueLoad, type CoffeeOrder, type MenuItem } from "#features/coffee-shop/lib/coffee.ts";
+import {
+  calculatePriceCents,
+  createOrderDraft,
+  getQueueLoad,
+  type CoffeeOrder,
+  type MenuItem,
+} from "#features/coffee-shop/lib/coffee.ts";
 
 export const storyMenu: readonly MenuItem[] = [
   {
@@ -39,9 +45,13 @@ export const storyDraft = {
   shots: 2,
 };
 
-export const storyPriceCents = calculatePriceCents(storySelectedItem, storyDraft.size, storyDraft.shots);
+export const storyPriceCents = calculatePriceCents(
+  storySelectedItem,
+  storyDraft.size,
+  storyDraft.shots,
+);
 
-export const storyOrders: readonly CoffeeOrder[] = [
+const storyOrders: readonly CoffeeOrder[] = [
   {
     id: "C-101",
     customerName: "Maya",

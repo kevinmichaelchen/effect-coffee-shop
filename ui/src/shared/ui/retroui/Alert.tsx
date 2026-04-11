@@ -22,16 +22,10 @@ const alertVariants = cva("relative w-full rounded border-2 p-4", {
   },
 });
 
-interface IAlertProps
-  extends HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof alertVariants> {}
+interface IAlertProps extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof alertVariants> {}
 
 const Alert = ({ className, variant, status, ...props }: IAlertProps) => (
-  <div
-    role="alert"
-    className={cn(alertVariants({ variant, status }), className)}
-    {...props}
-  />
+  <div role="alert" className={cn(alertVariants({ variant, status }), className)} {...props} />
 );
 Alert.displayName = "Alert";
 

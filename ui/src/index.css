@@ -109,8 +109,7 @@ body {
   background:
     radial-gradient(circle at top right, rgb(255 216 77 / 35%), transparent 28%),
     radial-gradient(circle at bottom left, rgb(121 240 213 / 26%), transparent 24%),
-    linear-gradient(180deg, rgb(17 17 17 / 3%) 0, transparent 100%),
-    var(--background);
+    linear-gradient(180deg, rgb(17 17 17 / 3%) 0, transparent 100%), var(--background);
 }
 
 body::before {

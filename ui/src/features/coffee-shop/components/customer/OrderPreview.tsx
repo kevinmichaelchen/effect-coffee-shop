@@ -33,7 +33,12 @@ export function OrderPreview(inputProps: OrderPreviewProps) {
       <Text as="p" className="text-sm text-white/80">
         Tickets open in the queue instantly and land in the barista board on the right.
       </Text>
-      <Button disabled={pending} variant="outline" className="justify-center bg-white text-black" onClick={onSubmit}>
+      <Button
+        disabled={pending}
+        variant="outline"
+        className="justify-center bg-white text-black"
+        onClick={onSubmit}
+      >
         {pending ? "Sending order…" : "Send to queue"}
       </Button>
     </Alert>

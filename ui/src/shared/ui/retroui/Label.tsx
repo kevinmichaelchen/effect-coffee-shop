@@ -4,9 +4,7 @@ import { cva } from "class-variance-authority";
 
 import { cn } from "#shared/lib/utils.ts";
 
-const labelVariants = cva(
-  "leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-);
+const labelVariants = cva("leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70");
 
 export const Label = ({
   className,

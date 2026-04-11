@@ -19,12 +19,7 @@ const Card = ({ className, ...props }: ICardProps) => {
 };
 
 const CardHeader = ({ className, ...props }: ICardProps) => {
-  return (
-    <div
-      className={cn("flex flex-col justify-start p-4", className)}
-      {...props}
-    />
-  );
+  return <div className={cn("flex flex-col justify-start p-4", className)} {...props} />;
 };
 
 const CardTitle = ({ className, ...props }: ICardProps) => {

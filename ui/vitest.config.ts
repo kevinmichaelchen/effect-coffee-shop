@@ -7,7 +7,7 @@ import { defineConfig } from "vitest/config";
 
 const dirname =
   typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
-const storybookBrowserProvider = playwright({}) as unknown as BrowserProviderOption;
+const storybookBrowserProvider: BrowserProviderOption = playwright({});
 
 export default defineConfig({
   test: {

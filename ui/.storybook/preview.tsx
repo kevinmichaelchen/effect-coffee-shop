@@ -1,6 +1,5 @@
 import type { Preview } from "@storybook/react-vite";
 import { StorybookShell } from "./StorybookShell.tsx";
-import type { ThemePreference } from "#shared/hooks/useThemePreference.ts";
 import "../src/index.css";
 
 const viewportOptions = {
@@ -65,11 +64,15 @@ const preview: Preview = {
     },
   },
   decorators: [
-    (Story, context) => (
-      <StorybookShell theme={context.globals.theme as ThemePreference}>
-        <Story />
-      </StorybookShell>
-    ),
+    (Story, context) => {
+      const theme = context.globals.theme === "dark" ? "dark" : "light";
+
+      return (
+        <StorybookShell theme={theme}>
+          <Story />
+        </StorybookShell>
+      );
+    },
   ],
 };
 

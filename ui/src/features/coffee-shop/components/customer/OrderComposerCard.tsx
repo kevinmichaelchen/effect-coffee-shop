@@ -16,7 +16,8 @@ interface OrderComposerCardProps {
 }
 
 export function OrderComposerCard(inputProps: OrderComposerCardProps) {
-  const { draft, item, menu, pending, priceCents, onSelectDrink, onSubmit, onUpdateDraft } = inputProps;
+  const { draft, item, menu, pending, priceCents, onSelectDrink, onSubmit, onUpdateDraft } =
+    inputProps;
 
   return (
     <Card className="w-full border-border">
@@ -34,7 +35,13 @@ export function OrderComposerCard(inputProps: OrderComposerCardProps) {
           onSelectDrink={onSelectDrink}
           onUpdateDraft={onUpdateDraft}
         />
-        <OrderPreview draft={draft} item={item} pending={pending} priceCents={priceCents} onSubmit={onSubmit} />
+        <OrderPreview
+          draft={draft}
+          item={item}
+          pending={pending}
+          priceCents={priceCents}
+          onSubmit={onSubmit}
+        />
       </Card.Content>
     </Card>
   );

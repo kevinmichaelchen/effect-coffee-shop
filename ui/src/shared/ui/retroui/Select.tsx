@@ -6,11 +6,7 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 const Select = SelectPrimitive.Root;
 
-const SelectTrigger = ({
-  className,
-  children,
-  ...props
-}: SelectPrimitive.SelectTriggerProps) => {
+const SelectTrigger = ({ className, children, ...props }: SelectPrimitive.SelectTriggerProps) => {
   return (
     <SelectPrimitive.Trigger
       className={cn(
@@ -70,11 +66,7 @@ const SelectContent = ({
 
 const SelectGroup = SelectPrimitive.Group;
 
-const SelectItem = ({
-  className,
-  children,
-  ...props
-}: SelectPrimitive.SelectItemProps) => (
+const SelectItem = ({ className, children, ...props }: SelectPrimitive.SelectItemProps) => (
   <SelectPrimitive.Item
     className={cn(
       "relative flex w-full cursor-default select-none items-center py-1.5 px-2 outline-none data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground focus:bg-primary focus:text-primary-foreground data-disabled:pointer-events-none data-disabled:opacity-50",

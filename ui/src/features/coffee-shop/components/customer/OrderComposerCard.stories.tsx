@@ -2,8 +2,17 @@ import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 import { OrderComposerCard } from "#features/coffee-shop/components/customer/OrderComposerCard.tsx";
-import { storyDraft, storyMenu, storySelectedItem } from "#features/coffee-shop/components/coffeeShopStoryData.ts";
-import { calculatePriceCents, normalizeDraftForItem, type MenuItem, type OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
+import {
+  storyDraft,
+  storyMenu,
+  storySelectedItem,
+} from "#features/coffee-shop/components/coffeeShopStoryData.ts";
+import {
+  calculatePriceCents,
+  normalizeDraftForItem,
+  type MenuItem,
+  type OrderDraft,
+} from "#features/coffee-shop/lib/coffee.ts";
 
 interface OrderComposerStoryProps {
   pending?: boolean;

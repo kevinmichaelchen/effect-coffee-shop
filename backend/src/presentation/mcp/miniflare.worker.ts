@@ -1,14 +1,8 @@
-import * as Layer from "effect/Layer";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import { InMemoryCoffeeAppLive } from "#external/live";
+import { createCoffeeWebHandler } from "#presentation/http/web-handler";
 import { CoffeeMcpHttpLive } from "./server.ts";
 
-const { handler } = HttpRouter.toWebHandler(
-  CoffeeMcpHttpLive.pipe(Layer.provide(InMemoryCoffeeAppLive)),
-  {
-    disableLogger: true,
-  },
-);
+const { handler } = createCoffeeWebHandler(CoffeeMcpHttpLive, InMemoryCoffeeAppLive);
 
 export default {
   fetch: handler,

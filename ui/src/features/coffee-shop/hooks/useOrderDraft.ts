@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
-import { createOrderDraft, normalizeDraftForItem, calculatePriceCents } from "#features/coffee-shop/lib/coffee.ts";
+import {
+  createOrderDraft,
+  normalizeDraftForItem,
+  calculatePriceCents,
+} from "#features/coffee-shop/lib/coffee.ts";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 
 function findItem(menu: readonly MenuItem[], drinkId: string): MenuItem | undefined {
@@ -45,7 +49,9 @@ export function useOrderDraft(menu: readonly MenuItem[]) {
   }
 
   function updateDraft<K extends keyof OrderDraft>(key: K, value: OrderDraft[K]): void {
-    setDraft((currentDraft) => (currentDraft === null ? currentDraft : { ...currentDraft, [key]: value }));
+    setDraft((currentDraft) =>
+      currentDraft === null ? currentDraft : { ...currentDraft, [key]: value },
+    );
   }
 
   function resetDraft(): void {

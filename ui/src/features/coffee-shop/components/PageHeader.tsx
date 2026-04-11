@@ -40,7 +40,11 @@ function HeaderIntro() {
   );
 }
 
-function NavigationLink(inputProps: { href: string; variant: "default" | "ghost" | "outline"; children: ReactNode }) {
+function NavigationLink(inputProps: {
+  href: string;
+  variant: "default" | "ghost" | "outline";
+  children: ReactNode;
+}) {
   const { href, variant, children } = inputProps;
 
   return (
@@ -50,18 +54,24 @@ function NavigationLink(inputProps: { href: string; variant: "default" | "ghost"
   );
 }
 
-function DesktopNavigation({ theme, onToggleTheme }: Pick<NavigationProps, "theme" | "onToggleTheme">) {
+function DesktopNavigation({
+  theme,
+  onToggleTheme,
+}: Pick<NavigationProps, "theme" | "onToggleTheme">) {
   return (
     <div className="hidden shrink-0 items-center gap-2 md:flex">
       <NavigationLink href={appRoutes.home} variant="outline">
-        LFM Demo
+        Beanline Assistant
       </NavigationLink>
       <ThemeToggle compact theme={theme} onToggle={onToggleTheme} />
     </div>
   );
 }
 
-function SessionSummary({ activeOrders, totalOrders }: Pick<NavigationProps, "activeOrders" | "totalOrders">) {
+function SessionSummary({
+  activeOrders,
+  totalOrders,
+}: Pick<NavigationProps, "activeOrders" | "totalOrders">) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Badge className="rounded-none px-2.5 py-1" size="sm" variant="solid">
@@ -81,7 +91,12 @@ function MobileNavigation(inputProps: NavigationProps) {
   return (
     <Drawer direction="right" open={isMenuOpen} onOpenChange={setIsMenuOpen}>
       <Drawer.Trigger asChild>
-        <Button aria-label="Open navigation menu" className="md:hidden" size="icon" variant="outline">
+        <Button
+          aria-label="Open navigation menu"
+          className="md:hidden"
+          size="icon"
+          variant="outline"
+        >
           <Menu className="size-4" />
         </Button>
       </Drawer.Trigger>
@@ -89,13 +104,15 @@ function MobileNavigation(inputProps: NavigationProps) {
         <Drawer.Content className="border-l-2 border-border bg-card">
           <Drawer.Header className="border-b-2 border-border bg-card px-4 py-4 text-left">
             <Drawer.Title>Control room menu</Drawer.Title>
-            <Drawer.Description>Navigation and theme controls for the coffee-shop control room.</Drawer.Description>
+            <Drawer.Description>
+              Navigation and theme controls for the coffee-shop control room.
+            </Drawer.Description>
           </Drawer.Header>
           <div className="grid gap-4 p-4">
             <SessionSummary activeOrders={activeOrders} totalOrders={totalOrders} />
             <div className="grid gap-2">
               <Button asChild className="justify-center" variant="outline">
-                <a href={appRoutes.home}>Back to LFM Demo</a>
+                <a href={appRoutes.home}>Back to Beanline</a>
               </Button>
             </div>
             <ThemeToggle theme={theme} onToggle={onToggleTheme} />

@@ -2,24 +2,27 @@ import { Label } from "#shared/ui/retroui/Label.tsx";
 import { Select } from "#shared/ui/retroui/Select.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 
-export interface SelectOption {
+interface SelectOption<TValue extends string> {
   label: string;
-  value: string;
+  value: TValue;
 }
 
-interface SelectFieldProps {
+interface SelectFieldProps<TValue extends string> {
   label: string;
-  value: string;
-  options: readonly SelectOption[];
-  onChange: (value: string) => void;
+  value: TValue;
+  options: readonly SelectOption<TValue>[];
+  onChange: (value: TValue) => void;
   disabled?: boolean;
   helperText?: string;
   placeholder?: string;
 }
 
-export function SelectField(inputProps: SelectFieldProps) {
+export function SelectField<TValue extends string>(inputProps: SelectFieldProps<TValue>) {
   const { label, value, options, onChange, disabled, helperText, placeholder } = inputProps;
-  const selectProps = disabled === undefined ? { value, onValueChange: onChange } : { disabled, value, onValueChange: onChange };
+  const selectProps =
+    disabled === undefined
+      ? { value, onValueChange: onChange }
+      : { disabled, value, onValueChange: onChange };
 
   return (
     <div className="grid gap-2">

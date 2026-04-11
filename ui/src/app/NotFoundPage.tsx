@@ -12,7 +12,7 @@ export function NotFoundPage() {
             Route not found
           </Text>
           <Text as="p" className="text-muted-foreground">
-            Head back to the local LFM demo or jump into the Coffee Shop control room.
+            Head back to Beanline or jump into the Coffee Shop control room.
           </Text>
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild>

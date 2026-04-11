@@ -78,7 +78,8 @@ export const ControlRoom: Story = {};
 
 export const WarningState: Story = {
   args: {
-    errorMessage: "Queue refresh is delayed. Showing the last successful snapshot from the backend.",
+    errorMessage:
+      "Queue refresh is delayed. Showing the last successful snapshot from the backend.",
   },
 };
 

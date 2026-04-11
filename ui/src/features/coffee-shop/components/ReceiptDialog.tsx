@@ -31,8 +31,8 @@ export function ReceiptDialog(inputProps: ReceiptDialogProps) {
             </div>
             <Text as="h3">{order.customerName}</Text>
             <Text as="p" className="text-lg">
-              {order.drinkName}, {order.size}, {order.temperature}, {order.milk} milk, {order.shots}
-              {" "}shot(s)
+              {order.drinkName}, {order.size}, {order.temperature}, {order.milk} milk, {order.shots}{" "}
+              shot(s)
             </Text>
             {order.notes !== undefined ? (
               <Text as="p" className="text-base text-muted-foreground">

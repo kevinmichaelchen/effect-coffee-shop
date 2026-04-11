@@ -8,8 +8,9 @@ This repo uses Bun workspaces, so install dependencies once from the repo root w
 
 - React + Vite
 - RetroUI components from `retroui.dev`
+- TanStack AI React client over a same-origin Worker route
 - TanStack Query for API state
-- strict `oxlint` + ESLint checks
+- strict `oxlint` + `lintcn` + ESLint checks with complexity, function-length, and size limits
 
 ## Run it
 
@@ -66,10 +67,23 @@ To override only the dev proxy target, set:
 VITE_COFFEE_PROXY_TARGET=http://api.onion.localhost:1365
 ```
 
+For the assistant to work against the local Bun backend, also set:
+
+```bash
+CLOUDFLARE_ACCOUNT_ID=...
+CLOUDFLARE_API_TOKEN=...
+```
+
+The deployed Cloudflare Worker uses its `AI` binding instead and does not need those local REST credentials.
+
 ## Checks
 
 ```bash
 bun run typecheck
 bun run lint
+bun run lint:custom
+bun run fmt:check
+bun run knip
+bun run test
 bun run build
 ```

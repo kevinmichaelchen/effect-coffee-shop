@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { SelectField } from "#shared/ui/SelectField.tsx";
 import { TextAreaField } from "#shared/ui/TextAreaField.tsx";
 import { TextField } from "#shared/ui/TextField.tsx";
+import { drinkSizes } from "#features/coffee-shop/lib/coffee.ts";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 
 function toLabel(value: string): string {
@@ -39,9 +40,12 @@ function CustomizationFields(inputProps: CustomizationFieldsProps) {
         <FieldCell>
           <SelectField
             label="Size"
-            options={["small", "medium", "large"].map((value) => ({ label: toLabel(value), value }))}
+            options={drinkSizes.map((value) => ({
+              label: toLabel(value),
+              value,
+            }))}
             value={draft.size}
-            onChange={(value) => onUpdateDraft("size", value as OrderDraft["size"])}
+            onChange={(value) => onUpdateDraft("size", value)}
           />
         </FieldCell>
         <FieldCell>
@@ -49,7 +53,7 @@ function CustomizationFields(inputProps: CustomizationFieldsProps) {
             label="Milk"
             options={item.availableMilks.map((value) => ({ label: toLabel(value), value }))}
             value={draft.milk}
-            onChange={(value) => onUpdateDraft("milk", value as OrderDraft["milk"])}
+            onChange={(value) => onUpdateDraft("milk", value)}
           />
         </FieldCell>
       </FieldRow>
@@ -59,13 +63,15 @@ function CustomizationFields(inputProps: CustomizationFieldsProps) {
             label="Temperature"
             options={item.availableTemperatures.map((value) => ({ label: toLabel(value), value }))}
             value={draft.temperature}
-            onChange={(value) => onUpdateDraft("temperature", value as OrderDraft["temperature"])}
+            onChange={(value) => onUpdateDraft("temperature", value)}
           />
         </FieldCell>
         <FieldCell>
           <TextField
             disabled={item.kind === "tea"}
-            helperText={item.kind === "tea" ? "Tea stays at zero shots." : `Max ${item.maxShots} shots`}
+            helperText={
+              item.kind === "tea" ? "Tea stays at zero shots." : `Max ${item.maxShots} shots`
+            }
             label="Shots"
             max={item.maxShots}
             min={0}

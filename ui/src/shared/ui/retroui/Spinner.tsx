@@ -11,11 +11,7 @@ interface SpinnerProps extends HTMLAttributes<HTMLSpanElement> {
   size?: keyof typeof sizeStyles;
 }
 
-export function Spinner({
-  className = "",
-  size = "md",
-  ...props
-}: SpinnerProps) {
+export function Spinner({ className = "", size = "md", ...props }: SpinnerProps) {
   return (
     <span
       aria-hidden="true"

@@ -14,7 +14,9 @@ interface MenuItemCardProps {
 export function MenuItemCard({ item, selected, onSelect }: MenuItemCardProps) {
   return (
     <Card
-      className={selected ? "w-full border-black bg-accent text-accent-foreground" : "w-full border-border"}
+      className={
+        selected ? "w-full border-black bg-accent text-accent-foreground" : "w-full border-border"
+      }
     >
       <Card.Header className="gap-3 border-b-2 border-dashed border-border">
         <div className="flex items-start justify-between gap-3">
