@@ -11,9 +11,7 @@ import { OrderRepository } from "#service/ports/OrderRepository";
 type RepositoryServices = MenuRepository | OrderRepository;
 
 export type SqlCoffeeRepositoriesTestHarness = {
-  readonly run: <A>(
-    effect: Effect.Effect<A, PersistenceError, RepositoryServices>,
-  ) => Promise<A>;
+  readonly run: <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) => Promise<A>;
   readonly reset: () => Promise<void>;
   readonly dispose: () => Promise<void>;
 };
@@ -50,7 +48,11 @@ export const createSqlCoffeeRepositoriesTestHarness =
     const run = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) =>
       Effect.runPromise(effect.pipe(Effect.provide(providedRepositories)));
 
-    const reset = () => db.prepare("DELETE FROM orders").run().then(() => undefined);
+    const reset = () =>
+      db
+        .prepare("DELETE FROM orders")
+        .run()
+        .then(() => undefined);
 
     return {
       run,

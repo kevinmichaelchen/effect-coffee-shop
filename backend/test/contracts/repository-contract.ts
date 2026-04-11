@@ -10,9 +10,7 @@ import { MenuRepository } from "#service/ports/MenuRepository";
 import { OrderRepository } from "#service/ports/OrderRepository";
 
 type RepositoryServices = MenuRepository | OrderRepository;
-type RunTest = <A>(
-  effect: Effect.Effect<A, PersistenceError, RepositoryServices>,
-) => Promise<A>;
+type RunTest = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) => Promise<A>;
 
 const utc = (iso: string) => Option.getOrThrow(DateTime.make(iso));
 

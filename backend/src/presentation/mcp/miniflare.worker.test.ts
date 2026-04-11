@@ -123,8 +123,7 @@ const runMcpTest = async (
     request: McpRequest,
     responses: ReadonlyArray<Response>,
   ) => Effect.Effect<unknown, unknown, never>,
-) =>
-  Effect.runPromise(verify(getClient().request, getClient().responses));
+) => Effect.runPromise(verify(getClient().request, getClient().responses));
 
 let client: McpMiniflareClient | undefined;
 

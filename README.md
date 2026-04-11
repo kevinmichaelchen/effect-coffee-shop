@@ -52,6 +52,22 @@ bun run --cwd backend test src/presentation/mcp/miniflare.worker.test.ts
 This exercises the MCP HTTP surface end-to-end on Miniflare against a Worker entrypoint.
 It covers the same classic MCP surface as the local HTTP server: prompts, resources, and direct coffee action tools.
 
+Deploy the Cloudflare candidate stack with upstream Alchemy:
+
+```bash
+bun run cf:configure
+bun run cf:login
+bun run cf:dev -- --profile default
+bun run cf:deploy -- --profile default
+```
+
+This candidate stack is defined in [`alchemy.run.ts`](./alchemy.run.ts) and deploys one Cloudflare Website resource that serves the built UI, the Effect HTTP API under `/api/*`, and the MCP HTTP surface under `/mcp`.
+The deployed Worker uses a D1 binding, so the browser app, API, and remote MCP server share the same origin and runtime.
+Classic stdio MCP is still Bun-only and is not part of the Cloudflare deployment.
+
+Alchemy state stays local under `.alchemy/` by default.
+If you want remote shared state later, set `ALCHEMY_STATE_TOKEN` and the stack will switch to `CloudflareStateStore`.
+If you start binding secret values with `alchemy.secret(...)`, set `ALCHEMY_PASSWORD` so Alchemy can encrypt them in state.
 Check the repo:
 
 ```bash
@@ -130,3 +146,32 @@ This repo runs Portless on a dedicated HTTP-only proxy at port `1365` with an is
 That serves an in-memory backend with the REST API plus MCP HTTP endpoint on `http://api.onion.localhost:1365`, and the frontend UI on `http://onion.localhost:1365`.
 
 This HTTP flow avoids HTTPS trust prompts and does not require `sudo`. It relies on `.localhost` resolution in the browser. It works on Chrome, Firefox, and Edge. Safari may still require host syncing, which Portless documents as a privileged operation.
+
+## Cloudflare candidate
+
+This branch includes a candidate Cloudflare deployment scaffold using upstream Alchemy instead of the vendored `alchemy-effect` package.
+
+The current shape is:
+
+- one Alchemy `Website` resource
+- `ui/dist` served as static assets
+- `/api/*` rewritten into the existing Effect `HttpApi`
+- `/mcp` handled by the existing MCP HTTP server
+- `D1` provisioned and bound into the Worker
+
+Expected workflow:
+
+```bash
+bun run cf:configure
+bun run cf:login
+bun run cf:dev -- --profile default
+bun run cf:deploy -- --profile default
+```
+
+You can target a non-default profile or stage with the normal Alchemy flags, for example:
+
+```bash
+bun run cf:deploy -- --profile personal --stage dev_kchen
+```
+
+Because this repo does not yet have Cloudflare credentials checked in or configured locally, treat this as a reviewable candidate rather than a verified deployment recipe.
