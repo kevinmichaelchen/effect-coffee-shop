@@ -1,8 +1,16 @@
 node_modules
+.env
+.env.local
+.env.*
+!.env.example
+!.env.alchemy.example
 .DS_Store
 .idea
 .vscode
 .alchemy
+.env
+.env.*
+!.env.example
 dist
 coverage
 .turbo

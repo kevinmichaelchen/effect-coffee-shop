@@ -7,6 +7,7 @@ import { InMemoryOrderIdGeneratorLive } from "#external/in-memory/InMemoryOrderI
 import { InMemoryOrderRepositoryLive } from "#external/in-memory/InMemoryOrderRepository";
 import { CoffeeHttpApiLive } from "#presentation/http/api";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
+import { CurrentActor, systemActor } from "#service/CurrentActor";
 import { PersistenceError } from "#service/errors";
 import { MenuRepository } from "#service/ports/MenuRepository";
 
@@ -14,6 +15,7 @@ export const HttpApiTestLive = HttpRouter.serve(CoffeeHttpApiLive, {
   disableListenLog: true,
   disableLogger: true,
 }).pipe(
+  Layer.provide(Layer.succeed(CurrentActor)(systemActor)),
   Layer.provide(CoffeeOrderApp.layer),
   Layer.provide(InMemoryCoffeeAppLive),
   Layer.provideMerge(NodeHttpServer.layerTest),
@@ -29,6 +31,7 @@ export const HttpApiPersistenceFailureTestLive = HttpRouter.serve(CoffeeHttpApiL
   disableListenLog: true,
   disableLogger: true,
 }).pipe(
+  Layer.provide(Layer.succeed(CurrentActor)(systemActor)),
   Layer.provide(CoffeeOrderApp.layer),
   Layer.provide(
     Layer.mergeAll(

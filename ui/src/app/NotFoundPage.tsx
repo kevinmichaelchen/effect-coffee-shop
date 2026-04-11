@@ -12,14 +12,17 @@ export function NotFoundPage() {
             Route not found
           </Text>
           <Text as="p" className="text-muted-foreground">
-            Head back to Beanline or jump into the Coffee Shop control room.
+            Head back to Beanline or jump into the customer or staff workspace.
           </Text>
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild>
               <a href={appRoutes.home}>Open landing page</a>
             </Button>
             <Button asChild variant="outline">
-              <a href={appRoutes.controlRoom}>Open control room</a>
+              <a href={appRoutes.shop}>Open customer workspace</a>
+            </Button>
+            <Button asChild variant="outline">
+              <a href={appRoutes.staff}>Open staff workspace</a>
             </Button>
           </div>
         </Card.Content>

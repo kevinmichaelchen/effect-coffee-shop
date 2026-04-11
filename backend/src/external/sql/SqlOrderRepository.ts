@@ -16,6 +16,7 @@ import { SqlOrderModel, toCoffeeOrder, toSqlOrderInsert } from "./models.ts";
 type SqlRepositoryError = Schema.SchemaError | SqlError.SqlError;
 
 const ListOrdersFiltersSchema = Schema.Struct({
+  ownerUserId: Schema.optionalKey(Schema.String),
   status: Schema.optionalKey(OrderStatusSchema),
 }).annotate({ identifier: "ListOrdersFilters" });
 
@@ -38,16 +39,31 @@ const makeSqlOrderQueries = Effect.gen(function* () {
       Request: ListOrdersFiltersSchema,
       Result: SqlOrderModel,
       execute: (filters) =>
-        filters.status === undefined
+        filters.ownerUserId === undefined && filters.status === undefined
           ? sql`
           SELECT *
           FROM orders
           ORDER BY createdAt, id
         `
-          : sql`
+          : filters.ownerUserId !== undefined && filters.status === undefined
+            ? sql`
+          SELECT *
+          FROM orders
+          WHERE ownerUserId = ${filters.ownerUserId}
+          ORDER BY createdAt, id
+        `
+            : filters.ownerUserId === undefined && filters.status !== undefined
+              ? sql`
           SELECT *
           FROM orders
           WHERE status = ${filters.status}
+          ORDER BY createdAt, id
+        `
+              : sql`
+          SELECT *
+          FROM orders
+          WHERE ownerUserId = ${filters.ownerUserId}
+            AND status = ${filters.status}
           ORDER BY createdAt, id
         `,
     })(filters);

@@ -1,10 +1,11 @@
 export const appRoutes = {
   home: "/",
-  controlRoom: "/control-room",
+  shop: "/shop",
+  staff: "/staff",
 } as const;
 
-const controlRoomAliases = new Set<string>(["/coffee-shop"]);
+const shopAliases = new Set<string>(["/control-room", "/coffee-shop"]);
 
-export function isControlRoomPath(pathname: string): boolean {
-  return pathname === appRoutes.controlRoom || controlRoomAliases.has(pathname);
+export function isShopPath(pathname: string): boolean {
+  return pathname === appRoutes.shop || shopAliases.has(pathname);
 }

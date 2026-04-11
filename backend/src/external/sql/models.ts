@@ -24,6 +24,7 @@ export class SqlMenuItemModel extends Model.Class<SqlMenuItemModel>("SqlMenuItem
 export class SqlOrderModel extends Model.Class<SqlOrderModel>("SqlOrderModel")({
   id: OrderIdSchema,
   customerName: Schema.String,
+  ownerUserId: Schema.String,
   drinkId: DrinkIdSchema,
   drinkName: Schema.String,
   size: DrinkSizeSchema,
@@ -47,6 +48,7 @@ export const toSqlOrderInsert = (order: CoffeeOrder): SqlOrderInsert => ({
 export const toCoffeeOrder = (order: SqlOrder): CoffeeOrder => ({
   id: order.id,
   customerName: order.customerName,
+  ownerUserId: order.ownerUserId,
   drinkId: order.drinkId,
   drinkName: order.drinkName,
   size: order.size,

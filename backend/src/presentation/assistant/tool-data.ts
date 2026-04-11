@@ -33,7 +33,6 @@ export const listOrdersToolParameters = {
 export const placeOrderToolParameters = {
   type: "object",
   properties: {
-    customerName: { type: "string", description: "Customer name for the ticket." },
     drinkId: { type: "string", description: "Menu drink id such as latte." },
     size: { type: "string", description: "Drink size such as small, medium, or large." },
     milk: { type: "string", description: "Milk choice such as whole, oat, almond, or none." },
@@ -41,7 +40,7 @@ export const placeOrderToolParameters = {
     shots: { type: "integer", description: "Number of espresso shots." },
     notes: { type: "string", description: "Optional order note." },
   },
-  required: ["customerName", "drinkId", "size"],
+  required: ["drinkId", "size"],
 } as const satisfies AiTextGenerationToolLegacyInput["parameters"];
 
 export const decodeOrderIdInput = Schema.decodeUnknownPromise(

@@ -1,18 +1,25 @@
 import * as Effect from "effect/Effect";
 import { InvalidOrderInputError } from "#domain/errors";
 import { isOrderStatus, type CoffeeOrders } from "#domain/order";
+import { AuthenticationRequiredError, requireSignedInActor } from "#service/CurrentActor";
 import { InternalAppError, internalAppErrorFromPersistence } from "#service/errors";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 import { type ListOrdersRequest } from "../contracts.ts";
 
 export const listOrders = Effect.fn("CoffeeOrders.listOrders")(function* (
   request: ListOrdersRequest,
-): Effect.fn.Return<CoffeeOrders, InvalidOrderInputError | InternalAppError, OrderRepository> {
+): Effect.fn.Return<
+  CoffeeOrders,
+  AuthenticationRequiredError | InvalidOrderInputError | InternalAppError,
+  OrderRepository
+> {
+  const actor = yield* requireSignedInActor();
   const orderRepository = yield* OrderRepository;
+  const ownerFilter = actor.kind === "customer" ? { ownerUserId: actor.userId } : {};
 
   if (request.status === undefined) {
     return yield* orderRepository
-      .list()
+      .list(ownerFilter)
       .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to list orders right now")));
   }
 
@@ -23,6 +30,9 @@ export const listOrders = Effect.fn("CoffeeOrders.listOrders")(function* (
   }
 
   return yield* orderRepository
-    .list({ status: request.status })
+    .list({
+      ...ownerFilter,
+      status: request.status,
+    })
     .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to list orders right now")));
 });

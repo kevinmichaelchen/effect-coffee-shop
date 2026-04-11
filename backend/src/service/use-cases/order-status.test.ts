@@ -1,6 +1,7 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import { InMemoryCoffeeAppLive } from "#external/live";
+import { CurrentActor, systemActor } from "#service/CurrentActor";
 import {
   cancelOrder,
   listOrders,
@@ -48,6 +49,8 @@ const validTransitionPrograms = [
   }),
 ];
 
+const provideSystemActor = Effect.provideService(CurrentActor, systemActor);
+
 describe("order status", () => {
   it.effect("rejects unsupported order status filters", () =>
     Effect.gen(function* () {
@@ -55,10 +58,10 @@ describe("order status", () => {
 
       assert.strictEqual(error._tag, "InvalidOrderInputError");
       assert.strictEqual(error.message, 'status "queued" is not supported');
-    }).pipe(Effect.provide(InMemoryCoffeeAppLive)),
+    }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 
   it.effect.each(validTransitionPrograms)("allows valid status transitions %#", (program) =>
-    program.pipe(Effect.provide(InMemoryCoffeeAppLive)),
+    program.pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 });

@@ -2,7 +2,10 @@ import { toServerSentEventsResponse, type ModelMessage } from "@tanstack/ai";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
+import * as ServiceMap from "effect/ServiceMap";
+import { emptyWebHandlerServices } from "#presentation/http/web-handler";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
+import { CurrentActor, type AppActor } from "#service/CurrentActor";
 import {
   type AssistantChunkQueue,
   type AssistantStreamChunk,
@@ -34,6 +37,7 @@ const coffeeAssistantSystemPrompt = [
 ].join(" ");
 
 interface AssistantHandlerOptions {
+  readonly actor: AppActor;
   readonly ai: AssistantAiConfig | undefined;
   readonly appLayer: Layer.Layer<never, any, any>;
   readonly model?: string;
@@ -94,6 +98,7 @@ export async function handleAssistantRequest(
   const queue = createAssistantChunkQueue<AssistantStreamChunk>(abortController.signal);
 
   void streamAssistantResponse({
+    actor: options.actor,
     ai: options.ai,
     appLayer: options.appLayer,
     body,
@@ -114,6 +119,7 @@ export { getAssistantModel, getBunAssistantAiConfig };
 type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;
 
 async function streamAssistantResponse(input: {
+  readonly actor: AppActor;
   readonly ai: AssistantAiConfig;
   readonly appLayer: Layer.Layer<never, any, any>;
   readonly body: AssistantRequestBody;
@@ -122,7 +128,7 @@ async function streamAssistantResponse(input: {
 }): Promise<void> {
   const messageId = createAssistantStreamId("msg");
   const runId = createAssistantStreamId("chat");
-  const runApp = createCoffeeAppRunner(input.appLayer);
+  const runApp = createCoffeeAppRunner(input.appLayer, input.actor);
 
   input.queue.push(createAssistantRunStartedChunk(runId, input.model));
 
@@ -147,11 +153,13 @@ async function streamAssistantResponse(input: {
 
 function createCoffeeAppRunner<TAppLayer extends Layer.Layer<never, any, any>>(
   appLayer: TAppLayer,
+  actor: AppActor,
 ): CoffeeAppRunner {
   const liveLayer = CoffeeOrderApp.layer.pipe(Layer.provide(appLayer));
+  const services = emptyWebHandlerServices().pipe(ServiceMap.add(CurrentActor, actor));
 
   return async <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) =>
-    Effect.runPromise(effect.pipe(Effect.provide(liveLayer)) as Effect.Effect<A, E, never>);
+    Effect.runPromiseWith(services)(effect.pipe(Effect.provide(liveLayer)));
 }
 
 async function parseAssistantRequestBody(request: Request): Promise<AssistantRequestBody | null> {

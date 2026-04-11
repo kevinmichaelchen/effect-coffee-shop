@@ -19,6 +19,7 @@ export const ai = Ai();
 
 export const website = await Website("onion", {
   url: true,
+  compatibility: "node",
   entrypoint: "./backend/src/presentation/cloudflare/worker.ts",
   build: {
     command: "bun run --cwd ui build",
@@ -32,6 +33,8 @@ export const website = await Website("onion", {
   },
   bindings: {
     AI: ai,
+    BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET,
+    COFFEE_STAFF_USER_IDS: process.env.COFFEE_STAFF_USER_IDS ?? "",
     DB: coffeeDb,
   },
 });

@@ -20,6 +20,10 @@ export const InMemoryOrderRepositoryLive = Layer.effect(
       list: (filters: ListOrdersFilters = {}) =>
         Effect.succeed(
           Array.from(orders.values())
+            .filter(
+              (order) =>
+                filters.ownerUserId === undefined || order.ownerUserId === filters.ownerUserId,
+            )
             .filter((order) => filters.status === undefined || order.status === filters.status)
             .sort(
               (left, right) =>

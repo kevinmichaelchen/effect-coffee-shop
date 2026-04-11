@@ -6,11 +6,14 @@ import { Drawer } from "#shared/ui/retroui/Drawer.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 import { ThemeToggle } from "#shared/ui/ThemeToggle.tsx";
 import type { ThemePreference } from "#shared/hooks/useThemePreference.ts";
-import { appRoutes } from "#app/routes.ts";
 
 interface PageHeaderProps {
   activeOrders: number;
+  badgeLabel: string;
+  footerLabel: string;
+  navLinks: readonly NavigationLinkProps[];
   theme: ThemePreference;
+  title: string;
   totalOrders: number;
   onToggleTheme: () => void;
 }
@@ -19,50 +22,53 @@ interface NavigationProps {
   theme: ThemePreference;
   totalOrders: number;
   activeOrders: number;
+  navLinks: readonly NavigationLinkProps[];
   onToggleTheme: () => void;
 }
 
-function HeaderIntro() {
+interface NavigationLinkProps {
+  href: string;
+  label: string;
+  variant: "default" | "ghost" | "outline";
+}
+
+function HeaderIntro(inputProps: Pick<PageHeaderProps, "badgeLabel" | "title">) {
+  const { badgeLabel, title } = inputProps;
+
   return (
     <div className="min-w-0 flex-1 grid gap-1.5">
       <div className="flex flex-wrap items-center gap-2">
         <Badge className="rounded-none bg-primary px-2.5 py-1" size="sm" variant="surface">
-          Coffee shop
+          {badgeLabel}
         </Badge>
-        <Text as="p" className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
-          Customer + barista
-        </Text>
       </div>
       <Text as="h1" className="max-w-3xl text-xl leading-none md:text-2xl">
-        Control room
+        {title}
       </Text>
     </div>
   );
 }
 
-function NavigationLink(inputProps: {
-  href: string;
-  variant: "default" | "ghost" | "outline";
-  children: ReactNode;
-}) {
-  const { href, variant, children } = inputProps;
+function NavigationLink(inputProps: NavigationLinkProps & { children?: ReactNode }) {
+  const { children, href, label, variant } = inputProps;
 
   return (
     <Button asChild size="sm" variant={variant}>
-      <a href={href}>{children}</a>
+      <a href={href}>{children ?? label}</a>
     </Button>
   );
 }
 
 function DesktopNavigation({
+  navLinks,
   theme,
   onToggleTheme,
-}: Pick<NavigationProps, "theme" | "onToggleTheme">) {
+}: Pick<NavigationProps, "navLinks" | "theme" | "onToggleTheme">) {
   return (
     <div className="hidden shrink-0 items-center gap-2 md:flex">
-      <NavigationLink href={appRoutes.home} variant="outline">
-        Beanline Assistant
-      </NavigationLink>
+      {navLinks.map((link) => (
+        <NavigationLink key={link.href} {...link} />
+      ))}
       <ThemeToggle compact theme={theme} onToggle={onToggleTheme} />
     </div>
   );
@@ -85,7 +91,7 @@ function SessionSummary({
 }
 
 function MobileNavigation(inputProps: NavigationProps) {
-  const { activeOrders, theme, totalOrders, onToggleTheme } = inputProps;
+  const { activeOrders, navLinks, theme, totalOrders, onToggleTheme } = inputProps;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -103,17 +109,19 @@ function MobileNavigation(inputProps: NavigationProps) {
       {isMenuOpen ? (
         <Drawer.Content className="border-l-2 border-border bg-card">
           <Drawer.Header className="border-b-2 border-border bg-card px-4 py-4 text-left">
-            <Drawer.Title>Control room menu</Drawer.Title>
+            <Drawer.Title>Workspace menu</Drawer.Title>
             <Drawer.Description>
-              Navigation and theme controls for the coffee-shop control room.
+              Navigation and theme controls for this workspace.
             </Drawer.Description>
           </Drawer.Header>
           <div className="grid gap-4 p-4">
             <SessionSummary activeOrders={activeOrders} totalOrders={totalOrders} />
             <div className="grid gap-2">
-              <Button asChild className="justify-center" variant="outline">
-                <a href={appRoutes.home}>Back to Beanline</a>
-              </Button>
+              {navLinks.map((link) => (
+                <Button key={link.href} asChild className="justify-center" variant={link.variant}>
+                  <a href={link.href}>{link.label}</a>
+                </Button>
+              ))}
             </div>
             <ThemeToggle theme={theme} onToggle={onToggleTheme} />
           </div>
@@ -124,15 +132,25 @@ function MobileNavigation(inputProps: NavigationProps) {
 }
 
 export function PageHeader(inputProps: PageHeaderProps) {
-  const { activeOrders, theme, totalOrders, onToggleTheme } = inputProps;
+  const {
+    activeOrders,
+    badgeLabel,
+    footerLabel,
+    navLinks,
+    theme,
+    title,
+    totalOrders,
+    onToggleTheme,
+  } = inputProps;
 
   return (
     <header className="border-2 border-border bg-card shadow-md">
       <div className="flex items-start justify-between gap-3 px-4 py-3 md:px-5 md:py-4">
-        <HeaderIntro />
-        <DesktopNavigation theme={theme} onToggleTheme={onToggleTheme} />
+        <HeaderIntro badgeLabel={badgeLabel} title={title} />
+        <DesktopNavigation navLinks={navLinks} theme={theme} onToggleTheme={onToggleTheme} />
         <MobileNavigation
           activeOrders={activeOrders}
+          navLinks={navLinks}
           theme={theme}
           totalOrders={totalOrders}
           onToggleTheme={onToggleTheme}
@@ -140,7 +158,7 @@ export function PageHeader(inputProps: PageHeaderProps) {
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t-2 border-border bg-background px-4 py-2.5 md:px-5">
         <Text as="p" className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
-          Orders + queue on one surface
+          {footerLabel}
         </Text>
         <SessionSummary activeOrders={activeOrders} totalOrders={totalOrders} />
       </div>

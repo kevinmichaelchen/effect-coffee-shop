@@ -1,7 +1,7 @@
 import * as Schema from "effect/Schema";
 
 export const PlaceOrderRequestSchema = Schema.Struct({
-  customerName: Schema.String,
+  customerName: Schema.optionalKey(Schema.String),
   drinkId: Schema.String,
   size: Schema.String,
   milk: Schema.optionalKey(Schema.String),

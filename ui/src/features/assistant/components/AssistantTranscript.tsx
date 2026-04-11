@@ -158,7 +158,7 @@ function TranscriptHeader({ activityControl, onReset }: TranscriptHeaderProps) {
         </Text>
         <Text as="p" className="max-w-3xl text-sm text-muted-foreground md:text-base">
           The assistant runs through your Cloudflare Worker, calls coffee tools server-side, and
-          shares the same D1-backed state as the control room.
+          shares the same D1-backed state as the customer and staff workspaces.
         </Text>
       </div>
       <div className="flex flex-wrap gap-3">

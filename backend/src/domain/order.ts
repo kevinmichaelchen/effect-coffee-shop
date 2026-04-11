@@ -15,6 +15,7 @@ export type OrderId = typeof OrderIdSchema.Type;
 export const CoffeeOrderSchema = Schema.Struct({
   id: OrderIdSchema,
   customerName: Schema.String,
+  ownerUserId: Schema.String,
   drinkId: DrinkIdSchema,
   drinkName: Schema.String,
   size: DrinkSizeSchema,
@@ -34,6 +35,7 @@ export const CoffeeOrdersSchema = Schema.Array(CoffeeOrderSchema).annotate({
 export type CoffeeOrders = typeof CoffeeOrdersSchema.Type;
 
 export interface ListOrdersFilters {
+  readonly ownerUserId?: string;
   readonly status?: OrderStatus;
 }
 

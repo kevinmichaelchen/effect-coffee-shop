@@ -19,6 +19,7 @@ const MenuItemSchema = Schema.Struct({
 export const CoffeeOrderSchema = Schema.Struct({
   id: Schema.String,
   customerName: Schema.String,
+  ownerUserId: Schema.String,
   drinkId: Schema.String,
   drinkName: Schema.String,
   size: DrinkSizeSchema,

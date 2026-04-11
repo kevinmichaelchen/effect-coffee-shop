@@ -14,6 +14,14 @@ import {
 import { MenuSchema } from "#domain/menu";
 import { CoffeeOrderSchema, CoffeeOrdersSchema, OrderIdSchema } from "#domain/order";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
+import {
+  type AppActor,
+  AuthenticationRequiredError,
+  CurrentActor,
+  StaffRoleRequiredError,
+  anonymousActor,
+  isAuthenticatedActor,
+} from "#service/CurrentActor";
 import { ListOrdersRequestSchema, PlaceOrderRequestSchema } from "#service/contracts";
 import { InternalAppError } from "#service/errors";
 
@@ -21,6 +29,23 @@ const HealthStatusSchema = Schema.Struct({
   status: Schema.Literal("ok"),
 }).annotate({ identifier: "HealthStatus" });
 const HEALTH_STATUS: typeof HealthStatusSchema.Type = { status: "ok" };
+
+const ActorSummarySchema = Schema.Struct({
+  displayName: Schema.optionalKey(Schema.String),
+  kind: Schema.Literals(["anonymous", "customer", "staff"] as const),
+  userId: Schema.optionalKey(Schema.String),
+}).annotate({ identifier: "ActorSummary" });
+
+type ActorSummary = typeof ActorSummarySchema.Type;
+
+const toActorSummary = (actor: AppActor): ActorSummary =>
+  isAuthenticatedActor(actor)
+    ? {
+        displayName: actor.displayName,
+        kind: actor.kind === "system" ? "staff" : actor.kind,
+        userId: actor.userId,
+      }
+    : anonymousActor;
 
 class HealthApi extends HttpApiGroup.make("health", { topLevel: true }).add(
   HttpApiEndpoint.get("check", "/health", {
@@ -37,52 +62,89 @@ class MenuApi extends HttpApiGroup.make("menu")
   )
   .prefix("/menu") {}
 
+class SessionApi extends HttpApiGroup.make("session")
+  .add(
+    HttpApiEndpoint.get("me", "/me", {
+      success: ActorSummarySchema,
+    }),
+  )
+  .prefix("/") {}
+
 class OrdersApi extends HttpApiGroup.make("orders")
   .add(
     HttpApiEndpoint.post("create", "/", {
       payload: PlaceOrderRequestSchema,
       success: CoffeeOrderSchema,
-      error: [DrinkNotFoundError, InvalidOrderInputError, InternalAppError],
+      error: [
+        AuthenticationRequiredError,
+        DrinkNotFoundError,
+        InvalidOrderInputError,
+        InternalAppError,
+      ],
     }),
     HttpApiEndpoint.get("list", "/", {
       query: ListOrdersRequestSchema,
       success: CoffeeOrdersSchema,
-      error: [InvalidOrderInputError, InternalAppError],
+      error: [AuthenticationRequiredError, InvalidOrderInputError, InternalAppError],
     }),
     HttpApiEndpoint.get("getById", "/:orderId", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: [OrderNotFoundError, InternalAppError],
+      error: [AuthenticationRequiredError, OrderNotFoundError, InternalAppError],
     }),
     HttpApiEndpoint.post("startBrewing", "/:orderId/start-brewing", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: [OrderNotFoundError, InvalidOrderStatusTransitionError, InternalAppError],
+      error: [
+        AuthenticationRequiredError,
+        InvalidOrderStatusTransitionError,
+        OrderNotFoundError,
+        StaffRoleRequiredError,
+        InternalAppError,
+      ],
     }),
     HttpApiEndpoint.post("markReady", "/:orderId/mark-ready", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: [OrderNotFoundError, InvalidOrderStatusTransitionError, InternalAppError],
+      error: [
+        AuthenticationRequiredError,
+        InvalidOrderStatusTransitionError,
+        OrderNotFoundError,
+        StaffRoleRequiredError,
+        InternalAppError,
+      ],
     }),
     HttpApiEndpoint.post("pickUp", "/:orderId/pick-up", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: [OrderNotFoundError, InvalidOrderStatusTransitionError, InternalAppError],
+      error: [
+        AuthenticationRequiredError,
+        InvalidOrderStatusTransitionError,
+        OrderNotFoundError,
+        StaffRoleRequiredError,
+        InternalAppError,
+      ],
     }),
     HttpApiEndpoint.post("cancel", "/:orderId/cancel", {
       params: {
         orderId: OrderIdSchema,
       },
       success: CoffeeOrderSchema,
-      error: [OrderNotFoundError, InvalidOrderStatusTransitionError, InternalAppError],
+      error: [
+        AuthenticationRequiredError,
+        InvalidOrderStatusTransitionError,
+        OrderNotFoundError,
+        StaffRoleRequiredError,
+        InternalAppError,
+      ],
     }),
   )
   .prefix("/orders") {}
@@ -90,6 +152,7 @@ class OrdersApi extends HttpApiGroup.make("orders")
 export class CoffeeHttpApi extends HttpApi.make("coffee-order-api")
   .add(HealthApi)
   .add(MenuApi)
+  .add(SessionApi)
   .add(OrdersApi) {}
 
 const HealthApiLive = HttpApiBuilder.group(CoffeeHttpApi, "health", (handlers) =>
@@ -98,6 +161,14 @@ const HealthApiLive = HttpApiBuilder.group(CoffeeHttpApi, "health", (handlers) =
 
 const MenuApiLive = HttpApiBuilder.group(CoffeeHttpApi, "menu", (handlers) =>
   handlers.handle("list", () => CoffeeOrderApp.use((app) => app.listMenu())),
+);
+
+const SessionApiLive = HttpApiBuilder.group(CoffeeHttpApi, "session", (handlers) =>
+  handlers.handle("me", () =>
+    Effect.gen(function* () {
+      return toActorSummary(yield* CurrentActor);
+    }),
+  ),
 );
 
 const OrdersApiLive = HttpApiBuilder.group(CoffeeHttpApi, "orders", (handlers) =>
@@ -115,5 +186,5 @@ const OrdersApiLive = HttpApiBuilder.group(CoffeeHttpApi, "orders", (handlers) =
 
 export const CoffeeHttpApiLive = Layer.provide(
   HttpApiBuilder.layer(CoffeeHttpApi, { openapiPath: "/openapi.json" }),
-  [HealthApiLive, MenuApiLive, OrdersApiLive],
+  [HealthApiLive, MenuApiLive, SessionApiLive, OrdersApiLive],
 ).pipe(Layer.provide(CoffeeOrderApp.layer));

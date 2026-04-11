@@ -6,13 +6,14 @@ import { formatOrderTime, formatPrice } from "#features/coffee-shop/lib/coffee.t
 import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";
 
 interface ReceiptDialogProps {
+  actionLabel: string;
   order: CoffeeOrder | null;
   onClose: () => void;
-  onShowQueue: () => void;
+  onOpenOrders: () => void;
 }
 
 export function ReceiptDialog(inputProps: ReceiptDialogProps) {
-  const { order, onClose, onShowQueue } = inputProps;
+  const { actionLabel, order, onClose, onOpenOrders } = inputProps;
 
   return (
     <Dialog open={order !== null} onOpenChange={(open) => !open && onClose()}>
@@ -20,7 +21,7 @@ export function ReceiptDialog(inputProps: ReceiptDialogProps) {
         <Dialog.Content className="max-w-xl" size="lg">
           <Dialog.Header>Order sent to the queue</Dialog.Header>
           <Dialog.Description className="px-4 pt-3 text-sm text-muted-foreground">
-            Review the new ticket details, then keep ordering or jump to the active queue.
+            Review the new ticket details, then keep ordering or jump to your active orders.
           </Dialog.Description>
           <div className="grid gap-5 px-4 pb-5 pt-1">
             <div className="flex flex-wrap items-center gap-3">
@@ -49,11 +50,11 @@ export function ReceiptDialog(inputProps: ReceiptDialogProps) {
             </Button>
             <Button
               onClick={() => {
-                onShowQueue();
+                onOpenOrders();
                 onClose();
               }}
             >
-              Open queue
+              {actionLabel}
             </Button>
           </Dialog.Footer>
         </Dialog.Content>
