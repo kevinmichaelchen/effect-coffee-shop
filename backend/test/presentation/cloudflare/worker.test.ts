@@ -1,4 +1,4 @@
-import type { D1Database } from "@cloudflare/workers-types";
+import type { D1Database, ExecutionContext } from "@cloudflare/workers-types";
 import { Miniflare } from "miniflare";
 import { describe, expect, it, vi } from "vitest";
 import worker, {
@@ -42,11 +42,21 @@ const makeTestEnv = async (): Promise<{
 };
 
 describe("cloudflare worker", () => {
+  const executionContext: ExecutionContext = {
+    passThroughOnException() {},
+    props: undefined,
+    waitUntil() {},
+  };
+
   it("rewrites /api requests into the existing HttpApi routes", async () => {
     const { assetsFetch, dispose, env } = await makeTestEnv();
 
     try {
-      const response = await worker.fetch(new Request("http://example.com/api/health"), env);
+      const response = await worker.fetch(
+        new Request("http://example.com/api/health"),
+        env,
+        executionContext,
+      );
 
       expect(response.status).toBe(200);
       expect(await response.json()).toEqual({ status: "ok" });
@@ -81,6 +91,7 @@ describe("cloudflare worker", () => {
           method: "POST",
         }),
         env,
+        executionContext,
       );
 
       const json = (await response.json()) as {
@@ -127,6 +138,7 @@ describe("cloudflare worker", () => {
           method: "POST",
         }),
         env,
+        executionContext,
       );
 
       const json = (await response.json()) as {
@@ -149,7 +161,11 @@ describe("cloudflare worker", () => {
     const { assetsFetch, dispose, env } = await makeTestEnv();
 
     try {
-      const response = await worker.fetch(new Request("http://example.com/"), env);
+      const response = await worker.fetch(
+        new Request("http://example.com/"),
+        env,
+        executionContext,
+      );
 
       expect(response.status).toBe(200);
       expect(await response.text()).toContain("ui");
@@ -169,6 +185,7 @@ describe("cloudflare worker", () => {
           ...env,
           BETTER_AUTH_SECRET: "test-secret-please-change-me-0001",
         },
+        executionContext,
       );
 
       const json = (await response.json()) as {

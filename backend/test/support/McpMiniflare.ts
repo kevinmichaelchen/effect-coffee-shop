@@ -1,15 +1,64 @@
 import path from "node:path";
 import { build } from "esbuild";
+import * as Option from "effect/Option";
 import { Miniflare } from "miniflare";
 import * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
 
-export type McpRequest = <Result>(
+const JsonRpcIdSchema = Schema.Union([Schema.String, Schema.Number, Schema.Null]);
+
+const JsonRpcErrorSchema = Schema.Struct({
+  code: Schema.Number,
+  data: Schema.optionalKey(Schema.Unknown),
+  message: Schema.String,
+});
+
+const JsonRpcErrorEnvelopeSchema = Schema.Struct({
+  error: JsonRpcErrorSchema,
+  id: Schema.optionalKey(JsonRpcIdSchema),
+  jsonrpc: Schema.Literal("2.0"),
+});
+
+const JsonRpcSuccessEnvelopeSchema = Schema.Struct({
+  id: Schema.optionalKey(JsonRpcIdSchema),
+  jsonrpc: Schema.Literal("2.0"),
+  result: Schema.Unknown,
+});
+
+class McpMiniflareBundleError extends Schema.TaggedErrorClass<McpMiniflareBundleError>()(
+  "McpMiniflareBundleError",
+  {
+    message: Schema.String,
+  },
+) {}
+
+class McpMiniflareTransportError extends Schema.TaggedErrorClass<McpMiniflareTransportError>()(
+  "McpMiniflareTransportError",
+  {
+    message: Schema.String,
+  },
+) {}
+
+class McpJsonRpcResponseError extends Schema.TaggedErrorClass<McpJsonRpcResponseError>()(
+  "McpJsonRpcResponseError",
+  {
+    code: Schema.Number,
+    message: Schema.String,
+  },
+) {}
+
+export type McpRequest = <S extends Schema.Top>(
+  schema: S,
   method: string,
   params?: unknown,
   options?: {
     readonly id?: number | string;
   },
-) => Effect.Effect<Result, unknown>;
+) => Effect.Effect<
+  S["Type"],
+  McpJsonRpcResponseError | McpMiniflareTransportError | Schema.SchemaError,
+  S["DecodingServices"]
+>;
 
 export type McpMiniflareClient = {
   readonly request: McpRequest;
@@ -26,22 +75,36 @@ const MCP_WORKER_ENTRYPOINT = path.resolve(
 let bundledWorkerScriptPromise: Promise<string> | undefined;
 
 const getBundledWorkerScript = () =>
-  (bundledWorkerScriptPromise ??= build({
-    bundle: true,
-    entryPoints: [MCP_WORKER_ENTRYPOINT],
-    format: "esm",
-    logLevel: "silent",
-    platform: "browser",
-    target: "esnext",
-    write: false,
-  }).then((result) => {
+  (bundledWorkerScriptPromise ??= Effect.gen(function* () {
+    const result = yield* Effect.tryPromise({
+      try: () =>
+        build({
+          bundle: true,
+          entryPoints: [MCP_WORKER_ENTRYPOINT],
+          format: "esm",
+          logLevel: "silent",
+          platform: "browser",
+          target: "esnext",
+          write: false,
+        }),
+      catch: () =>
+        new McpMiniflareBundleError({
+          message: "Miniflare worker bundle could not be built.",
+        }),
+    });
     const output = result.outputFiles[0];
+
     if (output === undefined) {
-      throw new Error("Miniflare worker bundle did not produce an output file");
+      return yield* new McpMiniflareBundleError({
+        message: "Miniflare worker bundle did not produce an output file.",
+      });
     }
 
     return output.text;
-  }));
+  }).pipe(Effect.runPromise));
+
+const decodeJsonRpcSuccessEnvelope = Schema.decodeUnknownEffect(JsonRpcSuccessEnvelopeSchema);
+const decodeJsonRpcErrorEnvelope = Schema.decodeUnknownOption(JsonRpcErrorEnvelopeSchema);
 
 export const createMcpMiniflareClient = async (): Promise<McpMiniflareClient> => {
   const script = await getBundledWorkerScript();
@@ -54,48 +117,53 @@ export const createMcpMiniflareClient = async (): Promise<McpMiniflareClient> =>
   const responses: Array<Response> = [];
 
   let sessionId: string | null = null;
-  let requestId = 1;
+  const nextRequestId = () => responses.length + 1;
 
-  const request: McpRequest = <Result>(
+  const request: McpRequest = <S extends Schema.Top>(
+    schema: S,
     method: string,
     params?: unknown,
     options?: {
       readonly id?: number | string;
     },
   ) =>
-    Effect.tryPromise({
-      try: async () => {
-        const headers = new Headers({
-          "content-type": "application/json",
-        });
-
-        if (sessionId !== null) {
-          headers.set("Mcp-Session-Id", sessionId);
-        }
-
-        const response = await fetch(baseUrl, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            id: options?.id ?? requestId++,
-            jsonrpc: "2.0",
-            method,
-            params,
+    Effect.gen(function* () {
+      const response = yield* Effect.tryPromise({
+        try: () =>
+          fetch(baseUrl, {
+            method: "POST",
+            headers: createMcpRequestHeaders(sessionId),
+            body: JSON.stringify({
+              id: options?.id ?? nextRequestId(),
+              jsonrpc: "2.0",
+              method,
+              params,
+            }),
           }),
-        });
+        catch: () =>
+          new McpMiniflareTransportError({
+            message: `MCP request failed for method ${method}.`,
+          }),
+      });
 
-        sessionId = response.headers.get("Mcp-Session-Id") ?? sessionId;
-        responses.push(response.clone());
+      sessionId = response.headers.get("Mcp-Session-Id") ?? sessionId;
+      responses.push(response.clone());
 
-        const json: Record<string, unknown> = await response.json();
+      const json = yield* Effect.tryPromise({
+        try: () => response.json(),
+        catch: () =>
+          new McpMiniflareTransportError({
+            message: `MCP response body was not valid JSON for method ${method}.`,
+          }),
+      });
+      const errorEnvelope = decodeJsonRpcErrorEnvelope(json);
 
-        if ("error" in json) {
-          throw new Error(JSON.stringify(json.error));
-        }
+      if (Option.isSome(errorEnvelope)) {
+        return yield* new McpJsonRpcResponseError(errorEnvelope.value.error);
+      }
 
-        return json.result as Result;
-      },
-      catch: (cause) => cause,
+      const successEnvelope = yield* decodeJsonRpcSuccessEnvelope(json);
+      return yield* Schema.decodeUnknownEffect(schema)(successEnvelope.result);
     });
 
   return {
@@ -103,9 +171,21 @@ export const createMcpMiniflareClient = async (): Promise<McpMiniflareClient> =>
     responses,
     resetSession: () => {
       sessionId = null;
-      requestId = 1;
       responses.length = 0;
     },
     dispose: () => miniflare.dispose(),
   };
 };
+
+function createMcpRequestHeaders(sessionId: string | null): Readonly<Record<string, string>> {
+  if (sessionId === null) {
+    return {
+      "content-type": "application/json",
+    };
+  }
+
+  return {
+    "content-type": "application/json",
+    "Mcp-Session-Id": sessionId,
+  };
+}

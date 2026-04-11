@@ -1,6 +1,6 @@
 import { createOrderDraft, type MenuItem } from "#features/coffee-shop/lib/coffee.ts";
 
-export const storyMenu: readonly MenuItem[] = [
+export const storyMenu: readonly [MenuItem, ...MenuItem[]] = [
   {
     id: "latte",
     name: "Latte",
@@ -30,7 +30,7 @@ export const storyMenu: readonly MenuItem[] = [
   },
 ];
 
-export const storySelectedItem = storyMenu[0]!;
+export const storySelectedItem = storyMenu[0];
 
 export const storyDraft = {
   ...createOrderDraft(storySelectedItem),

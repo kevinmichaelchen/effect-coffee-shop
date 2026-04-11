@@ -1,17 +1,28 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
 import { afterAll, beforeAll } from "vitest";
 import { createMcpMiniflareClient, type McpMiniflareClient } from "../support/McpMiniflare.ts";
 
 /**
  * Test workflow where MCP tools place an order and we verify persistence
  */
+const InitializeResponseSchema = Schema.Struct({
+  protocolVersion: Schema.String,
+});
+
+const ToolCallOrderResultSchema = Schema.Struct({
+  structuredContent: Schema.Struct({
+    id: Schema.String,
+  }),
+});
+
 const llmMcpWorkflow = () =>
   Effect.gen(function* () {
     const request = getClient().request;
 
     // Initialize MCP session
-    yield* request("initialize", {
+    yield* request(InitializeResponseSchema, "initialize", {
       protocolVersion: "2025-06-18",
       capabilities: {},
       clientInfo: {
@@ -21,7 +32,7 @@ const llmMcpWorkflow = () =>
     });
 
     // Place order directly with correct parameters
-    const placeOrderResult = yield* request("tools/call", {
+    const placeOrderResult = yield* request(ToolCallOrderResultSchema, "tools/call", {
       name: "place_order",
       arguments: {
         customerName: "Avery",
@@ -30,11 +41,10 @@ const llmMcpWorkflow = () =>
       },
     });
 
-    const orderId = (placeOrderResult as { structuredContent: { id: string } }).structuredContent
-      .id;
+    const orderId = placeOrderResult.structuredContent.id;
 
     // Verify persistence by getting the order
-    const getOrderResult = yield* request("tools/call", {
+    const getOrderResult = yield* request(ToolCallOrderResultSchema, "tools/call", {
       name: "get_order",
       arguments: { orderId },
     });
@@ -43,16 +53,14 @@ const llmMcpWorkflow = () =>
       success: true,
       orderId,
       placeOrderResult,
-      getOrderResult: getOrderResult as { structuredContent: { id: string } },
+      getOrderResult,
     };
   });
 
 let client: McpMiniflareClient | undefined;
 
 const getClient = () => {
-  if (client === undefined) {
-    throw new Error("MCP Miniflare client is not initialized");
-  }
+  assert.ok(client !== undefined);
 
   return client;
 };

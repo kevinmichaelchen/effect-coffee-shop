@@ -190,6 +190,19 @@ Current observability shape:
 - Better Auth anonymous telemetry stays disabled.
 - AI Gateway support is implemented in the assistant runtime, but provisioning is opt-in.
 
+Planned next observability shape:
+
+- Keep Cloudflare native Worker traces/logs enabled on the app Worker.
+- Add an OpenTelemetry Collector ingress layer on Cloudflare Containers.
+- Export app-worker traces/logs and AI Gateway traces into that Collector.
+- Forward from the Collector to an external OTLP-native backend.
+- Do not try to run the full self-hosted SigNoz stack inside Cloudflare Containers.
+  Containers still have ephemeral disk and are a better fit for the stateless
+  Collector than for SigNoz's ClickHouse-backed control plane.
+
+The first repo scaffold for that path lives in
+[`ops/otel-collector-cloudflare/`](./ops/otel-collector-cloudflare).
+
 Current limitation:
 
 - The current Cloudflare profile on this machine cannot manage AI Gateway resources, so `COFFEE_ASSISTANT_AI_GATEWAY=1` is not deployable here yet.

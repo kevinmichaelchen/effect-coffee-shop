@@ -4,20 +4,31 @@ import type {
   AiTextGenerationToolLegacyOutput,
   RoleScopedChatInput,
 } from "@cloudflare/workers-types";
-import type { ModelMessage } from "@tanstack/ai";
 import { runWorkersAiOverRest } from "./rest.ts";
 import type { AssistantToolDefinition } from "./tools.ts";
+import {
+  createGatewayOptions,
+  extractAssistantText,
+  isToolCall,
+  stripToolExecutor,
+  toWorkersAiMessages,
+  type AssistantGatewayMetadata,
+  type AssistantGatewayOptions,
+  type AssistantRunnableTool,
+} from "./workers-ai-format.ts";
+import type { ModelMessage } from "@tanstack/ai";
 
 const maxAssistantToolRounds = 4;
 const assistantMaxTokens = 256;
-
-type AssistantGatewayMetadata = Readonly<Record<string, boolean | number | string | null | bigint>>;
+const defaultAssistantModel = "@cf/meta/llama-3.1-8b-instruct-fast";
+const assistantToolLoopExhaustedMessage =
+  "I couldn't finish the request because the tool loop did not converge.";
 
 interface WorkersAiBinding {
   run(
     model: string,
     inputs: AiTextGenerationInput,
-    options?: Record<string, unknown>,
+    options?: AssistantGatewayOptions,
   ): Promise<AiTextGenerationOutput>;
 }
 
@@ -42,6 +53,17 @@ interface AssistantAiRunner {
   ) => Promise<AiTextGenerationOutput>;
 }
 
+interface AssistantConversationRoundInput {
+  readonly availableTools: readonly AssistantRunnableTool[];
+  readonly conversation: RoleScopedChatInput[];
+  readonly gatewayEventId: string | undefined;
+  readonly gatewayMetadata: AssistantGatewayMetadata | undefined;
+  readonly model: string;
+  readonly round: number;
+  readonly runner: AssistantAiRunner;
+  readonly tools: readonly AssistantToolDefinition[];
+}
+
 export function getBunAssistantAiConfig(
   env: Record<string, string | undefined>,
 ): AssistantAiConfig | undefined {
@@ -61,7 +83,12 @@ export function getBunAssistantAiConfig(
 
 export function getAssistantModel(env?: Record<string, string | undefined>): string {
   const model = env?.COFFEE_ASSISTANT_MODEL?.trim();
-  return model || getDefaultAssistantModel();
+
+  if (!model) {
+    return defaultAssistantModel;
+  }
+
+  return model;
 }
 
 export async function runAssistantConversation(input: {
@@ -77,31 +104,53 @@ export async function runAssistantConversation(input: {
   const conversation = toWorkersAiMessages(input.messages, input.systemPrompt);
   const availableTools = input.tools.map(stripToolExecutor);
 
-  for (let round = 0; round <= maxAssistantToolRounds; round++) {
-    const response = await runner.run(
-      input.model,
-      {
-        max_tokens: assistantMaxTokens,
-        messages: conversation,
-        tools: availableTools,
-      },
-      input.gatewayMetadata,
-      input.gatewayEventId,
-    );
-    const toolCalls = response.tool_calls?.filter(isToolCall) ?? [];
+  return runAssistantConversationRound({
+    availableTools,
+    conversation,
+    gatewayEventId: input.gatewayEventId,
+    gatewayMetadata: input.gatewayMetadata,
+    model: input.model,
+    round: 0,
+    runner,
+    tools: input.tools,
+  });
+}
 
-    if (toolCalls.length === 0) {
-      return extractAssistantText(response);
-    }
+async function runAssistantConversationRound(
+  input: AssistantConversationRoundInput,
+): Promise<string> {
+  const response = await input.runner.run(
+    input.model,
+    {
+      max_tokens: assistantMaxTokens,
+      messages: input.conversation,
+      tools: input.availableTools,
+    },
+    input.gatewayMetadata,
+    input.gatewayEventId,
+  );
+  const toolCalls = response.tool_calls?.filter(isToolCall) ?? [];
 
-    if (round === maxAssistantToolRounds) {
-      return exhaustedToolLoopMessage();
-    }
-
-    await appendToolCallMessages(conversation, toolCalls, input.tools);
+  if (toolCalls.length === 0) {
+    return extractAssistantText(response);
   }
 
-  return exhaustedToolLoopMessage();
+  if (input.round === maxAssistantToolRounds) {
+    return assistantToolLoopExhaustedMessage;
+  }
+
+  await appendToolCallMessages(input.conversation, toolCalls, input.tools);
+
+  return runAssistantConversationRound({
+    availableTools: input.availableTools,
+    conversation: input.conversation,
+    gatewayEventId: input.gatewayEventId,
+    gatewayMetadata: input.gatewayMetadata,
+    model: input.model,
+    round: input.round + 1,
+    runner: input.runner,
+    tools: input.tools,
+  });
 }
 
 function createAssistantAiRunner(config: AssistantAiConfig): AssistantAiRunner {
@@ -109,9 +158,12 @@ function createAssistantAiRunner(config: AssistantAiConfig): AssistantAiRunner {
     return {
       run: async (model, inputs, metadata, eventId) => {
         const options = createGatewayOptions(config.gatewayId, metadata, eventId);
-        return options === undefined
-          ? config.binding.run(model, inputs)
-          : config.binding.run(model, inputs, options);
+
+        if (options === undefined) {
+          return config.binding.run(model, inputs);
+        }
+
+        return config.binding.run(model, inputs, options);
       },
     };
   }
@@ -133,14 +185,11 @@ async function appendToolCallMessages(
   tools: readonly AssistantToolDefinition[],
 ): Promise<void> {
   for (const toolCall of toolCalls) {
+    conversation.push({ role: "assistant", content: JSON.stringify(toolCall) });
     conversation.push({
-      role: "assistant",
-      content: JSON.stringify(toolCall),
-    });
-    conversation.push({
-      role: "tool",
       content: await executeToolCall(toolCall, tools),
       name: toolCall.name,
+      role: "tool",
     });
   }
 }
@@ -156,100 +205,4 @@ async function executeToolCall(
   }
 
   return selectedTool.execute(toolCall.arguments);
-}
-
-function toWorkersAiMessages(
-  messages: readonly ModelMessage[],
-  systemPrompt: string,
-): RoleScopedChatInput[] {
-  const conversation: RoleScopedChatInput[] = [{ role: "system", content: systemPrompt }];
-
-  for (const message of messages) {
-    const converted = toWorkersAiMessage(message);
-
-    if (converted) {
-      conversation.push(converted);
-    }
-  }
-
-  return conversation;
-}
-
-function toWorkersAiMessage(message: ModelMessage): RoleScopedChatInput | null {
-  const content = extractMessageText(message.content);
-
-  if (content === "") {
-    return null;
-  }
-
-  return {
-    role: message.role,
-    content,
-  };
-}
-
-function extractMessageText(content: ModelMessage["content"]): string {
-  if (typeof content === "string") {
-    return content;
-  }
-
-  if (content === null) {
-    return "";
-  }
-
-  return content
-    .filter((part) => part.type === "text")
-    .map((part) => part.content)
-    .join("");
-}
-
-function stripToolExecutor(tool: AssistantToolDefinition) {
-  return {
-    description: tool.description,
-    name: tool.name,
-    parameters: tool.parameters,
-  };
-}
-
-function isToolCall(
-  value: AiTextGenerationToolLegacyOutput | undefined,
-): value is AiTextGenerationToolLegacyOutput {
-  return value !== undefined && typeof value.name === "string";
-}
-
-function extractAssistantText(output: AiTextGenerationOutput): string {
-  const text = output.response?.trim();
-
-  if (text) {
-    return text;
-  }
-
-  return "I couldn't generate a final response.";
-}
-
-function exhaustedToolLoopMessage(): string {
-  return "I couldn't finish the request because the tool loop did not converge.";
-}
-
-function createGatewayOptions(
-  gatewayId: string | undefined,
-  metadata: AssistantGatewayMetadata | undefined,
-  eventId: string | undefined,
-): Record<string, unknown> | undefined {
-  if ((gatewayId?.trim() ?? "") === "") {
-    return undefined;
-  }
-
-  return {
-    gateway: {
-      collectLog: true,
-      ...(eventId === undefined ? {} : { eventId }),
-      id: gatewayId,
-      ...(metadata === undefined ? {} : { metadata }),
-    },
-  };
-}
-
-function getDefaultAssistantModel(): string {
-  return "@cf/meta/llama-3.1-8b-instruct-fast";
 }

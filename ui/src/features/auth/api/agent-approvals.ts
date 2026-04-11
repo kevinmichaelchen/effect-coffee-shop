@@ -1,4 +1,5 @@
 import * as Schema from "effect/Schema";
+import { requestJson } from "#shared/lib/http.ts";
 
 const AgentApprovalErrorSchema = Schema.Struct({
   error: Schema.optionalKey(Schema.String),
@@ -28,43 +29,17 @@ type AgentApprovalError = typeof AgentApprovalErrorSchema.Type;
 export type PendingAgentApproval = typeof PendingAgentApprovalSchema.Type;
 type AgentApprovalResolution = typeof AgentApprovalResolutionSchema.Type;
 
-async function readJson<S extends Schema.Decoder<unknown>>(
-  response: Response,
-  schema: S,
-): Promise<S["Type"]> {
-  const value = Schema.decodeUnknownSync(Schema.UnknownFromJsonString)(await response.text());
-  return Schema.decodeUnknownPromise(schema)(value);
-}
-
 function readApprovalErrorMessage(error: AgentApprovalError): string {
   return error.message ?? error.error ?? "Agent approval request failed.";
 }
 
-async function throwApprovalError(response: Response): Promise<never> {
-  const fallback = `${response.status} ${response.statusText}`;
-  const message = await readJson(response, AgentApprovalErrorSchema)
-    .then(readApprovalErrorMessage)
-    .catch(() => fallback);
-
-  throw new Error(message);
-}
-
-async function request<S extends Schema.Decoder<unknown>>(
-  path: string,
-  schema: S,
-  init?: RequestInit,
-): Promise<S["Type"]> {
-  const response = await fetch(path, init);
-
-  if (!response.ok) {
-    return throwApprovalError(response);
-  }
-
-  return readJson(response, schema);
-}
-
 export async function fetchPendingAgentApprovals(): Promise<readonly PendingAgentApproval[]> {
-  const result = await request("/api/auth/agent/ciba/pending", PendingAgentApprovalsSchema);
+  const result = await requestJson({
+    errorSchema: AgentApprovalErrorSchema,
+    path: "/api/auth/agent/ciba/pending",
+    readErrorMessage: readApprovalErrorMessage,
+    schema: PendingAgentApprovalsSchema,
+  });
   return result.requests;
 }
 
@@ -73,13 +48,19 @@ export async function resolveAgentApproval(input: {
   readonly agentId: string;
   readonly userCode: string;
 }): Promise<AgentApprovalResolution> {
-  return request("/api/auth/agent/approve-capability", AgentApprovalResolutionSchema, {
-    body: JSON.stringify({
-      action: input.action,
-      agent_id: input.agentId,
-      user_code: input.userCode,
-    }),
-    headers: { "content-type": "application/json" },
-    method: "POST",
+  return requestJson({
+    errorSchema: AgentApprovalErrorSchema,
+    init: {
+      body: JSON.stringify({
+        action: input.action,
+        agent_id: input.agentId,
+        user_code: input.userCode,
+      }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    },
+    path: "/api/auth/agent/approve-capability",
+    readErrorMessage: readApprovalErrorMessage,
+    schema: AgentApprovalResolutionSchema,
   });
 }

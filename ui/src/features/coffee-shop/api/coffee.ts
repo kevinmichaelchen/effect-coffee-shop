@@ -1,4 +1,3 @@
-import * as Schema from "effect/Schema";
 import type {
   CoffeeApiError,
   CoffeeOrder,
@@ -12,6 +11,7 @@ import {
   CoffeeOrdersSchema,
   MenuSchema,
 } from "#features/coffee-shop/lib/coffee-schemas.ts";
+import { requestJson } from "#shared/lib/http.ts";
 
 const apiBaseUrl = import.meta.env.VITE_COFFEE_API_URL ?? "/api";
 
@@ -19,39 +19,8 @@ function toRequestUrl(path: string): string {
   return `${apiBaseUrl}${path}`;
 }
 
-async function readJson<S extends Schema.Decoder<unknown>>(
-  response: Response,
-  schema: S,
-): Promise<S["Type"]> {
-  const value = Schema.decodeUnknownSync(Schema.UnknownFromJsonString)(await response.text());
-  return Schema.decodeUnknownPromise(schema)(value);
-}
-
-async function throwResponseError(response: Response): Promise<never> {
-  const fallback = `${response.status} ${response.statusText}`;
-  const message = await readJson(response, CoffeeApiErrorSchema)
-    .then(readApiErrorMessage)
-    .catch(() => fallback);
-
-  throw new Error(message);
-}
-
 function readApiErrorMessage(error: CoffeeApiError): string {
   return error.message ?? error._tag ?? "Unknown API error";
-}
-
-async function request<S extends Schema.Decoder<unknown>>(
-  path: string,
-  schema: S,
-  init?: RequestInit,
-): Promise<S["Type"]> {
-  const response = await fetch(toRequestUrl(path), init);
-
-  if (!response.ok) {
-    return throwResponseError(response);
-  }
-
-  return readJson(response, schema);
 }
 
 function getActionPath(orderId: string, action: OrderAction): string {
@@ -66,18 +35,34 @@ function getActionPath(orderId: string, action: OrderAction): string {
 }
 
 export async function fetchMenu(): Promise<readonly MenuItem[]> {
-  return request("/menu", MenuSchema);
+  return requestJson({
+    errorSchema: CoffeeApiErrorSchema,
+    path: toRequestUrl("/menu"),
+    readErrorMessage: readApiErrorMessage,
+    schema: MenuSchema,
+  });
 }
 
 export async function fetchOrders(): Promise<readonly CoffeeOrder[]> {
-  return request("/orders", CoffeeOrdersSchema);
+  return requestJson({
+    errorSchema: CoffeeApiErrorSchema,
+    path: toRequestUrl("/orders"),
+    readErrorMessage: readApiErrorMessage,
+    schema: CoffeeOrdersSchema,
+  });
 }
 
 export async function createOrder(payload: PlaceOrderRequest): Promise<CoffeeOrder> {
-  return request("/orders", CoffeeOrderSchema, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload),
+  return requestJson({
+    errorSchema: CoffeeApiErrorSchema,
+    init: {
+      body: JSON.stringify(payload),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    },
+    path: toRequestUrl("/orders"),
+    readErrorMessage: readApiErrorMessage,
+    schema: CoffeeOrderSchema,
   });
 }
 
@@ -85,5 +70,11 @@ export async function updateOrderStatus(
   orderId: string,
   action: OrderAction,
 ): Promise<CoffeeOrder> {
-  return request(getActionPath(orderId, action), CoffeeOrderSchema, { method: "POST" });
+  return requestJson({
+    errorSchema: CoffeeApiErrorSchema,
+    init: { method: "POST" },
+    path: toRequestUrl(getActionPath(orderId, action)),
+    readErrorMessage: readApiErrorMessage,
+    schema: CoffeeOrderSchema,
+  });
 }

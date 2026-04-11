@@ -1,108 +1,45 @@
 import type { D1Database } from "@cloudflare/workers-types";
-import type { AgentAuthOptions, AgentSession, Capability } from "@better-auth/agent-auth";
+import type { AgentAuthOptions, AgentSession } from "@better-auth/agent-auth";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Schema from "effect/Schema";
 import {
   decodeListOrdersInput,
   decodeOrderIdInput,
   decodePlaceOrderInput,
 } from "#presentation/assistant/tool-data";
+import { coffeeAgentCapabilities } from "#presentation/auth/agent-auth-data";
 import { formatToolFailure } from "#presentation/assistant/tool-format";
 import { makeCloudflareCoffeeAppLive } from "#runtime/cloudflare/live";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 import { CurrentActor } from "#service/CurrentActor";
-
-const emptyObjectSchema = {
-  properties: {},
-  required: [],
-  type: "object",
-} as const;
-
-const listOrdersSchema = {
-  properties: {
-    status: {
-      description: "Optional order status filter such as pending, brewing, ready, or picked-up.",
-      type: "string",
-    },
-  },
-  required: [],
-  type: "object",
-} as const;
-
-const orderIdSchema = {
-  properties: {
-    orderId: {
-      description: "Coffee shop ticket id, such as order-0001.",
-      type: "string",
-    },
-  },
-  required: ["orderId"],
-  type: "object",
-} as const;
-
-const placeOrderSchema = {
-  properties: {
-    drinkId: {
-      description: "Menu drink id such as latte.",
-      type: "string",
-    },
-    milk: {
-      description: "Milk choice such as whole, oat, almond, or none.",
-      type: "string",
-    },
-    notes: {
-      description: "Optional order note.",
-      type: "string",
-    },
-    shots: {
-      description: "Number of espresso shots.",
-      type: "integer",
-    },
-    size: {
-      description: "Drink size such as small, medium, or large.",
-      type: "string",
-    },
-    temperature: {
-      description: "Drink temperature such as hot or iced.",
-      type: "string",
-    },
-  },
-  required: ["drinkId", "size"],
-  type: "object",
-} as const;
-
-const coffeeAgentCapabilities = [
-  {
-    approvalStrength: "session",
-    description: "List the current coffee menu for the signed-in customer.",
-    input: emptyObjectSchema,
-    name: "list_menu",
-  },
-  {
-    approvalStrength: "session",
-    description: "Create a new coffee order for the signed-in customer.",
-    input: placeOrderSchema,
-    name: "place_order",
-  },
-  {
-    approvalStrength: "session",
-    description: "Fetch one of the signed-in customer's orders by id.",
-    input: orderIdSchema,
-    name: "get_order",
-  },
-  {
-    approvalStrength: "session",
-    description: "List the signed-in customer's orders, optionally filtered by status.",
-    input: listOrdersSchema,
-    name: "list_orders",
-  },
-] as const satisfies ReadonlyArray<Capability>;
 
 const toAgentActor = (session: AgentSession) => ({
   displayName: session.user.name.trim() || session.user.email,
   kind: "customer" as const,
   userId: session.user.id,
 });
+
+class AgentCapabilityExecutionError extends Schema.TaggedErrorClass<AgentCapabilityExecutionError>()(
+  "AgentCapabilityExecutionError",
+  {
+    message: Schema.String,
+  },
+) {}
+
+class AgentCapabilityInputError extends Schema.TaggedErrorClass<AgentCapabilityInputError>()(
+  "AgentCapabilityInputError",
+  {
+    message: Schema.String,
+  },
+) {}
+
+class UnsupportedAgentCapabilityError extends Schema.TaggedErrorClass<UnsupportedAgentCapabilityError>()(
+  "UnsupportedAgentCapabilityError",
+  {
+    capability: Schema.String,
+  },
+) {}
 
 function makeAgentExecutionLayer(input: {
   readonly db: D1Database;
@@ -114,18 +51,31 @@ function makeAgentExecutionLayer(input: {
   );
 }
 
-function toExecutionError(error: unknown): Error {
-  return new Error(formatToolFailure(error));
+function toExecutionError(error: unknown): AgentCapabilityExecutionError {
+  return new AgentCapabilityExecutionError({
+    message: formatToolFailure(error),
+  });
 }
 
 async function decodeAgentInput<A>(input: {
   readonly decode: (value: unknown) => Promise<A>;
   readonly failureMessage: string;
   readonly value: unknown;
-}) {
-  return input.decode(input.value).catch(() => {
-    throw new Error(input.failureMessage);
-  });
+}): Promise<A> {
+  const result = await input
+    .decode(input.value)
+    .then((value) => ({ success: true as const, value }))
+    .catch(() => ({ success: false as const }));
+
+  if (!result.success) {
+    return Promise.reject(
+      new AgentCapabilityInputError({
+        message: input.failureMessage,
+      }),
+    );
+  }
+
+  return result.value;
 }
 
 async function runCoffeeEffect<A>(input: {
@@ -142,7 +92,7 @@ async function runCoffeeEffect<A>(input: {
 }
 
 export async function executeCoffeeAgentCapability(input: {
-  readonly arguments: Record<string, unknown> | undefined;
+  readonly arguments: unknown;
   readonly capability: string;
   readonly db: D1Database;
   readonly session: AgentSession;
@@ -194,7 +144,11 @@ export async function executeCoffeeAgentCapability(input: {
       });
     }
     default:
-      throw new Error(`Unsupported capability: ${input.capability}`);
+      return Promise.reject(
+        new UnsupportedAgentCapabilityError({
+          capability: input.capability,
+        }),
+      );
   }
 }
 
