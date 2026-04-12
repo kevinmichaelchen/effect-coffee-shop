@@ -126,15 +126,6 @@ function buildAuthOptions(input: {
   };
 }
 
-function parseStaffUserIds(value: string | undefined): Set<string> {
-  return new Set(
-    (value ?? "")
-      .split(",")
-      .map((entry) => entry.trim())
-      .filter((entry) => entry.length > 0),
-  );
-}
-
 async function ensureOrderOwnershipColumn(db: D1Database): Promise<void> {
   const table = await db
     .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'orders'")
@@ -207,7 +198,7 @@ export async function resolveCloudflareActor(input: {
   readonly db: D1Database;
   readonly request: Request;
   readonly secret: string | undefined;
-  readonly staffUserIds: string | undefined;
+  readonly staffUserIds: ReadonlySet<string>;
 }): Promise<AppActor> {
   if ((input.secret?.trim() ?? "") === "") {
     return anonymousActor;
@@ -222,11 +213,9 @@ export async function resolveCloudflareActor(input: {
     return anonymousActor;
   }
 
-  const staffUserIds = parseStaffUserIds(input.staffUserIds);
-
   return decodeResolvedActor({
     displayName: session.user.name.trim() || session.user.email,
-    kind: staffUserIds.has(session.user.id) ? "staff" : "customer",
+    kind: input.staffUserIds.has(session.user.id) ? "staff" : "customer",
     userId: session.user.id,
   });
 }
