@@ -24,18 +24,10 @@ func isEffectFile(ctx rule.RuleContext) bool {
 	if strings.Contains(fileName, "/vendor/") || strings.Contains(fileName, "/node_modules/") {
 		return false
 	}
-
-	excludedPaths := []string{
-		"/src/presentation/",
-		"/src/external/",
-		"/src/service/use-cases/",
-		"/src/service/CoffeeOrderApp.ts",
-		"/test/",
-	}
-	for _, excludedPath := range excludedPaths {
-		if strings.Contains(fileName, excludedPath) {
-			return false
-		}
+	if strings.Contains(fileName, "/test/") ||
+		strings.HasSuffix(fileName, ".test.ts") ||
+		strings.HasSuffix(fileName, ".spec.ts") {
+		return false
 	}
 
 	text := ctx.SourceFile.Text()
