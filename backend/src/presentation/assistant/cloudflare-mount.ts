@@ -6,6 +6,7 @@ import {
   type CloudflareRuntime,
   type CloudflareWorkerEnv,
 } from "#presentation/cloudflare/context";
+import { rejectDirectHttpBearerRequest } from "#presentation/cloudflare/direct-http-auth";
 import {
   cloudflarePathname,
   cloudflareResponse,
@@ -27,45 +28,46 @@ const rewriteApiRequest = (request: Request): Request => {
   return rewriteRequestPath(request, rewrittenPathname);
 };
 
-const getAssistantAiConfig = (runtime: CloudflareRuntime): AssistantAiConfig | undefined => {
-  if (Option.isNone(runtime.bindings.ai)) {
-    return undefined;
-  }
-
-  const binding = runtime.bindings.ai.value;
-
-  return Option.match(runtime.config.aiGatewayId, {
-    onNone: () => ({ binding, kind: "binding" }),
-    onSome: (gatewayId) => ({ binding, gatewayId, kind: "binding" }),
+const getAssistantAiConfig = (runtime: CloudflareRuntime): AssistantAiConfig | undefined =>
+  Option.match(runtime.bindings.ai, {
+    onNone: () => undefined,
+    onSome: (binding) =>
+      Option.match(runtime.config.aiGatewayId, {
+        onNone: () => ({ binding, kind: "binding" }),
+        onSome: (gatewayId) => ({ binding, gatewayId, kind: "binding" }),
+      }),
   });
-};
 
 export const cloudflareAssistantMount: CloudflareMount<CloudflareWorkerEnv> = {
   name: "assistant",
   matches: isAssistantRequest,
-  handle: async ({ env, request }) => {
-    const runtime = readCloudflareRuntime(env);
+  handle: async ({ env, request }) =>
+    Option.match(Option.fromNullishOr(rejectDirectHttpBearerRequest(request)), {
+      onNone: async () => {
+        const runtime = readCloudflareRuntime(env);
 
-    await ensureCloudflareAuthPersistence({
-      db: runtime.bindings.db,
-      secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
-    });
+        await ensureCloudflareAuthPersistence({
+          db: runtime.bindings.db,
+          secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
+        });
 
-    const actor = await resolveCloudflareActor({
-      db: runtime.bindings.db,
-      request,
-      secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
-      staffUserIds: runtime.config.staffUserIds,
-    });
+        const actor = await resolveCloudflareActor({
+          db: runtime.bindings.db,
+          request,
+          secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
+          staffUserIds: runtime.config.staffUserIds,
+        });
 
-    return cloudflareResponse(
-      await handleAssistantRequest(rewriteApiRequest(request), {
-        actor,
-        ai: getAssistantAiConfig(runtime),
-        appLayer: makeCloudflareCoffeeAppLive(runtime.bindings.db),
-        model: getAssistantModel(),
-      }),
-      actorLogFields(actor),
-    );
-  },
+        return cloudflareResponse(
+          await handleAssistantRequest(rewriteApiRequest(request), {
+            actor,
+            ai: getAssistantAiConfig(runtime),
+            appLayer: makeCloudflareCoffeeAppLive(runtime.bindings.db),
+            model: getAssistantModel(),
+          }),
+          actorLogFields(actor),
+        );
+      },
+      onSome: async (response: Response) => cloudflareResponse(response),
+    }),
 };

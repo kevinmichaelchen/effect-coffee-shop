@@ -112,6 +112,7 @@ Why this exists:
 - passkey auth, session cookies, and staff/customer actor resolution are presentation-boundary concerns
 - Agent Auth adds another public protocol surface with discovery, approval, and capability execution
 - Better Auth needs Cloudflare-specific setup and persistence bootstrapping that should not leak into the domain or service layers
+- Direct HTTP routes stay session-cookie-based; delegated agent access stays behind MCP and Better Auth capability execution rather than broad bearer-token access across `/api/*`
 
 ### `mcp/`
 

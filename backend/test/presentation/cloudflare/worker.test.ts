@@ -64,6 +64,59 @@ describe("cloudflare worker", () => {
     }
   });
 
+  it("rejects bearer tokens on direct app API routes", async () => {
+    const { dispose, env } = await makeTestEnv();
+
+    try {
+      const response = await worker.fetch(
+        new Request("http://example.com/api/me", {
+          headers: {
+            authorization: "Bearer agent-token",
+          },
+        }),
+        env,
+        executionContext,
+      );
+
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual({
+        error:
+          "Direct HTTP routes do not accept bearer agent tokens. Use session cookies for the app UI/API or MCP capability execution for agent access.",
+      });
+    } finally {
+      await dispose();
+    }
+  });
+
+  it("rejects bearer tokens on the assistant HTTP route", async () => {
+    const { dispose, env } = await makeTestEnv();
+
+    try {
+      const response = await worker.fetch(
+        new Request("http://example.com/api/assistant", {
+          body: JSON.stringify({
+            messages: [],
+          }),
+          headers: {
+            authorization: "Bearer agent-token",
+            "content-type": "application/json",
+          },
+          method: "POST",
+        }),
+        env,
+        executionContext,
+      );
+
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual({
+        error:
+          "Direct HTTP routes do not accept bearer agent tokens. Use session cookies for the app UI/API or MCP capability execution for agent access.",
+      });
+    } finally {
+      await dispose();
+    }
+  });
+
   it("serves the MCP HTTP surface without rewriting the path", async () => {
     const { assetsFetch, dispose, env } = await makeTestEnv();
 
