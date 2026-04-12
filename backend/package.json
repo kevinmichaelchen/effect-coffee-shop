@@ -26,6 +26,7 @@
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "knip": "knip --files --exports --no-config-hints",
+    "bench:mcp:miniflare": "bun run scripts/measure-mcp-miniflare.ts",
     "check": "bun run typecheck && bun run lint && bun run lint:custom && bun run fmt:check && bun run knip && bun run test",
     "test": "vitest run"
   },

@@ -112,16 +112,58 @@ const bundleWorkerScript = Effect.fn("bundleWorkerScript")(function* () {
   return output.text;
 });
 
-const decodeJsonRpcSuccessEnvelope = Schema.decodeUnknownEffect(JsonRpcSuccessEnvelopeSchema);
-const decodeJsonRpcErrorEnvelope = Schema.decodeUnknownOption(JsonRpcErrorEnvelopeSchema);
-
-export const createMcpMiniflareClient = async (): Promise<McpMiniflareClient> => {
-  const script = await Effect.runPromise(bundleWorkerScript().pipe(Effect.provide(Path.layer)));
-  const miniflare = new Miniflare({
+const createMiniflare = (script: string): Miniflare =>
+  new Miniflare({
     compatibilityDate: "2026-03-31",
     modules: true,
     script,
   });
+
+const decodeJsonRpcSuccessEnvelope = Schema.decodeUnknownEffect(JsonRpcSuccessEnvelopeSchema);
+const decodeJsonRpcErrorEnvelope = Schema.decodeUnknownOption(JsonRpcErrorEnvelopeSchema);
+
+export const measureMcpWorkerBundle = Effect.fn("measureMcpWorkerBundle")(function* () {
+  const bundleStart = performance.now();
+
+  yield* bundleWorkerScript();
+
+  return performance.now() - bundleStart;
+});
+
+export const measureMcpMiniflareBootstrap = Effect.fn("measureMcpMiniflareBootstrap")(function* () {
+  const bundleMs = yield* measureMcpWorkerBundle();
+  const script = yield* bundleWorkerScript();
+  const readyStart = performance.now();
+  const miniflare = createMiniflare(script);
+
+  yield* Effect.tryPromise({
+    try: () => miniflare.ready,
+    catch: () =>
+      new McpMiniflareTransportError({
+        message: "Miniflare worker could not be initialized.",
+      }),
+  });
+
+  const readyMs = performance.now() - readyStart;
+
+  yield* Effect.tryPromise({
+    try: () => miniflare.dispose(),
+    catch: () =>
+      new McpMiniflareTransportError({
+        message: "Miniflare worker could not be disposed.",
+      }),
+  });
+
+  return {
+    bundleMs,
+    readyMs,
+    totalMs: bundleMs + readyMs,
+  };
+});
+
+export const createMcpMiniflareClient = async (): Promise<McpMiniflareClient> => {
+  const script = await Effect.runPromise(bundleWorkerScript().pipe(Effect.provide(Path.layer)));
+  const miniflare = createMiniflare(script);
   const baseUrl = new URL("/mcp", await miniflare.ready).toString();
   const responses: Array<Response> = [];
 
