@@ -320,6 +320,10 @@ const load = Effect.succeed("loading");
 "effect";
 const status = { kind: "loading" };
         `),
+				validCase(`
+"effect";
+const syntheticEmailDomain = "users.onion.invalid";
+        `),
 			},
 			invalid: []rule_tester.InvalidTestCase{
 				invalidRuleCase(`
