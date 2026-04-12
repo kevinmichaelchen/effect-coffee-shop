@@ -1,6 +1,11 @@
+import * as Option from "effect/Option";
 import { getAssistantModel, handleAssistantRequest } from "#presentation/assistant/handler";
 import type { AssistantAiConfig } from "#presentation/assistant/runtime";
-import type { OnionCloudflareWorkerEnv } from "#presentation/cloudflare/context";
+import {
+  readCloudflareRuntime,
+  type CloudflareRuntime,
+  type CloudflareWorkerEnv,
+} from "#presentation/cloudflare/context";
 import {
   cloudflarePathname,
   cloudflareResponse,
@@ -22,41 +27,42 @@ const rewriteApiRequest = (request: Request): Request => {
   return rewriteRequestPath(request, rewrittenPathname);
 };
 
-const getAssistantAiConfig = (env: OnionCloudflareWorkerEnv): AssistantAiConfig | undefined => {
-  const binding = env.AI;
-
-  if (binding === undefined) {
+const getAssistantAiConfig = (runtime: CloudflareRuntime): AssistantAiConfig | undefined => {
+  if (Option.isNone(runtime.bindings.ai)) {
     return undefined;
   }
 
-  const gatewayId = env.AI_GATEWAY_ID?.trim();
+  const binding = runtime.bindings.ai.value;
 
-  return gatewayId === undefined || gatewayId === ""
-    ? { binding, kind: "binding" }
-    : { binding, gatewayId, kind: "binding" };
+  return Option.match(runtime.config.aiGatewayId, {
+    onNone: () => ({ binding, kind: "binding" }),
+    onSome: (gatewayId) => ({ binding, gatewayId, kind: "binding" }),
+  });
 };
 
-export const cloudflareAssistantMount: CloudflareMount<OnionCloudflareWorkerEnv> = {
+export const cloudflareAssistantMount: CloudflareMount<CloudflareWorkerEnv> = {
   name: "assistant",
   matches: isAssistantRequest,
   handle: async ({ env, request }) => {
+    const runtime = readCloudflareRuntime(env);
+
     await ensureCloudflareAuthPersistence({
-      db: env.DB,
-      secret: env.BETTER_AUTH_SECRET,
+      db: runtime.bindings.db,
+      secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
     });
 
     const actor = await resolveCloudflareActor({
-      db: env.DB,
+      db: runtime.bindings.db,
       request,
-      secret: env.BETTER_AUTH_SECRET,
-      staffUserIds: env.COFFEE_STAFF_USER_IDS,
+      secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
+      staffUserIds: runtime.config.staffUserIds,
     });
 
     return cloudflareResponse(
       await handleAssistantRequest(rewriteApiRequest(request), {
         actor,
-        ai: getAssistantAiConfig(env),
-        appLayer: makeCloudflareCoffeeAppLive(env.DB),
+        ai: getAssistantAiConfig(runtime),
+        appLayer: makeCloudflareCoffeeAppLive(runtime.bindings.db),
         model: getAssistantModel(),
       }),
       actorLogFields(actor),

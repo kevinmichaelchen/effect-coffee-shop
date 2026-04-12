@@ -1,4 +1,5 @@
-import type { OnionCloudflareWorkerEnv } from "#presentation/cloudflare/context";
+import * as Option from "effect/Option";
+import { readCloudflareRuntime, type CloudflareWorkerEnv } from "#presentation/cloudflare/context";
 import {
   cloudflarePathname,
   cloudflareResponse,
@@ -10,8 +11,6 @@ import { createCloudflareAuth, ensureCloudflareAuthPersistence } from "#presenta
 const betterAuthUnavailableResponse = () =>
   new Response("Better Auth is unavailable. Configure BETTER_AUTH_SECRET.", { status: 503 });
 
-const hasBetterAuthSecret = (secret: string | undefined) => (secret?.trim() ?? "") !== "";
-
 const isAgentDiscoveryRequest = (request: Request): boolean =>
   cloudflarePathname(request) === "/.well-known/agent-configuration";
 
@@ -20,30 +19,32 @@ const isAuthRequest = (request: Request): boolean => {
   return pathname === "/api/auth" || pathname.startsWith("/api/auth/");
 };
 
-const ensureAuthPersistence = async (env: OnionCloudflareWorkerEnv): Promise<void> =>
-  ensureCloudflareAuthPersistence({
-    db: env.DB,
-    secret: env.BETTER_AUTH_SECRET,
-  });
+const ensureAuthPersistence = async (env: CloudflareWorkerEnv): Promise<void> => {
+  const runtime = readCloudflareRuntime(env);
 
-const handleAuthRequest = async (
-  request: Request,
-  env: OnionCloudflareWorkerEnv,
-): Promise<Response> => {
-  if (!hasBetterAuthSecret(env.BETTER_AUTH_SECRET)) {
+  return ensureCloudflareAuthPersistence({
+    db: runtime.bindings.db,
+    secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
+  });
+};
+
+const handleAuthRequest = async (request: Request, env: CloudflareWorkerEnv): Promise<Response> => {
+  const runtime = readCloudflareRuntime(env);
+
+  if (Option.isNone(runtime.config.betterAuthSecret)) {
     return betterAuthUnavailableResponse();
   }
 
   await ensureAuthPersistence(env);
 
   return createCloudflareAuth({
-    db: env.DB,
+    db: runtime.bindings.db,
     request,
-    secret: env.BETTER_AUTH_SECRET,
+    secret: runtime.config.betterAuthSecret.value,
   }).handler(request);
 };
 
-export const cloudflareAgentDiscoveryMount: CloudflareMount<OnionCloudflareWorkerEnv> = {
+export const cloudflareAgentDiscoveryMount: CloudflareMount<CloudflareWorkerEnv> = {
   name: "agent-discovery",
   matches: isAgentDiscoveryRequest,
   handle: async ({ env, request }) =>
@@ -52,7 +53,7 @@ export const cloudflareAgentDiscoveryMount: CloudflareMount<OnionCloudflareWorke
     ),
 };
 
-export const cloudflareAuthMount: CloudflareMount<OnionCloudflareWorkerEnv> = {
+export const cloudflareAuthMount: CloudflareMount<CloudflareWorkerEnv> = {
   name: "auth",
   matches: isAuthRequest,
   handle: async ({ env, request }) => cloudflareResponse(await handleAuthRequest(request, env)),

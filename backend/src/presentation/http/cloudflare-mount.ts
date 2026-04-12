@@ -1,5 +1,6 @@
+import * as Option from "effect/Option";
 import { actorLogFields } from "#presentation/observability/logging";
-import type { OnionCloudflareWorkerEnv } from "#presentation/cloudflare/context";
+import { readCloudflareRuntime, type CloudflareWorkerEnv } from "#presentation/cloudflare/context";
 import {
   cloudflarePathname,
   cloudflareResponse,
@@ -23,24 +24,26 @@ const rewriteApiRequest = (request: Request): Request => {
   return rewriteRequestPath(request, rewrittenPathname);
 };
 
-export const cloudflareHttpApiMount: CloudflareMount<OnionCloudflareWorkerEnv> = {
+export const cloudflareHttpApiMount: CloudflareMount<CloudflareWorkerEnv> = {
   name: "api",
   matches: isApiRequest,
   handle: async ({ env, request }) => {
+    const runtime = readCloudflareRuntime(env);
+
     await ensureCloudflareAuthPersistence({
-      db: env.DB,
-      secret: env.BETTER_AUTH_SECRET,
+      db: runtime.bindings.db,
+      secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
     });
 
     const actor = await resolveCloudflareActor({
-      db: env.DB,
+      db: runtime.bindings.db,
       request,
-      secret: env.BETTER_AUTH_SECRET,
-      staffUserIds: env.COFFEE_STAFF_USER_IDS,
+      secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
+      staffUserIds: runtime.config.staffUserIds,
     });
 
     return cloudflareResponse(
-      await getCloudflareBackendHandler(env.DB)(
+      await getCloudflareBackendHandler(runtime.bindings.db)(
         rewriteApiRequest(request),
         createCloudflareRequestServices(actor),
       ),

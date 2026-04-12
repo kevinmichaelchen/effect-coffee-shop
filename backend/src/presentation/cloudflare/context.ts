@@ -3,6 +3,11 @@ import type {
   AiTextGenerationOutput,
   D1Database,
 } from "@cloudflare/workers-types";
+import * as Config from "effect/Config";
+import * as ConfigProvider from "effect/ConfigProvider";
+import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 export type AssetFetcher = { fetch(request: Request): Promise<Response> };
 
@@ -14,7 +19,7 @@ export interface WorkersAiBinding {
   ): Promise<AiTextGenerationOutput>;
 }
 
-export interface OnionCloudflareWorkerEnv {
+export interface CloudflareWorkerEnv {
   AI?: WorkersAiBinding;
   AI_GATEWAY_ID?: string;
   BETTER_AUTH_SECRET?: string;
@@ -22,3 +27,56 @@ export interface OnionCloudflareWorkerEnv {
   DB: D1Database;
   ASSETS?: AssetFetcher;
 }
+
+export interface CloudflareRuntime {
+  readonly bindings: {
+    readonly ai: Option.Option<WorkersAiBinding>;
+    readonly assets: Option.Option<AssetFetcher>;
+    readonly db: D1Database;
+  };
+  readonly config: {
+    readonly aiGatewayId: Option.Option<string>;
+    readonly betterAuthSecret: Option.Option<string>;
+    readonly staffUserIds: ReadonlySet<string>;
+  };
+}
+
+const cloudflareConfig = Config.all({
+  aiGatewayId: Config.string("aiGatewayId").pipe(Config.withDefault("")),
+  betterAuthSecret: Config.string("betterAuthSecret").pipe(Config.withDefault("")),
+  coffeeStaffUserIds: Config.string("coffeeStaffUserIds").pipe(Config.withDefault("")),
+});
+
+const decodeTrimmedString = (value: string): string => Schema.decodeUnknownSync(Schema.Trim)(value);
+
+const optionalTrimmedString = (value: string): Option.Option<string> => {
+  const trimmed = decodeTrimmedString(value);
+  return trimmed === "" ? Option.none() : Option.some(trimmed);
+};
+
+const parseStaffUserIds = (value: string): ReadonlySet<string> =>
+  new Set(
+    value
+      .split(",")
+      .map(decodeTrimmedString)
+      .filter((entry) => entry !== ""),
+  );
+
+export const readCloudflareRuntime = (env: CloudflareWorkerEnv): CloudflareRuntime => {
+  const decodedConfig = Effect.runSync(
+    cloudflareConfig.parse(ConfigProvider.fromUnknown(env).pipe(ConfigProvider.constantCase)),
+  );
+
+  return {
+    bindings: {
+      ai: Option.fromNullishOr(env.AI),
+      assets: Option.fromNullishOr(env.ASSETS),
+      db: env.DB,
+    },
+    config: {
+      aiGatewayId: optionalTrimmedString(decodedConfig.aiGatewayId),
+      betterAuthSecret: optionalTrimmedString(decodedConfig.betterAuthSecret),
+      staffUserIds: parseStaffUserIds(decodedConfig.coffeeStaffUserIds),
+    },
+  };
+};

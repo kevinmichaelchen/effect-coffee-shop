@@ -1,14 +1,12 @@
 import type { D1Database, ExecutionContext } from "@cloudflare/workers-types";
 import { Miniflare } from "miniflare";
 import { describe, expect, it, vi } from "vitest";
-import worker, {
-  type OnionCloudflareWorkerEnv,
-} from "../../../src/presentation/cloudflare/worker.ts";
+import worker, { type CloudflareWorkerEnv } from "../../../src/presentation/cloudflare/worker.ts";
 
 const makeTestEnv = async (): Promise<{
   assetsFetch: ReturnType<typeof vi.fn<(request: Request) => Promise<Response>>>;
   dispose: () => Promise<void>;
-  env: OnionCloudflareWorkerEnv;
+  env: CloudflareWorkerEnv;
 }> => {
   const miniflare = new Miniflare({
     d1Databases: {

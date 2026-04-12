@@ -146,7 +146,7 @@ That file is a good example of accidental complexity:
 - [router.ts](./cloudflare/router.ts): Assembly-only route ordering for Cloudflare mounts.
 - [host.ts](./cloudflare/host.ts): Generic Worker host that handles ordered mount dispatch plus request-level logging/error logging.
 - [mount.ts](./cloudflare/mount.ts): Small Cloudflare mount and request-context primitives shared across presentation surfaces.
-- [context.ts](./cloudflare/context.ts): Typed Cloudflare env/binding surface used by the Worker entrypoint and feature mounts.
+- [context.ts](./cloudflare/context.ts): Typed Cloudflare env/binding surface plus a small Effect-native config boundary that normalizes optional string settings and object bindings before mounts consume them.
 - [assets-mount.ts](./cloudflare/assets-mount.ts): Static asset fallback mount for non-API requests.
 
 ### `observability/`

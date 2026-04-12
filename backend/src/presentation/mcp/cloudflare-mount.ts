@@ -1,4 +1,5 @@
-import type { OnionCloudflareWorkerEnv } from "#presentation/cloudflare/context";
+import * as Option from "effect/Option";
+import { readCloudflareRuntime, type CloudflareWorkerEnv } from "#presentation/cloudflare/context";
 import {
   cloudflarePathname,
   cloudflareResponse,
@@ -16,17 +17,19 @@ const isMcpRequest = (request: Request): boolean => {
   return pathname === "/mcp" || pathname.startsWith("/mcp/");
 };
 
-export const cloudflareMcpMount: CloudflareMount<OnionCloudflareWorkerEnv> = {
+export const cloudflareMcpMount: CloudflareMount<CloudflareWorkerEnv> = {
   name: "mcp",
   matches: isMcpRequest,
   handle: async ({ env, request }) => {
+    const runtime = readCloudflareRuntime(env);
+
     await ensureCloudflareAuthPersistence({
-      db: env.DB,
-      secret: env.BETTER_AUTH_SECRET,
+      db: runtime.bindings.db,
+      secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
     });
 
     return cloudflareResponse(
-      await getCloudflareBackendHandler(env.DB)(
+      await getCloudflareBackendHandler(runtime.bindings.db)(
         request,
         createCloudflareRequestServices(systemActor),
       ),
