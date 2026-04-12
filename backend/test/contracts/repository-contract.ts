@@ -121,5 +121,44 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
         }),
       );
     });
+
+    it("filters orders by owner and by owner plus status", async () => {
+      await run(
+        Effect.gen(function* () {
+          const orderRepository = yield* OrderRepository;
+          const averyPending = makeOrder({
+            id: "order-0001",
+            createdAt: utc("2026-01-01T10:00:00.000Z"),
+            ownerUserId: "user-avery",
+            status: "pending",
+          });
+          const averyReady = makeOrder({
+            id: "order-0002",
+            createdAt: utc("2026-01-01T10:05:00.000Z"),
+            ownerUserId: "user-avery",
+            status: "ready",
+          });
+          const blakeReady = makeOrder({
+            id: "order-0003",
+            createdAt: utc("2026-01-01T10:10:00.000Z"),
+            ownerUserId: "user-blake",
+            status: "ready",
+          });
+
+          yield* orderRepository.save(blakeReady);
+          yield* orderRepository.save(averyReady);
+          yield* orderRepository.save(averyPending);
+
+          const averyOrders = yield* orderRepository.list({ ownerUserId: "user-avery" });
+          const averyReadyOrders = yield* orderRepository.list({
+            ownerUserId: "user-avery",
+            status: "ready",
+          });
+
+          assert.deepStrictEqual(averyOrders, [averyPending, averyReady]);
+          assert.deepStrictEqual(averyReadyOrders, [averyReady]);
+        }),
+      );
+    });
   });
 };

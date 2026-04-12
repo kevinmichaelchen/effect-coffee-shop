@@ -1,3 +1,4 @@
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
@@ -34,38 +35,36 @@ const makeSqlOrderQueries = Effect.gen(function* () {
 
   const update = (order: typeof SqlOrderModel.update.Type) => repository.update(order);
 
+  const buildListWhereClauses = (filters: ListOrdersFilters) =>
+    Arr.getSomes([
+      Option.map(
+        Option.fromUndefinedOr(filters.ownerUserId),
+        (ownerUserId) => sql`ownerUserId = ${ownerUserId}`,
+      ),
+      Option.map(Option.fromUndefinedOr(filters.status), (status) => sql`status = ${status}`),
+    ]);
+
   const listRecords = (filters: ListOrdersFilters) =>
     SqlSchema.findAll({
       Request: ListOrdersFiltersSchema,
       Result: SqlOrderModel,
-      execute: (filters) =>
-        filters.ownerUserId === undefined && filters.status === undefined
-          ? sql`
+      execute: (filters) => {
+        const whereClauses = buildListWhereClauses(filters);
+
+        return Option.match(Arr.head(whereClauses), {
+          onNone: () => sql`
           SELECT *
           FROM orders
-          ORDER BY createdAt, id
-        `
-          : filters.ownerUserId !== undefined && filters.status === undefined
-            ? sql`
-          SELECT *
-          FROM orders
-          WHERE ownerUserId = ${filters.ownerUserId}
-          ORDER BY createdAt, id
-        `
-            : filters.ownerUserId === undefined && filters.status !== undefined
-              ? sql`
-          SELECT *
-          FROM orders
-          WHERE status = ${filters.status}
-          ORDER BY createdAt, id
-        `
-              : sql`
-          SELECT *
-          FROM orders
-          WHERE ownerUserId = ${filters.ownerUserId}
-            AND status = ${filters.status}
           ORDER BY createdAt, id
         `,
+          onSome: () => sql`
+          SELECT *
+          FROM orders
+          WHERE ${sql.and(whereClauses)}
+          ORDER BY createdAt, id
+        `,
+        });
+      },
     })(filters);
 
   const save = Effect.fn("SqlOrderRepository.save")(function* (
