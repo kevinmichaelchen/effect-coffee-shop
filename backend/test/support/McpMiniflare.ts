@@ -1,8 +1,8 @@
-import path from "node:path";
 import { build } from "esbuild";
 import * as Option from "effect/Option";
 import { Miniflare } from "miniflare";
 import * as Effect from "effect/Effect";
+import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 
 const JsonRpcIdSchema = Schema.Union([Schema.String, Schema.Number, Schema.Null]);
@@ -67,47 +67,56 @@ export type McpMiniflareClient = {
   readonly dispose: () => Promise<void>;
 };
 
-const MCP_WORKER_ENTRYPOINT = path.resolve(
-  process.cwd(),
-  "src/presentation/mcp/miniflare.worker.ts",
-);
+const resolveMcpWorkerEntrypoint = Effect.fnUntraced(function* () {
+  const path = yield* Path.Path;
 
-let bundledWorkerScriptPromise: Promise<string> | undefined;
+  return yield* path.fromFileUrl(
+    new URL("../../src/presentation/mcp/miniflare.worker.ts", import.meta.url),
+  );
+});
 
-const getBundledWorkerScript = () =>
-  (bundledWorkerScriptPromise ??= Effect.gen(function* () {
-    const result = yield* Effect.tryPromise({
-      try: () =>
-        build({
-          bundle: true,
-          entryPoints: [MCP_WORKER_ENTRYPOINT],
-          format: "esm",
-          logLevel: "silent",
-          platform: "browser",
-          target: "esnext",
-          write: false,
-        }),
-      catch: () =>
+const bundleWorkerScript = Effect.fn("bundleWorkerScript")(function* () {
+  const entryPoint = yield* resolveMcpWorkerEntrypoint().pipe(
+    Effect.mapError(
+      () =>
         new McpMiniflareBundleError({
-          message: "Miniflare worker bundle could not be built.",
+          message: "Miniflare worker entrypoint could not be resolved.",
         }),
+    ),
+  );
+
+  const result = yield* Effect.tryPromise({
+    try: () =>
+      build({
+        bundle: true,
+        entryPoints: [entryPoint],
+        format: "esm",
+        logLevel: "silent",
+        platform: "browser",
+        target: "esnext",
+        write: false,
+      }),
+    catch: () =>
+      new McpMiniflareBundleError({
+        message: "Miniflare worker bundle could not be built.",
+      }),
+  });
+  const output = result.outputFiles[0];
+
+  if (output === undefined) {
+    return yield* new McpMiniflareBundleError({
+      message: "Miniflare worker bundle did not produce an output file.",
     });
-    const output = result.outputFiles[0];
+  }
 
-    if (output === undefined) {
-      return yield* new McpMiniflareBundleError({
-        message: "Miniflare worker bundle did not produce an output file.",
-      });
-    }
-
-    return output.text;
-  }).pipe(Effect.runPromise));
+  return output.text;
+});
 
 const decodeJsonRpcSuccessEnvelope = Schema.decodeUnknownEffect(JsonRpcSuccessEnvelopeSchema);
 const decodeJsonRpcErrorEnvelope = Schema.decodeUnknownOption(JsonRpcErrorEnvelopeSchema);
 
 export const createMcpMiniflareClient = async (): Promise<McpMiniflareClient> => {
-  const script = await getBundledWorkerScript();
+  const script = await Effect.runPromise(bundleWorkerScript().pipe(Effect.provide(Path.layer)));
   const miniflare = new Miniflare({
     compatibilityDate: "2026-03-31",
     modules: true,

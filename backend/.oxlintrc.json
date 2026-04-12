@@ -82,7 +82,7 @@
     {
       "files": ["test/**/*.ts"],
       "rules": {
-        "no-restricted-imports": ["error", { "patterns": ["../../src/*", "../src/*"] }]
+        "no-restricted-imports": ["error", { "patterns": ["../../src/*", "../src/*", "node:*"] }]
       }
     }
   ]
