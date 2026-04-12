@@ -16,6 +16,11 @@ const app = await alchemy("effect-v4-onion-otel", {
 });
 const observabilityApiToken =
   process.env.CLOUDFLARE_OBSERVABILITY_API_TOKEN?.trim();
+const ingressAuthorization = process.env.OTEL_INGRESS_AUTHORIZATION?.trim();
+const destinationHeaders =
+  ingressAuthorization === undefined || ingressAuthorization.length === 0
+    ? []
+    : ([["Authorization", ingressAuthorization]] as const);
 
 export const collector = await Container("collector", {
   build: {
@@ -30,6 +35,9 @@ export const collector = await Container("collector", {
 export const ingress = await Worker("ingress", {
   bindings: {
     OTEL_COLLECTOR: collector,
+    OTEL_INGRESS_AUTHORIZATION: ingressAuthorization
+      ? alchemy.secret(ingressAuthorization)
+      : "",
     UPSTREAM_OTLP_AUTHORIZATION: process.env.UPSTREAM_OTLP_AUTHORIZATION
       ? alchemy.secret(process.env.UPSTREAM_OTLP_AUTHORIZATION)
       : "",
@@ -62,6 +70,7 @@ export const tracesDestination = await WorkersObservabilityDestination(
       ? alchemy.secret(observabilityApiToken)
       : undefined,
     dataset: "opentelemetry-traces",
+    headers: destinationHeaders,
     name: collectorTraceDestinationName(),
     url: `${ingress.url}/v1/traces`,
   },
@@ -74,6 +83,7 @@ export const logsDestination = await WorkersObservabilityDestination(
       ? alchemy.secret(observabilityApiToken)
       : undefined,
     dataset: "opentelemetry-logs",
+    headers: destinationHeaders,
     name: collectorLogDestinationName(),
     url: `${ingress.url}/v1/logs`,
   },
@@ -81,6 +91,7 @@ export const logsDestination = await WorkersObservabilityDestination(
 
 console.log({
   collector: collector.name,
+  ingressAuthorizationConfigured: ingressAuthorization !== undefined,
   logsDestination: logsDestination.name,
   observabilityApiTokenConfigured: observabilityApiToken !== undefined,
   tracesDestination: tracesDestination.name,

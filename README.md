@@ -218,6 +218,7 @@ Current limitation:
 
 - The current Cloudflare profile on this machine cannot manage AI Gateway resources, so `COFFEE_ASSISTANT_AI_GATEWAY=1` is not deployable here yet.
 - Workers Observability destinations require a separate `CLOUDFLARE_OBSERVABILITY_API_TOKEN` with account-level `Workers Observability Write` permission.
+- Set `OTEL_INGRESS_AUTHORIZATION=Bearer ...` if you want the collector ingress Worker to require a matching `Authorization` header on incoming export traffic; the companion Alchemy app will attach the same header to Workers observability destinations automatically.
 - Even once that permission issue is fixed, payload-suppression and OTel-export destination setup still need a later pass before we should treat model logging as fully production-hardened.
 
 Expected workflow:
