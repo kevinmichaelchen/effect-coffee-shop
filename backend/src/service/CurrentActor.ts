@@ -31,7 +31,7 @@ export const systemActor: AuthenticatedActor = {
   userId: "system",
 };
 
-export const CurrentActor = Context.Reference<AppActor>("effect-v4-onion/service/CurrentActor", {
+export const CurrentActor = Context.Reference<AppActor>("effect-coffee-shop/service/CurrentActor", {
   defaultValue: () => anonymousActor,
 });
 

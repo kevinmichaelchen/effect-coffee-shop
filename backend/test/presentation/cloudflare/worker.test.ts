@@ -248,7 +248,7 @@ describe("cloudflare worker", () => {
       };
 
       expect(response.status).toBe(200);
-      expect(json.provider_name).toBe("Onion Coffee Shop");
+      expect(json.provider_name).toBe("Effect Coffee Shop");
       expect(json.default_location).toBe("http://example.com/api/auth/capability/execute");
       expect(json.endpoints.execute).toBe("http://example.com/api/auth/capability/execute");
       expect(assetsFetch).not.toHaveBeenCalled();

@@ -1,4 +1,4 @@
-# effect-v4-onion
+# effect-coffee-shop
 
 Coffee-order application used to explore Onion Architecture with TypeScript, Bun, and Effect v4.
 
@@ -148,12 +148,12 @@ For HTTP-only subdomain-based local development with [`portless`](https://github
 ```bash
 bun add -g portless
 
-bun run dev:onion:api
-bun run dev:onion:ui
+bun run dev:local:api
+bun run dev:local:ui
 ```
 
-This repo runs Portless on a dedicated HTTP-only proxy at port `1365` with an isolated state directory at `/tmp/effect-v4-onion-portless`, so it does not interfere with any other Portless daemon you already have running.
-That serves an in-memory backend with the REST API plus MCP HTTP endpoint on `http://api.onion.localhost:1365`, and the frontend UI on `http://onion.localhost:1365`.
+This repo runs Portless on a dedicated HTTP-only proxy at port `1365` with an isolated state directory at `/tmp/effect-coffee-shop-portless`, so it does not interfere with any other Portless daemon you already have running.
+That serves an in-memory backend with the REST API plus MCP HTTP endpoint on `http://api.coffee.localhost:1365`, and the frontend UI on `http://coffee.localhost:1365`.
 
 This HTTP flow avoids HTTPS trust prompts and does not require `sudo`. It relies on `.localhost` resolution in the browser. It works on Chrome, Firefox, and Edge. Safari may still require host syncing, which Portless documents as a privileged operation.
 

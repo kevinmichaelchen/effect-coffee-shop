@@ -178,6 +178,6 @@ export function createCoffeeAgentAuthOptions(input: {
       }),
     providerDescription:
       "Coffee ordering capabilities for delegated AI agents acting on behalf of a signed-in customer.",
-    providerName: "Onion Coffee Shop",
+    providerName: "Effect Coffee Shop",
   };
 }

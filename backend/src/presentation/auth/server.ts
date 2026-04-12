@@ -8,7 +8,7 @@ import { createCoffeeAgentAuthOptions } from "#presentation/auth/agent-auth";
 import { logStructuredEvent } from "#presentation/observability/logging";
 import { AppActorSchema, anonymousActor, type AppActor } from "#service/CurrentActor";
 
-const syntheticEmailDomain = "users.onion.invalid";
+const syntheticEmailDomain = "users.coffee.invalid";
 const longEnoughDevelopmentSecret = "dev-better-auth-secret-please-change-me-0001";
 const provisionalUserPrefix = "passkey-signup-";
 
@@ -79,7 +79,7 @@ function buildAuthOptions(input: {
   const host = getRequestHost(input.request);
 
   return {
-    appName: "Onion Coffee Shop",
+    appName: "Effect Coffee Shop",
     basePath: "/api/auth",
     database: input.db,
     ...(origin === undefined ? {} : { baseURL: origin }),
@@ -114,7 +114,7 @@ function buildAuthOptions(input: {
           requireSession: false,
           resolveUser: async ({ context }) => createProvisionalUser(getDisplayName(context)),
         },
-        rpName: "Onion Coffee Shop",
+        rpName: "Effect Coffee Shop",
         ...(origin === undefined ? {} : { origin }),
         ...(host === undefined ? {} : { rpID: host }),
       }),

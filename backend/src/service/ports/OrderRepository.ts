@@ -15,4 +15,4 @@ export class OrderRepository extends Context.Service<
       filters?: ListOrdersFilters,
     ) => Effect.Effect<ReadonlyArray<CoffeeOrder>, PersistenceError>;
   }
->()("effect-v4-onion/service/OrderRepository") {}
+>()("effect-coffee-shop/service/OrderRepository") {}

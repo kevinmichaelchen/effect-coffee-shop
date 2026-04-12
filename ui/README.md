@@ -37,20 +37,20 @@ Install `portless` globally once:
 bun add -g portless
 ```
 
-From the repo root, run the in-memory backend on `api.onion.localhost:1365` in one terminal:
+From the repo root, run the in-memory backend on `api.coffee.localhost:1365` in one terminal:
 
 ```bash
-bun run dev:onion:api
+bun run dev:local:api
 ```
 
-Run the frontend on `onion.localhost:1365` in another terminal:
+Run the frontend on `coffee.localhost:1365` in another terminal:
 
 ```bash
-bun run dev:onion:ui
+bun run dev:local:ui
 ```
 
-This flow keeps Portless on plain HTTP, disables host syncing, and uses an isolated state directory at `/tmp/effect-v4-onion-portless`, so it does not require `sudo` and does not collide with other Portless setups.
-In this mode, the UI still uses `/api/*`, and Vite proxies those requests to `http://api.onion.localhost:1365`.
+This flow keeps Portless on plain HTTP, disables host syncing, and uses an isolated state directory at `/tmp/effect-coffee-shop-portless`, so it does not require `sudo` and does not collide with other Portless setups.
+In this mode, the UI still uses `/api/*`, and Vite proxies those requests to `http://api.coffee.localhost:1365`.
 
 ## Environment
 
@@ -65,7 +65,7 @@ When that variable is unset, the app uses the local Vite proxy at `/api`.
 To override only the dev proxy target, set:
 
 ```bash
-VITE_COFFEE_PROXY_TARGET=http://api.onion.localhost:1365
+VITE_COFFEE_PROXY_TARGET=http://api.coffee.localhost:1365
 ```
 
 For the assistant to work against the local Bun backend, also set:

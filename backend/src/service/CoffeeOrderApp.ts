@@ -89,7 +89,7 @@ export class CoffeeOrderApp extends Context.Service<
       | InternalAppError
     >;
   }
->()("effect-v4-onion/service/CoffeeOrderApp") {
+>()("effect-coffee-shop/service/CoffeeOrderApp") {
   static readonly layer = Layer.effect(
     this,
     Effect.gen(function* () {
