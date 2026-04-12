@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "effect-v4-onion",
+      "name": "effect-coffee-shop",
       "devDependencies": {
         "@j178/prek": "0.3.8",
         "alchemy": "0.90.1",

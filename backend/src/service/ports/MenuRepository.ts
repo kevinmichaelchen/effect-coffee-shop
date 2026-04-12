@@ -12,4 +12,4 @@ export class MenuRepository extends Context.Service<
       drinkId: string,
     ) => Effect.Effect<Option.Option<MenuItem>, PersistenceError>;
   }
->()("effect-v4-onion/service/MenuRepository") {}
+>()("effect-coffee-shop/service/MenuRepository") {}

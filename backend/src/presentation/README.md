@@ -173,7 +173,7 @@ Why this exists:
 
 ### `dev/`
 
-- [onion-backend-main.ts](./dev/onion-backend-main.ts): In-memory local entrypoint that combines REST and MCP for the onion dev environment.
+- [local-backend-main.ts](./dev/local-backend-main.ts): In-memory local entrypoint that combines REST and MCP for the local dev environment.
 
 Why this exists:
 

@@ -1,5 +1,5 @@
 {
-  "name": "effect-v4-onion",
+  "name": "effect-coffee-shop",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -23,8 +23,8 @@
     "cli": "bun run --cwd backend cli",
     "mcp:stdio": "bun run --cwd backend mcp:stdio",
     "mcp:http": "bun run --cwd backend mcp:http",
-    "dev:onion:api": "PORTLESS_STATE_DIR=/tmp/effect-v4-onion-portless PORTLESS_PORT=1365 PORTLESS_HTTPS=0 PORTLESS_SYNC_HOSTS=0 portless api.onion bash scripts/dev-onion-api.sh",
-    "dev:onion:ui": "PORTLESS_STATE_DIR=/tmp/effect-v4-onion-portless PORTLESS_PORT=1365 PORTLESS_HTTPS=0 PORTLESS_SYNC_HOSTS=0 portless onion bash scripts/dev-onion-ui.sh",
+    "dev:local:api": "PORTLESS_STATE_DIR=/tmp/effect-coffee-shop-portless PORTLESS_PORT=1365 PORTLESS_HTTPS=0 PORTLESS_SYNC_HOSTS=0 portless api.coffee bash scripts/dev-local-api.sh",
+    "dev:local:ui": "PORTLESS_STATE_DIR=/tmp/effect-coffee-shop-portless PORTLESS_PORT=1365 PORTLESS_HTTPS=0 PORTLESS_SYNC_HOSTS=0 portless coffee bash scripts/dev-local-ui.sh",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "lint:fix": "bun run --cwd backend lint:fix",

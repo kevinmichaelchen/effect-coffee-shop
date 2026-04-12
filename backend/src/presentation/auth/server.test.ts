@@ -21,7 +21,7 @@ describe("passkey registration helpers", () => {
     });
 
     expect(created).toEqual({
-      email: "passkey-signup-user-123@users.onion.invalid",
+      email: "passkey-signup-user-123@users.coffee.invalid",
       id: "passkey-signup-user-123",
       name: "Alice Example",
     });
