@@ -206,6 +206,11 @@ That directory now includes a standalone Alchemy-managed companion Worker for
 collector ingress, separate from the main app so the collector can be deployed
 and destroyed independently.
 
+One important deployment note: the Alchemy app names, website resource name,
+and observability destination base names are stateful deployment identities.
+Do not rename them casually. Treat any rename as a deliberate migration that
+may recreate resources or fork existing Cloudflare/Alchemy state.
+
 Verification status:
 
 - Workers Observability destinations successfully delivered both datasets on April 11, 2026:

@@ -8,6 +8,8 @@ import {
 } from "./destination-names.ts";
 import { WorkersObservabilityDestination } from "./observability-destination.ts";
 
+// This physical app name is part of the deployed collector identity.
+// Do not rename it without a migration plan for state and destinations.
 const app = await alchemy("effect-v4-onion-otel", {
   password: process.env.ALCHEMY_PASSWORD,
   stateStore: process.env.ALCHEMY_STATE_TOKEN

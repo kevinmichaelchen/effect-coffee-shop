@@ -7,6 +7,8 @@ import {
   collectorTraceDestinationName,
 } from "./ops/otel-collector-cloudflare/destination-names.ts";
 
+// This physical app name is part of the deployed Alchemy/Cloudflare identity.
+// Do not rename it casually; treat any change as a state migration.
 const app = await alchemy("effect-v4-onion", {
   password: process.env.ALCHEMY_PASSWORD,
   stateStore: process.env.ALCHEMY_STATE_TOKEN
@@ -31,6 +33,8 @@ export const assistantGateway = aiGatewayEnabled
     })
   : undefined;
 
+// This resource name is also stateful. Renaming it can recreate the website
+// resource or fork deployment state.
 export const website = await Website("onion", {
   url: true,
   compatibility: "node",
