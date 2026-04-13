@@ -47,6 +47,8 @@ This directory currently includes:
 - a container image definition for `otel/opentelemetry-collector-contrib`
 - a minimal collector config that accepts OTLP over HTTP and forwards traces
   and logs upstream
+- collector-side redaction for `gen_ai.prompt_json` and
+  `gen_ai.completion_json` before upstream export
 - a standalone Alchemy-managed Worker that fronts the collector container on
   `/v1/traces` and `/v1/logs`
 - a local `.env.example` for wiring the upstream backend
@@ -95,6 +97,12 @@ When this is set, the Alchemy destination resources will attach the matching
 `Authorization` header automatically for Workers observability exports.
 This is the recommended baseline hardening for the ingress path.
 
+The collector also deletes `gen_ai.prompt_json` and `gen_ai.completion_json`
+attributes before forwarding telemetry upstream.
+That matches the Cloudflare AI Gateway OTEL attribute names for raw prompt and
+completion payloads, so future AI Gateway exports do not leak those fields by
+default.
+
 Set `CLOUDFLARE_OBSERVABILITY_API_TOKEN` to an account-level Cloudflare API
 token with `Workers Observability Write` permission.
 The current Alchemy Cloudflare OAuth flow is enough to deploy Workers and
@@ -129,6 +137,8 @@ Verification note:
   `opentelemetry-traces` and `opentelemetry-logs`.
 - Cloudflare telemetry queries also showed the ingress Worker receiving
   `POST /v1/logs` after real requests hit the main app Worker.
+- The collector config now strips `gen_ai.prompt_json` and
+  `gen_ai.completion_json` before upstream export.
 
 ## Notes For SigNoz
 
