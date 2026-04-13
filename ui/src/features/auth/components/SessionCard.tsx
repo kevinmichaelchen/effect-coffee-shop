@@ -3,6 +3,7 @@ import { Button } from "#shared/ui/retroui/Button.tsx";
 import { Card } from "#shared/ui/retroui/Card.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 import type { AuthenticatedViewer } from "#features/auth/lib/viewer.ts";
+import { useState } from "react";
 
 interface SessionCardProps {
   viewer: AuthenticatedViewer;
@@ -12,6 +13,19 @@ interface SessionCardProps {
 
 export function SessionCard(inputProps: SessionCardProps) {
   const { isPending, viewer, onSignOut } = inputProps;
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+  const canCopyUserId = navigator.clipboard?.writeText !== undefined;
+
+  const copyUserId = () => {
+    if (!canCopyUserId) {
+      return;
+    }
+
+    void navigator.clipboard.writeText(viewer.userId).then(
+      () => setCopyState("copied"),
+      () => setCopyState("failed"),
+    );
+  };
 
   return (
     <Card className="w-full border-border">
@@ -29,6 +43,28 @@ export function SessionCard(inputProps: SessionCardProps) {
           <Text as="p" className="text-sm text-muted-foreground">
             Orders placed here are scoped to your account.
           </Text>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <Text as="p" className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+              User ID
+            </Text>
+            <code className="rounded border border-border bg-muted px-2 py-1 font-mono text-xs">
+              {viewer.userId}
+            </code>
+            {canCopyUserId ? (
+              <Button
+                className="min-w-24 justify-center"
+                size="sm"
+                variant="outline"
+                onClick={copyUserId}
+              >
+                {copyState === "copied"
+                  ? "Copied"
+                  : copyState === "failed"
+                    ? "Copy failed"
+                    : "Copy ID"}
+              </Button>
+            ) : null}
+          </div>
         </div>
         <Button disabled={isPending} variant="outline" onClick={() => void onSignOut()}>
           Sign out
