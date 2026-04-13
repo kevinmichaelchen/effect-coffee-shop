@@ -4,6 +4,7 @@ type OtlpIngressPathname = "/v1/logs" | "/v1/traces";
 
 interface Env {
   OTEL_COLLECTOR: DurableObjectNamespace<OtelCollectorContainer>;
+  OTEL_INGRESS_AUTHORIZATION?: string;
   UPSTREAM_OTLP_AUTHORIZATION?: string;
   UPSTREAM_OTLP_HTTP_ENDPOINT: string;
 }
@@ -20,8 +21,15 @@ const okResponse = (status: string): Response => Response.json({ status });
 
 const pathnameOf = (request: Request): string => new URL(request.url).pathname;
 
+const ingressAuthorizationMissing = (env: Env): boolean =>
+  (env.OTEL_INGRESS_AUTHORIZATION?.trim() ?? "") === "";
+
 const isOtlpIngressPathname = (pathname: string): pathname is OtlpIngressPathname =>
   pathname === "/v1/logs" || pathname === "/v1/traces";
+
+const ingressRequestAuthorized = (request: Request, env: Env): boolean =>
+  ingressAuthorizationMissing(env) ||
+  request.headers.get("authorization") === env.OTEL_INGRESS_AUTHORIZATION;
 
 export class OtelCollectorContainer extends Container<Env> {
   defaultPort = 4318;
@@ -55,6 +63,10 @@ export default {
 
     if (request.method !== "POST") {
       return errorResponse("method not allowed", 405);
+    }
+
+    if (!ingressRequestAuthorized(request, env)) {
+      return errorResponse("unauthorized", 401);
     }
 
     const collector = env.OTEL_COLLECTOR.getByName(collectorInstanceName);

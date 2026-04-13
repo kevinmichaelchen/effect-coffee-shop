@@ -61,8 +61,9 @@ The companion Worker lives in [`worker/`](./worker) and provides:
 3. one simple `/healthz` endpoint for worker-level liveness checks
 4. one Alchemy deployment path independent of the main app
 
-The Worker is small on purpose. It does not try to add auth, routing
-fan-out, load balancing, or Effect-specific abstractions yet.
+The Worker is small on purpose. It now supports optional shared-secret auth on
+ingress requests, but it does not try to add routing fan-out, load balancing,
+or Effect-specific abstractions yet.
 
 ## Local Workflow
 
@@ -87,6 +88,12 @@ If your upstream requires an auth header, set
 environment.
 Because the companion app binds that value with `alchemy.secret(...)`, set
 `ALCHEMY_PASSWORD` as well so Alchemy can encrypt it in state.
+
+Set `OTEL_INGRESS_AUTHORIZATION=Bearer ...` to require the same authorization
+header on telemetry export requests that hit the ingress Worker.
+When this is set, the Alchemy destination resources will attach the matching
+`Authorization` header automatically for Workers observability exports.
+This is the recommended baseline hardening for the ingress path.
 
 Set `CLOUDFLARE_OBSERVABILITY_API_TOKEN` to an account-level Cloudflare API
 token with `Workers Observability Write` permission.
