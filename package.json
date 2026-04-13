@@ -5,6 +5,7 @@
   "type": "module",
   "workspaces": ["backend", "ui"],
   "scripts": {
+    "prepare": "if [ -d .git ] && [ -z \"$CI\" ]; then prek install --overwrite --prepare-hooks; fi",
     "dev": "turbo run dev --filter=ui",
     "storybook": "turbo run storybook --filter=ui",
     "build-storybook": "turbo run build-storybook --filter=ui",
@@ -46,7 +47,7 @@
     "lint:custom:affected": "turbo run lint:custom --affected",
     "affected:packages": "turbo query affected --packages",
     "affected:tasks": "turbo query affected",
-    "hooks:install": "prek install --overwrite",
+    "hooks:install": "prek install --overwrite --prepare-hooks",
     "hooks:run:pre-commit": "prek run --all-files --stage pre-commit",
     "hooks:run:pre-push": "prek run --all-files --stage pre-push"
   },

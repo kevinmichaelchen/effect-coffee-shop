@@ -23,11 +23,11 @@ Install dependencies:
 
 ```bash
 bun install
-bun run hooks:install
 ```
 
 This repo uses Bun workspaces. The root `bun install` covers both [`backend/`](./backend) and [`ui/`](./ui).
 Turborepo is the canonical root task runner for dev, build, and quality checks, so repeated runs can reuse the `.turbo` cache across workspaces and `--affected` can skip unrelated work.
+`bun install` also installs and prewarms the local Git hooks unless `CI` is set. If you need to refresh them manually, run `bun run hooks:install`.
 
 Run the app:
 
@@ -77,9 +77,12 @@ COFFEE_STAFF_USER_IDS=user-id-1,user-id-2 # optional
 Alchemy state stays local under `.alchemy/` by default.
 If you want remote shared state later, set `ALCHEMY_STATE_TOKEN` and the stack will switch to `CloudflareStateStore`.
 If you start binding secret values with `alchemy.secret(...)`, set `ALCHEMY_PASSWORD` so Alchemy can encrypt them in state.
-Check the repo:
+Canonical quality commands:
 
 ```bash
+bun run --cwd backend check
+bun run --cwd ui check
+bun run check:affected
 bun run typecheck
 bun run lint
 bun run lint:custom
@@ -88,6 +91,13 @@ bun run knip
 bun run test
 bun run check
 ```
+
+Recommended usage:
+
+- `bun run check` is the full local repo gate.
+- `bun run --cwd backend check` and `bun run --cwd ui check` are the workspace gates.
+- `bun run check:affected` is the fast branch-local gate when you want local confidence without paying for the whole repo.
+- `bun run build` stays separate from the main quality gate.
 
 Build workspace artifacts from the repo root:
 
@@ -110,6 +120,11 @@ Run the configured Git hooks without committing or pushing:
 bun run hooks:run:pre-commit
 bun run hooks:run:pre-push
 ```
+
+Hook policy:
+
+- `pre-commit` stays fast and runs format, lint, custom lint, and typecheck.
+- `pre-push` runs `bun run check:affected`, which keeps Knip and tests local without putting them on every commit.
 
 Run Storybook from the repo root:
 
