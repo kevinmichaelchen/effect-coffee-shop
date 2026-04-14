@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { appRoutes } from "#app/routes.ts";
 import { useViewerQuery } from "#features/auth/hooks/useViewerQuery.ts";
 import {
   anonymousViewer,
@@ -37,6 +38,17 @@ function getStaffQueueSnapshot(orders: readonly CoffeeOrder[], selectedOrderId: 
   };
 }
 
+function updateSelectedOrderSearch<TSearch extends { order?: string }>(
+  previous: TSearch,
+  orderId: string | null,
+): TSearch {
+  if (orderId === null) {
+    return { ...previous, order: undefined };
+  }
+
+  return { ...previous, order: orderId };
+}
+
 function useOrderActionHandler(
   orderActionMutation: ReturnType<typeof useOrderActionMutation>,
   setSelectedOrderId: (orderId: string | null) => void,
@@ -58,13 +70,24 @@ export function useStaffWorkspace() {
   const canLoadOrders = isAuthenticatedViewer(viewer) && isStaffViewer(viewer);
   const ordersQuery = useOrdersQuery({ enabled: canLoadOrders });
   const orderActionMutation = useOrderActionMutation();
+  const navigate = useNavigate({ from: appRoutes.staff });
+  const selectedOrderId = useSearch({
+    from: appRoutes.staff,
+    select: (search) => search.order ?? null,
+  });
   const { theme, toggleTheme } = useThemePreference();
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const orders = ordersQuery.data ?? emptyOrders;
   const { activeOrders, historyOrders, queueLoad, readyCount, selectedOrder } =
     getStaffQueueSnapshot(orders, selectedOrderId);
   const pendingOrderId = orderActionMutation.variables?.orderId ?? null;
   const errorMessage = getErrorMessage(viewerQuery.error?.message, ordersQuery.error?.message);
+  function setSelectedOrderId(orderId: string | null) {
+    void navigate({
+      resetScroll: false,
+      search: (previous) => updateSelectedOrderSearch(previous, orderId),
+      to: appRoutes.staff,
+    });
+  }
   const handleOrderAction = useOrderActionHandler(orderActionMutation, setSelectedOrderId);
 
   return {
