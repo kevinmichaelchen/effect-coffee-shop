@@ -1,4 +1,5 @@
 import type { ThemePreference } from "#shared/hooks/useThemePreference.ts";
+import { Link } from "@tanstack/react-router";
 import { appRoutes } from "#app/routes.ts";
 import { AssistantTranscript } from "#features/assistant/components/AssistantTranscript.tsx";
 import { ToolActivityDrawer } from "#features/assistant/components/ToolActivityDrawer.tsx";
@@ -108,10 +109,10 @@ function LandingHero({ onToggleTheme, theme }: LandingHeroProps) {
         </div>
         <div className="flex flex-wrap gap-3">
           <Button asChild variant="secondary">
-            <a href={appRoutes.shop}>Open customer workspace</a>
+            <Link to={appRoutes.shop}>Open customer workspace</Link>
           </Button>
           <Button asChild variant="outline">
-            <a href={appRoutes.staff}>Open staff workspace</a>
+            <Link to={appRoutes.staff}>Open staff workspace</Link>
           </Button>
         </div>
       </Card.Content>

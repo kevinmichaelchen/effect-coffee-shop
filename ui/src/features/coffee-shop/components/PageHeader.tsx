@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Badge } from "#shared/ui/retroui/Badge.tsx";
 import { Button } from "#shared/ui/retroui/Button.tsx";
 import { Drawer } from "#shared/ui/retroui/Drawer.tsx";
@@ -54,7 +55,7 @@ function NavigationLink(inputProps: NavigationLinkProps & { children?: ReactNode
 
   return (
     <Button asChild size="sm" variant={variant}>
-      <a href={href}>{children ?? label}</a>
+      <Link to={href}>{children ?? label}</Link>
     </Button>
   );
 }
@@ -119,7 +120,7 @@ function MobileNavigation(inputProps: NavigationProps) {
             <div className="grid gap-2">
               {navLinks.map((link) => (
                 <Button key={link.href} asChild className="justify-center" variant={link.variant}>
-                  <a href={link.href}>{link.label}</a>
+                  <Link to={link.href}>{link.label}</Link>
                 </Button>
               ))}
             </div>

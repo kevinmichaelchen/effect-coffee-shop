@@ -41,6 +41,7 @@
     "@tanstack/ai-react": "0.7.9",
     "@tanstack/react-query": "^5.96.0",
     "@tanstack/react-query-devtools": "^5.96.0",
+    "@tanstack/react-router": "1.168.21",
     "better-auth": "^1.6.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Button } from "#shared/ui/retroui/Button.tsx";
 import { Card } from "#shared/ui/retroui/Card.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
@@ -16,13 +17,13 @@ export function NotFoundPage() {
           </Text>
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild>
-              <a href={appRoutes.home}>Open landing page</a>
+              <Link to={appRoutes.home}>Open landing page</Link>
             </Button>
             <Button asChild variant="outline">
-              <a href={appRoutes.shop}>Open customer workspace</a>
+              <Link to={appRoutes.shop}>Open customer workspace</Link>
             </Button>
             <Button asChild variant="outline">
-              <a href={appRoutes.staff}>Open staff workspace</a>
+              <Link to={appRoutes.staff}>Open staff workspace</Link>
             </Button>
           </div>
         </Card.Content>
