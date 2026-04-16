@@ -39,6 +39,10 @@ export async function startCoffeeBunServer<
   });
 
   registerShutdown(dispose, server);
+  console.warn(
+    "[auth] Bun dev server grants system-level (staff) privileges to every request. " +
+      "Do not expose this server on an untrusted network.",
+  );
   console.log(`Coffee HTTP server listening on ${server.url}`);
 }
 

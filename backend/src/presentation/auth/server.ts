@@ -9,7 +9,9 @@ import { logStructuredEvent } from "#presentation/observability/logging";
 import { AppActorSchema, anonymousActor, type AppActor } from "#service/CurrentActor";
 
 const syntheticEmailDomain = "users.coffee.invalid";
-const longEnoughDevelopmentSecret = "dev-better-auth-secret-please-change-me-0001";
+// Schema migrations (CREATE TABLE / ALTER TABLE) do not depend on the secret
+// value, so a placeholder is safe here. It is never used for token signing.
+const migrationOnlySecret = "migration-bootstrap-placeholder";
 const provisionalUserPrefix = "passkey-signup-";
 
 const PasskeyRegistrationContextSchema = Schema.Struct({
@@ -66,14 +68,10 @@ function getRequestHost(request: Request | undefined): string | undefined {
   return request === undefined ? undefined : new URL(request.url).hostname;
 }
 
-function getBetterAuthSecret(secret: string | undefined): string {
-  return secret?.trim() || longEnoughDevelopmentSecret;
-}
-
 function buildAuthOptions(input: {
   readonly db: D1Database;
   readonly request: Request | undefined;
-  readonly secret: string | undefined;
+  readonly secret: string;
 }) {
   const origin = getRequestOrigin(input.request);
   const host = getRequestHost(input.request);
@@ -119,7 +117,7 @@ function buildAuthOptions(input: {
         ...(host === undefined ? {} : { rpID: host }),
       }),
     ],
-    secret: getBetterAuthSecret(input.secret),
+    secret: input.secret,
     telemetry: {
       enabled: false,
     },
@@ -154,6 +152,7 @@ export async function ensureCloudflareAuthPersistence(input: {
   readonly db: D1Database;
   readonly secret: string | undefined;
 }): Promise<void> {
+  const effectiveSecret = input.secret?.trim() || migrationOnlySecret;
   const cached = authBootstrapCache.get(input.db);
 
   if (cached !== undefined) {
@@ -164,7 +163,7 @@ export async function ensureCloudflareAuthPersistence(input: {
     const authOptions = buildAuthOptions({
       db: input.db,
       request: undefined,
-      secret: input.secret,
+      secret: effectiveSecret,
     });
     // Better Auth's passkey plugin types currently conflict with exactOptionalPropertyTypes.
     // Runtime behavior works on Cloudflare D1; keep the compatibility escape hatch here.
@@ -182,7 +181,7 @@ export async function ensureCloudflareAuthPersistence(input: {
 export function createCloudflareAuth(input: {
   readonly db: D1Database;
   readonly request: Request;
-  readonly secret: string | undefined;
+  readonly secret: string;
 }) {
   const authOptions = buildAuthOptions({
     db: input.db,
@@ -200,11 +199,17 @@ export async function resolveCloudflareActor(input: {
   readonly secret: string | undefined;
   readonly staffUserIds: ReadonlySet<string>;
 }): Promise<AppActor> {
-  if ((input.secret?.trim() ?? "") === "") {
+  const trimmedSecret = input.secret?.trim();
+
+  if (trimmedSecret === undefined || trimmedSecret === "") {
     return anonymousActor;
   }
 
-  const auth = createCloudflareAuth(input);
+  const auth = createCloudflareAuth({
+    db: input.db,
+    request: input.request,
+    secret: trimmedSecret,
+  });
   const session = await auth.api.getSession({
     headers: input.request.headers,
   });
