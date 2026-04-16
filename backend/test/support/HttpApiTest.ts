@@ -3,6 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import { InMemoryCoffeeAppLive } from "#external/live";
+import { InMemoryEmailServiceLive } from "#external/in-memory/InMemoryEmailService";
 import { InMemoryOrderIdGeneratorLive } from "#external/in-memory/InMemoryOrderIdGenerator";
 import { InMemoryOrderRepositoryLive } from "#external/in-memory/InMemoryOrderRepository";
 import { CoffeeHttpApiLive } from "#presentation/http/api";
@@ -38,6 +39,7 @@ export const HttpApiPersistenceFailureTestLive = HttpRouter.serve(CoffeeHttpApiL
       FailingMenuRepositoryLive,
       InMemoryOrderRepositoryLive,
       InMemoryOrderIdGeneratorLive,
+      InMemoryEmailServiceLive,
     ),
   ),
   Layer.provideMerge(NodeHttpServer.layerTest),

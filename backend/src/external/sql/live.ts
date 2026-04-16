@@ -1,4 +1,5 @@
 import * as Layer from "effect/Layer";
+import { InMemoryEmailServiceLive } from "../in-memory/InMemoryEmailService.ts";
 import { InMemoryOrderIdGeneratorLive } from "../in-memory/InMemoryOrderIdGenerator.ts";
 import { SqlMenuRepositoryLive } from "./SqlMenuRepository.ts";
 import { SqlOrderRepositoryLive } from "./SqlOrderRepository.ts";
@@ -13,4 +14,5 @@ export const SqlCoffeeRepositoriesLive = Layer.mergeAll(
 export const SqlCoffeeAppLive = Layer.mergeAll(
   SqlCoffeeRepositoriesLive,
   InMemoryOrderIdGeneratorLive,
+  InMemoryEmailServiceLive,
 );

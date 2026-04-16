@@ -32,6 +32,15 @@ export class InternalAppError extends Schema.TaggedErrorClass<InternalAppError>(
   { httpApiStatus: 500 },
 ) {}
 
+export class EmailError extends Schema.TaggedErrorClass<EmailError>()(
+  "EmailError",
+  {
+    message: Schema.String,
+    cause: Schema.optional(Schema.Defect),
+  },
+  { httpApiStatus: 500 },
+) {}
+
 export const internalAppErrorFromPersistence =
   (message: string) =>
   (error: PersistenceError): InternalAppError =>

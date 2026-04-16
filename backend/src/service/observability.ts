@@ -24,3 +24,7 @@ export function annotateObservabilitySpan(attributes: ObservabilityAttributes) {
 export function logInfoWithAttributes(message: string, attributes: ObservabilityAttributes) {
   return Effect.logInfo(message).pipe(Effect.annotateLogs(attributes));
 }
+
+export function logWarnWithAttributes(message: string, attributes: ObservabilityAttributes) {
+  return Effect.logWarning(message).pipe(Effect.annotateLogs(attributes));
+}

@@ -26,11 +26,30 @@ import {
   actorObservabilityAttributes,
   annotateObservabilitySpan,
   logInfoWithAttributes,
+  logWarnWithAttributes,
 } from "#service/observability";
 import { OrderIdGenerator } from "../ports/OrderIdGenerator.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
+import { EmailService } from "../ports/EmailService.ts";
 import { type PlaceOrderRequest } from "../contracts.ts";
+import type { AppActor } from "#service/CurrentActor";
+
+const dispatchOrderConfirmation = Effect.fnUntraced(function* (
+  actor: AppActor,
+  order: CoffeeOrder,
+) {
+  const emailService = yield* EmailService;
+  yield* emailService.sendOrderConfirmation(order).pipe(
+    Effect.catchTag("EmailError", (error) =>
+      logWarnWithAttributes("coffee order confirmation email failed", {
+        ...actorObservabilityAttributes(actor),
+        order_id: order.id,
+        error_message: error.message,
+      }),
+    ),
+  );
+});
 
 const trimmedOrUndefined = (value: string | undefined): string | undefined => {
   const trimmed = value?.trim();
@@ -138,7 +157,7 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
 ): Effect.fn.Return<
   CoffeeOrder,
   AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
-  MenuRepository | OrderIdGenerator | OrderRepository
+  MenuRepository | OrderIdGenerator | OrderRepository | EmailService
 > {
   const actor = yield* requireSignedInActor();
   const orderIdGenerator = yield* OrderIdGenerator;
@@ -190,9 +209,10 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
     ...(notes === undefined ? {} : { notes }),
   };
 
-  const savedOrder = yield* orderRepository
-    .save(order)
-    .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")));
+  const savedOrder = yield* orderRepository.save(order).pipe(
+    Effect.mapError(internalAppErrorFromPersistence("Unable to place order right now")),
+    Effect.tap((saved) => dispatchOrderConfirmation(actor, saved)),
+  );
 
   yield* logInfoWithAttributes("coffee order placed", {
     ...actorObservabilityAttributes(actor),

@@ -15,6 +15,7 @@ import { InternalAppError } from "./errors.ts";
 import { MenuRepository } from "./ports/MenuRepository.ts";
 import { OrderIdGenerator } from "./ports/OrderIdGenerator.ts";
 import { OrderRepository } from "./ports/OrderRepository.ts";
+import { EmailService } from "./ports/EmailService.ts";
 import {
   cancelOrder,
   getOrder,
@@ -96,6 +97,7 @@ export class CoffeeOrderApp extends Context.Service<
       const menuRepository = yield* MenuRepository;
       const orderIdGenerator = yield* OrderIdGenerator;
       const orderRepository = yield* OrderRepository;
+      const emailService = yield* EmailService;
 
       return CoffeeOrderApp.of({
         listMenu: () => listMenu().pipe(Effect.provideService(MenuRepository, menuRepository)),
@@ -104,6 +106,7 @@ export class CoffeeOrderApp extends Context.Service<
             Effect.provideService(MenuRepository, menuRepository),
             Effect.provideService(OrderIdGenerator, orderIdGenerator),
             Effect.provideService(OrderRepository, orderRepository),
+            Effect.provideService(EmailService, emailService),
           ),
         getOrder: (orderId) =>
           getOrder(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
