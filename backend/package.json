@@ -17,6 +17,7 @@
     "mcp:stdio": "bun run src/presentation/mcp/stdio-main.ts",
     "mcp:http": "bun run src/presentation/mcp/http-main.ts",
     "dev:local:api": "bun run src/presentation/dev/local-backend-main.ts",
+    "dev:local:full": "bun run src/presentation/dev/local-full-backend-main.ts",
     "typecheck": "tsgo --noEmit",
     "lint": "oxlint --disable-nested-config .",
     "lint:fix": "oxlint --disable-nested-config --fix .",
