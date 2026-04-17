@@ -83,7 +83,7 @@ describe("MCP tools with persistence verification", () => {
 
         assert.ok(
           result.success,
-          `Expected success but got: ${Bun.inspect(result, { depth: Infinity })}`,
+          `Expected success but got success=${String(result.success)} orderId=${result.orderId}`,
         );
         assert.ok(result.orderId, `Expected order ID to be set`);
         assert.match(result.orderId, /^order-\d{4}$/);
