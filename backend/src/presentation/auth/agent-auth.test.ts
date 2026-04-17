@@ -1,5 +1,6 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import type { AgentSession } from "@better-auth/agent-auth";
+import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import { Miniflare } from "miniflare";
 import { describe, expect, it } from "vitest";
@@ -13,6 +14,8 @@ import {
   createCoffeeAgentAuthOptions,
   executeCoffeeAgentCapability,
 } from "#presentation/auth/agent-auth";
+import { makeCloudflareCoffeeAppLive } from "#runtime/cloudflare/live";
+import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 
 async function withTestDatabase<A>(effect: (db: D1Database) => Promise<A>): Promise<A> {
   const miniflare = new Miniflare({
@@ -30,6 +33,9 @@ async function withTestDatabase<A>(effect: (db: D1Database) => Promise<A>): Prom
     await miniflare.dispose();
   }
 }
+
+const makeTestAppLayer = (db: D1Database) =>
+  CoffeeOrderApp.layer.pipe(Layer.provide(makeCloudflareCoffeeAppLive(db)));
 
 function createAgentSession(input: {
   readonly email?: string;
@@ -59,12 +65,12 @@ function createAgentSession(input: {
 
 async function placeLatteOrder(db: D1Database, session: AgentSession) {
   const result = await executeCoffeeAgentCapability({
+    appLayer: makeTestAppLayer(db),
     arguments: {
       drinkId: "latte",
       size: "medium",
     },
     capability: "place_order",
-    db,
     session,
   });
 
@@ -73,9 +79,9 @@ async function placeLatteOrder(db: D1Database, session: AgentSession) {
 
 async function listOrders(db: D1Database, session: AgentSession): Promise<CoffeeOrders> {
   const result = await executeCoffeeAgentCapability({
+    appLayer: makeTestAppLayer(db),
     arguments: {},
     capability: "list_orders",
-    db,
     session,
   });
 
@@ -88,9 +94,9 @@ async function getOrder(
   session: AgentSession,
 ): Promise<CoffeeOrder> {
   const result = await executeCoffeeAgentCapability({
+    appLayer: makeTestAppLayer(db),
     arguments: { orderId },
     capability: "get_order",
-    db,
     session,
   });
 
@@ -100,7 +106,7 @@ async function getOrder(
 describe("coffee agent auth", () => {
   it("publishes the delegated customer capabilities", async () => {
     await withTestDatabase(async (db) => {
-      const options = createCoffeeAgentAuthOptions({ db });
+      const options = createCoffeeAgentAuthOptions({ makeAppLayer: () => makeTestAppLayer(db) });
 
       expect(options.capabilities?.map((capability) => capability.name)).toEqual([
         "list_menu",
@@ -147,9 +153,9 @@ describe("coffee agent auth", () => {
 
       await expect(
         executeCoffeeAgentCapability({
+          appLayer: makeTestAppLayer(db),
           arguments: {},
           capability: "place_order",
-          db,
           session,
         }),
       ).rejects.toThrowError("Invalid place_order arguments.");

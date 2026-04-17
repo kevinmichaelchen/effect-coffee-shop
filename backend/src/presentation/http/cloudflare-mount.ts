@@ -12,7 +12,8 @@ import {
   createCloudflareRequestServices,
   getCloudflareBackendHandler,
 } from "#presentation/http/cloudflare-handler";
-import { ensureCloudflareAuthPersistence, resolveCloudflareActor } from "#presentation/auth/server";
+import { buildCloudflareAuthDependencies } from "#presentation/auth/cloudflare-mount";
+import { ensureAuthPersistence, resolveActor } from "#presentation/auth/server";
 
 const isApiRequest = (request: Request): boolean => {
   const pathname = cloudflarePathname(request);
@@ -32,18 +33,11 @@ export const cloudflareHttpApiMount: CloudflareMount<CloudflareWorkerEnv> = {
     Option.match(Option.fromNullishOr(rejectDirectHttpBearerRequest(request)), {
       onNone: async () => {
         const runtime = readCloudflareRuntime(env);
+        const authDeps = buildCloudflareAuthDependencies(runtime);
 
-        await ensureCloudflareAuthPersistence({
-          db: runtime.bindings.db,
-          secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
-        });
+        await ensureAuthPersistence(authDeps);
 
-        const actor = await resolveCloudflareActor({
-          db: runtime.bindings.db,
-          request,
-          secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
-          staffUserIds: runtime.config.staffUserIds,
-        });
+        const actor = await resolveActor({ ...authDeps, request });
 
         return cloudflareResponse(
           await getCloudflareBackendHandler(runtime.bindings.db)(

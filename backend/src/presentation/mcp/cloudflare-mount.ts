@@ -1,4 +1,3 @@
-import * as Option from "effect/Option";
 import { readCloudflareRuntime, type CloudflareWorkerEnv } from "#presentation/cloudflare/context";
 import {
   cloudflarePathname,
@@ -9,7 +8,8 @@ import {
   createCloudflareRequestServices,
   getCloudflareBackendHandler,
 } from "#presentation/http/cloudflare-handler";
-import { ensureCloudflareAuthPersistence } from "#presentation/auth/server";
+import { buildCloudflareAuthDependencies } from "#presentation/auth/cloudflare-mount";
+import { ensureAuthPersistence } from "#presentation/auth/server";
 import { systemActor } from "#service/CurrentActor";
 
 const isMcpRequest = (request: Request): boolean => {
@@ -23,10 +23,7 @@ export const cloudflareMcpMount: CloudflareMount<CloudflareWorkerEnv> = {
   handle: async ({ env, request }) => {
     const runtime = readCloudflareRuntime(env);
 
-    await ensureCloudflareAuthPersistence({
-      db: runtime.bindings.db,
-      secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
-    });
+    await ensureAuthPersistence(buildCloudflareAuthDependencies(runtime));
 
     return cloudflareResponse(
       await getCloudflareBackendHandler(runtime.bindings.db)(

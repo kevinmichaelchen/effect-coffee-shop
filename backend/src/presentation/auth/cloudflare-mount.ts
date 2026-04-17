@@ -1,12 +1,39 @@
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import { readCloudflareRuntime, type CloudflareWorkerEnv } from "#presentation/cloudflare/context";
+import {
+  createAuth,
+  ensureAuthPersistence,
+  type AuthDependencies,
+} from "#presentation/auth/server";
+import {
+  readCloudflareRuntime,
+  type CloudflareRuntime,
+  type CloudflareWorkerEnv,
+} from "#presentation/cloudflare/context";
 import {
   cloudflarePathname,
   cloudflareResponse,
   rewriteRequestPath,
   type CloudflareMount,
 } from "#presentation/cloudflare/mount";
-import { createCloudflareAuth, ensureCloudflareAuthPersistence } from "#presentation/auth/server";
+import { makeCloudflareCoffeeAppLive } from "#runtime/cloudflare/live";
+import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
+
+interface CloudflareAuthDependencies extends AuthDependencies {
+  readonly staffUserIds: ReadonlySet<string>;
+}
+
+export function buildCloudflareAuthDependencies(
+  runtime: CloudflareRuntime,
+): CloudflareAuthDependencies {
+  const d1 = runtime.bindings.db;
+  return {
+    db: d1,
+    makeAppLayer: () => CoffeeOrderApp.layer.pipe(Layer.provide(makeCloudflareCoffeeAppLive(d1))),
+    secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
+    staffUserIds: runtime.config.staffUserIds,
+  };
+}
 
 const betterAuthUnavailableResponse = () =>
   new Response("Better Auth is unavailable. Configure BETTER_AUTH_SECRET.", { status: 503 });
@@ -19,15 +46,6 @@ const isAuthRequest = (request: Request): boolean => {
   return pathname === "/api/auth" || pathname.startsWith("/api/auth/");
 };
 
-const ensureAuthPersistence = async (env: CloudflareWorkerEnv): Promise<void> => {
-  const runtime = readCloudflareRuntime(env);
-
-  return ensureCloudflareAuthPersistence({
-    db: runtime.bindings.db,
-    secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
-  });
-};
-
 const handleAuthRequest = async (request: Request, env: CloudflareWorkerEnv): Promise<Response> => {
   const runtime = readCloudflareRuntime(env);
 
@@ -35,13 +53,10 @@ const handleAuthRequest = async (request: Request, env: CloudflareWorkerEnv): Pr
     return betterAuthUnavailableResponse();
   }
 
-  await ensureAuthPersistence(env);
+  const deps = buildCloudflareAuthDependencies(runtime);
+  await ensureAuthPersistence(deps);
 
-  return createCloudflareAuth({
-    db: runtime.bindings.db,
-    request,
-    secret: runtime.config.betterAuthSecret.value,
-  }).handler(request);
+  return createAuth({ ...deps, request }).handler(request);
 };
 
 export const cloudflareAgentDiscoveryMount: CloudflareMount<CloudflareWorkerEnv> = {

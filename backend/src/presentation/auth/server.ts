@@ -1,4 +1,5 @@
-import type { D1Database } from "@cloudflare/workers-types";
+import type { BetterAuthOptions } from "better-auth";
+import type * as Layer from "effect/Layer";
 import { agentAuth } from "@better-auth/agent-auth";
 import { passkey } from "@better-auth/passkey";
 import { getMigrations } from "better-auth/db/migration";
@@ -6,7 +7,16 @@ import { betterAuth } from "better-auth";
 import * as Schema from "effect/Schema";
 import { createCoffeeAgentAuthOptions } from "#presentation/auth/agent-auth";
 import { logStructuredEvent } from "#presentation/observability/logging";
+import type { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 import { AppActorSchema, anonymousActor, type AppActor } from "#service/CurrentActor";
+
+// Better-Auth's `database` option is itself a wide union (D1Database,
+// SqliteDatabase, Dialect, Database, …) in @better-auth/core's types. Depending
+// on that union — instead of typing the parameter as `D1Database` — keeps
+// presentation/auth decoupled from Cloudflare; each runtime (Cloudflare,
+// bun:sqlite, Postgres, …) just passes whichever shape fits its adapter.
+type BetterAuthDatabase = BetterAuthOptions["database"];
+type CoffeeAppLayer = Layer.Layer<CoffeeOrderApp, unknown, never>;
 
 const syntheticEmailDomain = "users.coffee.invalid";
 const longEnoughDevelopmentSecret = "dev-better-auth-secret-please-change-me-0001";
@@ -21,7 +31,12 @@ const decodePasskeyRegistrationShape = Schema.decodeUnknownSync(PasskeyRegistrat
 
 const decodeResolvedActor = Schema.decodeUnknownSync(AppActorSchema);
 
-const authBootstrapCache = new WeakMap<D1Database, Promise<void>>();
+// One Better-Auth migration run per module (i.e. per Worker isolate / Bun
+// process). The library's `getMigrations()` is expensive enough that we don't
+// want to repeat it for every request, and a module-level promise is simpler
+// than the previous WeakMap<D1Database, _> which coupled the cache to a
+// Cloudflare-specific type.
+let authPersistencePromise: Promise<void> | undefined;
 
 export function getDisplayName(context: string | null | undefined): string {
   const parsed = decodePasskeyRegistrationShape(decodeJsonString(context ?? '{"displayName":""}'));
@@ -70,18 +85,20 @@ function getBetterAuthSecret(secret: string | undefined): string {
   return secret?.trim() || longEnoughDevelopmentSecret;
 }
 
-function buildAuthOptions(input: {
-  readonly db: D1Database;
-  readonly request: Request | undefined;
+export interface AuthDependencies {
+  readonly db: BetterAuthDatabase;
+  readonly makeAppLayer: () => CoffeeAppLayer;
   readonly secret: string | undefined;
-}) {
-  const origin = getRequestOrigin(input.request);
-  const host = getRequestHost(input.request);
+}
+
+function buildAuthOptions(deps: AuthDependencies & { readonly request: Request | undefined }) {
+  const origin = getRequestOrigin(deps.request);
+  const host = getRequestHost(deps.request);
 
   return {
     appName: "Effect Coffee Shop",
     basePath: "/api/auth",
-    database: input.db,
+    database: deps.db,
     ...(origin === undefined ? {} : { baseURL: origin }),
     logger: {
       level: "warn",
@@ -98,7 +115,7 @@ function buildAuthOptions(input: {
         }),
     },
     plugins: [
-      agentAuth(createCoffeeAgentAuthOptions({ db: input.db })),
+      agentAuth(createCoffeeAgentAuthOptions({ makeAppLayer: deps.makeAppLayer })),
       passkey({
         registration: {
           afterVerification: async ({ ctx, context, user }) => {
@@ -119,94 +136,50 @@ function buildAuthOptions(input: {
         ...(host === undefined ? {} : { rpID: host }),
       }),
     ],
-    secret: getBetterAuthSecret(input.secret),
+    secret: getBetterAuthSecret(deps.secret),
     telemetry: {
       enabled: false,
     },
   };
 }
 
-async function ensureOrderOwnershipColumn(db: D1Database): Promise<void> {
-  const table = await db
-    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'orders'")
-    .all<{ name: string }>();
-
-  if (table.results.length === 0) {
-    return;
+export async function ensureAuthPersistence(deps: AuthDependencies): Promise<void> {
+  if (authPersistencePromise !== undefined) {
+    return authPersistencePromise;
   }
 
-  const pragma = await db.prepare("PRAGMA table_info(orders)").all<{ name: string }>();
-
-  if (pragma.results.some((column) => column.name === "ownerUserId")) {
-    return;
-  }
-
-  await db.exec(
-    [
-      "ALTER TABLE orders ADD COLUMN ownerUserId TEXT NOT NULL DEFAULT '__legacy__';",
-      "CREATE INDEX IF NOT EXISTS orders_owner_user_id_created_at_idx ON orders (ownerUserId, createdAt, id);",
-      "CREATE INDEX IF NOT EXISTS orders_owner_user_id_status_created_at_idx ON orders (ownerUserId, status, createdAt, id);",
-    ].join("\n"),
-  );
-}
-
-export async function ensureCloudflareAuthPersistence(input: {
-  readonly db: D1Database;
-  readonly secret: string | undefined;
-}): Promise<void> {
-  const cached = authBootstrapCache.get(input.db);
-
-  if (cached !== undefined) {
-    return cached;
-  }
-
-  const bootstrap = (async () => {
-    const authOptions = buildAuthOptions({
-      db: input.db,
-      request: undefined,
-      secret: input.secret,
-    });
-    // Better Auth's passkey plugin types currently conflict with exactOptionalPropertyTypes.
-    // Runtime behavior works on Cloudflare D1; keep the compatibility escape hatch here.
+  authPersistencePromise = (async () => {
+    const authOptions = buildAuthOptions({ ...deps, request: undefined });
+    // Better Auth's passkey plugin types conflict with exactOptionalPropertyTypes.
     // @ts-expect-error third-party Better Auth typing bug
     const { runMigrations } = await getMigrations(authOptions);
 
     await runMigrations();
-    await ensureOrderOwnershipColumn(input.db);
   })();
 
-  authBootstrapCache.set(input.db, bootstrap);
-  return bootstrap;
+  return authPersistencePromise;
 }
 
-export function createCloudflareAuth(input: {
-  readonly db: D1Database;
-  readonly request: Request;
-  readonly secret: string | undefined;
-}) {
-  const authOptions = buildAuthOptions({
-    db: input.db,
-    request: input.request,
-    secret: input.secret,
-  });
+export function createAuth(deps: AuthDependencies & { readonly request: Request }) {
+  const authOptions = buildAuthOptions(deps);
 
   // @ts-expect-error third-party Better Auth typing bug
   return betterAuth(authOptions);
 }
 
-export async function resolveCloudflareActor(input: {
-  readonly db: D1Database;
-  readonly request: Request;
-  readonly secret: string | undefined;
-  readonly staffUserIds: ReadonlySet<string>;
-}): Promise<AppActor> {
-  if ((input.secret?.trim() ?? "") === "") {
+export async function resolveActor(
+  deps: AuthDependencies & {
+    readonly request: Request;
+    readonly staffUserIds: ReadonlySet<string>;
+  },
+): Promise<AppActor> {
+  if ((deps.secret?.trim() ?? "") === "") {
     return anonymousActor;
   }
 
-  const auth = createCloudflareAuth(input);
+  const auth = createAuth(deps);
   const session = await auth.api.getSession({
-    headers: input.request.headers,
+    headers: deps.request.headers,
   });
 
   if (session?.user === undefined) {
@@ -215,7 +188,7 @@ export async function resolveCloudflareActor(input: {
 
   return decodeResolvedActor({
     displayName: session.user.name.trim() || session.user.email,
-    kind: input.staffUserIds.has(session.user.id) ? "staff" : "customer",
+    kind: deps.staffUserIds.has(session.user.id) ? "staff" : "customer",
     userId: session.user.id,
   });
 }

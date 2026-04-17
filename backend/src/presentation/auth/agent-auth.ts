@@ -1,4 +1,3 @@
-import type { D1Database } from "@cloudflare/workers-types";
 import type { AgentAuthOptions, AgentSession } from "@better-auth/agent-auth";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -10,9 +9,10 @@ import {
 } from "#presentation/assistant/tool-data";
 import { coffeeAgentCapabilities } from "#presentation/auth/agent-auth-data";
 import { formatToolFailure } from "#presentation/assistant/tool-format";
-import { makeCloudflareCoffeeAppLive } from "#runtime/cloudflare/live";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 import { CurrentActor } from "#service/CurrentActor";
+
+type CoffeeAppLayer = Layer.Layer<CoffeeOrderApp, unknown, never>;
 
 const toAgentActor = (session: AgentSession) => ({
   displayName: session.user.name.trim() || session.user.email,
@@ -42,13 +42,10 @@ class UnsupportedAgentCapabilityError extends Schema.TaggedErrorClass<Unsupporte
 ) {}
 
 function makeAgentExecutionLayer(input: {
-  readonly db: D1Database;
+  readonly appLayer: CoffeeAppLayer;
   readonly session: AgentSession;
 }) {
-  return Layer.mergeAll(
-    Layer.succeed(CurrentActor)(toAgentActor(input.session)),
-    CoffeeOrderApp.layer.pipe(Layer.provide(makeCloudflareCoffeeAppLive(input.db))),
-  );
+  return Layer.mergeAll(Layer.succeed(CurrentActor)(toAgentActor(input.session)), input.appLayer);
 }
 
 function toExecutionError(error: unknown): AgentCapabilityExecutionError {
@@ -79,28 +76,28 @@ async function decodeAgentInput<A>(input: {
 }
 
 async function runCoffeeEffect<A>(input: {
-  readonly db: D1Database;
+  readonly appLayer: CoffeeAppLayer;
   readonly effect: Effect.Effect<A, unknown, CoffeeOrderApp>;
   readonly session: AgentSession;
 }) {
   return Effect.runPromise(
     input.effect.pipe(
       Effect.mapError(toExecutionError),
-      Effect.provide(makeAgentExecutionLayer({ db: input.db, session: input.session })),
+      Effect.provide(makeAgentExecutionLayer({ appLayer: input.appLayer, session: input.session })),
     ),
   );
 }
 
 export async function executeCoffeeAgentCapability(input: {
+  readonly appLayer: CoffeeAppLayer;
   readonly arguments: unknown;
   readonly capability: string;
-  readonly db: D1Database;
   readonly session: AgentSession;
 }) {
   switch (input.capability) {
     case "list_menu":
       return runCoffeeEffect({
-        db: input.db,
+        appLayer: input.appLayer,
         effect: CoffeeOrderApp.use((app) => app.listMenu()),
         session: input.session,
       });
@@ -112,7 +109,7 @@ export async function executeCoffeeAgentCapability(input: {
       });
 
       return runCoffeeEffect({
-        db: input.db,
+        appLayer: input.appLayer,
         effect: CoffeeOrderApp.use((app) => app.placeOrder(payload)),
         session: input.session,
       });
@@ -125,7 +122,7 @@ export async function executeCoffeeAgentCapability(input: {
       });
 
       return runCoffeeEffect({
-        db: input.db,
+        appLayer: input.appLayer,
         effect: CoffeeOrderApp.use((app) => app.getOrder(payload.orderId)),
         session: input.session,
       });
@@ -138,7 +135,7 @@ export async function executeCoffeeAgentCapability(input: {
       });
 
       return runCoffeeEffect({
-        db: input.db,
+        appLayer: input.appLayer,
         effect: CoffeeOrderApp.use((app) => app.listOrders(payload)),
         session: input.session,
       });
@@ -153,7 +150,7 @@ export async function executeCoffeeAgentCapability(input: {
 }
 
 export function createCoffeeAgentAuthOptions(input: {
-  readonly db: D1Database;
+  readonly makeAppLayer: () => CoffeeAppLayer;
 }): Pick<
   AgentAuthOptions,
   | "approvalMethods"
@@ -171,9 +168,9 @@ export function createCoffeeAgentAuthOptions(input: {
     modes: ["delegated"],
     onExecute: async ({ agentSession, arguments: args, capability }) =>
       executeCoffeeAgentCapability({
+        appLayer: input.makeAppLayer(),
         arguments: args,
         capability,
-        db: input.db,
         session: agentSession,
       }),
     providerDescription:
