@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Effect-TS/tsgo/refs/heads/main/schema.json",
   "compilerOptions": {
     "target": "ES2023",
     "lib": ["ES2023"],
@@ -20,7 +21,8 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "plugins": [{ "name": "@effect/language-service" }]
   },
   "include": ["vite.config.ts", "vite.shared.ts", "vitest.config.ts", ".storybook/**/*.ts"]
 }
