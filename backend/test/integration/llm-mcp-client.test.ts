@@ -81,7 +81,10 @@ describe("MCP tools with persistence verification", () => {
         // Run workflow with timeout
         const result = yield* llmMcpWorkflow().pipe(Effect.timeout("60 seconds"));
 
-        assert.ok(result.success, `Expected success but got: ${JSON.stringify(result)}`);
+        assert.ok(
+          result.success,
+          `Expected success but got: ${Bun.inspect(result, { depth: Infinity })}`,
+        );
         assert.ok(result.orderId, `Expected order ID to be set`);
         assert.match(result.orderId, /^order-\d{4}$/);
         assert.strictEqual(result.getOrderResult.structuredContent.id, result.orderId);

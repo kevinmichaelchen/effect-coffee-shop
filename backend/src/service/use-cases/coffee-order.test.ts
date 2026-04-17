@@ -1,6 +1,7 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
 import { InMemoryCoffeeAppLive } from "#external/live";
 import { CurrentActor, systemActor } from "#service/CurrentActor";
 import {
@@ -69,12 +70,12 @@ describe("coffee order workflow", () => {
         drinkId: "tea",
         size: "small",
       });
-      const encodedFirst = JSON.parse(JSON.stringify(first));
+      const encodedFirst = yield* Schema.encodeUnknownEffect(Schema.UnknownFromJsonString)(first);
 
       assert.strictEqual(first.id, "order-0001");
       assert.strictEqual(second.id, "order-0002");
       assert.isTrue(DateTime.isUtc(first.createdAt));
-      assert.match(encodedFirst.createdAt, /^\d{4}-\d{2}-\d{2}T/);
+      assert.match(encodedFirst, /"createdAt":"\d{4}-\d{2}-\d{2}T/);
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 });

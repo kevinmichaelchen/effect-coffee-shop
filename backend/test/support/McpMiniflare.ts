@@ -121,6 +121,7 @@ const createMiniflare = (script: string): Miniflare =>
 
 const decodeJsonRpcSuccessEnvelope = Schema.decodeUnknownEffect(JsonRpcSuccessEnvelopeSchema);
 const decodeJsonRpcErrorEnvelope = Schema.decodeUnknownOption(JsonRpcErrorEnvelopeSchema);
+const encodeJsonString = Schema.encodeUnknownEffect(Schema.UnknownFromJsonString);
 
 export const measureMcpWorkerBundle = Effect.fn("measureMcpWorkerBundle")(function* () {
   const bundleStart = performance.now();
@@ -179,17 +180,18 @@ export const createMcpMiniflareClient = async (): Promise<McpMiniflareClient> =>
     },
   ) =>
     Effect.gen(function* () {
+      const requestBody = yield* encodeJsonString({
+        id: options?.id ?? nextRequestId(),
+        jsonrpc: "2.0",
+        method,
+        params,
+      });
       const response = yield* Effect.tryPromise({
         try: () =>
           fetch(baseUrl, {
             method: "POST",
             headers: createMcpRequestHeaders(sessionId),
-            body: JSON.stringify({
-              id: options?.id ?? nextRequestId(),
-              jsonrpc: "2.0",
-              method,
-              params,
-            }),
+            body: requestBody,
           }),
         catch: () =>
           new McpMiniflareTransportError({
