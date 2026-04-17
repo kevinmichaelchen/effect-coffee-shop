@@ -47,12 +47,16 @@
     "lint:custom:affected": "turbo run lint:custom --affected",
     "affected:packages": "turbo query affected --packages",
     "affected:tasks": "turbo query affected",
+    "tsgo:patch": "effect-tsgo patch",
+    "tsgo:unpatch": "effect-tsgo unpatch",
     "hooks:install": "prek install --overwrite --prepare-hooks",
     "hooks:run:pre-commit": "prek run --all-files --stage pre-commit",
     "hooks:run:pre-push": "prek run --all-files --stage pre-push"
   },
   "devDependencies": {
+    "@effect/tsgo": "0.4.0",
     "@j178/prek": "0.3.8",
+    "@typescript/native-preview": "7.0.0-dev.20260330.1",
     "alchemy": "0.90.1",
     "turbo": "^2.9.2"
   },

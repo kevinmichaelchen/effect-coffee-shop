@@ -51,7 +51,9 @@ describe("http api success responses", () => {
       const response = yield* HttpClient.post("/orders", {
         body: HttpBody.jsonUnsafe(orderPayload),
       });
-      const body = Schema.decodeUnknownSync(CreatedOrderResponseSchema)(yield* response.json);
+      const body = yield* Schema.decodeUnknownEffect(CreatedOrderResponseSchema)(
+        yield* response.json,
+      );
 
       assert.strictEqual(response.status, 200);
       assert.strictEqual(body.id, "order-0001");
@@ -71,7 +73,7 @@ describe("http api error responses", () => {
           size: "medium",
         }),
       });
-      const body = Schema.decodeUnknownSync(InvalidOrderInputError)(yield* response.json);
+      const body = yield* Schema.decodeUnknownEffect(InvalidOrderInputError)(yield* response.json);
 
       assert.strictEqual(response.status, 400);
       assert.strictEqual(body._tag, "InvalidOrderInputError");
@@ -82,7 +84,7 @@ describe("http api error responses", () => {
   it.effect("maps missing orders to 404", () =>
     Effect.gen(function* () {
       const response = yield* HttpClient.get("/orders/order-9999");
-      const body = Schema.decodeUnknownSync(OrderNotFoundError)(yield* response.json);
+      const body = yield* Schema.decodeUnknownEffect(OrderNotFoundError)(yield* response.json);
 
       assert.strictEqual(response.status, 404);
       assert.strictEqual(body._tag, "OrderNotFoundError");
@@ -97,7 +99,7 @@ describe("http api error responses", () => {
         payload: orderPayload,
       });
       const response = yield* HttpClient.post(`/orders/${created.id}/mark-ready`);
-      const body = Schema.decodeUnknownSync(InvalidOrderStatusTransitionError)(
+      const body = yield* Schema.decodeUnknownEffect(InvalidOrderStatusTransitionError)(
         yield* response.json,
       );
 
@@ -114,7 +116,7 @@ describe("http api error responses", () => {
       const response = yield* HttpClient.post("/orders", {
         body: HttpBody.jsonUnsafe(orderPayload),
       });
-      const body = Schema.decodeUnknownSync(InternalAppError)(yield* response.json);
+      const body = yield* Schema.decodeUnknownEffect(InternalAppError)(yield* response.json);
 
       assert.strictEqual(response.status, 500);
       assert.strictEqual(body._tag, "InternalAppError");

@@ -173,17 +173,16 @@ const verifyStringRequestIds = (request: McpRequest, responses: ReadonlyArray<Re
       },
     );
     const response = responses[0];
-    let json: Schema.Schema.Type<typeof StringIdResponseSchema> | null = null;
 
-    if (response !== undefined) {
-      json = Schema.decodeUnknownSync(StringIdResponseSchema)(
-        yield* Effect.promise(async () => response.json()),
-      );
-    }
+    assert.ok(response !== undefined);
+
+    const json = yield* Effect.promise(async () => response.json()).pipe(
+      Effect.flatMap(Schema.decodeUnknownEffect(StringIdResponseSchema)),
+    );
 
     assert.strictEqual(initialize.protocolVersion, "2025-06-18");
     assert.strictEqual(initialize.serverInfo.name, "Coffee Orders MCP");
-    assert.strictEqual(json?.id, "init");
+    assert.strictEqual(json.id, "init");
   });
 
 const runMcpTest = async (
