@@ -8,6 +8,7 @@ import * as ConfigProvider from "effect/ConfigProvider";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
+import type { SendEmailBinding } from "#external/cloudflare/CloudflareEmailService";
 
 export type AssetFetcher = { fetch(request: Request): Promise<Response> };
 
@@ -26,6 +27,7 @@ export interface CloudflareWorkerEnv {
   COFFEE_STAFF_USER_IDS?: string;
   DB: D1Database;
   ASSETS?: AssetFetcher;
+  EMAIL?: SendEmailBinding;
 }
 
 export interface CloudflareRuntime {
@@ -33,6 +35,7 @@ export interface CloudflareRuntime {
     readonly ai: Option.Option<WorkersAiBinding>;
     readonly assets: Option.Option<AssetFetcher>;
     readonly db: D1Database;
+    readonly email: Option.Option<SendEmailBinding>;
   };
   readonly config: {
     readonly aiGatewayId: Option.Option<string>;
@@ -72,6 +75,7 @@ export const readCloudflareRuntime = (env: CloudflareWorkerEnv): CloudflareRunti
       ai: Option.fromNullishOr(env.AI),
       assets: Option.fromNullishOr(env.ASSETS),
       db: env.DB,
+      email: Option.fromNullishOr(env.EMAIL),
     },
     config: {
       aiGatewayId: optionalTrimmedString(decodedConfig.aiGatewayId),

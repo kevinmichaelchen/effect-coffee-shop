@@ -21,7 +21,11 @@ import {
 } from "#domain/menu";
 import { InternalAppError, internalAppErrorFromPersistence } from "#service/errors";
 import { type CoffeeOrder } from "#domain/order";
-import { AuthenticationRequiredError, requireSignedInActor } from "#service/CurrentActor";
+import {
+  AuthenticationRequiredError,
+  requireSignedInActor,
+  type AuthenticatedActor,
+} from "#service/CurrentActor";
 import {
   actorObservabilityAttributes,
   annotateObservabilitySpan,
@@ -33,14 +37,13 @@ import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 import { EmailService } from "../ports/EmailService.ts";
 import { type PlaceOrderRequest } from "../contracts.ts";
-import type { AppActor } from "#service/CurrentActor";
 
 const dispatchOrderConfirmation = Effect.fnUntraced(function* (
-  actor: AppActor,
+  actor: AuthenticatedActor,
   order: CoffeeOrder,
 ) {
   const emailService = yield* EmailService;
-  yield* emailService.sendOrderConfirmation(order).pipe(
+  yield* emailService.sendOrderConfirmation(order, actor.email).pipe(
     Effect.catchTag("EmailError", (error) =>
       logWarnWithAttributes("coffee order confirmation email failed", {
         ...actorObservabilityAttributes(actor),

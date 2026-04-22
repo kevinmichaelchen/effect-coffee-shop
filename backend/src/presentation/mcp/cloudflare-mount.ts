@@ -25,14 +25,15 @@ export const cloudflareMcpMount: CloudflareMount<CloudflareWorkerEnv> = {
 
     await ensureCloudflareAuthPersistence({
       db: runtime.bindings.db,
+      email: Option.getOrUndefined(runtime.bindings.email),
       secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
     });
 
     return cloudflareResponse(
-      await getCloudflareBackendHandler(runtime.bindings.db)(
-        request,
-        createCloudflareRequestServices(systemActor),
-      ),
+      await getCloudflareBackendHandler(
+        runtime.bindings.db,
+        Option.getOrUndefined(runtime.bindings.email),
+      )(request, createCloudflareRequestServices(systemActor)),
     );
   },
 };

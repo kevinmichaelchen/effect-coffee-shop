@@ -65,6 +65,7 @@ async function placeLatteOrder(db: D1Database, session: AgentSession) {
     },
     capability: "place_order",
     db,
+    email: undefined,
     session,
   });
 
@@ -76,6 +77,7 @@ async function listOrders(db: D1Database, session: AgentSession): Promise<Coffee
     arguments: {},
     capability: "list_orders",
     db,
+    email: undefined,
     session,
   });
 
@@ -91,6 +93,7 @@ async function getOrder(
     arguments: { orderId },
     capability: "get_order",
     db,
+    email: undefined,
     session,
   });
 
@@ -100,7 +103,7 @@ async function getOrder(
 describe("coffee agent auth", () => {
   it("publishes the delegated customer capabilities", async () => {
     await withTestDatabase(async (db) => {
-      const options = createCoffeeAgentAuthOptions({ db });
+      const options = createCoffeeAgentAuthOptions({ db, email: undefined });
 
       expect(options.capabilities?.map((capability) => capability.name)).toEqual([
         "list_menu",
@@ -150,6 +153,7 @@ describe("coffee agent auth", () => {
           arguments: {},
           capability: "place_order",
           db,
+          email: undefined,
           session,
         }),
       ).rejects.toThrowError("Invalid place_order arguments.");

@@ -35,21 +35,23 @@ export const cloudflareHttpApiMount: CloudflareMount<CloudflareWorkerEnv> = {
 
         await ensureCloudflareAuthPersistence({
           db: runtime.bindings.db,
+          email: Option.getOrUndefined(runtime.bindings.email),
           secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
         });
 
         const actor = await resolveCloudflareActor({
           db: runtime.bindings.db,
+          email: Option.getOrUndefined(runtime.bindings.email),
           request,
           secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
           staffUserIds: runtime.config.staffUserIds,
         });
 
         return cloudflareResponse(
-          await getCloudflareBackendHandler(runtime.bindings.db)(
-            rewriteApiRequest(request),
-            createCloudflareRequestServices(actor),
-          ),
+          await getCloudflareBackendHandler(
+            runtime.bindings.db,
+            Option.getOrUndefined(runtime.bindings.email),
+          )(rewriteApiRequest(request), createCloudflareRequestServices(actor)),
           actorLogFields(actor),
         );
       },

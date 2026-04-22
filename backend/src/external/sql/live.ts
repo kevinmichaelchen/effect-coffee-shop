@@ -11,8 +11,9 @@ export const SqlCoffeeRepositoriesLive = Layer.mergeAll(
   SqlOrderRepositoryLive,
 );
 
-export const SqlCoffeeAppLive = Layer.mergeAll(
+export const SqlCoffeeCoreLive = Layer.mergeAll(
   SqlCoffeeRepositoriesLive,
   InMemoryOrderIdGeneratorLive,
-  InMemoryEmailServiceLive,
 );
+
+export const SqlCoffeeAppLive = Layer.mergeAll(SqlCoffeeCoreLive, InMemoryEmailServiceLive);

@@ -8,6 +8,7 @@ const AnonymousActorSchema = Schema.Struct({
 
 const AuthenticatedActorSchema = Schema.Struct({
   displayName: Schema.String,
+  email: Schema.String,
   kind: Schema.Literals(["customer", "staff", "system"] as const),
   userId: Schema.String,
 }).annotate({ identifier: "AuthenticatedActor" });
@@ -19,7 +20,7 @@ export const AppActorSchema = Schema.Union([
 
 export type AppActor = typeof AppActorSchema.Type;
 type AnonymousActor = typeof AnonymousActorSchema.Type;
-type AuthenticatedActor = typeof AuthenticatedActorSchema.Type;
+export type AuthenticatedActor = typeof AuthenticatedActorSchema.Type;
 
 export const anonymousActor: AnonymousActor = {
   kind: "anonymous",
@@ -27,6 +28,7 @@ export const anonymousActor: AnonymousActor = {
 
 export const systemActor: AuthenticatedActor = {
   displayName: "System Operator",
+  email: "system@effect-coffee.shop",
   kind: "system",
   userId: "system",
 };

@@ -5,6 +5,6 @@ import { EmailService } from "#service/ports/EmailService";
 export const InMemoryEmailServiceLive = Layer.succeed(
   EmailService,
   EmailService.of({
-    sendOrderConfirmation: () => Effect.void,
+    sendOrderConfirmation: (_order, _recipientEmail) => Effect.void,
   }),
 );

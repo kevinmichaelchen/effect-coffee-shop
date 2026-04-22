@@ -24,6 +24,7 @@ const ensureAuthPersistence = async (env: CloudflareWorkerEnv): Promise<void> =>
 
   return ensureCloudflareAuthPersistence({
     db: runtime.bindings.db,
+    email: Option.getOrUndefined(runtime.bindings.email),
     secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
   });
 };
@@ -39,6 +40,7 @@ const handleAuthRequest = async (request: Request, env: CloudflareWorkerEnv): Pr
 
   return createCloudflareAuth({
     db: runtime.bindings.db,
+    email: Option.getOrUndefined(runtime.bindings.email),
     request,
     secret: runtime.config.betterAuthSecret.value,
   }).handler(request);

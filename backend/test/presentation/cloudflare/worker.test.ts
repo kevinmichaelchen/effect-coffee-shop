@@ -35,6 +35,9 @@ const makeTestEnv = async (): Promise<{
         fetch: assetsFetch,
       },
       DB: db,
+      EMAIL: {
+        send: async () => ({ messageId: "test-message-id" }),
+      },
     },
   };
 };

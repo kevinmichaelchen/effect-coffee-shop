@@ -13,9 +13,11 @@ import { formatToolFailure } from "#presentation/assistant/tool-format";
 import { makeCloudflareCoffeeAppLive } from "#runtime/cloudflare/live";
 import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
 import { CurrentActor } from "#service/CurrentActor";
+import type { SendEmailBinding } from "#external/cloudflare/CloudflareEmailService";
 
 const toAgentActor = (session: AgentSession) => ({
   displayName: session.user.name.trim() || session.user.email,
+  email: session.user.email,
   kind: "customer" as const,
   userId: session.user.id,
 });
@@ -43,11 +45,12 @@ class UnsupportedAgentCapabilityError extends Schema.TaggedErrorClass<Unsupporte
 
 function makeAgentExecutionLayer(input: {
   readonly db: D1Database;
+  readonly email: SendEmailBinding | undefined;
   readonly session: AgentSession;
 }) {
   return Layer.mergeAll(
     Layer.succeed(CurrentActor)(toAgentActor(input.session)),
-    CoffeeOrderApp.layer.pipe(Layer.provide(makeCloudflareCoffeeAppLive(input.db))),
+    CoffeeOrderApp.layer.pipe(Layer.provide(makeCloudflareCoffeeAppLive(input.db, input.email))),
   );
 }
 
@@ -81,12 +84,15 @@ async function decodeAgentInput<A>(input: {
 async function runCoffeeEffect<A>(input: {
   readonly db: D1Database;
   readonly effect: Effect.Effect<A, unknown, CoffeeOrderApp>;
+  readonly email: SendEmailBinding | undefined;
   readonly session: AgentSession;
 }) {
   return Effect.runPromise(
     input.effect.pipe(
       Effect.mapError(toExecutionError),
-      Effect.provide(makeAgentExecutionLayer({ db: input.db, session: input.session })),
+      Effect.provide(
+        makeAgentExecutionLayer({ db: input.db, email: input.email, session: input.session }),
+      ),
     ),
   );
 }
@@ -95,6 +101,7 @@ export async function executeCoffeeAgentCapability(input: {
   readonly arguments: unknown;
   readonly capability: string;
   readonly db: D1Database;
+  readonly email: SendEmailBinding | undefined;
   readonly session: AgentSession;
 }) {
   switch (input.capability) {
@@ -102,6 +109,7 @@ export async function executeCoffeeAgentCapability(input: {
       return runCoffeeEffect({
         db: input.db,
         effect: CoffeeOrderApp.use((app) => app.listMenu()),
+        email: input.email,
         session: input.session,
       });
     case "place_order": {
@@ -114,6 +122,7 @@ export async function executeCoffeeAgentCapability(input: {
       return runCoffeeEffect({
         db: input.db,
         effect: CoffeeOrderApp.use((app) => app.placeOrder(payload)),
+        email: input.email,
         session: input.session,
       });
     }
@@ -127,6 +136,7 @@ export async function executeCoffeeAgentCapability(input: {
       return runCoffeeEffect({
         db: input.db,
         effect: CoffeeOrderApp.use((app) => app.getOrder(payload.orderId)),
+        email: input.email,
         session: input.session,
       });
     }
@@ -140,6 +150,7 @@ export async function executeCoffeeAgentCapability(input: {
       return runCoffeeEffect({
         db: input.db,
         effect: CoffeeOrderApp.use((app) => app.listOrders(payload)),
+        email: input.email,
         session: input.session,
       });
     }
@@ -154,6 +165,7 @@ export async function executeCoffeeAgentCapability(input: {
 
 export function createCoffeeAgentAuthOptions(input: {
   readonly db: D1Database;
+  readonly email: SendEmailBinding | undefined;
 }): Pick<
   AgentAuthOptions,
   | "approvalMethods"
@@ -174,6 +186,7 @@ export function createCoffeeAgentAuthOptions(input: {
         arguments: args,
         capability,
         db: input.db,
+        email: input.email,
         session: agentSession,
       }),
     providerDescription:

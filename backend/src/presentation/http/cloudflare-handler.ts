@@ -6,11 +6,12 @@ import { createCoffeeWebHandler, emptyWebHandlerServices } from "#presentation/h
 import { CoffeeMcpHttpLive } from "#presentation/mcp/server";
 import { makeCloudflareCoffeeAppLive } from "#runtime/cloudflare/live";
 import { CurrentActor, type AppActor } from "#service/CurrentActor";
+import type { SendEmailBinding } from "#external/cloudflare/CloudflareEmailService";
 
-const makeBackendHandler = (db: D1Database) =>
+const makeBackendHandler = (db: D1Database, email?: SendEmailBinding) =>
   createCoffeeWebHandler(
     Layer.mergeAll(CoffeeHttpApiLive, CoffeeMcpHttpLive),
-    makeCloudflareCoffeeAppLive(db),
+    makeCloudflareCoffeeAppLive(db, email),
   );
 
 type WorkerHandler = ReturnType<typeof makeBackendHandler>["handler"];
@@ -18,22 +19,27 @@ type WorkerHandler = ReturnType<typeof makeBackendHandler>["handler"];
 let cachedHandler:
   | {
       db: D1Database;
+      email: SendEmailBinding | undefined;
       dispose: () => Promise<void>;
       handler: WorkerHandler;
     }
   | undefined;
 
-export const getCloudflareBackendHandler = (db: D1Database): WorkerHandler => {
-  if (cachedHandler?.db === db) {
+export const getCloudflareBackendHandler = (
+  db: D1Database,
+  email?: SendEmailBinding,
+): WorkerHandler => {
+  if (cachedHandler?.db === db && cachedHandler?.email === email) {
     return cachedHandler.handler;
   }
 
   void cachedHandler?.dispose();
 
-  const next = makeBackendHandler(db);
+  const next = makeBackendHandler(db, email);
 
   cachedHandler = {
     db,
+    email,
     dispose: next.dispose,
     handler: next.handler,
   };

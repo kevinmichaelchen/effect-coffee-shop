@@ -15,4 +15,4 @@ export const InMemoryCoffeeAppLive = Layer.mergeAll(
   InMemoryEmailServiceLive,
 );
 
-export { SqlCoffeeAppLive, SqlCoffeeRepositoriesLive } from "./sql/live.ts";
+export { SqlCoffeeAppLive, SqlCoffeeCoreLive, SqlCoffeeRepositoriesLive } from "./sql/live.ts";

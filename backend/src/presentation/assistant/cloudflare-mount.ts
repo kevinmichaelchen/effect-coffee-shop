@@ -48,11 +48,13 @@ export const cloudflareAssistantMount: CloudflareMount<CloudflareWorkerEnv> = {
 
         await ensureCloudflareAuthPersistence({
           db: runtime.bindings.db,
+          email: Option.getOrUndefined(runtime.bindings.email),
           secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
         });
 
         const actor = await resolveCloudflareActor({
           db: runtime.bindings.db,
+          email: Option.getOrUndefined(runtime.bindings.email),
           request,
           secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
           staffUserIds: runtime.config.staffUserIds,
@@ -62,7 +64,10 @@ export const cloudflareAssistantMount: CloudflareMount<CloudflareWorkerEnv> = {
           await handleAssistantRequest(rewriteApiRequest(request), {
             actor,
             ai: getAssistantAiConfig(runtime),
-            appLayer: makeCloudflareCoffeeAppLive(runtime.bindings.db),
+            appLayer: makeCloudflareCoffeeAppLive(
+              runtime.bindings.db,
+              Option.getOrUndefined(runtime.bindings.email),
+            ),
             model: getAssistantModel(),
           }),
           actorLogFields(actor),

@@ -7,6 +7,7 @@ import * as Schema from "effect/Schema";
 import { createCoffeeAgentAuthOptions } from "#presentation/auth/agent-auth";
 import { logStructuredEvent } from "#presentation/observability/logging";
 import { AppActorSchema, anonymousActor, type AppActor } from "#service/CurrentActor";
+import type { SendEmailBinding } from "#external/cloudflare/CloudflareEmailService";
 
 const syntheticEmailDomain = "users.coffee.invalid";
 const longEnoughDevelopmentSecret = "dev-better-auth-secret-please-change-me-0001";
@@ -72,6 +73,7 @@ function getBetterAuthSecret(secret: string | undefined): string {
 
 function buildAuthOptions(input: {
   readonly db: D1Database;
+  readonly email: SendEmailBinding | undefined;
   readonly request: Request | undefined;
   readonly secret: string | undefined;
 }) {
@@ -98,7 +100,7 @@ function buildAuthOptions(input: {
         }),
     },
     plugins: [
-      agentAuth(createCoffeeAgentAuthOptions({ db: input.db })),
+      agentAuth(createCoffeeAgentAuthOptions({ db: input.db, email: input.email })),
       passkey({
         registration: {
           afterVerification: async ({ ctx, context, user }) => {
@@ -152,6 +154,7 @@ async function ensureOrderOwnershipColumn(db: D1Database): Promise<void> {
 
 export async function ensureCloudflareAuthPersistence(input: {
   readonly db: D1Database;
+  readonly email: SendEmailBinding | undefined;
   readonly secret: string | undefined;
 }): Promise<void> {
   const cached = authBootstrapCache.get(input.db);
@@ -163,6 +166,7 @@ export async function ensureCloudflareAuthPersistence(input: {
   const bootstrap = (async () => {
     const authOptions = buildAuthOptions({
       db: input.db,
+      email: input.email,
       request: undefined,
       secret: input.secret,
     });
@@ -181,11 +185,13 @@ export async function ensureCloudflareAuthPersistence(input: {
 
 export function createCloudflareAuth(input: {
   readonly db: D1Database;
+  readonly email: SendEmailBinding | undefined;
   readonly request: Request;
   readonly secret: string | undefined;
 }) {
   const authOptions = buildAuthOptions({
     db: input.db,
+    email: input.email,
     request: input.request,
     secret: input.secret,
   });
@@ -196,6 +202,7 @@ export function createCloudflareAuth(input: {
 
 export async function resolveCloudflareActor(input: {
   readonly db: D1Database;
+  readonly email: SendEmailBinding | undefined;
   readonly request: Request;
   readonly secret: string | undefined;
   readonly staffUserIds: ReadonlySet<string>;
@@ -215,6 +222,7 @@ export async function resolveCloudflareActor(input: {
 
   return decodeResolvedActor({
     displayName: session.user.name.trim() || session.user.email,
+    email: session.user.email,
     kind: input.staffUserIds.has(session.user.id) ? "staff" : "customer",
     userId: session.user.id,
   });

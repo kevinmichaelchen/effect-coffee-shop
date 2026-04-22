@@ -6,6 +6,9 @@ import type { EmailError } from "#service/errors";
 export class EmailService extends Context.Service<
   EmailService,
   {
-    readonly sendOrderConfirmation: (order: CoffeeOrder) => Effect.Effect<void, EmailError>;
+    readonly sendOrderConfirmation: (
+      order: CoffeeOrder,
+      recipientEmail: string,
+    ) => Effect.Effect<void, EmailError>;
   }
 >()("effect-coffee-shop/service/EmailService") {}
