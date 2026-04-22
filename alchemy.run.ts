@@ -1,5 +1,11 @@
 import alchemy from "alchemy";
-import { Ai, AiGateway, D1Database, Website } from "alchemy/cloudflare";
+import {
+  Ai,
+  AiGateway,
+  D1Database,
+  EmailSender,
+  Website,
+} from "alchemy/cloudflare";
 import { CloudflareStateStore } from "alchemy/state";
 
 import {
@@ -30,6 +36,10 @@ export const assistantGateway = aiGatewayEnabled
       collectLogs: true,
     })
   : undefined;
+
+export const emailSender = EmailSender({
+  allowedSenderAddresses: ["noreply@effect-coffee.shop"],
+});
 
 export const website = await Website("onion", {
   url: true,
@@ -75,6 +85,7 @@ export const website = await Website("onion", {
     BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET,
     COFFEE_STAFF_USER_IDS: process.env.COFFEE_STAFF_USER_IDS ?? "",
     DB: coffeeDb,
+    EMAIL: emailSender,
   },
 });
 
