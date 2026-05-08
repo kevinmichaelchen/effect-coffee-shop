@@ -17,6 +17,11 @@
     "mcp:stdio": "bun run src/presentation/mcp/stdio-main.ts",
     "mcp:http": "bun run src/presentation/mcp/http-main.ts",
     "dev:local:api": "bun run src/presentation/dev/local-backend-main.ts",
+    "db:check": "sqlfu --config src/external/sql/sqlfu.config.ts check",
+    "db:draft": "sqlfu --config src/external/sql/sqlfu.config.ts draft",
+    "db:format": "sqlfu --config src/external/sql/sqlfu.config.ts format \"src/external/sql/**/*.sql\"",
+    "db:generate": "sqlfu --config src/external/sql/sqlfu.config.ts generate && oxfmt --write \"src/external/sql/**/*.ts\"",
+    "db:migrate": "sqlfu --config src/external/sql/sqlfu.config.ts migrate",
     "typecheck": "tsgo --noEmit",
     "lint": "oxlint --disable-nested-config .",
     "lint:fix": "oxlint --disable-nested-config --fix .",
@@ -39,7 +44,8 @@
     "@tanstack/ai": "0.14.0",
     "better-auth": "^1.6.9",
     "effect": "4.0.0-beta.64",
-    "lintcn": "^0.10.0"
+    "lintcn": "^0.10.0",
+    "sqlfu": "0.0.3-14"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260508.1",

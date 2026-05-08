@@ -4,6 +4,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { D1Client } from "@effect/sql-d1";
 import { SqlCoffeeRepositoriesLive } from "#external/live";
+import { makeCloudflareSqlCoffeeSchemaLive } from "#runtime/cloudflare/live";
 import type { PersistenceError } from "#service/errors";
 import { MenuRepository } from "#service/ports/MenuRepository";
 import { OrderRepository } from "#service/ports/OrderRepository";
@@ -29,7 +30,10 @@ export const createSqlCoffeeRepositoriesTestHarness =
   async (): Promise<SqlCoffeeRepositoriesTestHarness> => {
     const miniflare = createD1Miniflare();
     const db: D1Database = await miniflare.getD1Database("DB");
-    const repositoryLayer = SqlCoffeeRepositoriesLive.pipe(Layer.provide(D1Client.layer({ db })));
+    const repositoryLayer = SqlCoffeeRepositoriesLive.pipe(
+      Layer.provide(D1Client.layer({ db })),
+      Layer.provide(makeCloudflareSqlCoffeeSchemaLive(db)),
+    );
 
     const repositories = await Effect.runPromise(
       Effect.gen(function* () {

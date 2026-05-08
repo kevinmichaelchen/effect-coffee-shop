@@ -16,6 +16,8 @@ coverage
 .turbo
 storybook-static
 .wrangler
+.sqlfu
+**/.sqlfu
 
 # Fiberplane local issue tracking
 .fp/

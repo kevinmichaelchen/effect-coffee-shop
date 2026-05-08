@@ -4,27 +4,29 @@ This directory is the External/Infrastructure implementation for SQL-backed
 repository ports. Domain and service code should not import database clients,
 SQL query wrappers, generated files, or migration tooling from here.
 
-## SQLFU Adoption Proposal
+## SQLFU Project
 
-SQLFU is a good fit here as a SQL-first infrastructure tool, not as an inner
-layer abstraction. It can own authored SQL artifacts while Effect SQL continues
-to own runtime execution, layers, transactions, and resource management.
+SQLFU is used here as a SQL-first infrastructure tool, not as an inner layer
+abstraction. It owns authored SQL artifacts while Effect SQL continues to own
+runtime execution, layers, transactions, and resource management.
 
-The target shape is:
+The project shape is:
 
 ```text
 backend/src/external/sql/
   sqlfu.config.ts
   definitions.sql
   migrations/
+    .generated/
   queries/
-    menu.sql
-    orders.sql
-    seed-menu-items.sql
+    find-menu-item-by-id.sql
+    list-menu-items.sql
+    save-order.sql
+    ...
     .generated/
 ```
 
-The config should use SQLFU's Effect v4 generation target:
+The config uses SQLFU's Effect v4 generation target:
 
 ```ts
 import { defineConfig } from "sqlfu";
@@ -66,20 +68,20 @@ decode rows into infrastructure models before mapping them to domain values.
 Use SQLFU for schema changes instead of runtime schema patches:
 
 ```sh
-bunx sqlfu --config backend/src/external/sql/sqlfu.config.ts check
-bunx sqlfu --config backend/src/external/sql/sqlfu.config.ts draft
-bunx sqlfu --config backend/src/external/sql/sqlfu.config.ts generate
-bunx sqlfu --config backend/src/external/sql/sqlfu.config.ts migrate
+bun run --cwd backend db:check
+bun run --cwd backend db:draft
+bun run --cwd backend db:generate
+bun run --cwd backend db:migrate
 ```
 
 `check` should be the default diagnostic command. `draft` should create
 reviewable migrations from `definitions.sql`. `migrate` should apply reviewed
 migrations to the configured development or deployment database.
 
-For Cloudflare D1, use SQLFU's `d1` migration preset so migration history lines
-up with D1-compatible tooling. If SQLFU is only being used to author migrations
-and generate query wrappers, the config can omit `db`; commands that need a
-database can be wired later to the Alchemy-managed D1 database.
+For Cloudflare D1, the config uses SQLFU's `d1` migration preset so migration
+history lines up with D1-compatible tooling. Runtime-specific layers adapt the
+Bun SQLite and Cloudflare D1 bindings into SQLFU clients before the repository
+layers seed or query data.
 
 ## Query Design
 
@@ -93,14 +95,15 @@ Prefer checked-in named query files over inline SQL strings. For example:
 - `list-orders-by-owner.sql`
 - `list-orders-by-status.sql`
 - `list-orders-by-owner-and-status.sql`
+- `seed-menu-item.sql`
 
 For optional list filters, prefer a small set of named queries over dynamic SQL
 construction. That preserves stable query names for generated functions,
 observability, and freshness checks.
 
-For order persistence, prefer a single SQLite upsert with `returning` if SQLFU's
-analyzer accepts it. If not, keep separate insert and update query files rather
-than hand-editing generated output.
+Order persistence uses a single SQLite upsert with `returning`. If SQLFU's
+analyzer stops accepting that shape in a future release, keep separate insert
+and update query files rather than hand-editing generated output.
 
 ## Better Auth Schema
 
