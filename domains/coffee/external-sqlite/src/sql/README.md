@@ -111,16 +111,21 @@ and update query files rather than hand-editing generated output.
 
 ## Better Auth Schema
 
-SQLFU's Better Auth integration can move auth-owned tables into a managed
-region of `definitions.sql`. That would let Better Auth remain the source for
-its schema while SQLFU remains the migration owner.
+SQLFU's Better Auth integration owns the auth-managed region of
+`definitions.sql`. Better Auth remains the source for auth table shape while
+SQLFU remains the migration owner.
 
-The desired end state is:
+The workflow is:
 
-- Better Auth generation updates the managed region in `definitions.sql`.
-- SQLFU drafts reviewed migrations from the combined desired schema.
-- Presentation code no longer runs auth schema migrations or compatibility
-  `alter table` patches at request time.
+```sh
+bun run --cwd apps/backend db:auth:schema
+bun run --cwd apps/backend db:draft
+bun run --cwd apps/backend db:generate
+bun run --cwd apps/backend db:migrate
+```
+
+Presentation code must not run Better Auth schema migrations or compatibility
+`alter table` patches at request time.
 
 Better Auth runtime behavior can continue using the current D1-backed adapter
 until there is a separate reason to change it.

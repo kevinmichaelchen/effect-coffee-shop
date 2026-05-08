@@ -71,7 +71,7 @@ const resolveMcpWorkerEntrypoint = Effect.fnUntraced(function* () {
   const path = yield* Path.Path;
 
   return yield* path.fromFileUrl(
-    new URL("../../src/presentation/mcp/miniflare.worker.ts", import.meta.url),
+    new URL("../../src/cloudflare/mcp-miniflare-worker.ts", import.meta.url),
   );
 });
 

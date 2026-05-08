@@ -10,6 +10,7 @@
     "./sql/*": "./src/sql/*.ts"
   },
   "scripts": {
+    "auth:schema": "cd src/sql && bunx @better-auth/cli generate --config better-auth-schema.ts --yes",
     "db:check": "sqlfu --config src/sql/sqlfu.config.ts check",
     "db:draft": "sqlfu --config src/sql/sqlfu.config.ts draft",
     "db:format": "sqlfu --config src/sql/sqlfu.config.ts format \"src/sql/**/*.sql\"",
@@ -25,10 +26,13 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@better-auth/agent-auth": "catalog:",
+    "@better-auth/passkey": "catalog:",
     "@effect-coffee-shop/coffee-core": "workspace:*",
     "@effect/platform-bun": "catalog:",
     "@effect/sql-d1": "catalog:",
     "@effect/sql-sqlite-bun": "catalog:",
+    "better-auth": "catalog:",
     "effect": "catalog:",
     "sqlfu": "catalog:"
   },

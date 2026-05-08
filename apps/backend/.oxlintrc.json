@@ -43,7 +43,7 @@
       }
     },
     {
-      "files": ["src/presentation/**/*.ts"],
+      "files": ["src/cloudflare/**/*.ts", "src/composition/**/*.ts"],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -63,13 +63,24 @@
       }
     },
     {
+      "files": ["src/bun/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["#service/use-cases/*", "#service/ports/*"]
+          }
+        ]
+      }
+    },
+    {
       "files": ["src/runtime/**/*.ts"],
       "rules": {
         "no-restricted-imports": "off"
       }
     },
     {
-      "files": ["src/presentation/**/main.ts", "src/presentation/**/*-main.ts"],
+      "files": ["src/bun/**/main.ts", "src/bun/**/*-main.ts"],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -83,6 +94,12 @@
       "files": ["test/**/*.ts"],
       "rules": {
         "no-restricted-imports": ["error", { "patterns": ["../../src/*", "../src/*", "node:*"] }]
+      }
+    },
+    {
+      "files": ["test/presentation-boundaries.test.ts"],
+      "rules": {
+        "no-restricted-imports": "off"
       }
     }
   ]
