@@ -64,7 +64,7 @@ function isStaffActor(actor: AppActor): actor is AuthenticatedActor {
 
 const authenticationRequiredError = () =>
   new AuthenticationRequiredError({
-    message: "Sign in with a passkey to place and view orders.",
+    message: "Sign in to place and view orders.",
   });
 
 const staffRoleRequiredError = () =>
