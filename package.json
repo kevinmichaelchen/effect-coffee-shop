@@ -127,7 +127,7 @@
     "@effect/tsgo": "0.5.2",
     "@j178/prek": "0.3.13",
     "@typescript/native-preview": "7.0.0-dev.20260507.1",
-    "alchemy": "2.0.0-beta.35",
+    "alchemy": "2.0.0-beta.36",
     "effect": "4.0.0-beta.64",
     "turbo": "^2.9.10",
     "fallow": "catalog:"
