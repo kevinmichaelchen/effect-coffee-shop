@@ -1,7 +1,7 @@
 import * as Context from "effect/Context";
-import { InMemoryCoffeeAppLive } from "#external/live";
+import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/external-in-memory";
 import { createCoffeeWebHandler, emptyWebHandlerServices } from "#presentation/http/web-handler";
-import { CurrentActor, systemActor } from "#service/CurrentActor";
+import { CurrentActor, systemActor } from "@effect-coffee-shop/core/service/CurrentActor";
 import { CoffeeMcpHttpLive } from "./server.ts";
 
 const { handler } = createCoffeeWebHandler(CoffeeMcpHttpLive, InMemoryCoffeeAppLive);

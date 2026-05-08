@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+
+  "entry": ["src/index.ts!", "src/bun/live.ts!", "src/cloudflare/live.ts!"],
+  "project": ["src/**/*.ts!"],
+  "ignore": [
+    "src/sql/sqlfu.config.ts",
+    "src/sql/migrations/.generated/migrations.ts",
+    "src/sql/queries/.generated/index.ts",
+    "src/sql/queries/.generated/queries.ts",
+    "src/sql/queries/.generated/tables.ts",
+  ],
+}

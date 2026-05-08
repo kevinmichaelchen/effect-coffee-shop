@@ -2,7 +2,7 @@ import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";
 import * as HttpServer from "effect/unstable/http/HttpServer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
+import { CoffeeOrderApp } from "@effect-coffee-shop/core/service/CoffeeOrderApp";
 import {
   normalizeMcpHttpRequestIds,
   restoreMcpHttpResponseIds,

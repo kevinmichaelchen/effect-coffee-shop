@@ -3,11 +3,11 @@ import { Miniflare } from "miniflare";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { D1Client } from "@effect/sql-d1";
-import { SqlCoffeeRepositoriesLive } from "#external/live";
-import { makeCloudflareSqlCoffeeSchemaLive } from "#runtime/cloudflare/live";
-import type { PersistenceError } from "#service/errors";
-import { MenuRepository } from "#service/ports/MenuRepository";
-import { OrderRepository } from "#service/ports/OrderRepository";
+import { SqlCoffeeRepositoriesLive } from "@effect-coffee-shop/external-sqlite";
+import { makeCloudflareSqlCoffeeSchemaLive } from "@effect-coffee-shop/external-sqlite/cloudflare";
+import type { PersistenceError } from "@effect-coffee-shop/core/service/errors";
+import { MenuRepository } from "@effect-coffee-shop/core/service/ports/MenuRepository";
+import { OrderRepository } from "@effect-coffee-shop/core/service/ports/OrderRepository";
 
 type RepositoryServices = MenuRepository | OrderRepository;
 

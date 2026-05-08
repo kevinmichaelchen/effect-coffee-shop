@@ -1,6 +1,9 @@
 import type { AiTextGenerationToolLegacyInput } from "@cloudflare/workers-types";
 import * as Schema from "effect/Schema";
-import { ListOrdersRequestSchema, PlaceOrderRequestSchema } from "#service/contracts";
+import {
+  ListOrdersRequestSchema,
+  PlaceOrderRequestSchema,
+} from "@effect-coffee-shop/core/service/contracts";
 
 export const emptyToolParameters = {
   type: "object",

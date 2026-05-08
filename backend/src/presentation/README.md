@@ -34,9 +34,9 @@ It should **not** own business rules, persistence policy, or domain modeling.
 
 Those live elsewhere:
 
-- domain types and errors in `#domain/*`
-- application use cases in `#service/*`
-- runtime and storage wiring in `#runtime/*` and `#external/*`
+- domain types, errors, ports, and use cases in `@effect-coffee-shop/core`
+- runtime and storage wiring in the External Layer workspaces under `packages/external-*`
+- the default Bun app wiring selector in [../app-layer.ts](../app-layer.ts)
 
 ## Why There Is More Code Than Expected
 

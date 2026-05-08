@@ -1,7 +1,14 @@
 import * as Schema from "effect/Schema";
-import { MenuSchema } from "#domain/menu";
-import { CoffeeOrderSchema, CoffeeOrdersSchema, OrderIdSchema } from "#domain/order";
-import { ListOrdersRequestSchema, PlaceOrderRequestSchema } from "#service/contracts";
+import { MenuSchema } from "@effect-coffee-shop/core/domain/menu";
+import {
+  CoffeeOrderSchema,
+  CoffeeOrdersSchema,
+  OrderIdSchema,
+} from "@effect-coffee-shop/core/domain/order";
+import {
+  ListOrdersRequestSchema,
+  PlaceOrderRequestSchema,
+} from "@effect-coffee-shop/core/service/contracts";
 import { AppErrorSchema } from "./schemas.ts";
 
 const EmptyParamsSchema = Schema.Struct({});

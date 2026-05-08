@@ -6,7 +6,11 @@ import { betterAuth } from "better-auth";
 import * as Schema from "effect/Schema";
 import { createCoffeeAgentAuthOptions } from "#presentation/auth/agent-auth";
 import { logStructuredEvent } from "#presentation/observability/logging";
-import { AppActorSchema, anonymousActor, type AppActor } from "#service/CurrentActor";
+import {
+  AppActorSchema,
+  anonymousActor,
+  type AppActor,
+} from "@effect-coffee-shop/core/service/CurrentActor";
 
 const syntheticEmailDomain = "users.coffee.invalid";
 const longEnoughDevelopmentSecret = "dev-better-auth-secret-please-change-me-0001";

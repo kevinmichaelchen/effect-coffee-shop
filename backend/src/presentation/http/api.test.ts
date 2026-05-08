@@ -9,9 +9,9 @@ import {
   InvalidOrderInputError,
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
-} from "#domain/errors";
-import { OrderIdSchema } from "#domain/order";
-import { InternalAppError } from "#service/errors";
+} from "@effect-coffee-shop/core/domain/errors";
+import { OrderIdSchema } from "@effect-coffee-shop/core/domain/order";
+import { InternalAppError } from "@effect-coffee-shop/core/service/errors";
 import {
   HttpApiPersistenceFailureTestLive,
   HttpApiTestLive,

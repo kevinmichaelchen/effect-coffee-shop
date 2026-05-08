@@ -10,9 +10,9 @@ import {
 } from "#presentation/assistant/tool-data";
 import { coffeeAgentCapabilities } from "#presentation/auth/agent-auth-data";
 import { formatToolFailure } from "#presentation/assistant/tool-format";
-import { makeCloudflareCoffeeAppLive } from "#runtime/cloudflare/live";
-import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
-import { CurrentActor } from "#service/CurrentActor";
+import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/external-sqlite/cloudflare";
+import { CoffeeOrderApp } from "@effect-coffee-shop/core/service/CoffeeOrderApp";
+import { CurrentActor } from "@effect-coffee-shop/core/service/CurrentActor";
 
 const toAgentActor = (session: AgentSession) => ({
   displayName: session.user.name.trim() || session.user.email,

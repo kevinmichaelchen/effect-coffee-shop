@@ -1,7 +1,7 @@
 import type { AiTextGenerationToolLegacyInput } from "@cloudflare/workers-types";
 import * as Effect from "effect/Effect";
 import { coffeeMcpActionSpecs } from "#presentation/mcp/actions";
-import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
+import { CoffeeOrderApp } from "@effect-coffee-shop/core/service/CoffeeOrderApp";
 import {
   decodeListOrdersInput,
   decodeOrderIdInput,

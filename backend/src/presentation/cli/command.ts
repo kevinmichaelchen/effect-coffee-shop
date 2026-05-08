@@ -3,9 +3,9 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Command from "effect/unstable/cli/Command";
 import * as Flag from "effect/unstable/cli/Flag";
-import { drinkIds, drinkSizes, milks, temperatures } from "#domain/menu";
-import { orderStatuses } from "#domain/order";
-import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
+import { drinkIds, drinkSizes, milks, temperatures } from "@effect-coffee-shop/core/domain/menu";
+import { orderStatuses } from "@effect-coffee-shop/core/domain/order";
+import { CoffeeOrderApp } from "@effect-coffee-shop/core/service/CoffeeOrderApp";
 import { prettyJson } from "../shared/json.ts";
 
 const customerName = Flag.string("customer-name").pipe(

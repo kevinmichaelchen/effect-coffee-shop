@@ -1,6 +1,6 @@
 import * as Layer from "effect/Layer";
 import * as McpServer from "effect/unstable/ai/McpServer";
-import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
+import { CoffeeOrderApp } from "@effect-coffee-shop/core/service/CoffeeOrderApp";
 import { CoffeeActionToolsLive } from "./action-tools.ts";
 import { MenuResource, OpenOrdersResource, OrderResource } from "./resources.ts";
 import { RecommendDrinkPrompt, SummarizeOpenOrdersPrompt } from "./prompts.ts";

@@ -3,11 +3,11 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import { describe, it } from "vitest";
-import { menuItems } from "#domain/menu";
-import type { CoffeeOrder } from "#domain/order";
-import type { PersistenceError } from "#service/errors";
-import { MenuRepository } from "#service/ports/MenuRepository";
-import { OrderRepository } from "#service/ports/OrderRepository";
+import { menuItems } from "@effect-coffee-shop/core/domain/menu";
+import type { CoffeeOrder } from "@effect-coffee-shop/core/domain/order";
+import type { PersistenceError } from "@effect-coffee-shop/core/service/errors";
+import { MenuRepository } from "@effect-coffee-shop/core/service/ports/MenuRepository";
+import { OrderRepository } from "@effect-coffee-shop/core/service/ports/OrderRepository";
 
 type RepositoryServices = MenuRepository | OrderRepository;
 type RunTest = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) => Promise<A>;

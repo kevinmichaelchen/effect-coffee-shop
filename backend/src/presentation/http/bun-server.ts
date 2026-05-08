@@ -5,7 +5,7 @@ import {
   getBunAssistantAiConfig,
   handleAssistantRequest,
 } from "#presentation/assistant/handler";
-import { CurrentActor, systemActor } from "#service/CurrentActor";
+import { CurrentActor, systemActor } from "@effect-coffee-shop/core/service/CurrentActor";
 import { createCoffeeWebHandler, emptyWebHandlerServices } from "./web-handler.ts";
 
 export async function startCoffeeBunServer<

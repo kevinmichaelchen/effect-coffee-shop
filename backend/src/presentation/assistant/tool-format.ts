@@ -3,8 +3,8 @@ import {
   InvalidOrderInputError,
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
-} from "#domain/errors";
-import { InternalAppError } from "#service/errors";
+} from "@effect-coffee-shop/core/domain/errors";
+import { InternalAppError } from "@effect-coffee-shop/core/service/errors";
 
 export function serializeToolResult(result: unknown): string {
   if (typeof result === "string") {

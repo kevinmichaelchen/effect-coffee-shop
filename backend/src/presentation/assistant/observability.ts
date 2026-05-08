@@ -1,5 +1,5 @@
 import { actorLogFields, logStructuredEvent } from "#presentation/observability/logging";
-import type { AppActor } from "#service/CurrentActor";
+import type { AppActor } from "@effect-coffee-shop/core/service/CurrentActor";
 
 type AssistantToolActivity = {
   readonly detail: string;

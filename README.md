@@ -2,16 +2,22 @@
 
 Coffee-order application used to explore Onion Architecture with TypeScript, Bun, and Effect v4.
 
-This repo is split into two Bun workspaces:
+This repo is split into Bun workspaces:
 
-- `backend/` for the Effect-based HTTP, CLI, and MCP server
+- `backend/` for the Effect-based HTTP, CLI, and MCP presentation layer
+- `packages/core/` for the Onion Core: domain types, rules, service ports, and use cases
+- `packages/external-in-memory/` for the in-memory External Layer implementation
+- `packages/external-sqlite/` for the SQLFU-backed SQLite/D1 External Layer implementation
 - `ui/` for the standalone browser frontend
 
-The backend now lives in `backend/` and keeps the boundaries explicit:
+The backend selects its default local External Layer in `backend/src/app-layer.ts`.
+Switching the Bun app between SQLite and in-memory should be a one-line export change there.
 
-- `backend/src/domain` for business types and rules
-- `backend/src/service` for use cases and ports
-- `backend/src/external` for adapter implementations
+The main boundaries are:
+
+- `packages/core/src/domain` for business types and rules
+- `packages/core/src/service` for use cases and ports
+- `packages/external-*/src` for adapter implementations
 - `backend/src/presentation` for HTTP, CLI, and MCP entrypoints
 
 Most tests run against in-memory adapters. A small contract suite also runs against the SQL-backed repositories.
@@ -25,7 +31,7 @@ Install dependencies:
 bun install
 ```
 
-This repo uses Bun workspaces. The root `bun install` covers both [`backend/`](./backend) and [`ui/`](./ui).
+This repo uses Bun workspaces and Bun Catalogs. The root `bun install` covers [`backend/`](./backend), [`ui/`](./ui), and [`packages/*`](./packages).
 Turborepo is the canonical root task runner for dev, build, and quality checks, so repeated runs can reuse the `.turbo` cache across workspaces and `--affected` can skip unrelated work.
 `bun install` also installs and prewarms the local Git hooks unless `CI` is set. The repo now includes `@effect/tsgo` at the root with the `@effect/language-service` plugin enabled in the main backend and UI tsconfigs, but the binary patch stays opt-in because the upstream tool is still alpha. Use `bun run tsgo:patch` to try the Effect language service binary locally, and `bun run tsgo:unpatch` to restore the stock `@typescript/native-preview` binary.
 For VS Code or Cursor, install the `@typescript/native-preview` extension and make sure the native TypeScript server is active so the workspace plugin configuration can load when you opt into `@effect/tsgo`.

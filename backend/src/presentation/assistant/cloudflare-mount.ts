@@ -15,7 +15,7 @@ import {
 } from "#presentation/cloudflare/mount";
 import { actorLogFields } from "#presentation/observability/logging";
 import { ensureCloudflareAuthPersistence, resolveCloudflareActor } from "#presentation/auth/server";
-import { makeCloudflareCoffeeAppLive } from "#runtime/cloudflare/live";
+import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/external-sqlite/cloudflare";
 
 const isAssistantRequest = (request: Request): boolean => {
   const pathname = cloudflarePathname(request);

@@ -8,7 +8,7 @@ import {
   CoffeeOrdersSchema,
   type CoffeeOrder,
   type CoffeeOrders,
-} from "#domain/order";
+} from "@effect-coffee-shop/core/domain/order";
 import {
   createCoffeeAgentAuthOptions,
   executeCoffeeAgentCapability,

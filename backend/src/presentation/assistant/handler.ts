@@ -3,8 +3,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";
 import { emptyWebHandlerServices } from "#presentation/http/web-handler";
-import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
-import { CurrentActor, type AppActor } from "#service/CurrentActor";
+import { CoffeeOrderApp } from "@effect-coffee-shop/core/service/CoffeeOrderApp";
+import { CurrentActor, type AppActor } from "@effect-coffee-shop/core/service/CurrentActor";
 import {
   type AssistantChunkQueue,
   type AssistantStreamChunk,

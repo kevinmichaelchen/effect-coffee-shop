@@ -2,14 +2,14 @@ import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import { InMemoryCoffeeAppLive } from "#external/live";
-import { InMemoryOrderIdGeneratorLive } from "#external/in-memory/InMemoryOrderIdGenerator";
-import { InMemoryOrderRepositoryLive } from "#external/in-memory/InMemoryOrderRepository";
+import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/external-in-memory";
+import { InMemoryOrderIdGeneratorLive } from "@effect-coffee-shop/external-in-memory/in-memory/InMemoryOrderIdGenerator";
+import { InMemoryOrderRepositoryLive } from "@effect-coffee-shop/external-in-memory/in-memory/InMemoryOrderRepository";
 import { CoffeeHttpApiLive } from "#presentation/http/api";
-import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
-import { CurrentActor, systemActor } from "#service/CurrentActor";
-import { PersistenceError } from "#service/errors";
-import { MenuRepository } from "#service/ports/MenuRepository";
+import { CoffeeOrderApp } from "@effect-coffee-shop/core/service/CoffeeOrderApp";
+import { CurrentActor, systemActor } from "@effect-coffee-shop/core/service/CurrentActor";
+import { PersistenceError } from "@effect-coffee-shop/core/service/errors";
+import { MenuRepository } from "@effect-coffee-shop/core/service/ports/MenuRepository";
 
 export const HttpApiTestLive = HttpRouter.serve(CoffeeHttpApiLive, {
   disableListenLog: true,

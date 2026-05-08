@@ -4,8 +4,8 @@ import * as Context from "effect/Context";
 import { CoffeeHttpApiLive } from "#presentation/http/api";
 import { createCoffeeWebHandler, emptyWebHandlerServices } from "#presentation/http/web-handler";
 import { CoffeeMcpHttpLive } from "#presentation/mcp/server";
-import { makeCloudflareCoffeeAppLive } from "#runtime/cloudflare/live";
-import { CurrentActor, type AppActor } from "#service/CurrentActor";
+import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/external-sqlite/cloudflare";
+import { CurrentActor, type AppActor } from "@effect-coffee-shop/core/service/CurrentActor";
 
 const makeBackendHandler = (db: D1Database) =>
   createCoffeeWebHandler(

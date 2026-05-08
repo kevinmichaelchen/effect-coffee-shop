@@ -4,9 +4,12 @@ import {
   InvalidOrderInputError,
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
-} from "#domain/errors";
-import { AuthenticationRequiredError, StaffRoleRequiredError } from "#service/CurrentActor";
-import { InternalAppError } from "#service/errors";
+} from "@effect-coffee-shop/core/domain/errors";
+import {
+  AuthenticationRequiredError,
+  StaffRoleRequiredError,
+} from "@effect-coffee-shop/core/service/CurrentActor";
+import { InternalAppError } from "@effect-coffee-shop/core/service/errors";
 
 export const AppErrorSchema = Schema.Union([
   AuthenticationRequiredError,

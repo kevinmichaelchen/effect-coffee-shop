@@ -1,8 +1,8 @@
 import * as Effect from "effect/Effect";
 import * as McpSchema from "effect/unstable/ai/McpSchema";
 import * as McpServer from "effect/unstable/ai/McpServer";
-import { OrderIdSchema } from "#domain/order";
-import { CoffeeOrderApp } from "#service/CoffeeOrderApp";
+import { OrderIdSchema } from "@effect-coffee-shop/core/domain/order";
+import { CoffeeOrderApp } from "@effect-coffee-shop/core/service/CoffeeOrderApp";
 import { prettyJson } from "../shared/json.ts";
 
 export const MenuResource = McpServer.resource({
