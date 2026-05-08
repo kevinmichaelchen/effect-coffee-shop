@@ -1,0 +1,47 @@
+{
+  "name": "@effect-coffee-shop/coffee-external-sqlite",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./bun": "./src/bun/live.ts",
+    "./cloudflare": "./src/cloudflare/live.ts",
+    "./sql/*": "./src/sql/*.ts"
+  },
+  "scripts": {
+    "db:check": "sqlfu --config src/sql/sqlfu.config.ts check",
+    "db:draft": "sqlfu --config src/sql/sqlfu.config.ts draft",
+    "db:format": "sqlfu --config src/sql/sqlfu.config.ts format \"src/sql/**/*.sql\"",
+    "db:generate": "sqlfu --config src/sql/sqlfu.config.ts generate && oxfmt --write \"src/sql/**/*.ts\"",
+    "db:migrate": "sqlfu --config src/sql/sqlfu.config.ts migrate",
+    "typecheck": "tsgo --noEmit",
+    "lint": "oxlint --disable-nested-config .",
+    "lint:fix": "oxlint --disable-nested-config --fix .",
+    "lint:custom": "cd ../../../apps/backend && lintcn lint --tsconfig ../../domains/coffee/external-sqlite/tsconfig.json",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "knip": "knip --files --exports --no-config-hints",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect/platform-bun": "catalog:",
+    "@effect/sql-d1": "catalog:",
+    "@effect/sql-sqlite-bun": "catalog:",
+    "effect": "catalog:",
+    "sqlfu": "catalog:"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
+    "@effect/vitest": "catalog:",
+    "@types/bun": "catalog:",
+    "knip": "catalog:",
+    "lintcn": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -2,4 +2,4 @@
 
 set -euo pipefail
 
-exec bun run --cwd backend dev:local:api
+exec bun run --cwd apps/backend dev:local:api

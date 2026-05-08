@@ -2,20 +2,26 @@
 
 Coffee-order application used to explore Onion Architecture with TypeScript, Bun, and Effect v4.
 
-This repo is split into two Bun workspaces:
+This repo is split into Bun workspaces with a domain-centric layout:
 
-- `backend/` for the Effect-based HTTP, CLI, and MCP server
-- `ui/` for the standalone browser frontend
+- `apps/backend/` for the Effect-based HTTP, CLI, MCP, Bun, and Cloudflare presentation app
+- `apps/ui/` for the standalone browser frontend
+- `domains/coffee/core/` for the Coffee bounded context Onion Core: domain types, rules, service ports, and use cases
+- `domains/coffee/external-in-memory/` for the Coffee in-memory External Layer implementation
+- `domains/coffee/external-sqlite/` for the Coffee SQLFU-backed SQLite/D1 External Layer implementation
 
-The backend now lives in `backend/` and keeps the boundaries explicit:
+The backend selects its default local External Layer in `apps/backend/src/app-layer.ts`.
+Switching the Bun app between SQLite and in-memory should be a one-line export change there.
 
-- `backend/src/domain` for business types and rules
-- `backend/src/service` for use cases and ports
-- `backend/src/external` for adapter implementations
-- `backend/src/presentation` for HTTP, CLI, and MCP entrypoints
+The main boundaries are:
+
+- `domains/coffee/core/src/domain` for Coffee business types and rules
+- `domains/coffee/core/src/service` for Coffee use cases and ports
+- `domains/coffee/external-*/src` for Coffee adapter implementations
+- `apps/backend/src/presentation` for HTTP, CLI, MCP, and Worker entrypoints
 
 Most tests run against in-memory adapters. A small contract suite also runs against the SQL-backed repositories.
-Backend tests use a hybrid layout: source-owned tests live beside the code in `backend/src/**/*.test.ts`, while shared support, contracts, and cross-boundary integration workflows stay centralized under `backend/test`.
+Backend tests use a hybrid layout: source-owned tests live beside the code in `apps/backend/src/**/*.test.ts`, while shared support, contracts, and cross-boundary integration workflows stay centralized under `apps/backend/test`.
 
 ## Commands
 
@@ -25,7 +31,7 @@ Install dependencies:
 bun install
 ```
 
-This repo uses Bun workspaces. The root `bun install` covers both [`backend/`](./backend) and [`ui/`](./ui).
+This repo uses Bun workspaces and Bun Catalogs. The root `bun install` covers [`apps/*`](./apps) and [`domains/*/*`](./domains).
 Turborepo is the canonical root task runner for dev, build, and quality checks, so repeated runs can reuse the `.turbo` cache across workspaces and `--affected` can skip unrelated work.
 `bun install` also installs and prewarms the local Git hooks unless `CI` is set. The repo now includes `@effect/tsgo` at the root with the `@effect/language-service` plugin enabled in the main backend and UI tsconfigs, but the binary patch stays opt-in because the upstream tool is still alpha. Use `bun run tsgo:patch` to try the Effect language service binary locally, and `bun run tsgo:unpatch` to restore the stock `@typescript/native-preview` binary.
 For VS Code or Cursor, install the `@typescript/native-preview` extension and make sure the native TypeScript server is active so the workspace plugin configuration can load when you opt into `@effect/tsgo`.
@@ -47,7 +53,7 @@ bun run mcp:http
 Run the Worker-safe MCP contract locally on Miniflare:
 
 ```bash
-bun run --cwd backend test src/presentation/mcp/miniflare.worker.test.ts
+bun run --cwd apps/backend test src/presentation/mcp/miniflare.worker.test.ts
 ```
 
 This exercises the MCP HTTP surface end-to-end on Miniflare against a Worker entrypoint.
@@ -81,8 +87,8 @@ If you start binding secret values with `alchemy.secret(...)`, set `ALCHEMY_PASS
 Canonical quality commands:
 
 ```bash
-bun run --cwd backend check
-bun run --cwd ui check
+bun run --cwd apps/backend check
+bun run --cwd apps/ui check
 bun run check:affected
 bun run typecheck
 bun run lint
@@ -96,7 +102,7 @@ bun run check
 Recommended usage:
 
 - `bun run check` is the full local repo gate.
-- `bun run --cwd backend check` and `bun run --cwd ui check` are the workspace gates.
+- `bun run --cwd apps/backend check` and `bun run --cwd apps/ui check` are the app workspace gates.
 - `bun run check:affected` is the fast branch-local gate when you want local confidence without paying for the whole repo.
 - `bun run build` stays separate from the main quality gate.
 
@@ -134,11 +140,11 @@ bun run storybook
 bun run build-storybook
 ```
 
-`bun run storybook` serves the UI stories through Turborepo on port `6006` by default, and `bun run build-storybook` writes the static output to [`ui/storybook-static`](./ui/storybook-static).
+`bun run storybook` serves the UI stories through Turborepo on port `6006` by default, and `bun run build-storybook` writes the static output to [`apps/ui/storybook-static`](./apps/ui/storybook-static).
 
 ## UI
 
-A standalone browser UI lives in [`ui/`](./ui).
+A standalone browser UI lives in [`apps/ui/`](./apps/ui).
 
 Run the backend from the repo root:
 
@@ -149,14 +155,14 @@ bun run http
 Then start the frontend:
 
 ```bash
-bun run --cwd ui dev
+bun run --cwd apps/ui dev
 ```
 
 Run Storybook only for the UI workspace:
 
 ```bash
-bun run --cwd ui storybook
-bun run --cwd ui build-storybook
+bun run --cwd apps/ui storybook
+bun run --cwd apps/ui build-storybook
 ```
 
 For HTTP-only subdomain-based local development with [`portless`](https://github.com/vercel-labs/portless):
@@ -182,7 +188,7 @@ This branch includes a candidate Cloudflare deployment scaffold using upstream A
 The current shape is:
 
 - one Alchemy `Website` resource
-- `ui/dist` served as static assets
+- `apps/ui/dist` served as static assets
 - `/.well-known/agent-configuration` exposed for Better Auth Agent Auth discovery
 - `/api/auth/*` handled by Better Auth with passkey registration and sign-in
 - `/api/auth/capability/*` and `/api/auth/agent/*` handled by Better Auth Agent Auth
