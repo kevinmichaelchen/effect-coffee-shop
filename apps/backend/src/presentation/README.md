@@ -276,9 +276,8 @@ Those bugs do not belong in domain tests. They belong next to the boundary code 
 - The assistant still emits the final answer as a single text chunk after model completion. We surface progress events immediately, but we do not yet token-stream the final answer.
 - [http-jsonrpc-ids.ts](./mcp/http-jsonrpc-ids.ts) is a real shim, not an ideal abstraction.
 - The assistant path still contains format-bridging logic between TanStack AI, our SSE events, and Workers AI.
-- Better Auth experimental OpenTelemetry spans are still not wired because we do not yet provide a Worker-side tracer/export pipeline.
 - AI Gateway support is implemented in the assistant runtime, but provisioning is currently opt-in because the active Cloudflare profile on this machine cannot manage AI Gateway resources.
-- Even when AI Gateway is enabled, payload-suppression and external OTel export configuration still need a follow-up hardening pass.
+- Even when AI Gateway is enabled, payload-suppression and log-retention policy still need a follow-up hardening pass.
 
 ## What Could Simplify Later
 

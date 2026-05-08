@@ -9,9 +9,22 @@ const optionalSecret = (value: string | undefined) =>
     : Redacted.make(value);
 
 const state = () =>
-  process.env.ALCHEMY_STATE_TOKEN
-    ? Cloudflare.state()
-    : Alchemy.localState();
+  process.env.ALCHEMY_LOCAL_STATE === "1"
+    ? Alchemy.localState()
+    : Cloudflare.state();
+
+const betterAuthSecret = Effect.gen(function* () {
+  const provided = optionalSecret(process.env.BETTER_AUTH_SECRET);
+
+  if (provided !== "") {
+    return provided;
+  }
+
+  const generated = yield* Alchemy.Random("better-auth-secret", {
+    bytes: 32,
+  });
+  return generated.text;
+});
 
 export default Alchemy.Stack(
   "effect-v4-onion",
@@ -22,7 +35,9 @@ export default Alchemy.Stack(
   Effect.gen(function* () {
     const aiGatewayEnabled = process.env.COFFEE_ASSISTANT_AI_GATEWAY === "1";
 
-    const coffeeDb = yield* Cloudflare.D1Database("coffee-db");
+    const coffeeDb = yield* Cloudflare.D1Database("coffee-db", {
+      migrationsDir: "./domains/coffee/external-sqlite/src/sql/migrations",
+    });
 
     const assistantGateway = aiGatewayEnabled
       ? yield* Cloudflare.AiGateway("assistant", {
@@ -52,10 +67,22 @@ export default Alchemy.Stack(
           persist: true,
         },
       },
-      command: "bun run --cwd apps/ui build",
-      outdir: "./apps/ui/dist",
+      cwd: "apps/ui",
+      command: "bun run build",
+      outdir: "dist",
+      memo: {
+        include: [
+          "index.html",
+          "package.json",
+          "public/**",
+          "src/**",
+          "tsconfig*.json",
+          "vite.config.*",
+        ],
+        lockfile: true,
+      },
       dev: {
-        command: "bun run --cwd apps/ui dev -- --host 127.0.0.1 --port 5173",
+        command: "bun run dev -- --host 127.0.0.1 --port 5173",
       },
       assetsConfig: {
         runWorkerFirst: [
@@ -71,7 +98,7 @@ export default Alchemy.Stack(
       },
       env: {
         AI_GATEWAY_ID: assistantGateway?.gatewayId ?? "",
-        BETTER_AUTH_SECRET: optionalSecret(process.env.BETTER_AUTH_SECRET),
+        BETTER_AUTH_SECRET: yield* betterAuthSecret,
         COFFEE_STAFF_USER_IDS: process.env.COFFEE_STAFF_USER_IDS ?? "",
       },
     });
