@@ -1,4 +1,5 @@
 node_modules
+**/node_modules
 .env
 .env.local
 .env.*
@@ -14,6 +15,7 @@ node_modules
 dist
 coverage
 .turbo
+**/.turbo
 storybook-static
 .wrangler
 .sqlfu

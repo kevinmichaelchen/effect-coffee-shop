@@ -1,7 +1,7 @@
 import type { SqlCoffeeRepositoriesTestHarness } from "../support/D1Miniflare.ts";
 import { createSqlCoffeeRepositoriesTestHarness } from "../support/D1Miniflare.ts";
 import { afterAll, beforeAll, beforeEach } from "vitest";
-import { defineRepositoryContract } from "./repository-contract.ts";
+import { defineRepositoryContract } from "@effect-coffee-shop/coffee-core/application/testing/repository-contract";
 
 let harness: SqlCoffeeRepositoriesTestHarness | undefined;
 

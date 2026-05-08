@@ -1,0 +1,38 @@
+{
+  "name": "@effect-coffee-shop/coffee-external-drizzle-postgres",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./db/*": "./src/db/*.ts"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate --config drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config drizzle.config.ts",
+    "db:studio": "drizzle-kit studio --config drizzle.config.ts",
+    "typecheck": "tsgo --noEmit",
+    "lint": "oxlint --disable-nested-config .",
+    "lint:fix": "oxlint --disable-nested-config --fix .",
+    "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/external/drizzle-postgres/tsconfig.json",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect/sql-pg": "catalog:",
+    "drizzle-orm": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "drizzle-kit": "catalog:",
+    "lintcn": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

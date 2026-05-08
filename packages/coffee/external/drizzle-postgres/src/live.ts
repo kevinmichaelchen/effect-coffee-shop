@@ -1,0 +1,18 @@
+import * as Layer from "effect/Layer";
+import { CoffeeDb } from "./db/Db.ts";
+import { DrizzlePostgresSchemaLive } from "./db/migrate.ts";
+import { DrizzlePostgresPersistenceLive } from "./db/persistence.ts";
+import { DrizzleMenuRepositoryLive } from "./repositories/DrizzleMenuRepository.ts";
+import { DrizzleOrderIdGeneratorLive } from "./repositories/DrizzleOrderIdGenerator.ts";
+import { DrizzleOrderRepositoryLive } from "./repositories/DrizzleOrderRepository.ts";
+
+export const DrizzlePostgresCoffeeRepositoriesLive = Layer.mergeAll(
+  DrizzlePostgresPersistenceLive,
+  DrizzleMenuRepositoryLive,
+  DrizzleOrderRepositoryLive,
+);
+
+export const DrizzlePostgresCoffeeAppLive = Layer.mergeAll(
+  DrizzlePostgresCoffeeRepositoriesLive,
+  DrizzleOrderIdGeneratorLive,
+).pipe(Layer.provide(DrizzlePostgresSchemaLive), Layer.provide(CoffeeDb.layer));
