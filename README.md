@@ -202,7 +202,7 @@ The current shape is:
 - `D1` and `AI` provisioned and bound into the Worker
 - optional `AI_GATEWAY_ID` binding when `COFFEE_ASSISTANT_AI_GATEWAY=1` and the Cloudflare profile can manage AI Gateway resources
 - `BETTER_AUTH_SECRET` bound into the Worker as a Cloudflare secret
-- Cloudflare Worker observability enabled with persisted logs/traces and source maps
+- Cloudflare Worker observability enabled with persisted logs/traces
 
 Current observability shape:
 
@@ -213,36 +213,9 @@ Current observability shape:
 - Better Auth anonymous telemetry stays disabled.
 - AI Gateway support is implemented in the assistant runtime, but provisioning is opt-in.
 
-Current observability shape:
-
-- Keep Cloudflare native Worker traces/logs enabled on the app Worker.
-- Add an OpenTelemetry Collector ingress layer on Cloudflare Containers.
-- Export app-worker traces/logs into that Collector when `COFFEE_OTEL_EXPORT=1`.
-- Forward from the Collector to an external OTLP-native backend.
-- Do not try to run the full self-hosted SigNoz stack inside Cloudflare Containers.
-  Containers still have ephemeral disk and are a better fit for the stateless
-  Collector than for SigNoz's ClickHouse-backed control plane.
-
-The first repo scaffold for that path lives in
-[`ops/otel-collector-cloudflare/`](./ops/otel-collector-cloudflare).
-That directory now includes a standalone Alchemy-managed companion Worker for
-collector ingress, separate from the main app so the collector can be deployed
-and destroyed independently.
-
-Verification status:
-
-- Workers Observability destinations successfully delivered both datasets on April 11, 2026:
-  `opentelemetry-traces` last complete at `2026-04-11T20:01:13Z`
-  `opentelemetry-logs` last complete at `2026-04-11T20:01:23Z`
-- Live traffic against the deployed app also showed the collector ingress Worker
-  receiving `POST /v1/logs` through Cloudflare's telemetry query API.
-
 Current limitation:
 
 - The current Cloudflare profile on this machine cannot manage AI Gateway resources, so `COFFEE_ASSISTANT_AI_GATEWAY=1` is not deployable here yet.
-- Workers Observability destinations require a separate `CLOUDFLARE_OBSERVABILITY_API_TOKEN` with account-level `Workers Observability Write` permission.
-- Set `OTEL_INGRESS_AUTHORIZATION=Bearer ...` if you want the collector ingress Worker to require a matching `Authorization` header on incoming export traffic; the companion Alchemy app will attach the same header to Workers observability destinations automatically.
-- The collector now strips `gen_ai.prompt_json` and `gen_ai.completion_json` before upstream export, but broader payload-suppression and redaction policy still need a later pass before we should treat model logging as fully production-hardened.
 
 Expected workflow:
 

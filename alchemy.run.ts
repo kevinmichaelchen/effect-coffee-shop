@@ -3,11 +3,6 @@ import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
 import * as Redacted from "effect/Redacted";
 
-import {
-  collectorLogDestinationName,
-  collectorTraceDestinationName,
-} from "./ops/otel-collector-cloudflare/destination-names.ts";
-
 const optionalSecret = (value: string | undefined) =>
   value === undefined || value.trim().length === 0
     ? ""
@@ -26,7 +21,6 @@ export default Alchemy.Stack(
   },
   Effect.gen(function* () {
     const aiGatewayEnabled = process.env.COFFEE_ASSISTANT_AI_GATEWAY === "1";
-    const otelExportEnabled = process.env.COFFEE_OTEL_EXPORT === "1";
 
     const coffeeDb = yield* Cloudflare.D1Database("coffee-db");
 
@@ -47,16 +41,12 @@ export default Alchemy.Stack(
         enabled: true,
         headSamplingRate: 1,
         logs: {
-          destinations: otelExportEnabled ? [collectorLogDestinationName()] : [],
           enabled: true,
           headSamplingRate: 1,
           invocationLogs: true,
           persist: true,
         },
         traces: {
-          destinations: otelExportEnabled
-            ? [collectorTraceDestinationName()]
-            : [],
           enabled: true,
           headSamplingRate: 1,
           persist: true,
@@ -93,7 +83,6 @@ export default Alchemy.Stack(
     return {
       assistantGateway: assistantGateway?.gatewayId ?? null,
       database: coffeeDb.databaseName,
-      otelExportEnabled,
       url: website.url,
     };
   }),
