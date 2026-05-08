@@ -38,9 +38,14 @@ That makes the cleaner split:
 
 ## Scope Of This Slice
 
-This repo now includes a small standalone Alchemy app for the companion Worker
-that fronts the Collector container. It is intentionally separate from the main
-app so the collector can be deployed, updated, and destroyed independently.
+This repo includes the original companion Worker/container files, but the
+Alchemy v2 migration currently does not provision the Collector container. The
+v2 stack in this directory only manages the Cloudflare Workers Observability
+destination resources and points them at an already-running collector ingress
+URL.
+
+Set `OTEL_COLLECTOR_INGRESS_URL` to that existing ingress origin, for example
+`https://<collector-worker>.<account>.workers.dev`.
 
 This directory currently includes:
 
@@ -49,10 +54,11 @@ This directory currently includes:
   and logs upstream
 - collector-side redaction for `gen_ai.prompt_json` and
   `gen_ai.completion_json` before upstream export
-- a standalone Alchemy-managed Worker that fronts the collector container on
-  `/v1/traces` and `/v1/logs`
+- legacy Worker/container source for the Cloudflare Container ingress
+- a v2 Alchemy stack that manages trace/log destination resources
 - a local `.env.example` for wiring the upstream backend
-- a companion [`alchemy.run.ts`](./alchemy.run.ts) for deploy/dev/destroy
+- a companion [`alchemy.run.ts`](./alchemy.run.ts) for destination
+  deploy/destroy
 
 ## Companion Worker
 
@@ -73,23 +79,20 @@ or Effect-specific abstractions yet.
 cp ops/otel-collector-cloudflare/.env.example ops/otel-collector-cloudflare/.env.local
 bun install
 bun run check
-bun run --cwd ops/otel-collector-cloudflare/worker check
-bun run cf:dev:otel-collector -- --env-file ./ops/otel-collector-cloudflare/.env.local
+bun run cf:deploy:otel-collector -- --env-file ./ops/otel-collector-cloudflare/.env.local
 ```
 
-`bun run cf:dev:otel-collector` and `bun run cf:deploy:otel-collector` both
-require a working local Docker CLI and daemon because Alchemy builds the
-collector image before it can start or deploy the Worker.
+`bun run cf:deploy:otel-collector` does not currently build or deploy the
+Collector container under Alchemy v2. It requires `OTEL_COLLECTOR_INGRESS_URL`
+to point at an already-running ingress that accepts `POST /v1/traces` and
+`POST /v1/logs`.
 
-Set `UPSTREAM_OTLP_HTTP_ENDPOINT` in the companion env file or shell
-environment to the OTLP HTTP base path for your backend, such as
-`https://<signoz-host>:4318/v1`.
+If you are running the legacy companion ingress yourself, set
+`UPSTREAM_OTLP_HTTP_ENDPOINT` in that Worker/container environment to the OTLP
+HTTP base path for your backend, such as `https://<signoz-host>:4318/v1`.
 
 If your upstream requires an auth header, set
-`UPSTREAM_OTLP_AUTHORIZATION=Bearer ...` in the same env file or shell
-environment.
-Because the companion app binds that value with `alchemy.secret(...)`, set
-`ALCHEMY_PASSWORD` as well so Alchemy can encrypt it in state.
+`UPSTREAM_OTLP_AUTHORIZATION=Bearer ...` in that Worker/container environment.
 
 Set `OTEL_INGRESS_AUTHORIZATION=Bearer ...` to require the same authorization
 header on telemetry export requests that hit the ingress Worker.
@@ -120,14 +123,14 @@ bun run cf:deploy:otel-collector -- --profile default --env-file ./ops/otel-coll
 
 Alchemy will:
 
-1. build and push the collector image from [`../Dockerfile`](./Dockerfile)
-2. provision the companion Worker
-3. create trace/log destination resources that point at the companion Worker
-4. attach the container binding to the Worker
-5. manage this collector app state separately from the main coffee-shop app
+1. create trace/log destination resources that point at
+   `OTEL_COLLECTOR_INGRESS_URL`
+2. attach the optional `OTEL_INGRESS_AUTHORIZATION` header to those
+   destinations
+3. manage this destination state separately from the main coffee-shop app
 
 After deploy, point Cloudflare Workers OTLP export and AI Gateway OTEL at the
-Worker URL, not at the container directly.
+same collector ingress URL, not at the container directly.
 
 Verification note:
 
