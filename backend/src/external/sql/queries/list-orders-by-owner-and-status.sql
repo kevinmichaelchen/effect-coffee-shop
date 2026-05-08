@@ -1,4 +1,4 @@
 select *
 from orders
-where owneruserid = :ownerUserId and status = :status
-order by createdat, id;
+where owner_user_id = :owner_user_id and status = :status
+order by created_at, id;

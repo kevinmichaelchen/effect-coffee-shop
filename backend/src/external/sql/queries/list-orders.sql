@@ -1,3 +1,3 @@
 select *
 from orders
-order by createdat, id;
+order by created_at, id;

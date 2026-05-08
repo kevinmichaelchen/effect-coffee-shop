@@ -14,10 +14,10 @@ const toMenuItem = (item: SqlMenuItemModel): MenuItem => ({
   id: item.id,
   name: item.name,
   kind: item.kind,
-  basePriceCents: item.basepricecents,
-  availableMilks: item.availablemilks,
-  availableTemperatures: item.availabletemperatures,
-  maxShots: item.maxshots,
+  basePriceCents: item.base_price_cents,
+  availableMilks: item.available_milks,
+  availableTemperatures: item.available_temperatures,
+  maxShots: item.max_shots,
 });
 
 const decodeSqlMenuItems = Schema.decodeUnknownEffect(Schema.Array(SqlMenuItemModel));

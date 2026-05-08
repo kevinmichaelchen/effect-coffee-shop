@@ -6,10 +6,10 @@ select
   id,
   name,
   kind,
-  basepricecents,
-  availablemilks,
-  availabletemperatures,
-  maxshots
+  base_price_cents,
+  available_milks,
+  available_temperatures,
+  max_shots
 from menu_items
 where id = ?
 limit 1;
@@ -43,9 +43,9 @@ export namespace findMenuItemById {
     id: string;
     name: string;
     kind: string;
-    basepricecents: number;
-    availablemilks: string;
-    availabletemperatures: string;
-    maxshots: number;
+    base_price_cents: number;
+    available_milks: string;
+    available_temperatures: string;
+    max_shots: number;
   };
 }

@@ -1,4 +1,4 @@
 select *
 from orders
 where status = :status
-order by createdat, id;
+order by created_at, id;

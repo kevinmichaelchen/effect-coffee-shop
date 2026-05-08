@@ -4,7 +4,7 @@ import { SqlClient } from "effect/unstable/sql";
 const sql = `
 select *
 from orders
-order by createdat, id;
+order by created_at, id;
 `.trim();
 const query = { name: "listOrders", sql, args: [] };
 
@@ -26,17 +26,17 @@ export const listOrders = Object.assign(
 export namespace listOrders {
   export type Result = {
     id: string;
-    customername: string;
-    owneruserid: string;
-    drinkid: string;
-    drinkname: string;
+    customer_name: string;
+    owner_user_id: string;
+    drink_id: string;
+    drink_name: string;
     size: string;
     milk: string;
     temperature: string;
     shots: number;
     notes?: string;
     status: string;
-    pricecents: number;
-    createdat: string;
+    price_cents: number;
+    created_at: string;
   };
 }

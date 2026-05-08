@@ -4,13 +4,13 @@ import { SqlClient } from "effect/unstable/sql";
 const sql = `
 select *
 from orders
-where owneruserid = ?
-order by createdat, id;
+where owner_user_id = ?
+order by created_at, id;
 `.trim();
 const query = (params: listOrdersByOwner.Params) => ({
   name: "listOrdersByOwner",
   sql,
-  args: [params.ownerUserId],
+  args: [params.owner_user_id],
 });
 
 export const listOrdersByOwner = Object.assign(
@@ -30,21 +30,21 @@ export const listOrdersByOwner = Object.assign(
 
 export namespace listOrdersByOwner {
   export type Params = {
-    ownerUserId: string;
+    owner_user_id: string;
   };
   export type Result = {
     id: string;
-    customername: string;
-    owneruserid: string;
-    drinkid: string;
-    drinkname: string;
+    customer_name: string;
+    owner_user_id: string;
+    drink_id: string;
+    drink_name: string;
     size: string;
     milk: string;
     temperature: string;
     shots: number;
     notes?: string;
     status: string;
-    pricecents: number;
-    createdat: string;
+    price_cents: number;
+    created_at: string;
   };
 }

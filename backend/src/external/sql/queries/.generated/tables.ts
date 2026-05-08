@@ -5,25 +5,25 @@ export type MenuItemsRow = {
   id: string;
   name: string;
   kind: string;
-  sortorder: number;
-  basepricecents: number;
-  availablemilks: string;
-  availabletemperatures: string;
-  maxshots: number;
+  sort_order: number;
+  base_price_cents: number;
+  available_milks: string;
+  available_temperatures: string;
+  max_shots: number;
 };
 
 export type OrdersRow = {
   id: string;
-  customername: string;
-  owneruserid: string;
-  drinkid: string;
-  drinkname: string;
+  customer_name: string;
+  owner_user_id: string;
+  drink_id: string;
+  drink_name: string;
   size: string;
   milk: string;
   temperature: string;
   shots: number;
   notes: string | null;
   status: string;
-  pricecents: number;
-  createdat: string;
+  price_cents: number;
+  created_at: string;
 };

@@ -7,11 +7,11 @@ insert into
     id,
     name,
     kind,
-    sortorder,
-    basepricecents,
-    availablemilks,
-    availabletemperatures,
-    maxshots
+    sort_order,
+    base_price_cents,
+    available_milks,
+    available_temperatures,
+    max_shots
   )
 values
   (
@@ -28,11 +28,11 @@ on conflict (id) do update
 set
   name = excluded.name,
   kind = excluded.kind,
-  sortorder = excluded.sortorder,
-  basepricecents = excluded.basepricecents,
-  availablemilks = excluded.availablemilks,
-  availabletemperatures = excluded.availabletemperatures,
-  maxshots = excluded.maxshots;
+  sort_order = excluded.sort_order,
+  base_price_cents = excluded.base_price_cents,
+  available_milks = excluded.available_milks,
+  available_temperatures = excluded.available_temperatures,
+  max_shots = excluded.max_shots;
 `.trim();
 const query = (params: seedMenuItem.Params) => ({
   name: "seedMenuItem",
@@ -41,11 +41,11 @@ const query = (params: seedMenuItem.Params) => ({
     params.item.id,
     params.item.name,
     params.item.kind,
-    params.item.sortorder,
-    params.item.basepricecents,
-    params.item.availablemilks,
-    params.item.availabletemperatures,
-    params.item.maxshots,
+    params.item.sort_order,
+    params.item.base_price_cents,
+    params.item.available_milks,
+    params.item.available_temperatures,
+    params.item.max_shots,
   ],
 });
 
@@ -66,11 +66,11 @@ export namespace seedMenuItem {
       id: string;
       name: string;
       kind: string;
-      sortorder: number;
-      basepricecents: number;
-      availablemilks: string;
-      availabletemperatures: string;
-      maxshots: number;
+      sort_order: number;
+      base_price_cents: number;
+      available_milks: string;
+      available_temperatures: string;
+      max_shots: number;
     };
   };
 }

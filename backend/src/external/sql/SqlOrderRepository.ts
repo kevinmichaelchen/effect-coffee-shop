@@ -32,8 +32,8 @@ const listRecords = (filters: ListOrdersFilters) =>
       }),
     onSome: (ownerUserId) =>
       Option.match(Option.fromUndefinedOr(filters.status), {
-        onNone: () => listOrdersByOwner({ ownerUserId }),
-        onSome: (status) => listOrdersByOwnerAndStatus({ ownerUserId, status }),
+        onNone: () => listOrdersByOwner({ owner_user_id: ownerUserId }),
+        onSome: (status) => listOrdersByOwnerAndStatus({ owner_user_id: ownerUserId, status }),
       }),
   });
 

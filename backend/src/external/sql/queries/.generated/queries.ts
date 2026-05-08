@@ -15,7 +15,7 @@ export const sqlfuQuerySources = [
     sqlFile: "find-menu-item-by-id.sql",
     generatedFile: "find-menu-item-by-id.sql.ts",
     sourceSql:
-      "select\n  id,\n  name,\n  kind,\n  basepricecents,\n  availablemilks,\n  availabletemperatures,\n  maxshots\nfrom menu_items\nwhere id = :id\nlimit 1;\n",
+      "select\n  id,\n  name,\n  kind,\n  base_price_cents,\n  available_milks,\n  available_temperatures,\n  max_shots\nfrom menu_items\nwhere id = :id\nlimit 1;\n",
   },
   {
     sqlFile: "find-order-by-id.sql",
@@ -26,39 +26,40 @@ export const sqlfuQuerySources = [
     sqlFile: "list-menu-items.sql",
     generatedFile: "list-menu-items.sql.ts",
     sourceSql:
-      "select\n  id,\n  name,\n  kind,\n  basepricecents,\n  availablemilks,\n  availabletemperatures,\n  maxshots\nfrom menu_items\norder by sortorder, id;\n",
+      "select\n  id,\n  name,\n  kind,\n  base_price_cents,\n  available_milks,\n  available_temperatures,\n  max_shots\nfrom menu_items\norder by sort_order, id;\n",
   },
   {
     sqlFile: "list-orders.sql",
     generatedFile: "list-orders.sql.ts",
-    sourceSql: "select *\nfrom orders\norder by createdat, id;\n",
+    sourceSql: "select *\nfrom orders\norder by created_at, id;\n",
   },
   {
     sqlFile: "list-orders-by-owner.sql",
     generatedFile: "list-orders-by-owner.sql.ts",
-    sourceSql: "select *\nfrom orders\nwhere owneruserid = :ownerUserId\norder by createdat, id;\n",
+    sourceSql:
+      "select *\nfrom orders\nwhere owner_user_id = :owner_user_id\norder by created_at, id;\n",
   },
   {
     sqlFile: "list-orders-by-owner-and-status.sql",
     generatedFile: "list-orders-by-owner-and-status.sql.ts",
     sourceSql:
-      "select *\nfrom orders\nwhere owneruserid = :ownerUserId and status = :status\norder by createdat, id;\n",
+      "select *\nfrom orders\nwhere owner_user_id = :owner_user_id and status = :status\norder by created_at, id;\n",
   },
   {
     sqlFile: "list-orders-by-status.sql",
     generatedFile: "list-orders-by-status.sql.ts",
-    sourceSql: "select *\nfrom orders\nwhere status = :status\norder by createdat, id;\n",
+    sourceSql: "select *\nfrom orders\nwhere status = :status\norder by created_at, id;\n",
   },
   {
     sqlFile: "save-order.sql",
     generatedFile: "save-order.sql.ts",
     sourceSql:
-      "insert into\n  orders (\n    id,\n    customername,\n    owneruserid,\n    drinkid,\n    drinkname,\n    size,\n    milk,\n    temperature,\n    shots,\n    notes,\n    status,\n    pricecents,\n    createdat\n  )\nvalues\n  (\n    :order.id,\n    :order.customername,\n    :order.owneruserid,\n    :order.drinkid,\n    :order.drinkname,\n    :order.size,\n    :order.milk,\n    :order.temperature,\n    :order.shots,\n    :order.notes,\n    :order.status,\n    :order.pricecents,\n    :order.createdat\n  )\non conflict (id) do update\nset\n  customername = excluded.customername,\n  owneruserid = excluded.owneruserid,\n  drinkid = excluded.drinkid,\n  drinkname = excluded.drinkname,\n  size = excluded.size,\n  milk = excluded.milk,\n  temperature = excluded.temperature,\n  shots = excluded.shots,\n  notes = excluded.notes,\n  status = excluded.status,\n  pricecents = excluded.pricecents,\n  createdat = excluded.createdat\nreturning *;\n",
+      "insert into\n  orders (\n    id,\n    customer_name,\n    owner_user_id,\n    drink_id,\n    drink_name,\n    size,\n    milk,\n    temperature,\n    shots,\n    notes,\n    status,\n    price_cents,\n    created_at\n  )\nvalues\n  (\n    :order.id,\n    :order.customer_name,\n    :order.owner_user_id,\n    :order.drink_id,\n    :order.drink_name,\n    :order.size,\n    :order.milk,\n    :order.temperature,\n    :order.shots,\n    :order.notes,\n    :order.status,\n    :order.price_cents,\n    :order.created_at\n  )\non conflict (id) do update\nset\n  customer_name = excluded.customer_name,\n  owner_user_id = excluded.owner_user_id,\n  drink_id = excluded.drink_id,\n  drink_name = excluded.drink_name,\n  size = excluded.size,\n  milk = excluded.milk,\n  temperature = excluded.temperature,\n  shots = excluded.shots,\n  notes = excluded.notes,\n  status = excluded.status,\n  price_cents = excluded.price_cents,\n  created_at = excluded.created_at\nreturning *;\n",
   },
   {
     sqlFile: "seed-menu-item.sql",
     generatedFile: "seed-menu-item.sql.ts",
     sourceSql:
-      "insert into\n  menu_items (\n    id,\n    name,\n    kind,\n    sortorder,\n    basepricecents,\n    availablemilks,\n    availabletemperatures,\n    maxshots\n  )\nvalues\n  (\n    :item.id,\n    :item.name,\n    :item.kind,\n    :item.sortorder,\n    :item.basepricecents,\n    :item.availablemilks,\n    :item.availabletemperatures,\n    :item.maxshots\n  )\non conflict (id) do update\nset\n  name = excluded.name,\n  kind = excluded.kind,\n  sortorder = excluded.sortorder,\n  basepricecents = excluded.basepricecents,\n  availablemilks = excluded.availablemilks,\n  availabletemperatures = excluded.availabletemperatures,\n  maxshots = excluded.maxshots;\n",
+      "insert into\n  menu_items (\n    id,\n    name,\n    kind,\n    sort_order,\n    base_price_cents,\n    available_milks,\n    available_temperatures,\n    max_shots\n  )\nvalues\n  (\n    :item.id,\n    :item.name,\n    :item.kind,\n    :item.sort_order,\n    :item.base_price_cents,\n    :item.available_milks,\n    :item.available_temperatures,\n    :item.max_shots\n  )\non conflict (id) do update\nset\n  name = excluded.name,\n  kind = excluded.kind,\n  sort_order = excluded.sort_order,\n  base_price_cents = excluded.base_price_cents,\n  available_milks = excluded.available_milks,\n  available_temperatures = excluded.available_temperatures,\n  max_shots = excluded.max_shots;\n",
   },
 ];
