@@ -34,7 +34,7 @@ export const assistantGateway = aiGatewayEnabled
 export const website = await Website("onion", {
   url: true,
   compatibility: "node",
-  entrypoint: "./backend/src/presentation/cloudflare/worker.ts",
+  entrypoint: "./apps/backend/src/presentation/cloudflare/worker.ts",
   observability: {
     enabled: true,
     headSamplingRate: 1,
@@ -54,13 +54,13 @@ export const website = await Website("onion", {
   },
   sourceMap: true,
   build: {
-    command: "bun run --cwd ui build",
+    command: "bun run --cwd apps/ui build",
   },
   dev: {
-    command: "bun run --cwd ui dev -- --host 127.0.0.1 --port 5173",
+    command: "bun run --cwd apps/ui dev -- --host 127.0.0.1 --port 5173",
   },
   assets: {
-    directory: "./ui/dist",
+    directory: "./apps/ui/dist",
     run_worker_first: [
       "/.well-known/agent-configuration",
       "/api",
