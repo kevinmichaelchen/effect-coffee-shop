@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import type { CoffeeOrder, ListOrdersFilters } from "@effect-coffee-shop/coffee-core/domain/order";
-import { OrderRepository } from "@effect-coffee-shop/coffee-core/service/ports/OrderRepository";
+import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
 
 export const InMemoryOrderRepositoryLive = Layer.effect(
   OrderRepository,

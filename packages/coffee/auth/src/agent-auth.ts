@@ -11,8 +11,8 @@ import {
 import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
 import { coffeeAgentCapabilities } from "@effect-coffee-shop/coffee-auth/agent-auth-data";
 import { formatToolFailure } from "@effect-coffee-shop/coffee-actions/tool-format";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/service/CoffeeOrderApp";
-import { CurrentActor } from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
+import { CurrentActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;
 

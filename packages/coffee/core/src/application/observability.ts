@@ -1,5 +1,5 @@
 import * as Effect from "effect/Effect";
-import type { AppActor } from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 type ObservabilityValue = boolean | number | string | null;
 type ObservabilityAttributes = Readonly<Record<string, ObservabilityValue>>;

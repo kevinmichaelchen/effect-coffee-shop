@@ -3,7 +3,10 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
-import { CurrentActor, systemActor } from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+import {
+  CurrentActor,
+  systemActor,
+} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import {
   getOrder,
   listOrders,
@@ -11,7 +14,7 @@ import {
   pickUpOrder,
   placeOrder,
   startBrewing,
-} from "@effect-coffee-shop/coffee-core/service/use-cases/index";
+} from "@effect-coffee-shop/coffee-core/application/use-cases/index";
 
 const provideSystemActor = Effect.provideService(CurrentActor, systemActor);
 

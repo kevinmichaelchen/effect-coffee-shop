@@ -7,4 +7,4 @@ export class OrderIdGenerator extends Context.Service<
   {
     readonly next: Effect.Effect<OrderId>;
   }
->()("effect-coffee-shop/service/OrderIdGenerator") {}
+>()("effect-coffee-shop/application/OrderIdGenerator") {}

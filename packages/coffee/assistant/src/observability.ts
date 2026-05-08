@@ -1,5 +1,5 @@
 import { actorLogFields, logStructuredEvent } from "@effect-coffee-shop/backend-host/logging";
-import type { AppActor } from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 type AssistantToolActivity = {
   readonly detail: string;

@@ -11,7 +11,7 @@ import {
   OrderNotFoundError,
 } from "@effect-coffee-shop/coffee-core/domain/errors";
 import { OrderIdSchema } from "@effect-coffee-shop/coffee-core/domain/order";
-import { InternalAppError } from "@effect-coffee-shop/coffee-core/service/errors";
+import { InternalAppError } from "@effect-coffee-shop/coffee-core/application/errors";
 import { HttpApiPersistenceFailureTestLive, HttpApiTestLive } from "./test-support.ts";
 import { CoffeeHttpApi } from "./api.ts";
 

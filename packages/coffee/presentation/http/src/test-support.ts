@@ -5,10 +5,13 @@ import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import { InMemoryOrderIdGeneratorLive } from "@effect-coffee-shop/coffee-external-in-memory/in-memory/InMemoryOrderIdGenerator";
 import { InMemoryOrderRepositoryLive } from "@effect-coffee-shop/coffee-external-in-memory/in-memory/InMemoryOrderRepository";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/service/CoffeeOrderApp";
-import { CurrentActor, systemActor } from "@effect-coffee-shop/coffee-core/service/CurrentActor";
-import { PersistenceError } from "@effect-coffee-shop/coffee-core/service/errors";
-import { MenuRepository } from "@effect-coffee-shop/coffee-core/service/ports/MenuRepository";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
+import {
+  CurrentActor,
+  systemActor,
+} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
+import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
 import { CoffeeHttpApiLive } from "./api.ts";
 
 export const HttpApiTestLive = HttpRouter.serve(CoffeeHttpApiLive, {

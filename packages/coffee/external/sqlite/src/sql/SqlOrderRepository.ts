@@ -8,8 +8,8 @@ import type {
   ListOrdersFilters,
   OrderId,
 } from "@effect-coffee-shop/coffee-core/domain/order";
-import { PersistenceError } from "@effect-coffee-shop/coffee-core/service/errors";
-import { OrderRepository } from "@effect-coffee-shop/coffee-core/service/ports/OrderRepository";
+import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
+import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
 import { findOrderById } from "./queries/.generated/find-order-by-id.sql.ts";
 import { listOrders } from "./queries/.generated/list-orders.sql.ts";
 import { listOrdersByOwnerAndStatus } from "./queries/.generated/list-orders-by-owner-and-status.sql.ts";

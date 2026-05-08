@@ -3,7 +3,7 @@ import * as Context from "effect/Context";
 import * as HttpServer from "effect/unstable/http/HttpServer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/service/CoffeeOrderApp";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import {
   normalizeMcpHttpRequestIds,
   restoreMcpHttpResponseIds,

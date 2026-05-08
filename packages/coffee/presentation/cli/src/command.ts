@@ -10,7 +10,7 @@ import {
   temperatures,
 } from "@effect-coffee-shop/coffee-core/domain/menu";
 import { orderStatuses } from "@effect-coffee-shop/coffee-core/domain/order";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/service/CoffeeOrderApp";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import { prettyJson } from "@effect-coffee-shop/backend-host/json";
 
 const customerName = Flag.string("customer-name").pipe(

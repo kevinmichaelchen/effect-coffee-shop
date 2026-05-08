@@ -5,16 +5,16 @@ import type { CoffeeOrder, OrderId } from "@effect-coffee-shop/coffee-core/domai
 import {
   AuthenticationRequiredError,
   requireSignedInActor,
-} from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import {
   InternalAppError,
   internalAppErrorFromPersistence,
-} from "@effect-coffee-shop/coffee-core/service/errors";
+} from "@effect-coffee-shop/coffee-core/application/errors";
 import {
   actorObservabilityAttributes,
   annotateObservabilitySpan,
   logInfoWithAttributes,
-} from "@effect-coffee-shop/coffee-core/service/observability";
+} from "@effect-coffee-shop/coffee-core/application/observability";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
 export const getOrder = Effect.fn("CoffeeOrders.getOrder")(function* (

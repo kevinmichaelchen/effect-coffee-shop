@@ -4,7 +4,7 @@ import {
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
 } from "@effect-coffee-shop/coffee-core/domain/errors";
-import { InternalAppError } from "@effect-coffee-shop/coffee-core/service/errors";
+import { InternalAppError } from "@effect-coffee-shop/coffee-core/application/errors";
 
 export function serializeToolResult(result: unknown): string {
   if (typeof result === "string") {

@@ -5,7 +5,10 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import { CoffeeAppLive } from "#app-layer";
-import { CurrentActor, systemActor } from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+import {
+  CurrentActor,
+  systemActor,
+} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
 
 const CoffeeMcpHttpServerLive = Layer.unwrap(

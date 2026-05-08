@@ -25,17 +25,17 @@ import {
 import {
   InternalAppError,
   internalAppErrorFromPersistence,
-} from "@effect-coffee-shop/coffee-core/service/errors";
+} from "@effect-coffee-shop/coffee-core/application/errors";
 import { type CoffeeOrder } from "@effect-coffee-shop/coffee-core/domain/order";
 import {
   AuthenticationRequiredError,
   requireSignedInActor,
-} from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import {
   actorObservabilityAttributes,
   annotateObservabilitySpan,
   logInfoWithAttributes,
-} from "@effect-coffee-shop/coffee-core/service/observability";
+} from "@effect-coffee-shop/coffee-core/application/observability";
 import { OrderIdGenerator } from "../ports/OrderIdGenerator.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";

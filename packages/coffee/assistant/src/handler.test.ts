@@ -1,6 +1,6 @@
 import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
-import { systemActor } from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { describe, expect, it, vi } from "vitest";
 import { handleAssistantRequest } from "./handler.ts";
 import type { AssistantAiConfig } from "./runtime.ts";

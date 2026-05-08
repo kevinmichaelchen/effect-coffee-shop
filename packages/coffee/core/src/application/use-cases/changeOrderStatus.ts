@@ -14,16 +14,16 @@ import {
   AuthenticationRequiredError,
   StaffRoleRequiredError,
   requireStaffActor,
-} from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import {
   InternalAppError,
   internalAppErrorFromPersistence,
-} from "@effect-coffee-shop/coffee-core/service/errors";
+} from "@effect-coffee-shop/coffee-core/application/errors";
 import {
   actorObservabilityAttributes,
   annotateObservabilitySpan,
   logInfoWithAttributes,
-} from "@effect-coffee-shop/coffee-core/service/observability";
+} from "@effect-coffee-shop/coffee-core/application/observability";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
 const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* (

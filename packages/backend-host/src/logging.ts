@@ -1,4 +1,4 @@
-import type { AppActor } from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 type StructuredLogValue = boolean | number | string | null;
 export type StructuredLogRecord = Readonly<Record<string, StructuredLogValue>>;

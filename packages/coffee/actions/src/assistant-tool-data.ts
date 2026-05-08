@@ -3,7 +3,7 @@ import * as Schema from "effect/Schema";
 import {
   ListOrdersRequestSchema,
   PlaceOrderRequestSchema,
-} from "@effect-coffee-shop/coffee-core/service/contracts";
+} from "@effect-coffee-shop/coffee-core/application/contracts";
 
 export const emptyToolParameters = {
   type: "object",

@@ -10,7 +10,7 @@ import {
   getCloudflareBackendHandler,
 } from "../../composition/coffee-backend.ts";
 import { ensureCloudflareAuthPersistence } from "@effect-coffee-shop/coffee-auth/better-auth";
-import { systemActor } from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 const isMcpRequest = (request: Request): boolean => {
   const pathname = cloudflarePathname(request);

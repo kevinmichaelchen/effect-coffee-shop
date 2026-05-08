@@ -2,7 +2,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import { menuItems } from "@effect-coffee-shop/coffee-core/domain/menu";
-import { MenuRepository } from "@effect-coffee-shop/coffee-core/service/ports/MenuRepository";
+import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
 
 export const InMemoryMenuRepositoryLive = Layer.succeed(MenuRepository)({
   list: Effect.succeed(menuItems),

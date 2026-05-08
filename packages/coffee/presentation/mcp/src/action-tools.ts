@@ -3,7 +3,7 @@ import * as Layer from "effect/Layer";
 import * as McpServer from "effect/unstable/ai/McpServer";
 import * as Tool from "effect/unstable/ai/Tool";
 import * as Toolkit from "effect/unstable/ai/Toolkit";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/service/CoffeeOrderApp";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import { coffeeMcpActionSpecs } from "@effect-coffee-shop/coffee-actions/actions";
 
 const ListMenuTool = Tool.make("list_menu", coffeeMcpActionSpecs.list_menu);

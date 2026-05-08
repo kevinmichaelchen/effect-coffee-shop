@@ -55,8 +55,8 @@
               "@effect/platform-node/*",
               "bun:*",
               "node:*",
-              "#service/use-cases/*",
-              "#service/ports/*"
+              "#application/use-cases/*",
+              "#application/ports/*"
             ]
           }
         ]
@@ -68,7 +68,7 @@
         "no-restricted-imports": [
           "error",
           {
-            "patterns": ["#service/use-cases/*", "#service/ports/*"]
+            "patterns": ["#application/use-cases/*", "#application/ports/*"]
           }
         ]
       }
@@ -85,7 +85,7 @@
         "no-restricted-imports": [
           "error",
           {
-            "patterns": ["#service/use-cases/*", "#service/ports/*"]
+            "patterns": ["#application/use-cases/*", "#application/ports/*"]
           }
         ]
       }

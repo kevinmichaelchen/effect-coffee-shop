@@ -4,8 +4,11 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { CoffeeAppLive } from "#app-layer";
 import { runCoffeeCli } from "@effect-coffee-shop/coffee-cli/command";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/service/CoffeeOrderApp";
-import { CurrentActor, systemActor } from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
+import {
+  CurrentActor,
+  systemActor,
+} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 const CoffeeCliLive = Layer.mergeAll(
   Layer.succeed(CurrentActor)(systemActor),

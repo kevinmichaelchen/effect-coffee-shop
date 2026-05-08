@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import * as McpServer from "effect/unstable/ai/McpServer";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/service/CoffeeOrderApp";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import { prettyJson } from "@effect-coffee-shop/backend-host/json";
 
 export const RecommendDrinkPrompt = McpServer.prompt({

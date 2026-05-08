@@ -6,7 +6,10 @@ import {
   handleAssistantRequest,
 } from "@effect-coffee-shop/coffee-assistant/handler";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
-import { CurrentActor, systemActor } from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+import {
+  CurrentActor,
+  systemActor,
+} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { createCoffeeWebHandler } from "./web-handler.ts";
 
 export async function startCoffeeBunServer<

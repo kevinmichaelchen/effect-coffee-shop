@@ -6,7 +6,7 @@ import type {
   ListOrdersFilters,
   OrderId,
 } from "@effect-coffee-shop/coffee-core/domain/order";
-import type { PersistenceError } from "@effect-coffee-shop/coffee-core/service/errors";
+import type { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
 
 export class OrderRepository extends Context.Service<
   OrderRepository,
@@ -19,4 +19,4 @@ export class OrderRepository extends Context.Service<
       filters?: ListOrdersFilters,
     ) => Effect.Effect<ReadonlyArray<CoffeeOrder>, PersistenceError>;
   }
->()("effect-coffee-shop/service/OrderRepository") {}
+>()("effect-coffee-shop/application/OrderRepository") {}

@@ -10,7 +10,7 @@ import {
   AppActorSchema,
   anonymousActor,
   type AppActor,
-} from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 const syntheticEmailDomain = "users.coffee.invalid";
 const longEnoughDevelopmentSecret = "dev-better-auth-secret-please-change-me-0001";

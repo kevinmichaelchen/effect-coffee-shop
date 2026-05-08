@@ -8,8 +8,8 @@ import {
 import {
   AuthenticationRequiredError,
   StaffRoleRequiredError,
-} from "@effect-coffee-shop/coffee-core/service/CurrentActor";
-import { InternalAppError } from "@effect-coffee-shop/coffee-core/service/errors";
+} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { InternalAppError } from "@effect-coffee-shop/coffee-core/application/errors";
 
 export const AppErrorSchema = Schema.Union([
   AuthenticationRequiredError,

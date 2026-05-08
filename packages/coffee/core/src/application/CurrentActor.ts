@@ -31,9 +31,12 @@ export const systemActor: AuthenticatedActor = {
   userId: "system",
 };
 
-export const CurrentActor = Context.Reference<AppActor>("effect-coffee-shop/service/CurrentActor", {
-  defaultValue: () => anonymousActor,
-});
+export const CurrentActor = Context.Reference<AppActor>(
+  "effect-coffee-shop/application/CurrentActor",
+  {
+    defaultValue: () => anonymousActor,
+  },
+);
 
 export class AuthenticationRequiredError extends Schema.TaggedErrorClass<AuthenticationRequiredError>()(
   "AuthenticationRequiredError",

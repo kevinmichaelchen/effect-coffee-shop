@@ -16,11 +16,11 @@ import type {
 import type {
   ListOrdersRequest,
   PlaceOrderRequest,
-} from "@effect-coffee-shop/coffee-core/service/contracts";
+} from "@effect-coffee-shop/coffee-core/application/contracts";
 import {
   AuthenticationRequiredError,
   StaffRoleRequiredError,
-} from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { InternalAppError } from "./errors.ts";
 import { MenuRepository } from "./ports/MenuRepository.ts";
 import { OrderIdGenerator } from "./ports/OrderIdGenerator.ts";
@@ -99,7 +99,7 @@ export class CoffeeOrderApp extends Context.Service<
       | InternalAppError
     >;
   }
->()("effect-coffee-shop/service/CoffeeOrderApp") {
+>()("effect-coffee-shop/application/CoffeeOrderApp") {
   static readonly layer = Layer.effect(
     this,
     Effect.gen(function* () {

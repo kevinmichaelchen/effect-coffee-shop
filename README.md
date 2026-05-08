@@ -16,7 +16,7 @@ Switching the Bun app between SQLite and in-memory should be a one-line export c
 The main boundaries are:
 
 - `packages/coffee/core/src/domain` for Coffee business types and rules
-- `packages/coffee/core/src/service` for Coffee use cases and ports
+- `packages/coffee/core/src/application` for Coffee use cases and ports
 - `packages/coffee/external/*/src` for Coffee adapter implementations
 - `packages/coffee/presentation/*/src` for runtime-agnostic Coffee HTTP, MCP, and CLI surfaces
 - `apps/backend/src/cloudflare` and `apps/backend/src/bun` for HTTP, CLI, MCP, and Worker entrypoints

@@ -8,7 +8,7 @@ import {
 import {
   ListOrdersRequestSchema,
   PlaceOrderRequestSchema,
-} from "@effect-coffee-shop/coffee-core/service/contracts";
+} from "@effect-coffee-shop/coffee-core/application/contracts";
 import { AppErrorSchema } from "./schemas.ts";
 
 const EmptyParamsSchema = Schema.Struct({});

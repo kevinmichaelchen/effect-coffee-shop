@@ -3,7 +3,7 @@ import type { Menu } from "@effect-coffee-shop/coffee-core/domain/menu";
 import {
   InternalAppError,
   internalAppErrorFromPersistence,
-} from "@effect-coffee-shop/coffee-core/service/errors";
+} from "@effect-coffee-shop/coffee-core/application/errors";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 
 export const listMenu = Effect.fn("CoffeeOrders.listMenu")(function* (): Effect.fn.Return<

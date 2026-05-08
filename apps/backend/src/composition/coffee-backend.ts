@@ -6,7 +6,10 @@ import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";
 import { createCoffeeWebHandler } from "@effect-coffee-shop/coffee-http/web-handler";
 import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
 import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
-import { CurrentActor, type AppActor } from "@effect-coffee-shop/coffee-core/service/CurrentActor";
+import {
+  CurrentActor,
+  type AppActor,
+} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 const makeBackendHandler = (db: D1Database) =>
   createCoffeeWebHandler(
