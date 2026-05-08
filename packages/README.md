@@ -21,9 +21,9 @@ surfaces can be composed independently from deployment shells.
 
 ## Layer Placement
 
-Domain and application Layers stay in `domains/coffee/core` when they assemble
+Domain and application Layers stay in `packages/domains/coffee/core` when they assemble
 pure application services from ports. External implementation Layers stay with
-their owning External package, such as `domains/coffee/external-sqlite`.
+their owning External package, such as `packages/domains/coffee/external-sqlite`.
 
 Presentation packages may export route, tool, server, or handler Layers. They
 do not choose the concrete database or runtime implementation. `apps/backend`

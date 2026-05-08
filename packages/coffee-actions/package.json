@@ -1,28 +1,27 @@
 {
-  "name": "@effect-coffee-shop/backend-host",
+  "name": "@effect-coffee-shop/coffee-actions",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./fetch-host": "./src/fetch-host.ts",
-    "./http-jsonrpc-ids": "./src/http-jsonrpc-ids.ts",
-    "./json": "./src/json.ts",
-    "./logging": "./src/logging.ts",
-    "./mount": "./src/mount.ts",
-    "./request-services": "./src/request-services.ts"
+    "./actions": "./src/actions.ts",
+    "./assistant-tool-data": "./src/assistant-tool-data.ts",
+    "./schemas": "./src/schemas.ts",
+    "./tool-format": "./src/tool-format.ts"
   },
   "scripts": {
     "typecheck": "tsgo --noEmit",
-    "lint": "oxlint --disable-nested-config .",
-    "lint:fix": "oxlint --disable-nested-config --fix .",
-    "lint:custom": "cd ../../apps/backend && lintcn lint --tsconfig ../../presentation/backend-host/tsconfig.json",
+    "lint": "oxlint -c ../.oxlintrc.json --disable-nested-config .",
+    "lint:fix": "oxlint -c ../.oxlintrc.json --disable-nested-config --fix .",
+    "lint:custom": "cd ../../apps/backend && lintcn lint --tsconfig ../../packages/coffee-actions/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "knip": "knip --files --exports --no-config-hints",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@cloudflare/workers-types": "catalog:",
     "@effect-coffee-shop/coffee-core": "workspace:*",
     "effect": "catalog:"
   },

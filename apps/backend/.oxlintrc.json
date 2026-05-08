@@ -95,12 +95,6 @@
       "rules": {
         "no-restricted-imports": ["error", { "patterns": ["../../src/*", "../src/*", "node:*"] }]
       }
-    },
-    {
-      "files": ["test/presentation-boundaries.test.ts"],
-      "rules": {
-        "no-restricted-imports": "off"
-      }
     }
   ]
 }

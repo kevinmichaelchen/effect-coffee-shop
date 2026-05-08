@@ -1,0 +1,35 @@
+{
+  "$schema": "../node_modules/oxlint/configuration_schema.json",
+  "plugins": ["oxc", "typescript", "unicorn", "node"],
+  "options": {
+    "typeAware": true,
+    "typeCheck": true,
+    "maxWarnings": 0
+  },
+  "rules": {
+    "no-bitwise": "error",
+    "no-plusplus": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-non-null-assertion": "error"
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "@effect-coffee-shop/backend",
+              "@effect-coffee-shop/backend/*",
+              "#app-layer",
+              "**/apps/backend/src/**",
+              "**/apps/backend/src/cloudflare/**",
+              "**/src/cloudflare/**"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
