@@ -90,7 +90,7 @@ bun run typecheck
 bun run lint
 bun run lint:custom
 bun run fmt:check
-bun run knip
+bun run fallow
 bun run test
 bun run build
 ```

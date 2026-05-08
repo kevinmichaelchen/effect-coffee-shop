@@ -50,12 +50,6 @@
       "outputs": [],
       "outputLogs": "new-only"
     },
-    "knip": {
-      "description": "Detect unused files and exports.",
-      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
-      "outputs": [],
-      "outputLogs": "new-only"
-    },
     "test": {
       "description": "Run workspace test suites.",
       "dependsOn": ["typecheck"],
@@ -74,6 +68,12 @@
       "cache": false,
       "persistent": true,
       "interruptible": true
+    },
+    "fallow": {
+      "description": "Run repo-level Fallow codebase intelligence checks.",
+      "inputs": ["$TURBO_DEFAULT$", ".fallowrc.jsonc", "!README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
     }
   }
 }
