@@ -69,22 +69,22 @@ bun run cf:dev -- --profile default
 bun run cf:deploy -- --profile default
 ```
 
-This candidate stack is defined in [`alchemy.run.ts`](./alchemy.run.ts) and deploys one Cloudflare Website resource that serves the built UI, the Effect HTTP API under `/api/*`, and the MCP HTTP surface under `/mcp`.
+This candidate stack is defined in [`alchemy.run.ts`](./alchemy.run.ts) and deploys one Cloudflare `StaticSite` resource that serves the built UI, the Effect HTTP API under `/api/*`, and the MCP HTTP surface under `/mcp`.
 The deployed Worker uses both `D1` and `AI` bindings, so the browser app, assistant route, API, and remote MCP server share the same origin and runtime.
 Classic stdio MCP is still Bun-only and is not part of the Cloudflare deployment.
-The Worker now also enables native Cloudflare traces/logs with uploaded source maps.
+The Worker enables native Cloudflare traces/logs.
 The assistant path can be wired through an optional Alchemy-managed AI Gateway for model-side metadata and request logging when the deploying Cloudflare profile has AI Gateway permissions.
 
-For passkey auth on the Cloudflare path, also set:
+For passkey auth on the Cloudflare path, optionally set:
 
 ```bash
-BETTER_AUTH_SECRET=...
+BETTER_AUTH_SECRET=... # optional; Alchemy generates a per-stage secret when omitted
 COFFEE_STAFF_USER_IDS=user-id-1,user-id-2 # optional
 ```
 
-Alchemy state stays local under `.alchemy/` by default.
-If you want remote shared state later, set `ALCHEMY_STATE_TOKEN` and the stack will switch to `CloudflareStateStore`.
-If you start binding secret values with `alchemy.secret(...)`, set `ALCHEMY_PASSWORD` so Alchemy can encrypt them in state.
+Alchemy uses the v2 Cloudflare state store by default so team and CI deploys share state.
+For a disposable local-only state file under `.alchemy/`, set `ALCHEMY_LOCAL_STATE=1`.
+The app-owned D1 schema lives in [`domains/coffee/external-sqlite/src/sql/migrations`](./domains/coffee/external-sqlite/src/sql/migrations) and is applied by Alchemy during D1 updates.
 Canonical quality commands:
 
 ```bash
@@ -188,7 +188,7 @@ This branch includes a candidate Cloudflare deployment scaffold using upstream A
 
 The current shape is:
 
-- one Alchemy `Website` resource
+- one Alchemy `StaticSite` resource
 - `apps/ui/dist` served as static assets
 - `/.well-known/agent-configuration` exposed for Better Auth Agent Auth discovery
 - `/api/auth/*` handled by Better Auth with passkey registration and sign-in
@@ -200,9 +200,10 @@ The current shape is:
 - `/api/*` rewritten into the existing Effect `HttpApi`
 - `/mcp` handled by the existing MCP HTTP server
 - `D1` and `AI` provisioned and bound into the Worker
+- app-owned D1 migrations applied from `domains/coffee/external-sqlite/src/sql/migrations`
 - optional `AI_GATEWAY_ID` binding when `COFFEE_ASSISTANT_AI_GATEWAY=1` and the Cloudflare profile can manage AI Gateway resources
-- `BETTER_AUTH_SECRET` bound into the Worker as a Cloudflare secret
-- Cloudflare Worker observability enabled with persisted logs/traces and source maps
+- `BETTER_AUTH_SECRET` bound into the Worker from the environment or an Alchemy-managed per-stage random secret
+- Cloudflare Worker observability enabled with persisted logs/traces
 
 Current observability shape:
 
@@ -213,36 +214,9 @@ Current observability shape:
 - Better Auth anonymous telemetry stays disabled.
 - AI Gateway support is implemented in the assistant runtime, but provisioning is opt-in.
 
-Current observability shape:
-
-- Keep Cloudflare native Worker traces/logs enabled on the app Worker.
-- Add an OpenTelemetry Collector ingress layer on Cloudflare Containers.
-- Export app-worker traces/logs into that Collector when `COFFEE_OTEL_EXPORT=1`.
-- Forward from the Collector to an external OTLP-native backend.
-- Do not try to run the full self-hosted SigNoz stack inside Cloudflare Containers.
-  Containers still have ephemeral disk and are a better fit for the stateless
-  Collector than for SigNoz's ClickHouse-backed control plane.
-
-The first repo scaffold for that path lives in
-[`ops/otel-collector-cloudflare/`](./ops/otel-collector-cloudflare).
-That directory now includes a standalone Alchemy-managed companion Worker for
-collector ingress, separate from the main app so the collector can be deployed
-and destroyed independently.
-
-Verification status:
-
-- Workers Observability destinations successfully delivered both datasets on April 11, 2026:
-  `opentelemetry-traces` last complete at `2026-04-11T20:01:13Z`
-  `opentelemetry-logs` last complete at `2026-04-11T20:01:23Z`
-- Live traffic against the deployed app also showed the collector ingress Worker
-  receiving `POST /v1/logs` through Cloudflare's telemetry query API.
-
 Current limitation:
 
 - The current Cloudflare profile on this machine cannot manage AI Gateway resources, so `COFFEE_ASSISTANT_AI_GATEWAY=1` is not deployable here yet.
-- Workers Observability destinations require a separate `CLOUDFLARE_OBSERVABILITY_API_TOKEN` with account-level `Workers Observability Write` permission.
-- Set `OTEL_INGRESS_AUTHORIZATION=Bearer ...` if you want the collector ingress Worker to require a matching `Authorization` header on incoming export traffic; the companion Alchemy app will attach the same header to Workers observability destinations automatically.
-- The collector now strips `gen_ai.prompt_json` and `gen_ai.completion_json` before upstream export, but broader payload-suppression and redaction policy still need a later pass before we should treat model logging as fully production-hardened.
 
 Expected workflow:
 
