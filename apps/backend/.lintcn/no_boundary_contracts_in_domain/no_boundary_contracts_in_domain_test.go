@@ -28,7 +28,7 @@ export type CoffeeOrder = typeof CoffeeOrderSchema.Type;
 		`,
 	},
 	{
-		FileName: "src/service/contracts.ts",
+		FileName: "src/application/contracts.ts",
 		Code: `
 export const PlaceOrderRequestSchema = Schema.Struct({});
 export type PlaceOrderRequest = typeof PlaceOrderRequestSchema.Type;

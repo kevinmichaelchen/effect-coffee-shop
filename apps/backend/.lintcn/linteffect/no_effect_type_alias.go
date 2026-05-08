@@ -1,6 +1,6 @@
 // lintcn:name no-effect-type-alias
 // lintcn:severity warn
-// lintcn:description Rule: avoid Effect.Effect type aliases. Why: they hide the service surface and make types opaque. Fix: keep Effect types on service methods or inline at the call site.
+// lintcn:description Rule: avoid Effect.Effect type aliases. Why: they hide the application surface and make types opaque. Fix: keep Effect types on application methods or inline at the call site.
 // lintcn:source https://github.com/OperationalFallacy/biome-effect-linting-rules/blob/master/rules/no-effect-type-alias.grit
 
 package linteffect
@@ -19,7 +19,7 @@ var NoEffectTypeAliasRule = rule.Rule{
 					return
 				}
 				if stringsContainsNodeText(node.AsTypeAliasDeclaration().Type, "Effect.Effect") {
-					reportRule(ctx, node.AsTypeAliasDeclaration().Type, "noEffectTypeAlias", "Rule: avoid Effect.Effect type aliases. Why: they hide the service surface and make types opaque. Fix: keep Effect types on service methods or inline at the call site.")
+					reportRule(ctx, node.AsTypeAliasDeclaration().Type, "noEffectTypeAlias", "Rule: avoid Effect.Effect type aliases. Why: they hide the application surface and make types opaque. Fix: keep Effect types on application methods or inline at the call site.")
 				}
 			},
 		}

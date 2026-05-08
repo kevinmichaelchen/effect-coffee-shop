@@ -43,7 +43,7 @@
       }
     },
     {
-      "files": ["src/presentation/**/*.ts"],
+      "files": ["src/cloudflare/**/*.ts", "src/composition/**/*.ts"],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -55,9 +55,20 @@
               "@effect/platform-node/*",
               "bun:*",
               "node:*",
-              "#service/use-cases/*",
-              "#service/ports/*"
+              "#application/use-cases/*",
+              "#application/ports/*"
             ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/bun/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["#application/use-cases/*", "#application/ports/*"]
           }
         ]
       }
@@ -69,12 +80,12 @@
       }
     },
     {
-      "files": ["src/presentation/**/main.ts", "src/presentation/**/*-main.ts"],
+      "files": ["src/bun/**/main.ts", "src/bun/**/*-main.ts"],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
-            "patterns": ["#service/use-cases/*", "#service/ports/*"]
+            "patterns": ["#application/use-cases/*", "#application/ports/*"]
           }
         ]
       }

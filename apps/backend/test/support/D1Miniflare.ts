@@ -5,9 +5,9 @@ import * as Layer from "effect/Layer";
 import { D1Client } from "@effect/sql-d1";
 import { SqlCoffeeRepositoriesLive } from "@effect-coffee-shop/coffee-external-sqlite";
 import { makeCloudflareSqlCoffeeSchemaLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
-import type { PersistenceError } from "@effect-coffee-shop/coffee-core/service/errors";
-import { MenuRepository } from "@effect-coffee-shop/coffee-core/service/ports/MenuRepository";
-import { OrderRepository } from "@effect-coffee-shop/coffee-core/service/ports/OrderRepository";
+import type { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
+import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
+import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
 
 type RepositoryServices = MenuRepository | OrderRepository;
 

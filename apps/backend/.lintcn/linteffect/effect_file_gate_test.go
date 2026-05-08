@@ -68,7 +68,7 @@ if (ready) {
 				},
 			},
 			{
-				FileName: "src/service/use-cases/placeOrder.ts",
+				FileName: "src/application/use-cases/placeOrder.ts",
 				Code: `
 "effect";
 declare const ready: boolean;
@@ -81,12 +81,12 @@ if (ready) {
 				},
 			},
 			{
-				FileName: "src/service/CoffeeOrderApp.ts",
+				FileName: "src/application/CoffeeOrderApp.ts",
 				Code: `
 "effect";
 declare const ready: boolean;
 if (ready) {
-  console.log("service app code is linted");
+  console.log("application app code is linted");
 }
         `,
 				Errors: []rule_tester.InvalidTestCaseError{

@@ -1,0 +1,39 @@
+{
+  "name": "@effect-coffee-shop/coffee-actions",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./execute": "./src/execute.ts",
+    "./format": "./src/format.ts",
+    "./json-schema": "./src/json-schema.ts",
+    "./schemas": "./src/schemas.ts",
+    "./specs": "./src/specs.ts"
+  },
+  "scripts": {
+    "typecheck": "tsgo --noEmit",
+    "lint": "oxlint -c .oxlintrc.json --disable-nested-config .",
+    "lint:fix": "oxlint -c .oxlintrc.json --disable-nested-config --fix .",
+    "lint:custom": "cd ../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/actions/tsconfig.json",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "knip": "knip --files --exports --no-config-hints",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@effect-coffee-shop/coffee-core": "workspace:*",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@effect/vitest": "catalog:",
+    "@types/bun": "catalog:",
+    "knip": "catalog:",
+    "lintcn": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

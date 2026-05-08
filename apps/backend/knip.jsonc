@@ -3,11 +3,11 @@
 
   // Focus on application and test code only.
   "entry": [
-    "src/presentation/http/main.ts!",
-    "src/presentation/cli/main.ts!",
-    "src/presentation/mcp/stdio-main.ts!",
-    "src/presentation/mcp/http-main.ts!",
-    "src/presentation/mcp/miniflare.worker.ts",
+    "src/bun/http-main.ts!",
+    "src/bun/cli-main.ts!",
+    "src/bun/mcp-stdio-main.ts!",
+    "src/bun/mcp-http-main.ts!",
+    "src/cloudflare/mcp-miniflare-worker.ts",
     "src/**/*.test.ts",
     "test/**/*.test.ts",
   ],
