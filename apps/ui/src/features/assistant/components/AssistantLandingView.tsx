@@ -9,8 +9,6 @@ import type {
 } from "#features/assistant/lib/assistant-chat.ts";
 import type { ConnectionStatus } from "@tanstack/ai-client";
 import { ThemeToggle } from "#shared/ui/ThemeToggle.tsx";
-import { Badge } from "#shared/ui/retroui/Badge.tsx";
-import { Button } from "#shared/ui/retroui/Button.tsx";
 import { Card } from "#shared/ui/retroui/Card.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 
@@ -50,102 +48,87 @@ export function AssistantLandingView(inputProps: AssistantLandingViewProps) {
   } = inputProps;
 
   return (
-    <main className="mx-auto grid min-h-screen w-full max-w-7xl gap-5 px-4 py-4 lg:px-6">
-      <section className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <LandingHero theme={theme} onToggleTheme={onToggleTheme} />
-        <LandingFactsCard />
-      </section>
-      <section className="grid gap-5">
-        <AssistantTranscript
-          activityControl={<ToolActivityDrawer events={events} />}
-          connectionStatus={connectionStatus}
-          errorMessage={errorMessage}
-          input={input}
-          isBusy={isBusy}
-          latestActivity={events.length === 0 ? null : (events[events.length - 1] ?? null)}
-          messages={messages}
-          prompts={prompts}
-          status={status}
-          onInputChange={onInputChange}
-          onPromptClick={onPromptClick}
-          onReset={onReset}
-          onSubmit={onSubmit}
-        />
-      </section>
+    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-5 lg:px-6">
+      <AssistantShell theme={theme} onToggleTheme={onToggleTheme} />
+      <AssistantHeader status={status} />
+      <AssistantTranscript
+        activityControl={<ToolActivityDrawer events={events} />}
+        connectionStatus={connectionStatus}
+        errorMessage={errorMessage}
+        input={input}
+        isBusy={isBusy}
+        latestActivity={events.length === 0 ? null : (events[events.length - 1] ?? null)}
+        messages={messages}
+        prompts={prompts}
+        status={status}
+        onInputChange={onInputChange}
+        onPromptClick={onPromptClick}
+        onReset={onReset}
+        onSubmit={onSubmit}
+      />
     </main>
   );
 }
 
-interface LandingHeroProps {
+interface AssistantShellProps {
   onToggleTheme: () => void;
   theme: ThemePreference;
 }
 
-function LandingHero({ onToggleTheme, theme }: LandingHeroProps) {
+function AssistantShell({ onToggleTheme, theme }: AssistantShellProps) {
   return (
-    <Card className="w-full border-border bg-primary text-primary-foreground">
-      <Card.Content className="grid gap-5 p-5 lg:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex flex-wrap gap-2">
-            <Badge className="rounded-none bg-black px-2.5 py-1 text-white" size="sm">
-              Cloudflare Workers AI
-            </Badge>
-            <Badge className="rounded-none px-2.5 py-1" size="sm" variant="outline">
-              D1-backed coffee tools
-            </Badge>
-          </div>
-          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-        </div>
-        <div className="grid gap-3">
-          <Text as="h1" className="max-w-4xl text-4xl leading-none md:text-6xl">
-            Beanline Control Surface
-          </Text>
-          <Text as="p" className="max-w-3xl text-base text-primary-foreground/80 md:text-lg">
-            The landing assistant now runs through your same-origin Cloudflare Worker, executes
-            coffee tools server-side, and shares the same live state as the customer and staff
-            workspaces.
-          </Text>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button asChild variant="secondary">
-            <a href={appRoutes.shop}>Open customer workspace</a>
-          </Button>
-          <Button asChild variant="outline">
-            <a href={appRoutes.staff}>Open staff workspace</a>
-          </Button>
-        </div>
-      </Card.Content>
-    </Card>
+    <header className="flex min-h-14 items-center justify-between border-b border-border pb-4">
+      <Text as="p" className="text-lg font-semibold">
+        Beanline
+      </Text>
+      <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+        <a className="font-medium text-foreground" href={appRoutes.home}>
+          Assistant
+        </a>
+        <a href={appRoutes.shop}>Order</a>
+        <a href={appRoutes.staff}>Staff</a>
+      </nav>
+      <ThemeToggle compact theme={theme} onToggle={onToggleTheme} />
+    </header>
   );
 }
 
-function LandingFactsCard() {
+function AssistantHeader({ status }: Pick<AssistantLandingViewProps, "status">) {
   return (
-    <Card className="w-full border-border bg-card">
-      <Card.Content className="grid gap-4 p-5">
-        <MetricStrip label="Assistant runtime" value="Workers AI via same-origin Worker" />
-        <MetricStrip label="Tool orchestration" value="TanStack AI server tools + SSE stream" />
-        <MetricStrip label="Coffee state" value="Shared D1 database for orders and queue" />
-        <MetricStrip label="Deployment shape" value="Static UI + Worker + D1 on Cloudflare" />
-      </Card.Content>
-    </Card>
+    <section className="flex flex-wrap items-end justify-between gap-4">
+      <div className="grid gap-2">
+        <Text as="h1" className="text-3xl font-semibold leading-tight md:text-4xl">
+          Assistant
+        </Text>
+        <Text as="p" className="max-w-2xl text-sm text-muted-foreground md:text-base">
+          Ask about menu, orders, or queue status.
+        </Text>
+      </div>
+      <Card className="w-full md:w-auto">
+        <Card.Content className="flex flex-wrap gap-5 p-4">
+          <MetricStrip label="Runtime" value={status.phase === "running" ? "Busy" : "Ready"} />
+          <MetricStrip label="Tools" value="Server" />
+          <MetricStrip label="State" value="Shared" />
+        </Card.Content>
+      </Card>
+    </section>
+  );
+}
+
+function MetricStrip({ label, value }: MetricStripProps) {
+  return (
+    <div className="grid min-w-20 gap-1">
+      <Text as="p" className="text-xs text-muted-foreground">
+        {label}
+      </Text>
+      <Text as="p" className="text-xl font-semibold">
+        {value}
+      </Text>
+    </div>
   );
 }
 
 interface MetricStripProps {
   label: string;
   value: string;
-}
-
-function MetricStrip({ label, value }: MetricStripProps) {
-  return (
-    <div className="grid gap-2 border-b-2 border-dashed border-border pb-3 last:border-b-0 last:pb-0">
-      <Text as="p" className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
-        {label}
-      </Text>
-      <Text as="h3" className="text-xl leading-snug">
-        {value}
-      </Text>
-    </div>
-  );
 }

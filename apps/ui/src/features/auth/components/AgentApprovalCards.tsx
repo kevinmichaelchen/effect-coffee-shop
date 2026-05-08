@@ -67,48 +67,83 @@ export function PendingApprovalCard(inputProps: PendingApprovalCardProps) {
   }
 
   return (
-    <Card className="w-full border-border">
-      <Card.Header className="border-b-2 border-border bg-card">
+    <Card className="w-full">
+      <Card.Header className="border-b border-border">
         <Text as="h3">Approve agent access</Text>
         <Text as="p" className="text-sm text-muted-foreground">
           Review the pending delegated capabilities before authorizing this agent.
         </Text>
       </Card.Header>
       <Card.Content className="grid gap-5">
-        <div className="grid gap-1">
-          <Text as="p" className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
-            Agent
-          </Text>
-          <Text as="h4">{approval.agent_name ?? approval.agent_id ?? "Unknown agent"}</Text>
-          <Text as="p" className="text-sm text-muted-foreground">
-            Device code expires in {formatExpiresIn(approval.expires_in)}.
-          </Text>
-        </div>
-        {approval.binding_message !== null ? (
-          <Alert className="border-border bg-card" status="info">
-            <Alert.Title>Binding message</Alert.Title>
-            <Alert.Description>{approval.binding_message}</Alert.Description>
-          </Alert>
-        ) : null}
-        <div className="grid gap-2">
-          <Text as="h5">Requested capabilities</Text>
-          <ul className="grid gap-2">
-            {approval.capabilities.map((capability) => (
-              <li key={capability} className="border-2 border-border bg-card px-3 py-2 text-sm">
-                {capability}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button disabled={actionPending} onClick={handleApprove}>
-            Approve capabilities
-          </Button>
-          <Button disabled={actionPending} variant="outline" onClick={handleDeny}>
-            Deny request
-          </Button>
-        </div>
+        <ApprovalIdentity approval={approval} />
+        <BindingMessage message={approval.binding_message} />
+        <CapabilityList capabilities={approval.capabilities} />
+        <ApprovalActions
+          actionPending={actionPending}
+          onApprove={handleApprove}
+          onDeny={handleDeny}
+        />
       </Card.Content>
     </Card>
+  );
+}
+
+function ApprovalIdentity({ approval }: { approval: PendingAgentApproval }) {
+  return (
+    <div className="grid gap-1">
+      <Text as="p" className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+        Agent
+      </Text>
+      <Text as="h4">{approval.agent_name ?? approval.agent_id ?? "Unknown agent"}</Text>
+      <Text as="p" className="text-sm text-muted-foreground">
+        Device code expires in {formatExpiresIn(approval.expires_in)}.
+      </Text>
+    </div>
+  );
+}
+
+function BindingMessage({ message }: { message: string | null }) {
+  return message !== null ? (
+    <Alert className="border-border bg-background" status="info">
+      <Alert.Title>Binding message</Alert.Title>
+      <Alert.Description>{message}</Alert.Description>
+    </Alert>
+  ) : null;
+}
+
+function CapabilityList({ capabilities }: { capabilities: readonly string[] }) {
+  return (
+    <div className="grid gap-2">
+      <Text as="h5">Requested capabilities</Text>
+      <ul className="grid gap-2">
+        {capabilities.map((capability) => (
+          <li
+            key={capability}
+            className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+          >
+            {capability}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ApprovalActions(inputProps: {
+  actionPending: boolean;
+  onApprove: () => Promise<void>;
+  onDeny: () => Promise<void>;
+}) {
+  const { actionPending, onApprove, onDeny } = inputProps;
+
+  return (
+    <div className="flex flex-wrap gap-3">
+      <Button disabled={actionPending} onClick={() => void onApprove()}>
+        Approve capabilities
+      </Button>
+      <Button disabled={actionPending} variant="outline" onClick={() => void onDeny()}>
+        Deny request
+      </Button>
+    </div>
   );
 }

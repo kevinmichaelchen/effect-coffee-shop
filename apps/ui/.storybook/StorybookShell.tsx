@@ -1,4 +1,4 @@
-import { useEffect, type PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import { AppProviders } from "#app/AppProviders.tsx";
 import type { ThemePreference } from "#shared/hooks/useThemePreference.ts";
 
@@ -7,9 +7,7 @@ interface StorybookShellProps extends PropsWithChildren {
 }
 
 export function StorybookShell({ children, theme }: StorybookShellProps) {
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-  }, [theme]);
+  document.documentElement.classList.toggle("dark", theme === "dark");
 
   return (
     <AppProviders>

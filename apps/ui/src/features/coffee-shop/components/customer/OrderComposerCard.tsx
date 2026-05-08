@@ -20,14 +20,14 @@ export function OrderComposerCard(inputProps: OrderComposerCardProps) {
     inputProps;
 
   return (
-    <Card className="w-full border-border">
-      <Card.Header className="border-b-2 border-border bg-card">
+    <Card className="w-full">
+      <Card.Header className="border-b border-border">
         <Text as="h3">Build an order</Text>
         <Text as="p" className="text-sm text-muted-foreground">
-          The form honors the backend’s milk, temperature, and shot limits for each drink.
+          Menu constraints come from the backend.
         </Text>
       </Card.Header>
-      <Card.Content className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <Card.Content className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <OrderFields
           draft={draft}
           item={item}

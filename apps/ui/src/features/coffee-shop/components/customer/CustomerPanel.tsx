@@ -1,6 +1,5 @@
 import { Alert } from "#shared/ui/retroui/Alert.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
-import { MenuCatalogCard } from "#features/coffee-shop/components/customer/MenuCatalogCard.tsx";
 import { OrderComposerCard } from "#features/coffee-shop/components/customer/OrderComposerCard.tsx";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 
@@ -31,7 +30,7 @@ export function CustomerPanel(inputProps: CustomerPanelProps) {
   }
 
   return (
-    <section className="grid gap-6">
+    <section className="grid gap-5">
       <OrderComposerCard
         draft={draft}
         item={selectedItem}
@@ -42,7 +41,6 @@ export function CustomerPanel(inputProps: CustomerPanelProps) {
         onSubmit={onSubmit}
         onUpdateDraft={onUpdateDraft}
       />
-      <MenuCatalogCard menu={menu} selectedDrinkId={draft.drinkId} onSelectDrink={onSelectDrink} />
     </section>
   );
 }

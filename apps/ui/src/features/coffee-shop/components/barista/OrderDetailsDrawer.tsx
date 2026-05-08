@@ -18,7 +18,7 @@ export function OrderDetailsDrawer(inputProps: OrderDetailsDrawerProps) {
   return (
     <Drawer open={order !== null} direction="right" onOpenChange={onOpenChange}>
       {order !== null ? (
-        <Drawer.Content className="border-l-2 border-border">
+        <Drawer.Content className="border-l border-border">
           <Drawer.Header>
             <Drawer.Title>{order.drinkName}</Drawer.Title>
             <Drawer.Description>Ticket {order.id}</Drawer.Description>
@@ -40,7 +40,7 @@ export function OrderDetailsDrawer(inputProps: OrderDetailsDrawerProps) {
               <Button
                 key={option.action}
                 disabled={pending}
-                variant={option.action === "cancel" ? "outline" : "default"}
+                variant={option.action === "cancel" ? "ghost" : "default"}
                 onClick={() => onAction(order.id, option.action)}
               >
                 {option.label}
@@ -63,8 +63,8 @@ interface DetailLineProps {
 
 function DetailLine({ label, value }: DetailLineProps) {
   return (
-    <div className="grid gap-1 border-b-2 border-dashed border-border pb-3">
-      <Text as="p" className="text-sm uppercase tracking-[0.08em] text-muted-foreground">
+    <div className="grid gap-1 border-b border-border pb-3">
+      <Text as="p" className="text-sm text-muted-foreground">
         {label}
       </Text>
       <Text as="p">{value}</Text>

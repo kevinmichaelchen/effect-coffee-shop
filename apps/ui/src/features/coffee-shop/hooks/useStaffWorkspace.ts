@@ -52,17 +52,32 @@ function useOrderActionHandler(
   };
 }
 
+function useStaffOrders(input: {
+  selectedOrderId: string | null;
+  viewer: ReturnType<typeof useViewerQuery>["data"];
+}) {
+  const { selectedOrderId, viewer } = input;
+  const canLoadOrders =
+    viewer !== undefined && isAuthenticatedViewer(viewer) && isStaffViewer(viewer);
+  const ordersQuery = useOrdersQuery({ enabled: canLoadOrders });
+  const orders = ordersQuery.data ?? emptyOrders;
+
+  return {
+    orders,
+    ordersQuery,
+    ...getStaffQueueSnapshot(orders, selectedOrderId),
+  };
+}
+
 export function useStaffWorkspace() {
   const viewerQuery = useViewerQuery();
   const viewer = viewerQuery.data ?? anonymousViewer;
-  const canLoadOrders = isAuthenticatedViewer(viewer) && isStaffViewer(viewer);
-  const ordersQuery = useOrdersQuery({ enabled: canLoadOrders });
   const orderActionMutation = useOrderActionMutation();
   const { theme, toggleTheme } = useThemePreference();
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const orders = ordersQuery.data ?? emptyOrders;
-  const { activeOrders, historyOrders, queueLoad, readyCount, selectedOrder } =
-    getStaffQueueSnapshot(orders, selectedOrderId);
+  const staffOrders = useStaffOrders({ selectedOrderId, viewer: viewerQuery.data });
+  const { activeOrders, historyOrders, orders, ordersQuery, queueLoad, readyCount, selectedOrder } =
+    staffOrders;
   const pendingOrderId = orderActionMutation.variables?.orderId ?? null;
   const errorMessage = getErrorMessage(viewerQuery.error?.message, ordersQuery.error?.message);
   const handleOrderAction = useOrderActionHandler(orderActionMutation, setSelectedOrderId);

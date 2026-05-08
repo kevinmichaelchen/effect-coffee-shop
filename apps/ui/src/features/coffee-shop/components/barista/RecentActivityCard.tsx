@@ -15,15 +15,15 @@ export function RecentActivityCard({ orders, onInspect }: RecentActivityCardProp
   }
 
   return (
-    <Card className="w-full border-border">
-      <Card.Header className="border-b-2 border-border bg-card">
+    <Card className="w-full">
+      <Card.Header className="border-b border-border">
         <Text as="h3">Recent activity</Text>
       </Card.Header>
       <Card.Content className="grid gap-3">
         {orders.map((order) => (
           <button
             key={order.id}
-            className="grid gap-2 border-2 border-border bg-background p-3 text-left shadow-xs transition hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-sm"
+            className="grid gap-2 rounded-md border border-border bg-background p-3 text-left transition hover:bg-muted/50"
             type="button"
             onClick={() => onInspect(order.id)}
           >

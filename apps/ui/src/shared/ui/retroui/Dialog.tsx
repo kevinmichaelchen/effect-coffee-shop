@@ -10,12 +10,7 @@ const Dialog = ReactDialog.Root;
 const DialogTrigger = ReactDialog.Trigger;
 
 const overlayVariants = cva(
-  ` fixed bg-black/80 font-head
-    data-[state=open]:fade-in-0
-    data-[state=open]:animate-in 
-    data-[state=closed]:animate-out 
-    data-[state=closed]:fade-out-0 
-  `,
+  "fixed bg-black/80 font-head data-[state=open]:fade-in-0 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
   {
     variants: {
       variant: {
@@ -45,16 +40,9 @@ const DialogBackdrop = React.forwardRef<HTMLDivElement, IDialogBackgroupProps>(
     );
   },
 );
-DialogBackdrop.displayName = "DialogBackdrop";
 
 const dialogVariants = cva(
-  `fixed left-[50%] top-[50%] z-50 grid rounded overflow-hidden w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border-2 bg-background shadow-lg duration-200 
-  data-[state=open]:animate-in 
-  data-[state=open]:fade-in-0 
-  data-[state=open]:zoom-in-95 
-  data-[state=closed]:animate-out 
-  data-[state=closed]:fade-out-0 
-  data-[state=closed]:zoom-out-95`,
+  "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 overflow-hidden rounded border-2 bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
   {
     variants: {
       size: {
@@ -99,7 +87,6 @@ const DialogContent = React.forwardRef<HTMLDivElement, IDialogContentProps>(func
     </ReactDialog.Portal>
   );
 });
-DialogContent.displayName = "DialogContent";
 
 type IDialogDescriptionProps = HTMLAttributes<HTMLDivElement>;
 const DialogDescription = ({ children, className, ...props }: IDialogDescriptionProps) => {

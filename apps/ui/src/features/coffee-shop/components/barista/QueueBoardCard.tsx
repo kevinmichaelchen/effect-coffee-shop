@@ -15,11 +15,11 @@ export function QueueBoardCard(inputProps: QueueBoardCardProps) {
   const { orders, pendingOrderId, onAction, onInspect } = inputProps;
 
   return (
-    <Card className="w-full border-border">
-      <Card.Header className="border-b-2 border-border bg-card">
+    <Card className="w-full">
+      <Card.Header className="border-b border-border">
         <Text as="h3">Barista queue</Text>
         <Text as="p" className="text-sm text-muted-foreground">
-          Live ticket actions are mapped directly to the existing order transition endpoints.
+          Move active tickets through the line.
         </Text>
       </Card.Header>
       <Card.Content>
