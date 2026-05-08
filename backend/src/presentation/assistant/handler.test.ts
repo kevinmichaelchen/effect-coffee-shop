@@ -87,7 +87,7 @@ const verifyToolRun = async () => {
   expect(body).toContain('"kind":"tool-call"');
   expect(body).toContain('"kind":"tool-result"');
   expect(body).toContain("espresso drinks, cold brew, and tea");
-  expect(body).toContain("[DONE]");
+  expect(body).toContain('"type":"RUN_FINISHED"');
 };
 
 const verifyUiMessages = async () => {
@@ -121,7 +121,7 @@ const verifyUiMessages = async () => {
     }),
   );
   expect(body).toContain("espresso drinks, cold brew, and tea");
-  expect(body).toContain("[DONE]");
+  expect(body).toContain('"type":"RUN_FINISHED"');
 };
 
 const verifyAiGatewayRouting = async () => {

@@ -5,19 +5,19 @@
     "": {
       "name": "otel-collector-cloudflare-worker",
       "dependencies": {
-        "@cloudflare/containers": "0.3.0",
+        "@cloudflare/containers": "latest",
       },
       "devDependencies": {
-        "@cloudflare/workers-types": "4.20260411.1",
-        "typescript": "5.9.3",
+        "@cloudflare/workers-types": "latest",
+        "typescript": "latest",
       },
     },
   },
   "packages": {
-    "@cloudflare/containers": ["@cloudflare/containers@0.3.0", "", {}, "sha512-8HM1NgXThWCTk7SH28QFxqMNLJwl6RrMkj3qd0KvDA59BALsn3mZXNDT94i1JaGZnP4Bc8sPGs1u9UAl/mVUVg=="],
+    "@cloudflare/containers": ["@cloudflare/containers@0.3.3", "", {}, "sha512-ZSXmArCoo5bVTp8pGAJdl5WKmwtZDcffJqr4JcZEbSmMIFjU+AlBqgysuxXMgu03Rp239cOdqerbjK7H0K2krQ=="],
 
-    "@cloudflare/workers-types": ["@cloudflare/workers-types@4.20260411.1", "", {}, "sha512-SsntcTanLz+LmgJC8yB7sGCtpC8HxboVDmwrOH1hp1SHZwuKnhfmhUfeiwy7O/cE3iVN1cxe1E17stxP5DJXDw=="],
+    "@cloudflare/workers-types": ["@cloudflare/workers-types@4.20260508.1", "", {}, "sha512-0KNR+UkrYJYmtyQ5tOjUT/wt/U34FuE4Y8FLSbPMwFrGQQpmvR9wKghwRkL4d28y5t9jI9cvGqeAoo/cerTnCQ=="],
 
-    "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+    "typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
   }
 }
