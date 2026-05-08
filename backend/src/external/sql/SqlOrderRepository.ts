@@ -1,100 +1,72 @@
-import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { SqlClient, SqlModel, SqlSchema, type SqlError } from "effect/unstable/sql";
-import {
-  OrderStatusSchema,
-  type CoffeeOrder,
-  type ListOrdersFilters,
-  type OrderId,
-} from "#domain/order";
+import { SqlClient } from "effect/unstable/sql";
+import type { CoffeeOrder, ListOrdersFilters, OrderId } from "#domain/order";
 import { PersistenceError } from "#service/errors";
 import { OrderRepository } from "#service/ports/OrderRepository";
-import { SqlOrderModel, toCoffeeOrder, toSqlOrderInsert } from "./models.ts";
+import { findOrderById } from "./queries/.generated/find-order-by-id.sql.ts";
+import { listOrders } from "./queries/.generated/list-orders.sql.ts";
+import { listOrdersByOwnerAndStatus } from "./queries/.generated/list-orders-by-owner-and-status.sql.ts";
+import { listOrdersByOwner } from "./queries/.generated/list-orders-by-owner.sql.ts";
+import { listOrdersByStatus } from "./queries/.generated/list-orders-by-status.sql.ts";
+import { saveOrder } from "./queries/.generated/save-order.sql.ts";
+import { SqlOrderModel, toCoffeeOrder, toSqlOrderSave } from "./models.ts";
 
-type SqlRepositoryError = Schema.SchemaError | SqlError.SqlError;
+const decodeSqlOrder = Schema.decodeUnknownEffect(SqlOrderModel);
+const decodeSqlOrders = Schema.decodeUnknownEffect(Schema.Array(SqlOrderModel));
 
-const ListOrdersFiltersSchema = Schema.Struct({
-  ownerUserId: Schema.optionalKey(Schema.String),
-  status: Schema.optionalKey(OrderStatusSchema),
-}).annotate({ identifier: "ListOrdersFilters" });
-
-const makeSqlOrderQueries = Effect.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
-  const repository = yield* SqlModel.makeRepository(SqlOrderModel, {
-    tableName: "orders",
-    spanPrefix: "SqlOrderRepository",
-    idColumn: "id",
+const decodeOptionalSqlOrder = (row: unknown) =>
+  Option.match(Option.fromNullishOr(row), {
+    onNone: () => Effect.succeed(Option.none<CoffeeOrder>()),
+    onSome: (row) => decodeSqlOrder(row).pipe(Effect.map(toCoffeeOrder), Effect.map(Option.some)),
   });
 
-  const findById = (orderId: OrderId) => repository.findById(orderId);
+const listRecords = (filters: ListOrdersFilters) =>
+  Option.match(Option.fromUndefinedOr(filters.ownerUserId), {
+    onNone: () =>
+      Option.match(Option.fromUndefinedOr(filters.status), {
+        onNone: () => listOrders(),
+        onSome: (status) => listOrdersByStatus({ status }),
+      }),
+    onSome: (ownerUserId) =>
+      Option.match(Option.fromUndefinedOr(filters.status), {
+        onNone: () => listOrdersByOwner({ owner_user_id: ownerUserId }),
+        onSome: (status) => listOrdersByOwnerAndStatus({ owner_user_id: ownerUserId, status }),
+      }),
+  });
 
-  const insert = (order: typeof SqlOrderModel.insert.Type) => repository.insert(order);
+const makeSqlOrderQueries = Effect.gen(function* () {
+  const sqlClient = yield* SqlClient.SqlClient;
 
-  const update = (order: typeof SqlOrderModel.update.Type) => repository.update(order);
-
-  const buildListWhereClauses = (filters: ListOrdersFilters) =>
-    Arr.getSomes([
-      Option.map(
-        Option.fromUndefinedOr(filters.ownerUserId),
-        (ownerUserId) => sql`ownerUserId = ${ownerUserId}`,
-      ),
-      Option.map(Option.fromUndefinedOr(filters.status), (status) => sql`status = ${status}`),
-    ]);
-
-  const listRecords = (filters: ListOrdersFilters) =>
-    SqlSchema.findAll({
-      Request: ListOrdersFiltersSchema,
-      Result: SqlOrderModel,
-      execute: (filters) => {
-        const whereClauses = buildListWhereClauses(filters);
-
-        return Option.match(Arr.head(whereClauses), {
-          onNone: () => sql`
-          SELECT *
-          FROM orders
-          ORDER BY createdAt, id
-        `,
-          onSome: () => sql`
-          SELECT *
-          FROM orders
-          WHERE ${sql.and(whereClauses)}
-          ORDER BY createdAt, id
-        `,
-        });
-      },
-    })(filters);
-
-  const save = Effect.fn("SqlOrderRepository.save")(function* (
-    order: CoffeeOrder,
-  ): Effect.fn.Return<CoffeeOrder, SqlRepositoryError> {
-    const record = toSqlOrderInsert(order);
-    const saved = yield* findById(order.id).pipe(
-      Effect.flatMap(() => update(record)),
-      Effect.catchTag("NoSuchElementError", () => insert(record)),
+  const save = Effect.fn("SqlOrderRepository.save")(function* (order: CoffeeOrder) {
+    const saved = yield* Effect.provideService(
+      saveOrder({ order: toSqlOrderSave(order) }).pipe(Effect.flatMap(decodeSqlOrder)),
+      SqlClient.SqlClient,
+      sqlClient,
     );
     return toCoffeeOrder(saved);
   });
 
-  const getById = Effect.fn("SqlOrderRepository.getById")(function* (
-    orderId: OrderId,
-  ): Effect.fn.Return<Option.Option<CoffeeOrder>, SqlRepositoryError> {
-    return yield* findById(orderId).pipe(
-      Effect.map((order) => Option.some(toCoffeeOrder(order))),
-      Effect.catchTag("NoSuchElementError", () => Effect.succeed(Option.none())),
+  const getById = Effect.fn("SqlOrderRepository.getById")(function* (orderId: OrderId) {
+    return yield* Effect.provideService(
+      findOrderById({ id: orderId }).pipe(Effect.flatMap(decodeOptionalSqlOrder)),
+      SqlClient.SqlClient,
+      sqlClient,
     );
   });
 
-  const list = Effect.fn("SqlOrderRepository.list")(function* (
-    filters: ListOrdersFilters = {},
-  ): Effect.fn.Return<ReadonlyArray<CoffeeOrder>, SqlRepositoryError> {
-    const orders = yield* listRecords(filters);
+  const list = Effect.fn("SqlOrderRepository.list")(function* (filters: ListOrdersFilters = {}) {
+    const orders = yield* Effect.provideService(
+      listRecords(filters).pipe(Effect.flatMap(decodeSqlOrders)),
+      SqlClient.SqlClient,
+      sqlClient,
+    );
     return orders.map(toCoffeeOrder);
   });
 
-  return { save, getById, list } as const;
+  return { getById, list, save } as const;
 });
 
 export const SqlOrderRepositoryLive = Layer.effect(

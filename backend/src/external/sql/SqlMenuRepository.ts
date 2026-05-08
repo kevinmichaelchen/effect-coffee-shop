@@ -2,67 +2,54 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { SqlClient, SqlSchema } from "effect/unstable/sql";
+import { SqlClient } from "effect/unstable/sql";
 import type { MenuItem } from "#domain/menu";
 import { PersistenceError } from "#service/errors";
 import { MenuRepository } from "#service/ports/MenuRepository";
+import { findMenuItemById } from "./queries/.generated/find-menu-item-by-id.sql.ts";
+import { listMenuItems } from "./queries/.generated/list-menu-items.sql.ts";
 import { SqlMenuItemModel } from "./models.ts";
 
 const toMenuItem = (item: SqlMenuItemModel): MenuItem => ({
   id: item.id,
   name: item.name,
   kind: item.kind,
-  basePriceCents: item.basePriceCents,
-  availableMilks: item.availableMilks,
-  availableTemperatures: item.availableTemperatures,
-  maxShots: item.maxShots,
+  basePriceCents: item.base_price_cents,
+  availableMilks: item.available_milks,
+  availableTemperatures: item.available_temperatures,
+  maxShots: item.max_shots,
 });
 
+const decodeSqlMenuItems = Schema.decodeUnknownEffect(Schema.Array(SqlMenuItemModel));
+const decodeSqlMenuItem = Schema.decodeUnknownEffect(SqlMenuItemModel);
+
+const decodeOptionalSqlMenuItem = (row: unknown) =>
+  Option.match(Option.fromNullishOr(row), {
+    onNone: () => Effect.succeed(Option.none<MenuItem>()),
+    onSome: (row) => decodeSqlMenuItem(row).pipe(Effect.map(toMenuItem), Effect.map(Option.some)),
+  });
+
 const makeSqlMenuQueries = Effect.gen(function* () {
-  const sql = yield* SqlClient.SqlClient;
+  const sqlClient = yield* SqlClient.SqlClient;
 
-  const listRows = () =>
-    SqlSchema.findAll({
-      Request: Schema.Void,
-      Result: SqlMenuItemModel,
-      execute: () => sql`
-      SELECT
-        id,
-        name,
-        kind,
-        basePriceCents,
-        availableMilks,
-        availableTemperatures,
-        maxShots
-      FROM menu_items
-      ORDER BY sortOrder, id
-    `,
-    })(undefined);
+  const list = Effect.provideService(
+    listMenuItems().pipe(
+      Effect.flatMap(decodeSqlMenuItems),
+      Effect.map((items) => items.map(toMenuItem)),
+    ),
+    SqlClient.SqlClient,
+    sqlClient,
+  );
 
-  const findByIdRow = (drinkId: string) =>
-    SqlSchema.findOneOption({
-      Request: Schema.String,
-      Result: SqlMenuItemModel,
-      execute: (id) => sql`
-      SELECT
-        id,
-        name,
-        kind,
-        basePriceCents,
-        availableMilks,
-        availableTemperatures,
-        maxShots
-      FROM menu_items
-      WHERE id = ${id}
-    `,
-    })(drinkId);
-
-  const list = listRows().pipe(Effect.map((items) => items.map(toMenuItem)));
-
-  const findById = (drinkId: string) =>
-    findByIdRow(drinkId).pipe(Effect.map(Option.map(toMenuItem)));
-
-  return { list, findById } as const;
+  return {
+    findById: (drinkId: string) =>
+      Effect.provideService(
+        findMenuItemById({ id: drinkId }).pipe(Effect.flatMap(decodeOptionalSqlMenuItem)),
+        SqlClient.SqlClient,
+        sqlClient,
+      ),
+    list,
+  } as const;
 });
 
 export const SqlMenuRepositoryLive = Layer.effect(
