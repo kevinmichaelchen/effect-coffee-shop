@@ -28,3 +28,17 @@ bun run --cwd packages/coffee/external/drizzle-postgres db:migrate
 
 `db:migrate` reads `COFFEE_POSTGRES_URL`. The same variable is used by the live
 Effect layer.
+
+## Tests
+
+The repository contract suite runs only when `COFFEE_POSTGRES_TEST_URL` points
+at a disposable Postgres database:
+
+```sh
+COFFEE_POSTGRES_TEST_URL=postgres://postgres:postgres@localhost:5432/effect_coffee_drizzle_test \
+  bun run --cwd packages/coffee/external/drizzle-postgres test
+```
+
+The suite applies migrations through the Effect layer, verifies migration
+idempotency, checks seeded menu data, exercises sequence-backed order IDs, and
+round-trips order persistence and filters.
