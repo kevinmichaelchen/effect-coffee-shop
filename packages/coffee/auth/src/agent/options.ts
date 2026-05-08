@@ -7,10 +7,10 @@ import {
   decodeListOrdersInput,
   decodeOrderIdInput,
   decodePlaceOrderInput,
-} from "@effect-coffee-shop/coffee-actions/assistant-tool-data";
+} from "@effect-coffee-shop/coffee-actions/schemas";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
-import { coffeeAgentCapabilities } from "@effect-coffee-shop/coffee-auth/agent-auth-data";
-import { formatToolFailure } from "@effect-coffee-shop/coffee-actions/tool-format";
+import { coffeeAgentCapabilities } from "./capabilities.ts";
+import { formatToolFailure } from "@effect-coffee-shop/coffee-actions/format";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import { CurrentActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 

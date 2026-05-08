@@ -1,0 +1,45 @@
+{
+  "$schema": "../../../node_modules/oxlint/configuration_schema.json",
+  "plugins": ["oxc", "typescript", "unicorn", "node"],
+  "options": {
+    "typeAware": true,
+    "typeCheck": true,
+    "maxWarnings": 0
+  },
+  "rules": {
+    "no-bitwise": "error",
+    "no-plusplus": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-non-null-assertion": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          "@better-auth/*",
+          "@cloudflare/*",
+          "@effect-coffee-shop/backend",
+          "@effect-coffee-shop/backend/*",
+          "@effect-coffee-shop/backend-host",
+          "@effect-coffee-shop/backend-host/*",
+          "@effect-coffee-shop/coffee-assistant",
+          "@effect-coffee-shop/coffee-assistant/*",
+          "@effect-coffee-shop/coffee-auth",
+          "@effect-coffee-shop/coffee-auth/*",
+          "@effect-coffee-shop/coffee-cli",
+          "@effect-coffee-shop/coffee-cli/*",
+          "@effect-coffee-shop/coffee-external-*",
+          "@effect-coffee-shop/coffee-external-*/*",
+          "@effect-coffee-shop/coffee-http",
+          "@effect-coffee-shop/coffee-http/*",
+          "@effect-coffee-shop/coffee-mcp",
+          "@effect-coffee-shop/coffee-mcp/*",
+          "@tanstack/*",
+          "better-auth",
+          "better-auth/*",
+          "bun:*",
+          "node:*"
+        ]
+      }
+    ]
+  }
+}

@@ -1,21 +1,20 @@
 import type { AiTextGenerationToolLegacyInput } from "@cloudflare/workers-types";
-import * as Effect from "effect/Effect";
-import { coffeeMcpActionSpecs } from "@effect-coffee-shop/coffee-actions/actions";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
+import { type CoffeeActionName, coffeeActionSpecs } from "@effect-coffee-shop/coffee-actions/specs";
 import {
-  decodeListOrdersInput,
-  decodeOrderIdInput,
-  decodePlaceOrderInput,
-  emptyToolParameters,
-  listOrdersToolParameters,
-  orderIdToolParameters,
-  placeOrderToolParameters,
-} from "@effect-coffee-shop/coffee-actions/assistant-tool-data";
+  executeCoffeeAction,
+  type CoffeeAppRunner,
+} from "@effect-coffee-shop/coffee-actions/execute";
 import {
   formatToolFailure,
   formatToolPayload,
   serializeToolResult,
-} from "@effect-coffee-shop/coffee-actions/tool-format";
+} from "@effect-coffee-shop/coffee-actions/format";
+import {
+  emptyToolParameters,
+  listOrdersToolParameters,
+  orderIdToolParameters,
+  placeOrderToolParameters,
+} from "./parameters.ts";
 
 interface AssistantToolActivity {
   readonly detail: string;
@@ -31,8 +30,6 @@ export interface AssistantToolDefinition extends AiTextGenerationToolLegacyInput
   readonly execute: (input: unknown) => Promise<string>;
 }
 
-type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;
-
 type AssistantToolEmitter = (activity: AssistantToolActivity) => void;
 
 export function createCoffeeAssistantTools(
@@ -44,113 +41,81 @@ export function createCoffeeAssistantTools(
     createPlaceOrderTool(runApp, emitActivity),
     createGetOrderTool(runApp, emitActivity),
     createListOrdersTool(runApp, emitActivity),
-    createOrderIdTool(
-      "start_brewing",
-      coffeeMcpActionSpecs.start_brewing.description,
-      emitActivity,
-      runApp,
-      (orderId) => CoffeeOrderApp.use((app) => app.startBrewing(orderId)),
-    ),
-    createOrderIdTool(
-      "mark_ready",
-      coffeeMcpActionSpecs.mark_ready.description,
-      emitActivity,
-      runApp,
-      (orderId) => CoffeeOrderApp.use((app) => app.markReady(orderId)),
-    ),
-    createOrderIdTool(
-      "pick_up_order",
-      coffeeMcpActionSpecs.pick_up_order.description,
-      emitActivity,
-      runApp,
-      (orderId) => CoffeeOrderApp.use((app) => app.pickUpOrder(orderId)),
-    ),
-    createOrderIdTool(
-      "cancel_order",
-      coffeeMcpActionSpecs.cancel_order.description,
-      emitActivity,
-      runApp,
-      (orderId) => CoffeeOrderApp.use((app) => app.cancelOrder(orderId)),
-    ),
+    createOrderIdTool("start_brewing", emitActivity, runApp),
+    createOrderIdTool("mark_ready", emitActivity, runApp),
+    createOrderIdTool("pick_up_order", emitActivity, runApp),
+    createOrderIdTool("cancel_order", emitActivity, runApp),
   ] as const satisfies readonly AssistantToolDefinition[];
 }
 
 function createListMenuTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
   return createAppTool({
-    description: coffeeMcpActionSpecs.list_menu.description,
+    action: "list_menu",
+    description: coffeeActionSpecs.list_menu.description,
     emitActivity,
-    execute: async () => runApp(CoffeeOrderApp.use((app) => app.listMenu())),
     name: "list_menu",
     parameters: emptyToolParameters,
+    runApp,
   });
 }
 
 function createPlaceOrderTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
   return createAppTool({
-    description: coffeeMcpActionSpecs.place_order.description,
+    action: "place_order",
+    description: coffeeActionSpecs.place_order.description,
     emitActivity,
-    execute: async (input) => {
-      const request = await decodePlaceOrderInput(input);
-      return runApp(CoffeeOrderApp.use((app) => app.placeOrder(request)));
-    },
     name: "place_order",
     parameters: placeOrderToolParameters,
+    runApp,
   });
 }
 
 function createGetOrderTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
   return createAppTool({
-    description: coffeeMcpActionSpecs.get_order.description,
+    action: "get_order",
+    description: coffeeActionSpecs.get_order.description,
     emitActivity,
-    execute: async (input) => {
-      const { orderId } = await decodeOrderIdInput(input);
-      return runApp(CoffeeOrderApp.use((app) => app.getOrder(orderId)));
-    },
     name: "get_order",
     parameters: orderIdToolParameters,
+    runApp,
   });
 }
 
 function createListOrdersTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
   return createAppTool({
-    description: coffeeMcpActionSpecs.list_orders.description,
+    action: "list_orders",
+    description: coffeeActionSpecs.list_orders.description,
     emitActivity,
-    execute: async (input) => {
-      const request = await decodeListOrdersInput(input);
-      return runApp(CoffeeOrderApp.use((app) => app.listOrders(request)));
-    },
     name: "list_orders",
     parameters: listOrdersToolParameters,
+    runApp,
   });
 }
 
 function createOrderIdTool(
-  name: AssistantToolDefinition["name"],
-  description: string,
+  name: CoffeeActionName,
   emitActivity: AssistantToolEmitter,
   runApp: CoffeeAppRunner,
-  execute: (orderId: string) => Effect.Effect<unknown, unknown, CoffeeOrderApp>,
 ) {
   return createAppTool({
-    description,
+    action: name,
+    description: coffeeActionSpecs[name].description,
     emitActivity,
-    execute: async (input) => {
-      const { orderId } = await decodeOrderIdInput(input);
-      return runApp(execute(orderId));
-    },
     name,
     parameters: orderIdToolParameters,
+    runApp,
   });
 }
 
 function createAppTool(input: {
+  readonly action: CoffeeActionName;
   readonly description: string;
   readonly emitActivity: AssistantToolEmitter;
-  readonly execute: (input: unknown) => Promise<unknown>;
   readonly name: string;
   readonly parameters: NonNullable<AiTextGenerationToolLegacyInput["parameters"]>;
+  readonly runApp: CoffeeAppRunner;
 }): AssistantToolDefinition {
-  const { description, emitActivity, execute, name, parameters } = input;
+  const { action, description, emitActivity, name, parameters, runApp } = input;
 
   return {
     description,
@@ -162,7 +127,11 @@ function createAppTool(input: {
       });
 
       try {
-        const output = await execute(toolInput);
+        const output = await executeCoffeeAction({
+          action,
+          payload: toolInput,
+          runApp,
+        });
         const serializedOutput = serializeToolResult(output);
 
         emitActivity({

@@ -38,7 +38,7 @@ import {
   getBunAssistantAiConfig,
   runAssistantConversation,
 } from "./runtime.ts";
-import { createCoffeeAssistantTools, getAssistantToolActivityEvent } from "./tools.ts";
+import { createCoffeeAssistantTools, getAssistantToolActivityEvent } from "./tools/definitions.ts";
 
 const coffeeAssistantSystemPrompt = [
   "You are Beanline, the live assistant for the Effect Coffee Shop.",

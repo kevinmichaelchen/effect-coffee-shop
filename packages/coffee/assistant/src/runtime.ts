@@ -5,7 +5,7 @@ import type {
   RoleScopedChatInput,
 } from "@cloudflare/workers-types";
 import { runWorkersAiOverRest } from "./rest.ts";
-import type { AssistantToolDefinition } from "./tools.ts";
+import type { AssistantToolDefinition } from "./tools/definitions.ts";
 import {
   createGatewayOptions,
   extractAssistantText,

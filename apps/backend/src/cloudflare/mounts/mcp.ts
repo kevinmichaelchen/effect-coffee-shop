@@ -9,7 +9,7 @@ import {
   createCloudflareRequestServices,
   getCloudflareBackendHandler,
 } from "../../composition/coffee-backend.ts";
-import { ensureCloudflareAuthPersistence } from "@effect-coffee-shop/coffee-auth/better-auth";
+import { ensureCloudflareAuthPersistence } from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 const isMcpRequest = (request: Request): boolean => {

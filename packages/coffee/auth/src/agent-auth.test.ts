@@ -13,7 +13,7 @@ import {
   createCoffeeAgentAppRunner,
   createCoffeeAgentAuthOptions,
   executeCoffeeAgentCapability,
-} from "@effect-coffee-shop/coffee-auth/agent-auth";
+} from "@effect-coffee-shop/coffee-auth/agent/options";
 import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
 
 async function withTestDatabase<A>(effect: (db: D1Database) => Promise<A>): Promise<A> {

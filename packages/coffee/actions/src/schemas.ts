@@ -5,6 +5,11 @@ import {
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
 } from "@effect-coffee-shop/coffee-core/domain/errors";
+import { OrderIdSchema } from "@effect-coffee-shop/coffee-core/domain/order";
+import {
+  ListOrdersRequestSchema,
+  PlaceOrderRequestSchema,
+} from "@effect-coffee-shop/coffee-core/application/contracts";
 import {
   AuthenticationRequiredError,
   StaffRoleRequiredError,
@@ -20,3 +25,14 @@ export const AppErrorSchema = Schema.Union([
   InternalAppError,
   StaffRoleRequiredError,
 ]).annotate({ identifier: "AppError" });
+
+export const EmptyActionInputSchema = Schema.Struct({});
+
+export const OrderIdActionInputSchema = Schema.Struct({
+  orderId: OrderIdSchema,
+});
+
+export const decodeEmptyActionInput = Schema.decodeUnknownPromise(EmptyActionInputSchema);
+export const decodeOrderIdInput = Schema.decodeUnknownPromise(OrderIdActionInputSchema);
+export const decodeListOrdersInput = Schema.decodeUnknownPromise(ListOrdersRequestSchema);
+export const decodePlaceOrderInput = Schema.decodeUnknownPromise(PlaceOrderRequestSchema);

@@ -1,22 +1,18 @@
-import * as Schema from "effect/Schema";
 import { MenuSchema } from "@effect-coffee-shop/coffee-core/domain/menu";
 import {
   CoffeeOrderSchema,
   CoffeeOrdersSchema,
-  OrderIdSchema,
 } from "@effect-coffee-shop/coffee-core/domain/order";
 import {
   ListOrdersRequestSchema,
   PlaceOrderRequestSchema,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
-import { AppErrorSchema } from "./schemas.ts";
+import { AppErrorSchema, EmptyActionInputSchema, OrderIdActionInputSchema } from "./schemas.ts";
 
-const EmptyParamsSchema = Schema.Struct({});
-
-export const coffeeMcpActionSpecs = {
+export const coffeeActionSpecs = {
   list_menu: {
     description: "List the current coffee menu",
-    parameters: EmptyParamsSchema,
+    parameters: EmptyActionInputSchema,
     success: MenuSchema,
     failure: AppErrorSchema,
   },
@@ -28,9 +24,7 @@ export const coffeeMcpActionSpecs = {
   },
   get_order: {
     description: "Fetch one order by id",
-    parameters: Schema.Struct({
-      orderId: OrderIdSchema,
-    }),
+    parameters: OrderIdActionInputSchema,
     success: CoffeeOrderSchema,
     failure: AppErrorSchema,
   },
@@ -42,34 +36,28 @@ export const coffeeMcpActionSpecs = {
   },
   start_brewing: {
     description: "Move an order from pending to brewing",
-    parameters: Schema.Struct({
-      orderId: OrderIdSchema,
-    }),
+    parameters: OrderIdActionInputSchema,
     success: CoffeeOrderSchema,
     failure: AppErrorSchema,
   },
   mark_ready: {
     description: "Move an order from brewing to ready",
-    parameters: Schema.Struct({
-      orderId: OrderIdSchema,
-    }),
+    parameters: OrderIdActionInputSchema,
     success: CoffeeOrderSchema,
     failure: AppErrorSchema,
   },
   pick_up_order: {
     description: "Move an order from ready to picked-up",
-    parameters: Schema.Struct({
-      orderId: OrderIdSchema,
-    }),
+    parameters: OrderIdActionInputSchema,
     success: CoffeeOrderSchema,
     failure: AppErrorSchema,
   },
   cancel_order: {
     description: "Cancel a pending or brewing order",
-    parameters: Schema.Struct({
-      orderId: OrderIdSchema,
-    }),
+    parameters: OrderIdActionInputSchema,
     success: CoffeeOrderSchema,
     failure: AppErrorSchema,
   },
 } as const;
+
+export type CoffeeActionName = keyof typeof coffeeActionSpecs;

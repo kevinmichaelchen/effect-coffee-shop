@@ -4,61 +4,23 @@ import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
-import { createCoffeeAgentAuthOptions } from "@effect-coffee-shop/coffee-auth/agent-auth";
+import { createCoffeeAgentAuthOptions } from "../agent/options.ts";
 import { logStructuredEvent } from "@effect-coffee-shop/backend-host/logging";
 import {
   AppActorSchema,
   anonymousActor,
   type AppActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import {
+  createProvisionalUser,
+  createRegisteredUser,
+  getDisplayName,
+  provisionalUserPrefix,
+} from "./users.ts";
 
-const syntheticEmailDomain = "users.coffee.invalid";
 const longEnoughDevelopmentSecret = "dev-better-auth-secret-please-change-me-0001";
-const provisionalUserPrefix = "passkey-signup-";
-
-const PasskeyRegistrationContextSchema = Schema.Struct({
-  displayName: Schema.String,
-});
-
-const decodeJsonString = Schema.decodeUnknownSync(Schema.UnknownFromJsonString);
-const decodePasskeyRegistrationShape = Schema.decodeUnknownSync(PasskeyRegistrationContextSchema);
 
 const decodeResolvedActor = Schema.decodeUnknownSync(AppActorSchema);
-
-export function getDisplayName(context: string | null | undefined): string {
-  const parsed = decodePasskeyRegistrationShape(decodeJsonString(context ?? '{"displayName":""}'));
-  const displayName = parsed.displayName.trim();
-
-  if (displayName.length === 0) {
-    throw new Error("displayName must not be blank");
-  }
-
-  return displayName;
-}
-
-function createSyntheticEmail(userId: string): string {
-  return `${userId}@${syntheticEmailDomain}`;
-}
-
-export function createProvisionalUser(displayName: string) {
-  const userId = `${provisionalUserPrefix}${crypto.randomUUID()}`;
-  return {
-    displayName,
-    id: userId,
-    name: displayName,
-  };
-}
-
-export function createRegisteredUser(input: {
-  readonly context: string | null | undefined;
-  readonly userId: string;
-}) {
-  return {
-    email: createSyntheticEmail(input.userId),
-    id: input.userId,
-    name: getDisplayName(input.context),
-  };
-}
 
 function getRequestOrigin(request: Request | undefined): string | undefined {
   return request === undefined ? undefined : new URL(request.url).origin;

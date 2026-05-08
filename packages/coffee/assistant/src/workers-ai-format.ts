@@ -4,7 +4,7 @@ import type {
   RoleScopedChatInput,
 } from "@cloudflare/workers-types";
 import type { ModelMessage } from "@tanstack/ai";
-import type { AssistantToolDefinition } from "./tools.ts";
+import type { AssistantToolDefinition } from "./tools/definitions.ts";
 
 export type AssistantGatewayMetadata = Readonly<
   Record<string, boolean | number | string | null | bigint>

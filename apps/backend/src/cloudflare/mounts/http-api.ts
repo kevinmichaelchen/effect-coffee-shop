@@ -15,7 +15,7 @@ import {
 import {
   ensureCloudflareAuthPersistence,
   resolveCloudflareActor,
-} from "@effect-coffee-shop/coffee-auth/better-auth";
+} from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
 import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
 
 const isApiRequest = (request: Request): boolean => {

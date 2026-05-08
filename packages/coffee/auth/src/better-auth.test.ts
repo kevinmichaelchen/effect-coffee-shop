@@ -3,7 +3,7 @@ import {
   createProvisionalUser,
   createRegisteredUser,
   getDisplayName,
-} from "@effect-coffee-shop/coffee-auth/better-auth";
+} from "@effect-coffee-shop/coffee-auth/better-auth/users";
 
 describe("passkey registration helpers", () => {
   it("creates provisional users from the registration context display name", () => {

@@ -4,16 +4,16 @@ import * as McpServer from "effect/unstable/ai/McpServer";
 import * as Tool from "effect/unstable/ai/Tool";
 import * as Toolkit from "effect/unstable/ai/Toolkit";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
-import { coffeeMcpActionSpecs } from "@effect-coffee-shop/coffee-actions/actions";
+import { coffeeActionSpecs } from "@effect-coffee-shop/coffee-actions/specs";
 
-const ListMenuTool = Tool.make("list_menu", coffeeMcpActionSpecs.list_menu);
-const PlaceOrderTool = Tool.make("place_order", coffeeMcpActionSpecs.place_order);
-const GetOrderTool = Tool.make("get_order", coffeeMcpActionSpecs.get_order);
-const ListOrdersTool = Tool.make("list_orders", coffeeMcpActionSpecs.list_orders);
-const StartBrewingTool = Tool.make("start_brewing", coffeeMcpActionSpecs.start_brewing);
-const MarkReadyTool = Tool.make("mark_ready", coffeeMcpActionSpecs.mark_ready);
-const PickUpOrderTool = Tool.make("pick_up_order", coffeeMcpActionSpecs.pick_up_order);
-const CancelOrderTool = Tool.make("cancel_order", coffeeMcpActionSpecs.cancel_order);
+const ListMenuTool = Tool.make("list_menu", coffeeActionSpecs.list_menu);
+const PlaceOrderTool = Tool.make("place_order", coffeeActionSpecs.place_order);
+const GetOrderTool = Tool.make("get_order", coffeeActionSpecs.get_order);
+const ListOrdersTool = Tool.make("list_orders", coffeeActionSpecs.list_orders);
+const StartBrewingTool = Tool.make("start_brewing", coffeeActionSpecs.start_brewing);
+const MarkReadyTool = Tool.make("mark_ready", coffeeActionSpecs.mark_ready);
+const PickUpOrderTool = Tool.make("pick_up_order", coffeeActionSpecs.pick_up_order);
+const CancelOrderTool = Tool.make("cancel_order", coffeeActionSpecs.cancel_order);
 
 const CoffeeActionToolkit = Toolkit.make(
   ListMenuTool,

@@ -5,15 +5,16 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./actions": "./src/actions.ts",
-    "./assistant-tool-data": "./src/assistant-tool-data.ts",
+    "./execute": "./src/execute.ts",
+    "./format": "./src/format.ts",
+    "./json-schema": "./src/json-schema.ts",
     "./schemas": "./src/schemas.ts",
-    "./tool-format": "./src/tool-format.ts"
+    "./specs": "./src/specs.ts"
   },
   "scripts": {
     "typecheck": "tsgo --noEmit",
-    "lint": "oxlint -c ../../.oxlintrc.json --disable-nested-config .",
-    "lint:fix": "oxlint -c ../../.oxlintrc.json --disable-nested-config --fix .",
+    "lint": "oxlint -c .oxlintrc.json --disable-nested-config .",
+    "lint:fix": "oxlint -c .oxlintrc.json --disable-nested-config --fix .",
     "lint:custom": "cd ../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/actions/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
@@ -21,7 +22,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@cloudflare/workers-types": "catalog:",
     "@effect-coffee-shop/coffee-core": "workspace:*",
     "effect": "catalog:"
   },
