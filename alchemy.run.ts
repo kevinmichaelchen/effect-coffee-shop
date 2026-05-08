@@ -1,88 +1,100 @@
-import alchemy from "alchemy";
-import { Ai, AiGateway, D1Database, Website } from "alchemy/cloudflare";
-import { CloudflareStateStore } from "alchemy/state";
+import * as Alchemy from "alchemy";
+import * as Cloudflare from "alchemy/Cloudflare";
+import * as Effect from "effect/Effect";
+import * as Redacted from "effect/Redacted";
 
 import {
   collectorLogDestinationName,
   collectorTraceDestinationName,
 } from "./ops/otel-collector-cloudflare/destination-names.ts";
 
-const app = await alchemy("effect-v4-onion", {
-  password: process.env.ALCHEMY_PASSWORD,
-  stateStore: process.env.ALCHEMY_STATE_TOKEN
-    ? (scope) => new CloudflareStateStore(scope)
-    : undefined,
-});
-const aiGatewayEnabled = process.env.COFFEE_ASSISTANT_AI_GATEWAY === "1";
-const otelExportEnabled = process.env.COFFEE_OTEL_EXPORT === "1";
+const optionalSecret = (value: string | undefined) =>
+  value === undefined || value.trim().length === 0
+    ? ""
+    : Redacted.make(value);
 
-export const coffeeDb = await D1Database("coffee-db", {
-  dev: {
-    remote: false,
-  },
-});
+const state = () =>
+  process.env.ALCHEMY_STATE_TOKEN
+    ? Cloudflare.state()
+    : Alchemy.localState();
 
-export const ai = Ai();
+export default Alchemy.Stack(
+  "effect-v4-onion",
+  {
+    providers: Cloudflare.providers(),
+    state: state(),
+  },
+  Effect.gen(function* () {
+    const aiGatewayEnabled = process.env.COFFEE_ASSISTANT_AI_GATEWAY === "1";
+    const otelExportEnabled = process.env.COFFEE_OTEL_EXPORT === "1";
 
-export const assistantGateway = aiGatewayEnabled
-  ? await AiGateway("assistant", {
-      authentication: true,
-      collectLogs: true,
-    })
-  : undefined;
+    const coffeeDb = yield* Cloudflare.D1Database("coffee-db");
 
-export const website = await Website("onion", {
-  url: true,
-  compatibility: "node",
-  entrypoint: "./apps/backend/src/presentation/cloudflare/worker.ts",
-  observability: {
-    enabled: true,
-    headSamplingRate: 1,
-    logs: {
-      destinations: otelExportEnabled ? [collectorLogDestinationName()] : [],
-      enabled: true,
-      headSamplingRate: 1,
-      invocationLogs: true,
-      persist: true,
-    },
-    traces: {
-      destinations: otelExportEnabled ? [collectorTraceDestinationName()] : [],
-      enabled: true,
-      headSamplingRate: 1,
-      persist: true,
-    },
-  },
-  sourceMap: true,
-  build: {
-    command: "bun run --cwd apps/ui build",
-  },
-  dev: {
-    command: "bun run --cwd apps/ui dev -- --host 127.0.0.1 --port 5173",
-  },
-  assets: {
-    directory: "./apps/ui/dist",
-    run_worker_first: [
-      "/.well-known/agent-configuration",
-      "/api",
-      "/api/*",
-      "/mcp",
-      "/mcp/*",
-    ],
-  },
-  bindings: {
-    AI: ai,
-    AI_GATEWAY_ID: assistantGateway?.id ?? "",
-    BETTER_AUTH_SECRET: alchemy.secret.env.BETTER_AUTH_SECRET,
-    COFFEE_STAFF_USER_IDS: process.env.COFFEE_STAFF_USER_IDS ?? "",
-    DB: coffeeDb,
-  },
-});
+    const assistantGateway = aiGatewayEnabled
+      ? yield* Cloudflare.AiGateway("assistant", {
+          authentication: true,
+          collectLogs: true,
+        })
+      : undefined;
 
-console.log({
-  assistantGateway: assistantGateway?.id ?? null,
-  database: coffeeDb.name,
-  otelExportEnabled,
-  url: website.url,
-});
+    const website = yield* Cloudflare.StaticSite("onion", {
+      url: true,
+      compatibility: {
+        flags: ["nodejs_compat"],
+      },
+      main: "./apps/backend/src/presentation/cloudflare/worker.ts",
+      observability: {
+        enabled: true,
+        headSamplingRate: 1,
+        logs: {
+          destinations: otelExportEnabled ? [collectorLogDestinationName()] : [],
+          enabled: true,
+          headSamplingRate: 1,
+          invocationLogs: true,
+          persist: true,
+        },
+        traces: {
+          destinations: otelExportEnabled
+            ? [collectorTraceDestinationName()]
+            : [],
+          enabled: true,
+          headSamplingRate: 1,
+          persist: true,
+        },
+      },
+      command: "bun run --cwd apps/ui build",
+      outdir: "./apps/ui/dist",
+      dev: {
+        command: "bun run --cwd apps/ui dev -- --host 127.0.0.1 --port 5173",
+      },
+      assetsConfig: {
+        runWorkerFirst: [
+          "/.well-known/agent-configuration",
+          "/api",
+          "/api/*",
+          "/mcp",
+          "/mcp/*",
+        ],
+      },
+      bindings: {
+        DB: coffeeDb,
+      },
+      env: {
+        AI_GATEWAY_ID: assistantGateway?.gatewayId ?? "",
+        BETTER_AUTH_SECRET: optionalSecret(process.env.BETTER_AUTH_SECRET),
+        COFFEE_STAFF_USER_IDS: process.env.COFFEE_STAFF_USER_IDS ?? "",
+      },
+    });
 
-await app.finalize();
+    yield* website.bind("AI", {
+      bindings: [{ type: "ai", name: "AI" }],
+    });
+
+    return {
+      assistantGateway: assistantGateway?.gatewayId ?? null,
+      database: coffeeDb.databaseName,
+      otelExportEnabled,
+      url: website.url,
+    };
+  }),
+);

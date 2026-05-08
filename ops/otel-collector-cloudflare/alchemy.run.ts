@@ -1,101 +1,132 @@
-import alchemy from "alchemy";
-import { Container, Worker } from "alchemy/cloudflare";
-import { CloudflareStateStore } from "alchemy/state";
+import * as Alchemy from "alchemy";
+import * as Cloudflare from "alchemy/Cloudflare";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
+import * as Redacted from "effect/Redacted";
 
+import type { OtelCollectorContainer } from "./worker/src/index.ts";
 import {
   collectorLogDestinationName,
   collectorTraceDestinationName,
 } from "./destination-names.ts";
-import { WorkersObservabilityDestination } from "./observability-destination.ts";
+import {
+  WorkersObservabilityDestination,
+  WorkersObservabilityDestinationProvider,
+} from "./observability-destination.ts";
 
-const app = await alchemy("effect-v4-onion-otel", {
-  password: process.env.ALCHEMY_PASSWORD,
-  stateStore: process.env.ALCHEMY_STATE_TOKEN
-    ? (scope) => new CloudflareStateStore(scope)
-    : undefined,
-});
-const observabilityApiToken =
-  process.env.CLOUDFLARE_OBSERVABILITY_API_TOKEN?.trim();
-const ingressAuthorization = process.env.OTEL_INGRESS_AUTHORIZATION?.trim();
-const destinationHeaders =
-  ingressAuthorization === undefined || ingressAuthorization.length === 0
-    ? []
-    : ([["Authorization", ingressAuthorization]] as const);
+const optionalSecret = (value: string | undefined) =>
+  value === undefined || value.trim().length === 0
+    ? ""
+    : Redacted.make(value);
 
-export const collector = await Container("collector", {
-  build: {
-    context: "./ops/otel-collector-cloudflare",
-    dockerfile: "Dockerfile",
-    platform: "linux/amd64",
-  },
-  className: "OtelCollectorContainer",
-  maxInstances: 1,
-});
+const state = () =>
+  process.env.ALCHEMY_STATE_TOKEN
+    ? Cloudflare.state()
+    : Alchemy.localState();
 
-export const ingress = await Worker("ingress", {
-  bindings: {
-    OTEL_COLLECTOR: collector,
-    OTEL_INGRESS_AUTHORIZATION: ingressAuthorization
-      ? alchemy.secret(ingressAuthorization)
-      : "",
-    UPSTREAM_OTLP_AUTHORIZATION: process.env.UPSTREAM_OTLP_AUTHORIZATION
-      ? alchemy.secret(process.env.UPSTREAM_OTLP_AUTHORIZATION)
-      : "",
-    UPSTREAM_OTLP_HTTP_ENDPOINT: process.env.UPSTREAM_OTLP_HTTP_ENDPOINT ?? "",
-  },
-  cwd: "./ops/otel-collector-cloudflare/worker",
-  entrypoint: "./src/index.ts",
-  observability: {
-    enabled: true,
-    headSamplingRate: 1,
-    logs: {
-      enabled: true,
-      headSamplingRate: 1,
-      invocationLogs: true,
-      persist: true,
-    },
-    traces: {
-      enabled: true,
-      headSamplingRate: 1,
-      persist: true,
-    },
-  },
-  url: true,
-});
+const cloudflareProviders = Cloudflare.providers();
 
-export const tracesDestination = await WorkersObservabilityDestination(
-  "traces-destination",
-  {
-    apiToken: observabilityApiToken
-      ? alchemy.secret(observabilityApiToken)
-      : undefined,
-    dataset: "opentelemetry-traces",
-    headers: destinationHeaders,
-    name: collectorTraceDestinationName(),
-    url: `${ingress.url}/v1/traces`,
-  },
+const providers = Layer.merge(
+  cloudflareProviders,
+  WorkersObservabilityDestinationProvider().pipe(
+    Layer.provide(cloudflareProviders),
+  ),
 );
 
-export const logsDestination = await WorkersObservabilityDestination(
-  "logs-destination",
+export default Alchemy.Stack(
+  "effect-v4-onion-otel",
   {
-    apiToken: observabilityApiToken
-      ? alchemy.secret(observabilityApiToken)
-      : undefined,
-    dataset: "opentelemetry-logs",
-    headers: destinationHeaders,
-    name: collectorLogDestinationName(),
-    url: `${ingress.url}/v1/logs`,
+    providers,
+    state: state(),
   },
+  Effect.gen(function* () {
+    const observabilityApiToken =
+      process.env.CLOUDFLARE_OBSERVABILITY_API_TOKEN?.trim();
+    const ingressAuthorization = process.env.OTEL_INGRESS_AUTHORIZATION?.trim();
+    const destinationHeaders: ReadonlyArray<readonly [string, string]> =
+      ingressAuthorization === undefined || ingressAuthorization.length === 0
+        ? []
+        : [["Authorization", ingressAuthorization]];
+
+    const collectorNamespace =
+      Cloudflare.DurableObjectNamespace<OtelCollectorContainer>(
+        "OTEL_COLLECTOR",
+        {
+          className: "OtelCollectorContainer",
+        },
+      );
+
+    const ingress = yield* Cloudflare.Worker("ingress", {
+      bindings: {
+        OTEL_COLLECTOR: collectorNamespace,
+      },
+      compatibility: {
+        flags: ["nodejs_compat"],
+      },
+      env: {
+        OTEL_INGRESS_AUTHORIZATION: optionalSecret(ingressAuthorization),
+        UPSTREAM_OTLP_AUTHORIZATION: optionalSecret(
+          process.env.UPSTREAM_OTLP_AUTHORIZATION,
+        ),
+        UPSTREAM_OTLP_HTTP_ENDPOINT:
+          process.env.UPSTREAM_OTLP_HTTP_ENDPOINT ?? "",
+      },
+      main: "./ops/otel-collector-cloudflare/worker/src/index.ts",
+      observability: {
+        enabled: true,
+        headSamplingRate: 1,
+        logs: {
+          enabled: true,
+          headSamplingRate: 1,
+          invocationLogs: true,
+          persist: true,
+        },
+        traces: {
+          enabled: true,
+          headSamplingRate: 1,
+          persist: true,
+        },
+      },
+      url: true,
+    });
+
+    yield* ingress.bind("OtelCollectorContainer", {
+      containers: [{ className: "OtelCollectorContainer" }],
+    });
+
+    const tracesDestination = yield* WorkersObservabilityDestination(
+      "traces-destination",
+      {
+        apiToken: observabilityApiToken
+          ? Redacted.make(observabilityApiToken)
+          : undefined,
+        dataset: "opentelemetry-traces",
+        headers: destinationHeaders,
+        name: collectorTraceDestinationName(),
+        url: `${ingress.url}/v1/traces`,
+      },
+    );
+
+    const logsDestination = yield* WorkersObservabilityDestination(
+      "logs-destination",
+      {
+        apiToken: observabilityApiToken
+          ? Redacted.make(observabilityApiToken)
+          : undefined,
+        dataset: "opentelemetry-logs",
+        headers: destinationHeaders,
+        name: collectorLogDestinationName(),
+        url: `${ingress.url}/v1/logs`,
+      },
+    );
+
+    return {
+      collector: "OtelCollectorContainer",
+      ingressAuthorizationConfigured: ingressAuthorization !== undefined,
+      logsDestination: logsDestination.name,
+      observabilityApiTokenConfigured: observabilityApiToken !== undefined,
+      tracesDestination: tracesDestination.name,
+      url: ingress.url,
+    };
+  }),
 );
-
-console.log({
-  collector: collector.name,
-  ingressAuthorizationConfigured: ingressAuthorization !== undefined,
-  logsDestination: logsDestination.name,
-  observabilityApiTokenConfigured: observabilityApiToken !== undefined,
-  tracesDestination: tracesDestination.name,
-  url: ingress.url,
-});
-
-await app.finalize();
