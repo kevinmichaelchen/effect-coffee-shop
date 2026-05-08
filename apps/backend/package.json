@@ -27,9 +27,8 @@
     "lint:custom:list": "lintcn list",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
-    "knip": "knip --files --exports --no-config-hints",
     "bench:mcp:miniflare": "bun run scripts/measure-mcp-miniflare.ts",
-    "check": "bun run typecheck && bun run lint && bun run lint:custom && bun run fmt:check && bun run knip && bun run test",
+    "check": "bun run typecheck && bun run lint && bun run lint:custom && bun run fmt:check && bun run test",
     "test": "vitest run"
   },
   "dependencies": {
@@ -43,25 +42,19 @@
     "@effect-coffee-shop/coffee-http": "workspace:*",
     "@effect-coffee-shop/coffee-mcp": "workspace:*",
     "@effect/platform-bun": "catalog:",
-    "@effect/sql-d1": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
-    "@effect/platform-node": "catalog:",
     "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "esbuild": "catalog:",
-    "find-up": "catalog:",
-    "goke": "catalog:",
-    "knip": "catalog:",
     "lintcn": "catalog:",
     "miniflare": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "tar": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

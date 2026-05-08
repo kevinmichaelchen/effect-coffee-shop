@@ -16,7 +16,6 @@
     "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/presentation/http/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
-    "knip": "knip --files --exports --no-config-hints",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
@@ -30,7 +29,6 @@
     "@effect/platform-node": "catalog:",
     "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
-    "knip": "catalog:",
     "lintcn": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",

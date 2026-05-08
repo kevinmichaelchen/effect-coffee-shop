@@ -17,7 +17,6 @@
     "lint:custom": "cd ../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/auth/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
-    "knip": "knip --files --exports --no-config-hints",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
@@ -32,9 +31,7 @@
   },
   "devDependencies": {
     "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
-    "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
-    "knip": "catalog:",
     "lintcn": "catalog:",
     "miniflare": "catalog:",
     "oxfmt": "catalog:",

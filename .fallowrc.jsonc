@@ -1,0 +1,190 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+
+  "entry": [
+    "alchemy.run.ts",
+    "apps/backend/src/cloudflare/worker.ts",
+    "apps/backend/src/cloudflare/mcp-miniflare-worker.ts",
+    "apps/backend/src/bun/*.ts",
+    "apps/backend/scripts/*.ts",
+    "apps/backend/src/**/*.test.ts",
+    "apps/backend/test/**/*.ts",
+    "apps/ui/src/main.tsx",
+    "apps/ui/src/**/*.stories.tsx",
+    "apps/ui/.storybook/**/*.{ts,tsx}",
+    "apps/ui/vite.config.ts",
+    "apps/ui/vite.shared.ts",
+    "apps/ui/vitest.config.ts",
+    "packages/coffee/core/src/index.ts",
+    "packages/coffee/core/src/**/*.test.ts",
+    "packages/coffee/external/in-memory/src/index.ts",
+    "packages/coffee/external/sqlite/src/index.ts",
+    "packages/coffee/external/sqlite/src/bun/live.ts",
+    "packages/coffee/external/sqlite/src/cloudflare/live.ts"
+  ],
+
+  "ignorePatterns": [
+    "**/*.d.ts",
+    "**/*.generated.ts",
+    "**/dist/**",
+    "**/storybook-static/**",
+    "packages/coffee/external/sqlite/src/sql/migrations/.generated/**",
+    "packages/coffee/external/sqlite/src/sql/queries/.generated/**"
+  ],
+
+  "ignoreDependencies": [
+    "oxlint-tsgolint"
+  ],
+
+  "rules": {
+    "unresolved-imports": "error",
+    "unlisted-dependencies": "error",
+    "unused-files": "error",
+    "unused-exports": "error",
+    "unused-types": "error",
+    "unused-dependencies": "error",
+    "unused-dev-dependencies": "error",
+    "unused-optional-dependencies": "error",
+    "unused-enum-members": "error",
+    "unused-class-members": "off",
+    "duplicate-exports": "error",
+    "circular-dependencies": "error",
+    "boundary-violation": "error",
+    "type-only-dependencies": "error",
+    "test-only-dependencies": "warn",
+    "coverage-gaps": "off",
+    "feature-flags": "warn",
+    "stale-suppressions": "warn"
+  },
+
+  "duplicates": {
+    "mode": "semantic",
+    "minTokens": 50,
+    "minLines": 5,
+    "threshold": 15,
+    "ignoreImports": true
+  },
+
+  "health": {
+    "maxCyclomatic": 20,
+    "maxCognitive": 15,
+    "maxCrap": 500
+  },
+
+  "audit": {
+    "gate": "new-only"
+  },
+
+  "boundaries": {
+    "zones": [
+      {
+        "name": "tests",
+        "patterns": [
+          "**/*.test.ts",
+          "**/test-support.ts",
+          "apps/backend/scripts/**",
+          "apps/backend/test/**"
+        ]
+      },
+      {
+        "name": "infra",
+        "patterns": ["alchemy.run.ts"]
+      },
+      {
+        "name": "ui",
+        "patterns": ["apps/ui/**"]
+      },
+      {
+        "name": "backend-app",
+        "patterns": ["apps/backend/**"]
+      },
+      {
+        "name": "backend-host",
+        "patterns": ["packages/backend-host/**"]
+      },
+      {
+        "name": "domain",
+        "patterns": ["packages/coffee/core/src/domain/**"]
+      },
+      {
+        "name": "application",
+        "patterns": ["packages/coffee/core/src/application/**", "packages/coffee/core/src/index.ts"]
+      },
+      {
+        "name": "actions",
+        "patterns": ["packages/coffee/actions/**"]
+      },
+      {
+        "name": "assistant",
+        "patterns": ["packages/coffee/assistant/**"]
+      },
+      {
+        "name": "auth",
+        "patterns": ["packages/coffee/auth/**"]
+      },
+      {
+        "name": "external",
+        "patterns": ["packages/coffee/external/**"]
+      },
+      {
+        "name": "presentation",
+        "patterns": ["packages/coffee/presentation/**"]
+      }
+    ],
+    "rules": [
+      {
+        "from": "infra",
+        "allow": ["backend-app", "ui", "external"]
+      },
+      {
+        "from": "ui",
+        "allow": []
+      },
+      {
+        "from": "backend-app",
+        "allow": [
+          "backend-host",
+          "domain",
+          "application",
+          "actions",
+          "assistant",
+          "auth",
+          "external",
+          "presentation"
+        ]
+      },
+      {
+        "from": "backend-host",
+        "allow": ["domain", "application"]
+      },
+      {
+        "from": "domain",
+        "allow": []
+      },
+      {
+        "from": "application",
+        "allow": ["domain"]
+      },
+      {
+        "from": "actions",
+        "allow": ["domain", "application"]
+      },
+      {
+        "from": "assistant",
+        "allow": ["backend-host", "domain", "application", "actions"]
+      },
+      {
+        "from": "auth",
+        "allow": ["backend-host", "domain", "application", "actions"]
+      },
+      {
+        "from": "external",
+        "allow": ["domain", "application"]
+      },
+      {
+        "from": "presentation",
+        "allow": ["backend-host", "domain", "application", "actions", "assistant"]
+      }
+    ]
+  }
+}

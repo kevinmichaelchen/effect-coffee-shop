@@ -96,7 +96,8 @@ bun run typecheck
 bun run lint
 bun run lint:custom
 bun run fmt:check
-bun run knip
+bun run fallow
+bun run fallow:audit
 bun run test
 bun run check
 ```
@@ -133,7 +134,7 @@ bun run hooks:run:pre-push
 Hook policy:
 
 - `pre-commit` stays fast and runs format, lint, custom lint, and typecheck.
-- `pre-push` runs `bun run check:affected`, which keeps Knip and tests local without putting them on every commit.
+- `pre-push` runs `bun run check:affected`, which keeps Fallow audit and tests local without putting them on every commit.
 
 Run Storybook from the repo root:
 

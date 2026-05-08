@@ -10,6 +10,7 @@ import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
 
 const { handler } = createCoffeeWebHandler(CoffeeMcpHttpLive, InMemoryCoffeeAppLive);
 
+/** @public Miniflare module worker entrypoint. */
 export default {
   fetch: async (request: Request) =>
     handler(request, emptyWebHandlerServices().pipe(Context.add(CurrentActor, systemActor))),
