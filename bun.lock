@@ -132,7 +132,7 @@
         "vitest": "catalog:",
       },
     },
-    "packages/coffee-actions": {
+    "packages/coffee/actions": {
       "name": "@effect-coffee-shop/coffee-actions",
       "version": "0.1.0",
       "dependencies": {
@@ -152,7 +152,7 @@
         "vitest": "catalog:",
       },
     },
-    "packages/coffee-assistant": {
+    "packages/coffee/assistant": {
       "name": "@effect-coffee-shop/coffee-assistant",
       "version": "0.1.0",
       "dependencies": {
@@ -176,7 +176,7 @@
         "vitest": "catalog:",
       },
     },
-    "packages/coffee-auth": {
+    "packages/coffee/auth": {
       "name": "@effect-coffee-shop/coffee-auth",
       "version": "0.1.0",
       "dependencies": {
@@ -203,7 +203,71 @@
         "vitest": "catalog:",
       },
     },
-    "packages/coffee-cli": {
+    "packages/coffee/core": {
+      "name": "@effect-coffee-shop/coffee-core",
+      "version": "0.1.0",
+      "dependencies": {
+        "effect": "catalog:",
+      },
+      "devDependencies": {
+        "@effect/vitest": "catalog:",
+        "@types/bun": "catalog:",
+        "knip": "catalog:",
+        "lintcn": "catalog:",
+        "oxfmt": "catalog:",
+        "oxlint": "catalog:",
+        "oxlint-tsgolint": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
+    "packages/coffee/external/in-memory": {
+      "name": "@effect-coffee-shop/coffee-external-in-memory",
+      "version": "0.1.0",
+      "dependencies": {
+        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "effect": "catalog:",
+      },
+      "devDependencies": {
+        "@effect/vitest": "catalog:",
+        "@types/bun": "catalog:",
+        "knip": "catalog:",
+        "lintcn": "catalog:",
+        "oxfmt": "catalog:",
+        "oxlint": "catalog:",
+        "oxlint-tsgolint": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
+    "packages/coffee/external/sqlite": {
+      "name": "@effect-coffee-shop/coffee-external-sqlite",
+      "version": "0.1.0",
+      "dependencies": {
+        "@better-auth/agent-auth": "catalog:",
+        "@better-auth/passkey": "catalog:",
+        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "@effect/platform-bun": "catalog:",
+        "@effect/sql-d1": "catalog:",
+        "@effect/sql-sqlite-bun": "catalog:",
+        "better-auth": "catalog:",
+        "effect": "catalog:",
+        "sqlfu": "catalog:",
+      },
+      "devDependencies": {
+        "@cloudflare/workers-types": "catalog:",
+        "@effect/vitest": "catalog:",
+        "@types/bun": "catalog:",
+        "knip": "catalog:",
+        "lintcn": "catalog:",
+        "oxfmt": "catalog:",
+        "oxlint": "catalog:",
+        "oxlint-tsgolint": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
+    "packages/coffee/presentation/cli": {
       "name": "@effect-coffee-shop/coffee-cli",
       "version": "0.1.0",
       "dependencies": {
@@ -223,7 +287,7 @@
         "vitest": "catalog:",
       },
     },
-    "packages/coffee-http": {
+    "packages/coffee/presentation/http": {
       "name": "@effect-coffee-shop/coffee-http",
       "version": "0.1.0",
       "dependencies": {
@@ -246,7 +310,7 @@
         "vitest": "catalog:",
       },
     },
-    "packages/coffee-mcp": {
+    "packages/coffee/presentation/mcp": {
       "name": "@effect-coffee-shop/coffee-mcp",
       "version": "0.1.0",
       "dependencies": {
@@ -256,70 +320,6 @@
         "effect": "catalog:",
       },
       "devDependencies": {
-        "@effect/vitest": "catalog:",
-        "@types/bun": "catalog:",
-        "knip": "catalog:",
-        "lintcn": "catalog:",
-        "oxfmt": "catalog:",
-        "oxlint": "catalog:",
-        "oxlint-tsgolint": "catalog:",
-        "typescript": "catalog:",
-        "vitest": "catalog:",
-      },
-    },
-    "packages/domains/coffee/core": {
-      "name": "@effect-coffee-shop/coffee-core",
-      "version": "0.1.0",
-      "dependencies": {
-        "effect": "catalog:",
-      },
-      "devDependencies": {
-        "@effect/vitest": "catalog:",
-        "@types/bun": "catalog:",
-        "knip": "catalog:",
-        "lintcn": "catalog:",
-        "oxfmt": "catalog:",
-        "oxlint": "catalog:",
-        "oxlint-tsgolint": "catalog:",
-        "typescript": "catalog:",
-        "vitest": "catalog:",
-      },
-    },
-    "packages/domains/coffee/external-in-memory": {
-      "name": "@effect-coffee-shop/coffee-external-in-memory",
-      "version": "0.1.0",
-      "dependencies": {
-        "@effect-coffee-shop/coffee-core": "workspace:*",
-        "effect": "catalog:",
-      },
-      "devDependencies": {
-        "@effect/vitest": "catalog:",
-        "@types/bun": "catalog:",
-        "knip": "catalog:",
-        "lintcn": "catalog:",
-        "oxfmt": "catalog:",
-        "oxlint": "catalog:",
-        "oxlint-tsgolint": "catalog:",
-        "typescript": "catalog:",
-        "vitest": "catalog:",
-      },
-    },
-    "packages/domains/coffee/external-sqlite": {
-      "name": "@effect-coffee-shop/coffee-external-sqlite",
-      "version": "0.1.0",
-      "dependencies": {
-        "@better-auth/agent-auth": "catalog:",
-        "@better-auth/passkey": "catalog:",
-        "@effect-coffee-shop/coffee-core": "workspace:*",
-        "@effect/platform-bun": "catalog:",
-        "@effect/sql-d1": "catalog:",
-        "@effect/sql-sqlite-bun": "catalog:",
-        "better-auth": "catalog:",
-        "effect": "catalog:",
-        "sqlfu": "catalog:",
-      },
-      "devDependencies": {
-        "@cloudflare/workers-types": "catalog:",
         "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
         "knip": "catalog:",
@@ -577,23 +577,23 @@
 
     "@effect-coffee-shop/backend-host": ["@effect-coffee-shop/backend-host@workspace:packages/backend-host"],
 
-    "@effect-coffee-shop/coffee-actions": ["@effect-coffee-shop/coffee-actions@workspace:packages/coffee-actions"],
+    "@effect-coffee-shop/coffee-actions": ["@effect-coffee-shop/coffee-actions@workspace:packages/coffee/actions"],
 
-    "@effect-coffee-shop/coffee-assistant": ["@effect-coffee-shop/coffee-assistant@workspace:packages/coffee-assistant"],
+    "@effect-coffee-shop/coffee-assistant": ["@effect-coffee-shop/coffee-assistant@workspace:packages/coffee/assistant"],
 
-    "@effect-coffee-shop/coffee-auth": ["@effect-coffee-shop/coffee-auth@workspace:packages/coffee-auth"],
+    "@effect-coffee-shop/coffee-auth": ["@effect-coffee-shop/coffee-auth@workspace:packages/coffee/auth"],
 
-    "@effect-coffee-shop/coffee-cli": ["@effect-coffee-shop/coffee-cli@workspace:packages/coffee-cli"],
+    "@effect-coffee-shop/coffee-cli": ["@effect-coffee-shop/coffee-cli@workspace:packages/coffee/presentation/cli"],
 
-    "@effect-coffee-shop/coffee-core": ["@effect-coffee-shop/coffee-core@workspace:packages/domains/coffee/core"],
+    "@effect-coffee-shop/coffee-core": ["@effect-coffee-shop/coffee-core@workspace:packages/coffee/core"],
 
-    "@effect-coffee-shop/coffee-external-in-memory": ["@effect-coffee-shop/coffee-external-in-memory@workspace:packages/domains/coffee/external-in-memory"],
+    "@effect-coffee-shop/coffee-external-in-memory": ["@effect-coffee-shop/coffee-external-in-memory@workspace:packages/coffee/external/in-memory"],
 
-    "@effect-coffee-shop/coffee-external-sqlite": ["@effect-coffee-shop/coffee-external-sqlite@workspace:packages/domains/coffee/external-sqlite"],
+    "@effect-coffee-shop/coffee-external-sqlite": ["@effect-coffee-shop/coffee-external-sqlite@workspace:packages/coffee/external/sqlite"],
 
-    "@effect-coffee-shop/coffee-http": ["@effect-coffee-shop/coffee-http@workspace:packages/coffee-http"],
+    "@effect-coffee-shop/coffee-http": ["@effect-coffee-shop/coffee-http@workspace:packages/coffee/presentation/http"],
 
-    "@effect-coffee-shop/coffee-mcp": ["@effect-coffee-shop/coffee-mcp@workspace:packages/coffee-mcp"],
+    "@effect-coffee-shop/coffee-mcp": ["@effect-coffee-shop/coffee-mcp@workspace:packages/coffee/presentation/mcp"],
 
     "@effect-coffee-shop/web": ["@effect-coffee-shop/web@workspace:apps/ui"],
 

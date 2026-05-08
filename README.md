@@ -6,18 +6,19 @@ This repo is split into Bun workspaces with a domain-centric layout:
 
 - `apps/backend/` for the Effect-based HTTP, CLI, MCP, Bun, and Cloudflare presentation app
 - `apps/ui/` for the standalone browser frontend
-- `packages/domains/coffee/core/` for the Coffee bounded context Onion Core: domain types, rules, service ports, and use cases
-- `packages/domains/coffee/external-in-memory/` for the Coffee in-memory External Layer implementation
-- `packages/domains/coffee/external-sqlite/` for the Coffee SQLFU-backed SQLite/D1 External Layer implementation
+- `packages/coffee/core/` for the Coffee bounded context Onion Core: domain types, rules, service ports, and use cases
+- `packages/coffee/external/in-memory/` for the Coffee in-memory External Layer implementation
+- `packages/coffee/external/sqlite/` for the Coffee SQLFU-backed SQLite/D1 External Layer implementation
 
 The backend selects its default local External Layer in `apps/backend/src/app-layer.ts`.
 Switching the Bun app between SQLite and in-memory should be a one-line export change there.
 
 The main boundaries are:
 
-- `packages/domains/coffee/core/src/domain` for Coffee business types and rules
-- `packages/domains/coffee/core/src/service` for Coffee use cases and ports
-- `packages/domains/coffee/external-*/src` for Coffee adapter implementations
+- `packages/coffee/core/src/domain` for Coffee business types and rules
+- `packages/coffee/core/src/service` for Coffee use cases and ports
+- `packages/coffee/external/*/src` for Coffee adapter implementations
+- `packages/coffee/presentation/*/src` for runtime-agnostic Coffee HTTP, MCP, and CLI surfaces
 - `apps/backend/src/cloudflare` and `apps/backend/src/bun` for HTTP, CLI, MCP, and Worker entrypoints
 
 Most tests run against in-memory adapters. A small contract suite also runs against the SQL-backed repositories.
@@ -84,7 +85,7 @@ COFFEE_STAFF_USER_IDS=user-id-1,user-id-2 # optional
 
 Alchemy uses the v2 Cloudflare state store by default so team and CI deploys share state.
 For a disposable local-only state file under `.alchemy/`, set `ALCHEMY_LOCAL_STATE=1`.
-The app-owned D1 schema lives in [`packages/domains/coffee/external-sqlite/src/sql/migrations`](./packages/domains/coffee/external-sqlite/src/sql/migrations) and is applied by Alchemy during D1 updates.
+The app-owned D1 schema lives in [`packages/coffee/external/sqlite/src/sql/migrations`](./packages/coffee/external/sqlite/src/sql/migrations) and is applied by Alchemy during D1 updates.
 Canonical quality commands:
 
 ```bash
@@ -200,7 +201,7 @@ The current shape is:
 - `/api/*` rewritten into the existing Effect `HttpApi`
 - `/mcp` handled by the existing MCP HTTP server
 - `D1` and `AI` provisioned and bound into the Worker
-- app-owned D1 migrations applied from `packages/domains/coffee/external-sqlite/src/sql/migrations`
+- app-owned D1 migrations applied from `packages/coffee/external/sqlite/src/sql/migrations`
 - optional `AI_GATEWAY_ID` binding when `COFFEE_ASSISTANT_AI_GATEWAY=1` and the Cloudflare profile can manage AI Gateway resources
 - `BETTER_AUTH_SECRET` bound into the Worker from the environment or an Alchemy-managed per-stage random secret
 - Cloudflare Worker observability enabled with persisted logs/traces

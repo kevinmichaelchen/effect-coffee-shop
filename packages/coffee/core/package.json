@@ -1,29 +1,28 @@
 {
-  "name": "@effect-coffee-shop/coffee-mcp",
+  "name": "@effect-coffee-shop/coffee-core",
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "imports": {
+    "#domain/*": "./src/domain/*.ts",
+    "#service/*": "./src/service/*.ts"
+  },
   "exports": {
     ".": "./src/index.ts",
-    "./action-tools": "./src/action-tools.ts",
-    "./prompts": "./src/prompts.ts",
-    "./resources": "./src/resources.ts",
-    "./server": "./src/server.ts"
+    "./domain/*": "./src/domain/*.ts",
+    "./service/*": "./src/service/*.ts"
   },
   "scripts": {
     "typecheck": "tsgo --noEmit",
-    "lint": "oxlint -c ../.oxlintrc.json --disable-nested-config .",
-    "lint:fix": "oxlint -c ../.oxlintrc.json --disable-nested-config --fix .",
-    "lint:custom": "cd ../../apps/backend && lintcn lint --tsconfig ../../packages/coffee-mcp/tsconfig.json",
+    "lint": "oxlint --disable-nested-config .",
+    "lint:fix": "oxlint --disable-nested-config --fix .",
+    "lint:custom": "cd ../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/core/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "knip": "knip --files --exports --no-config-hints",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@effect-coffee-shop/backend-host": "workspace:*",
-    "@effect-coffee-shop/coffee-actions": "workspace:*",
-    "@effect-coffee-shop/coffee-core": "workspace:*",
     "effect": "catalog:"
   },
   "devDependencies": {

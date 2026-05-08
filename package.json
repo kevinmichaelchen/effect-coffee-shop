@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "workspaces": {
-    "packages": ["apps/*", "packages/*", "packages/domains/*/*"],
+    "packages": ["apps/*", "packages/backend-host", "packages/coffee/core", "packages/coffee/actions", "packages/coffee/assistant", "packages/coffee/auth", "packages/coffee/external/*", "packages/coffee/presentation/*"],
     "catalog": {
       "@better-auth/agent-auth": "0.4.5",
       "@better-auth/passkey": "^1.6.9",

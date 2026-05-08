@@ -13,7 +13,7 @@ runtime execution, layers, transactions, and resource management.
 The project shape is:
 
 ```text
-packages/domains/coffee/external-sqlite/src/sql/
+packages/coffee/external/sqlite/src/sql/
   sqlfu.config.ts
   definitions.sql
   migrations/

@@ -36,7 +36,7 @@ export default Alchemy.Stack(
     const aiGatewayEnabled = process.env.COFFEE_ASSISTANT_AI_GATEWAY === "1";
 
     const coffeeDb = yield* Cloudflare.D1Database("coffee-db", {
-      migrationsDir: "./packages/domains/coffee/external-sqlite/src/sql/migrations",
+      migrationsDir: "./packages/coffee/external/sqlite/src/sql/migrations",
     });
 
     const assistantGateway = aiGatewayEnabled

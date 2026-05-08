@@ -19,7 +19,7 @@
     "typecheck": "tsgo --noEmit",
     "lint": "oxlint --disable-nested-config .",
     "lint:fix": "oxlint --disable-nested-config --fix .",
-    "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/domains/coffee/external-sqlite/tsconfig.json",
+    "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/external/sqlite/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "knip": "knip --files --exports --no-config-hints",
