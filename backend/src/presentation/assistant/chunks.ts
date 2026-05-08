@@ -1,3 +1,5 @@
+import { EventType, type StreamChunk } from "@tanstack/ai";
+
 export interface AssistantChunkQueue<TChunk> {
   readonly stream: AsyncIterable<TChunk>;
   readonly close: () => void;
@@ -5,48 +7,7 @@ export interface AssistantChunkQueue<TChunk> {
   readonly push: (chunk: TChunk) => void;
 }
 
-export type AssistantStreamChunk =
-  | {
-      readonly type: "CUSTOM";
-      readonly timestamp: number;
-      readonly model: string;
-      readonly name: string;
-      readonly value: unknown;
-    }
-  | {
-      readonly type: "RUN_FINISHED";
-      readonly runId: string;
-      readonly model: string;
-      readonly timestamp: number;
-      readonly finishReason: "stop";
-    }
-  | {
-      readonly type: "RUN_STARTED";
-      readonly runId: string;
-      readonly model: string;
-      readonly timestamp: number;
-    }
-  | {
-      readonly type: "TEXT_MESSAGE_CONTENT";
-      readonly messageId: string;
-      readonly model: string;
-      readonly timestamp: number;
-      readonly delta: string;
-      readonly content: string;
-    }
-  | {
-      readonly type: "TEXT_MESSAGE_END";
-      readonly messageId: string;
-      readonly model: string;
-      readonly timestamp: number;
-    }
-  | {
-      readonly type: "TEXT_MESSAGE_START";
-      readonly messageId: string;
-      readonly model: string;
-      readonly timestamp: number;
-      readonly role: "assistant";
-    };
+export type AssistantStreamChunk = StreamChunk;
 
 export function createAssistantChunkQueue<TChunk>(
   signal?: AbortSignal,
@@ -73,7 +34,7 @@ export function createAssistantChunkQueue<TChunk>(
 
   const close = () => {
     isClosed = true;
-    settlePending({ value: undefined as TChunk, done: true });
+    settlePending({ value: undefined, done: true });
   };
 
   const push = (chunk: TChunk) => {
@@ -133,7 +94,8 @@ export function createAssistantChunkQueue<TChunk>(
 
 export function createAssistantRunStartedChunk(runId: string, model: string): AssistantStreamChunk {
   return {
-    type: "RUN_STARTED",
+    type: EventType.RUN_STARTED,
+    threadId: runId,
     runId,
     model,
     timestamp: Date.now(),
@@ -145,7 +107,8 @@ export function createAssistantRunFinishedChunk(
   model: string,
 ): AssistantStreamChunk {
   return {
-    type: "RUN_FINISHED",
+    type: EventType.RUN_FINISHED,
+    threadId: runId,
     runId,
     model,
     timestamp: Date.now(),
@@ -158,7 +121,7 @@ export function createAssistantTextStartChunk(
   model: string,
 ): AssistantStreamChunk {
   return {
-    type: "TEXT_MESSAGE_START",
+    type: EventType.TEXT_MESSAGE_START,
     messageId,
     model,
     timestamp: Date.now(),
@@ -172,7 +135,7 @@ export function createAssistantTextContentChunk(
   content: string,
 ): AssistantStreamChunk {
   return {
-    type: "TEXT_MESSAGE_CONTENT",
+    type: EventType.TEXT_MESSAGE_CONTENT,
     messageId,
     model,
     timestamp: Date.now(),
@@ -186,7 +149,7 @@ export function createAssistantTextEndChunk(
   model: string,
 ): AssistantStreamChunk {
   return {
-    type: "TEXT_MESSAGE_END",
+    type: EventType.TEXT_MESSAGE_END,
     messageId,
     model,
     timestamp: Date.now(),
@@ -199,7 +162,7 @@ export function createAssistantCustomChunk(
   value: unknown,
 ): AssistantStreamChunk {
   return {
-    type: "CUSTOM",
+    type: EventType.CUSTOM,
     timestamp: Date.now(),
     model,
     name,

@@ -34,6 +34,12 @@ const ingressRequestAuthorized = (request: Request, env: Env): boolean =>
 export class OtelCollectorContainer extends Container<Env> {
   defaultPort = 4318;
 
+  labels = {
+    app: "effect-coffee-shop",
+    component: "otel-collector",
+    service: "collector-ingress",
+  };
+
   sleepAfter = "10m";
 
   constructor(ctx: DurableObjectState<Env>, env: Env) {

@@ -4,8 +4,8 @@ export const temperatures = ["hot", "iced", "extra-hot"] as const;
 export const orderStatuses = ["pending", "brewing", "ready", "picked-up", "cancelled"] as const;
 
 export type DrinkSize = (typeof drinkSizes)[number];
-export type Milk = (typeof milks)[number];
-export type Temperature = (typeof temperatures)[number];
+type Milk = (typeof milks)[number];
+type Temperature = (typeof temperatures)[number];
 export type OrderStatus = (typeof orderStatuses)[number];
 export type OrderAction = "start-brewing" | "mark-ready" | "pick-up" | "cancel";
 
