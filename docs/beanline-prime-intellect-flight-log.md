@@ -575,3 +575,156 @@ Before spending on a larger base model, make the reward less sparse:
 - Keep the Iteration 2 champion as the production candidate unless the next
   experiment beats `0.835` on `hard_eval` and improves `price_format` above
   `0.625` without raising tool calls.
+
+## Iteration 4: Receipt Signal And Bigger-Model Probe
+
+### Plan
+
+The most valuable next step was to improve the training signal before spending
+on much larger models. Iteration 3 showed that price-format reward alone was too
+sparse. Iteration 4 therefore made the receipt behavior more explicit:
+
+- Environment version: `0.1.5`
+- Added more accepted-order training tasks whose prompts ask for dollar totals.
+- Added rubric: `receipt_style`
+- New reward weights:
+
+| Reward component | Weight |
+| --- | ---: |
+| `tool_correctness` | `0.40` |
+| `final_response_quality` | `0.20` |
+| `product_efficiency` | `0.15` |
+| `price_format` | `0.15` |
+| `receipt_style` | `0.10` |
+
+`receipt_style` rewards a successful final answer that includes the drink name,
+order id, exact dollar total, no cent/currency mistakes, no post-success tool
+calls, and short wording.
+
+### Champion Re-Baseline Under `0.1.5`
+
+The reward changed, so the Iteration 2 champion had to be re-evaluated before
+any new run could be compared fairly.
+
+- Adapter: `rqvfrcdy4xt95oka37b0xjyu`
+- Hosted eval id: `qu00ipz8e4o04ja1jgx119wu`
+- Eval shape: 8 examples, 2 rollouts per example, 256 max tokens
+
+| Metric | Champion on `0.1.5 hard_eval` |
+| --- | ---: |
+| reward avg | `0.830` |
+| pass@1 | `1.000` |
+| pass@2 | `1.000` |
+| tool_correctness avg | `0.984` |
+| final_response_quality avg | `0.639` |
+| product_efficiency avg | `0.853` |
+| price_format avg | `0.625` |
+| receipt_style avg | `0.866` |
+| average total tool calls | `1.750` |
+| average output tokens | `132.562` |
+
+The champion remains strong. The key miss is unchanged: exact dollar formatting
+is only `0.625`.
+
+### Experiment A: 0.8B Warm-Start With Receipt Style
+
+- Run: `bepjjxzmb5ix79n0exmvtxra`
+- Config: `effect-coffee-ordering-qwen-0.8b-receipt-style-v015`
+- Start point: Iteration 2 checkpoint `oo8lrytspz37lfsdlloubig7`
+- Environment version: `0.1.5`
+- Learning rate: `5e-5`
+- Max steps: `55`
+- Cost: `$0.60`
+
+Trainer metrics:
+
+| Checkpoint | Hard eval Avg@2 | Mean eval completion length | Decision |
+| --- | ---: | ---: | --- |
+| step 32 | `0.7435` | `645.688` | below champion |
+| step 42 | `0.7521` | `635.563` | below champion |
+| step 52 | `0.7412` | `668.688` | below champion |
+| final | `0.7426` | `669.625` | rejected |
+
+This confirmed that adding receipt-style reward and examples helped training
+batches but did not produce a better held-out policy. The model still became
+too verbose on held-out eval.
+
+### Experiment B: Raw Bigger-Model Probes
+
+Before training a bigger model, two raw larger Qwen models were evaluated on
+the same hard holdout.
+
+| Model | Eval id | Reward avg | Tool correctness | Price format | Receipt style | Notes |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| `Qwen/Qwen3.5-2B` | `psc4otym1oh7irxcdw18tzya` | `0.610` | `0.562` | `0.750` | `0.741` | better receipt prior, weak tool use |
+| `Qwen/Qwen3.5-4B` | `a0tbg2ctifimgv5l18z7jrij` | `0.674` | `0.688` | `0.688` | `0.688` | verbose reasoning, 50% truncation |
+
+An attempted `Qwen/Qwen3.5-4B` eval with `enable_thinking=false` failed at the
+hosted eval client layer:
+
+- Eval id: `mwxan4rlkl14013zz7usctb6`
+- Failure: `AsyncCompletions.create() got an unexpected keyword argument
+  'enable_thinking'`
+
+That failed eval is not evidence about model quality; it is a tooling limitation
+for this hosted eval path.
+
+### Experiment C: 2B Training Probe
+
+The raw 2B model had a better receipt prior than the 0.8B champion but poor tool
+correctness. Since RL previously taught tool behavior well, a small 2B training
+run was the most plausible larger-model experiment.
+
+- Run: `ubl29vbu5g5oi08ig4pbhw4q`
+- Config: `effect-coffee-ordering-qwen-2b-v015`
+- Model: `Qwen/Qwen3.5-2B`
+- Environment version: `0.1.5`
+- Planned max steps: `50`
+- Stopped at: step `31` after the first trained hard eval
+- Cost: `$1.80`
+
+Trainer metrics:
+
+| Checkpoint | Hard eval Avg@2 | Mean eval completion length | Decision |
+| --- | ---: | ---: | --- |
+| step 0 | `0.6116` | `553.438` | raw 2B baseline in training config |
+| step 27 | `0.6675` | `628.438` | below champion; stopped soon after |
+
+Training did improve over raw 2B, but it was still far below the 0.8B champion
+and had worse verbosity. The run was stopped to protect budget.
+
+### Decision
+
+Do not promote any Iteration 4 adapter. Do not start 4B/9B training yet.
+
+The current champion remains:
+
+- Adapter: `rqvfrcdy4xt95oka37b0xjyu`
+- Champion `0.1.5 hard_eval` reward: `0.830`
+- Main weakness: `price_format = 0.625`
+
+The larger-model result is informative: bigger raw Qwen models have somewhat
+better receipt priors, but they do not naturally preserve the tool discipline we
+need. Training 2B did not close the gap cheaply enough, and 4B showed a
+verbosity/truncation risk.
+
+### Spend
+
+- Wallet after Iteration 4: `$43.27`
+- Iteration 4 incremental spend: about `$2.67`
+- Approximate total spend from the initial `$50.00`: `$6.73`
+- Budget remaining: `$43.27`
+
+### Next Decision
+
+The next best path is not a bigger RL run. The evidence points toward adding a
+more direct supervised receipt-format signal before more RL:
+
+- Add or generate deterministic successful-order transcripts where the final
+  answer is exactly one short receipt sentence with `$x.xx`.
+- Use SFT or another Prime-supported seed/warmup path if available.
+- If SFT is not available, reshape the environment so accepted-order prompts
+  expose a stronger contrast between good and bad final receipts, then rerun a
+  short 0.8B experiment.
+- Only revisit 2B/4B after the final-answer signal is strong enough that the
+  larger model's receipt prior can be captured without losing tool correctness.
