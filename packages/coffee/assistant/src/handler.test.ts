@@ -1,12 +1,13 @@
 import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import { describe, expect, it, vi } from "vitest";
-import { handleAssistantRequest } from "./handler.ts";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createAssistantModelRunnerLayer, handleAssistantRequest } from "./handler.ts";
 import type { AssistantAiConfig } from "./runtime.ts";
 import type { AssistantGatewayOptions } from "./workers-ai-format.ts";
 
 const assistantModel = "@cf/meta/llama-3.1-8b-instruct-fast";
+const localAssistantModel = "qwen3-beanline";
 
 const createAiRunMock = () =>
   vi.fn<
@@ -32,13 +33,13 @@ const createBindingAiConfig = (
 ): AssistantAiConfig =>
   gatewayId === undefined
     ? {
-        kind: "binding",
+        kind: "workers-ai-binding",
         binding: {
           run: aiRun,
         },
       }
     : {
-        kind: "binding",
+        kind: "workers-ai-binding",
         binding: {
           run: aiRun,
         },
@@ -47,9 +48,9 @@ const createBindingAiConfig = (
 
 const createAssistantHandlerOptions = (aiRun: ReturnType<typeof createAiRunMock>) => ({
   actor: systemActor,
-  ai: createBindingAiConfig(aiRun),
   appLayer: InMemoryCoffeeAppLive,
   model: assistantModel,
+  modelLayer: createAssistantModelRunnerLayer(createBindingAiConfig(aiRun)),
 });
 
 const verifyToolRun = async () => {
@@ -86,6 +87,69 @@ const verifyToolRun = async () => {
   expect(body).toContain('"label":"list_menu"');
   expect(body).toContain('"kind":"tool-call"');
   expect(body).toContain('"kind":"tool-result"');
+  expect(body).toContain("espresso drinks, cold brew, and tea");
+  expect(body).toContain('"type":"RUN_FINISHED"');
+};
+
+const verifyOllamaToolRun = async () => {
+  const fetchMock = vi
+    .fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>()
+    .mockResolvedValueOnce(
+      Response.json({
+        message: {
+          content: "",
+          tool_calls: [
+            {
+              function: {
+                arguments: {},
+                name: "list_menu",
+              },
+            },
+          ],
+        },
+      }),
+    )
+    .mockResolvedValueOnce(
+      Response.json({
+        message: {
+          content: "We have espresso drinks, cold brew, and tea available right now.",
+        },
+      }),
+    );
+
+  vi.stubGlobal("fetch", fetchMock);
+
+  const response = await handleAssistantRequest(
+    createAssistantRequest([{ role: "user", content: "List the menu briefly." }]),
+    {
+      actor: systemActor,
+      appLayer: InMemoryCoffeeAppLive,
+      model: localAssistantModel,
+      modelLayer: createAssistantModelRunnerLayer({
+        kind: "ollama",
+        endpoint: "http://localhost:11434/",
+      }),
+    },
+  );
+  const body = await response.text();
+  const requestBodies = fetchMock.mock.calls.flatMap((call) => {
+    const requestBody = call[1]?.body;
+
+    return typeof requestBody === "string" ? [requestBody] : [];
+  });
+
+  expect(response.status).toBe(200);
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(fetchMock).toHaveBeenCalledWith(
+    "http://localhost:11434/api/chat",
+    expect.objectContaining({
+      method: "POST",
+    }),
+  );
+  expect(requestBodies.join("\n")).toContain(`"model":"${localAssistantModel}"`);
+  expect(requestBodies.join("\n")).toContain('"tools"');
+  expect(requestBodies.join("\n")).toContain('"tool_name":"list_menu"');
+  expect(body).toContain('"label":"list_menu"');
   expect(body).toContain("espresso drinks, cold brew, and tea");
   expect(body).toContain('"type":"RUN_FINISHED"');
 };
@@ -133,7 +197,10 @@ const verifyAiGatewayRouting = async () => {
     createAssistantRequest([{ role: "user", content: "List the menu briefly." }]),
     {
       ...createAssistantHandlerOptions(aiRun),
-      ai: createBindingAiConfig(aiRun, "assistant-gateway"),
+      gatewayEnabled: true,
+      modelLayer: createAssistantModelRunnerLayer(
+        createBindingAiConfig(aiRun, "assistant-gateway"),
+      ),
     },
   );
 
@@ -153,8 +220,13 @@ const verifyAiGatewayRouting = async () => {
   );
 };
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe("assistant handler", () => {
   it("runs coffee tools before streaming the final assistant reply", verifyToolRun);
+  it("runs coffee tools through a local Ollama-compatible assistant provider", verifyOllamaToolRun);
   it("accepts TanStack UI messages from the browser client", verifyUiMessages);
   it(
     "routes Cloudflare Worker assistant traffic through the configured AI Gateway",

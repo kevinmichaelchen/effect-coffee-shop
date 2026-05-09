@@ -63,11 +63,11 @@ function ComposerStatus(inputProps: ComposerStatusProps) {
       {isBusy ? (
         <div className="flex items-center gap-2 text-sm font-medium">
           <Spinner size="sm" />
-          <span>{busyDetail ?? "Waiting on Workers AI…"}</span>
+          <span>{busyDetail ?? "Waiting on Beanline..."}</span>
         </div>
       ) : null}
       <p className="text-sm text-muted-foreground">
-        {helpText ?? "Cmd/Ctrl + Enter sends the prompt to the Cloudflare Worker."}
+        {helpText ?? "Cmd/Ctrl + Enter sends the prompt to Beanline."}
       </p>
     </div>
   );

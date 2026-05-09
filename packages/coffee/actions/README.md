@@ -8,7 +8,7 @@ It sits at the application/presentation boundary:
 - It defines shared action names, descriptions, schemas, JSON input metadata, execution helpers, and presentation-neutral formatting.
 - It does not depend on HTTP, MCP, assistant runtimes, Better Auth, Cloudflare, Bun, Node, or external adapter packages.
 
-Presentation packages adapt these neutral actions into their own transport or runtime format. For example, MCP turns them into Effect MCP tools, the assistant turns them into Workers AI tool definitions, and auth turns them into Agent Auth capabilities.
+Presentation packages adapt these neutral actions into their own transport or runtime format. For example, MCP turns them into Effect MCP tools, the assistant turns them into provider-neutral AI tools, and auth turns them into Agent Auth capabilities.
 
 ## Directory Map
 

@@ -1,6 +1,8 @@
 import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";
+import * as Option from "effect/Option";
 import {
+  createAssistantModelRunnerLayer,
   getAssistantModel,
   getBunAssistantAiConfig,
   handleAssistantRequest,
@@ -27,11 +29,17 @@ export async function startCoffeeBunServer<
     fetch: async (request) => {
       const pathname = new URL(request.url).pathname;
       if (pathname === "/assistant") {
+        const ai = getBunAssistantAiConfig(Bun.env);
+        const modelLayer = Option.match(Option.fromNullishOr(ai), {
+          onNone: () => undefined,
+          onSome: createAssistantModelRunnerLayer,
+        });
+
         return handleAssistantRequest(request, {
           actor: systemActor,
-          ai: getBunAssistantAiConfig(Bun.env),
           appLayer: input.appLayer,
-          model: getAssistantModel(Bun.env),
+          model: getAssistantModel(Bun.env, ai),
+          modelLayer,
         });
       }
 

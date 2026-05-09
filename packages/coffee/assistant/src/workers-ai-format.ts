@@ -1,54 +1,52 @@
 import type {
-  AiTextGenerationOutput,
   AiTextGenerationToolLegacyOutput,
   RoleScopedChatInput,
 } from "@cloudflare/workers-types";
-import type { ModelMessage } from "@tanstack/ai";
-import type { AssistantToolDefinition } from "./tools/definitions.ts";
-
-export type AssistantGatewayMetadata = Readonly<
-  Record<string, boolean | number | string | null | bigint>
->;
+import * as Match from "effect/Match";
+import * as Option from "effect/Option";
+import type {
+  AssistantConversationMessage,
+  AssistantRequestMetadata,
+  AssistantToolCall,
+  AssistantToolDefinition,
+} from "./model.ts";
+import { getAssistantToolDescription, getAssistantToolName } from "./model.ts";
 
 export type AssistantGatewayOptions = Readonly<{
   gateway: Readonly<{
     collectLog: true;
     eventId?: string;
     id: string;
-    metadata?: AssistantGatewayMetadata;
+    metadata?: AssistantRequestMetadata;
   }>;
 }>;
 
 export type AssistantRunnableTool = Readonly<{
-  description: AssistantToolDefinition["description"];
-  name: AssistantToolDefinition["name"];
+  description: string;
+  name: string;
   parameters?: AssistantToolDefinition["parameters"];
 }>;
 
-const assistantFallbackMessage = "I couldn't generate a final response.";
-
 export function createGatewayOptions(
   gatewayId: string | undefined,
-  metadata: AssistantGatewayMetadata | undefined,
+  metadata: AssistantRequestMetadata | undefined,
   eventId: string | undefined,
 ): AssistantGatewayOptions | undefined {
-  const normalizedGatewayId = gatewayId?.trim();
+  const normalizedGatewayId = Option.fromNullishOr(gatewayId?.trim()).pipe(
+    Option.filter((id) => id !== ""),
+  );
 
-  if (normalizedGatewayId === undefined || normalizedGatewayId === "") {
-    return undefined;
-  }
-
-  return createGatewayOptionRecord(normalizedGatewayId, eventId, metadata);
-}
-
-export function extractAssistantText(output: AiTextGenerationOutput): string {
-  const text = output.response?.trim();
-
-  if (!text) {
-    return assistantFallbackMessage;
-  }
-
-  return text;
+  return normalizedGatewayId.pipe(
+    Option.match({
+      onNone: () => undefined,
+      onSome: (id) =>
+        createGatewayOptionRecord(
+          id,
+          Option.fromNullishOr(eventId),
+          Option.fromNullishOr(metadata),
+        ),
+    }),
+  );
 }
 
 export function isToolCall(
@@ -57,107 +55,85 @@ export function isToolCall(
   return value !== undefined && typeof value.name === "string";
 }
 
-export function stripToolExecutor(tool: AssistantToolDefinition): AssistantRunnableTool {
-  if (tool.parameters === undefined) {
-    return {
-      description: tool.description,
-      name: tool.name,
-    };
-  }
-
+export function toAssistantToolCall(toolCall: AiTextGenerationToolLegacyOutput): AssistantToolCall {
   return {
-    description: tool.description,
-    name: tool.name,
-    parameters: tool.parameters,
+    arguments: toolCall.arguments,
+    name: toolCall.name,
   };
 }
 
-export function toWorkersAiMessages(
-  messages: readonly ModelMessage[],
-  systemPrompt: string,
-): RoleScopedChatInput[] {
-  return messages.reduce<RoleScopedChatInput[]>(
-    (conversation, message) => {
-      const converted = toWorkersAiMessage(message);
+export function stripToolExecutor(tool: AssistantToolDefinition): AssistantRunnableTool {
+  const runnableTool = {
+    description: getAssistantToolDescription(tool),
+    name: getAssistantToolName(tool),
+  };
 
-      if (converted === null) {
-        return conversation;
-      }
-
-      return conversation.concat(converted);
-    },
-    [{ role: "system", content: systemPrompt }],
+  return Option.fromNullishOr(tool.parameters).pipe(
+    Option.match({
+      onNone: () => runnableTool,
+      onSome: (parameters) => ({
+        ...runnableTool,
+        parameters,
+      }),
+    }),
   );
 }
 
-function toWorkersAiMessage(message: ModelMessage): RoleScopedChatInput | null {
-  const content = extractMessageText(message.content);
-
-  if (content === "") {
-    return null;
-  }
-
-  return {
-    role: message.role,
-    content,
-  };
+export function toWorkersAiMessages(
+  messages: readonly AssistantConversationMessage[],
+): RoleScopedChatInput[] {
+  return messages.flatMap((message) =>
+    toWorkersAiMessage(message).pipe(
+      Option.match({
+        onNone: () => [],
+        onSome: (converted) => [converted],
+      }),
+    ),
+  );
 }
 
-function extractMessageText(content: ModelMessage["content"]): string {
-  if (content === null) {
-    return "";
-  }
-
-  if (typeof content === "string") {
-    return content;
-  }
-
-  return content
-    .filter((part) => part.type === "text")
-    .map((part) => part.content)
-    .join("");
+function toWorkersAiMessage(
+  message: AssistantConversationMessage,
+): Option.Option<RoleScopedChatInput> {
+  return Match.value(message).pipe(
+    Match.when({ content: "" }, () => Option.none<RoleScopedChatInput>()),
+    Match.when({ role: "tool" }, (toolMessage) =>
+      Option.some({
+        content: toolMessage.content,
+        name: toolMessage.name,
+        role: "tool",
+      }),
+    ),
+    Match.orElse((roleMessage) =>
+      Option.some({
+        role: roleMessage.role,
+        content: roleMessage.content,
+      }),
+    ),
+  );
 }
 
 function createGatewayOptionRecord(
   gatewayId: string,
-  eventId: string | undefined,
-  metadata: AssistantGatewayMetadata | undefined,
+  eventId: Option.Option<string>,
+  metadata: Option.Option<AssistantRequestMetadata>,
 ): AssistantGatewayOptions {
-  if (eventId === undefined) {
-    if (metadata === undefined) {
-      return {
-        gateway: {
-          collectLog: true,
-          id: gatewayId,
-        },
-      };
-    }
-
-    return {
-      gateway: {
-        collectLog: true,
-        id: gatewayId,
-        metadata,
-      },
-    };
-  }
-
-  if (metadata === undefined) {
-    return {
-      gateway: {
-        collectLog: true,
-        eventId,
-        id: gatewayId,
-      },
-    };
-  }
-
   return {
     gateway: {
       collectLog: true,
-      eventId,
       id: gatewayId,
-      metadata,
+      ...eventId.pipe(
+        Option.match({
+          onNone: () => ({}),
+          onSome: (value) => ({ eventId: value }),
+        }),
+      ),
+      ...metadata.pipe(
+        Option.match({
+          onNone: () => ({}),
+          onSome: (value) => ({ metadata: value }),
+        }),
+      ),
     },
   };
 }

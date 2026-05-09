@@ -1,0 +1,123 @@
+import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
+import * as Effect from "effect/Effect";
+import {
+  AssistantModelRequestError,
+  AssistantModelResponseDecodeError,
+  type AssistantRequestMetadata,
+  type AssistantModelRunnerService,
+  extractResponseText,
+} from "./model.ts";
+import { runWorkersAiOverRest } from "./workers-ai-rest.ts";
+import {
+  createGatewayOptions,
+  isToolCall,
+  stripToolExecutor,
+  toAssistantToolCall,
+  toWorkersAiMessages,
+  type AssistantGatewayOptions,
+} from "./workers-ai-format.ts";
+
+interface WorkersAiBinding {
+  run(
+    model: string,
+    inputs: AiTextGenerationInput,
+    options?: AssistantGatewayOptions,
+  ): Promise<AiTextGenerationOutput>;
+}
+
+export type WorkersAiConfig =
+  | {
+      readonly kind: "workers-ai-binding";
+      readonly binding: WorkersAiBinding;
+      readonly gatewayId?: string;
+    }
+  | {
+      readonly kind: "workers-ai-rest";
+      readonly accountId: string;
+      readonly apiKey: string;
+    };
+
+export function makeWorkersAiRunner(config: WorkersAiConfig): AssistantModelRunnerService {
+  const runner = createWorkersAiRunner(config);
+
+  return {
+    run: (request) =>
+      runner
+        .run(
+          request.model,
+          {
+            max_tokens: request.maxTokens,
+            messages: toWorkersAiMessages(request.conversation),
+            tools: request.tools.map(stripToolExecutor),
+          },
+          request.requestMetadata,
+          request.eventId,
+        )
+        .pipe(
+          Effect.map((response) => {
+            const toolCalls =
+              response.tool_calls?.filter(isToolCall).map(toAssistantToolCall) ?? [];
+
+            return {
+              text: extractResponseText(response.response),
+              toolCalls,
+            };
+          }),
+        ),
+  };
+}
+
+interface WorkersAiRunner {
+  readonly run: (
+    model: string,
+    inputs: AiTextGenerationInput,
+    metadata?: AssistantRequestMetadata,
+    eventId?: string,
+  ) => Effect.Effect<
+    AiTextGenerationOutput,
+    AssistantModelRequestError | AssistantModelResponseDecodeError
+  >;
+}
+
+function createWorkersAiRunner(config: WorkersAiConfig): WorkersAiRunner {
+  if (config.kind === "workers-ai-binding") {
+    return {
+      run: (model, inputs, metadata, eventId) => {
+        const options = createGatewayOptions(config.gatewayId, metadata, eventId);
+
+        if (options === undefined) {
+          return runWorkersAiBinding(config.binding, model, inputs);
+        }
+
+        return runWorkersAiBinding(config.binding, model, inputs, options);
+      },
+    };
+  }
+
+  return {
+    run: (model, inputs) =>
+      runWorkersAiOverRest({
+        accountId: config.accountId,
+        apiKey: config.apiKey,
+        model,
+        request: inputs,
+      }),
+  };
+}
+
+function runWorkersAiBinding(
+  binding: WorkersAiBinding,
+  model: string,
+  inputs: AiTextGenerationInput,
+  options?: AssistantGatewayOptions,
+): Effect.Effect<AiTextGenerationOutput, AssistantModelRequestError> {
+  return Effect.tryPromise({
+    try: () =>
+      options === undefined ? binding.run(model, inputs) : binding.run(model, inputs, options),
+    catch: () =>
+      new AssistantModelRequestError({
+        message: "Workers AI binding request failed.",
+        provider: "Workers AI",
+      }),
+  });
+}

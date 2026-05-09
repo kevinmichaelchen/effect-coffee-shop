@@ -21,8 +21,8 @@ under `packages/coffee`, while shared host utilities stay directly under
 - `coffee/presentation/mcp`: MCP resources, prompts, tools, and stdio/HTTP MCP
   Layers.
 - `coffee/presentation/cli`: CLI command tree over `CoffeeOrderApp`.
-- `coffee/assistant`: assistant request parsing, Workers AI runtime, streaming
-  chunks, and assistant tool projection.
+- `coffee/assistant`: assistant request parsing, provider-neutral AI runtime,
+  Cloudflare and Ollama adapters, streaming chunks, and assistant tool projection.
 - `coffee/auth`: Better Auth runtime setup and delegated Agent Auth capability
   execution.
 

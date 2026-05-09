@@ -1,9 +1,22 @@
-import type { AiTextGenerationToolLegacyInput } from "@cloudflare/workers-types";
-import { type CoffeeActionName, coffeeActionSpecs } from "@effect-coffee-shop/coffee-actions/specs";
+import type { CoffeeActionName } from "@effect-coffee-shop/coffee-actions/specs";
 import {
   executeCoffeeAction,
   type CoffeeAppRunner,
 } from "@effect-coffee-shop/coffee-actions/execute";
+import {
+  CancelOrderTool,
+  GetOrderTool,
+  ListMenuTool,
+  ListOrdersTool,
+  MarkReadyTool,
+  PickUpOrderTool,
+  PlaceOrderTool,
+  StartBrewingTool,
+} from "@effect-coffee-shop/coffee-actions/toolkit";
+import * as Effect from "effect/Effect";
+import * as Match from "effect/Match";
+import * as Tool from "effect/unstable/ai/Tool";
+import type { AssistantToolActivity, AssistantToolDefinition } from "../model.ts";
 import {
   formatToolFailure,
   formatToolPayload,
@@ -16,21 +29,12 @@ import {
   placeOrderToolParameters,
 } from "./parameters.ts";
 
-interface AssistantToolActivity {
-  readonly detail: string;
-  readonly kind: "tool-call" | "tool-result";
-  readonly label: string;
-}
-
 export function getAssistantToolActivityEvent(): string {
   return "assistant_tool_activity";
 }
 
-export interface AssistantToolDefinition extends AiTextGenerationToolLegacyInput {
-  readonly execute: (input: unknown) => Promise<string>;
-}
-
 type AssistantToolEmitter = (activity: AssistantToolActivity) => void;
+type OrderStateActionName = "cancel_order" | "mark_ready" | "pick_up_order" | "start_brewing";
 
 export function createCoffeeAssistantTools(
   runApp: CoffeeAppRunner,
@@ -51,109 +55,124 @@ export function createCoffeeAssistantTools(
 function createListMenuTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
   return createAppTool({
     action: "list_menu",
-    description: coffeeActionSpecs.list_menu.description,
     emitActivity,
-    name: "list_menu",
     parameters: emptyToolParameters,
     runApp,
+    tool: ListMenuTool,
   });
 }
 
 function createPlaceOrderTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
   return createAppTool({
     action: "place_order",
-    description: coffeeActionSpecs.place_order.description,
     emitActivity,
-    name: "place_order",
     parameters: placeOrderToolParameters,
     runApp,
+    tool: PlaceOrderTool,
   });
 }
 
 function createGetOrderTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
   return createAppTool({
     action: "get_order",
-    description: coffeeActionSpecs.get_order.description,
     emitActivity,
-    name: "get_order",
     parameters: orderIdToolParameters,
     runApp,
+    tool: GetOrderTool,
   });
 }
 
 function createListOrdersTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
   return createAppTool({
     action: "list_orders",
-    description: coffeeActionSpecs.list_orders.description,
     emitActivity,
-    name: "list_orders",
     parameters: listOrdersToolParameters,
     runApp,
+    tool: ListOrdersTool,
   });
 }
 
 function createOrderIdTool(
-  name: CoffeeActionName,
+  name: OrderStateActionName,
   emitActivity: AssistantToolEmitter,
   runApp: CoffeeAppRunner,
 ) {
+  const tool = getOrderStateTool(name);
+
   return createAppTool({
     action: name,
-    description: coffeeActionSpecs[name].description,
     emitActivity,
-    name,
     parameters: orderIdToolParameters,
     runApp,
+    tool,
   });
 }
 
 function createAppTool(input: {
   readonly action: CoffeeActionName;
-  readonly description: string;
   readonly emitActivity: AssistantToolEmitter;
-  readonly name: string;
-  readonly parameters: NonNullable<AiTextGenerationToolLegacyInput["parameters"]>;
+  readonly parameters: AssistantToolDefinition["parameters"];
   readonly runApp: CoffeeAppRunner;
+  readonly tool: Tool.Any;
 }): AssistantToolDefinition {
-  const { action, description, emitActivity, name, parameters, runApp } = input;
+  const { action, emitActivity, parameters, runApp, tool } = input;
+  const name = tool.name;
 
   return {
-    description,
-    execute: async (toolInput) => {
-      emitActivity({
-        detail: formatToolPayload(toolInput),
-        kind: "tool-call",
-        label: name,
-      });
-
-      try {
-        const output = await executeCoffeeAction({
-          action,
-          payload: toolInput,
-          runApp,
-        });
-        const serializedOutput = serializeToolResult(output);
-
+    execute: (toolInput) =>
+      Effect.gen(function* () {
         emitActivity({
-          detail: formatToolPayload(output),
-          kind: "tool-result",
+          detail: formatToolPayload(toolInput),
+          kind: "tool-call",
           label: name,
         });
 
-        return serializedOutput;
-      } catch (error) {
-        const detail = formatToolFailure(error);
+        return yield* Effect.tryPromise({
+          try: () =>
+            executeCoffeeAction({
+              action,
+              payload: toolInput,
+              runApp,
+            }),
+          catch: (error) => error,
+        }).pipe(
+          Effect.match({
+            onFailure: (error) => {
+              const detail = formatToolFailure(error);
 
-        emitActivity({
-          detail,
-          kind: "tool-result",
-          label: name,
-        });
+              emitActivity({
+                detail,
+                kind: "tool-result",
+                label: name,
+              });
 
-        return detail;
-      }
-    },
-    name,
+              return detail;
+            },
+            onSuccess: (output) => {
+              const serializedOutput = serializeToolResult(output);
+
+              emitActivity({
+                detail: formatToolPayload(output),
+                kind: "tool-result",
+                label: name,
+              });
+
+              return serializedOutput;
+            },
+          }),
+        );
+      }),
     parameters,
+    tool,
   };
+}
+
+function getOrderStateTool(name: OrderStateActionName): Tool.Any {
+  return Match.value(name).pipe(
+    Match.when("start_brewing", () => StartBrewingTool),
+    Match.when("mark_ready", () => MarkReadyTool),
+    Match.when("pick_up_order", () => PickUpOrderTool),
+    Match.when("cancel_order", () => CancelOrderTool),
+    Match.exhaustive,
+  );
 }
