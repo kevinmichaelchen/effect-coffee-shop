@@ -279,8 +279,139 @@ correctness while reducing verbosity:
 
 ## Next Decision
 
-Before launching Iteration 2, update the Prime environment reward code and eval
-tasks to encode the product-readiness criteria above. Then run a small hosted
-baseline against the Iteration 1 adapter and a matched hosted eval after the
-new training run. Append both results here before deciding whether to try a
-larger model.
+Iteration 2 has now been executed. The result beat Iteration 1 on every tracked
+product-readiness metric, so the next decision is whether to harden the eval
+suite with more adversarial tasks before trying a larger model.
+
+## Iteration 2 Execution: Efficiency And Final Response Quality
+
+### Reward Revision
+
+Environment `0.1.3` added a third reward component, `product_efficiency`, and
+changed the system prompt to make the desired trace explicit:
+
+- Use `list_menu` when validation is needed.
+- For valid orders, call `place_order` once with canonical values.
+- After `place_order` succeeds, stop using tools.
+- Give one concise final confirmation with drink, order id, and price.
+- For invalid requests, give one concise correction or valid alternative.
+
+The new reward weights were:
+
+| Reward component | Weight |
+| --- | ---: |
+| `tool_correctness` | `0.55` |
+| `final_response_quality` | `0.25` |
+| `product_efficiency` | `0.20` |
+
+`product_efficiency` scored the operational shape of the trace:
+
+- `place_order` tasks: at most one menu lookup, exactly one order call, no tool
+  calls after success, a final response, and concise wording.
+- `list_menu` tasks: exactly one menu call, no order calls, a final answer, and
+  concise wording.
+- refusal tasks: no order call, at most one menu call, a final answer, and
+  concise wording.
+
+### Stricter Baseline For Iteration 1 Adapter
+
+The Iteration 1 adapter was redeployed and evaluated against environment
+`0.1.3` before training Iteration 2.
+
+- Adapter: `wukfwrfyupnrxl3sl5apsbjx`
+- Hosted eval id: `xvcy6h7p5z1ffgm9i0t22eka`
+- Eval shape: 8 examples, 2 rollouts per example, 256 max tokens
+
+| Metric | Iteration 1 under `0.1.3` |
+| --- | ---: |
+| reward avg | `0.703` |
+| pass@1 | `0.938` |
+| pass@2 | `1.000` |
+| tool_correctness avg | `0.953` |
+| final_response_quality avg | `0.286` |
+| product_efficiency avg | `0.536` |
+| average total tool calls | `3.000` |
+| average `list_menu` calls | `1.625` |
+| average `place_order` calls | `1.375` |
+| max_turns_reached rate | `0.562` |
+
+This confirmed the diagnosis: the first adapter was already strong on business
+correctness, but it still used too many tools, repeated menu lookups, and often
+ran to the turn limit.
+
+### Training Run
+
+- Successful run: `pa17nnag3uslv49ydyyjhy85`
+- Environment version: `0.1.3`
+- Model: `Qwen/Qwen3.5-0.8B`
+- Max steps: `50`
+- Training cost: `$0.97`
+
+Trainer evals:
+
+| Checkpoint | Avg@2 | Notes |
+| --- | ---: | --- |
+| step 0 | `0.4521` | raw base model under stricter reward |
+| step 25 | `0.6992` | near-tie with Iteration 1 stricter baseline |
+| final | `0.7984` | clear improvement, so final adapter was evaluated externally |
+
+The step-25 eval was slightly below the Iteration 1 stricter baseline, but the
+training reward was still rising and cost was low, so the run continued to step
+50. That was the right call: the final trainer eval moved materially above the
+baseline.
+
+### External Verification Eval
+
+- Adapter: `rqvfrcdy4xt95oka37b0xjyu`
+- Inference model string while deployed:
+  `Qwen/Qwen3.5-0.8B:rqvfrcdy4xt95oka37b0xjyu`
+- Hosted eval id: `m5l1fk46fmkwdk123h6j09ne`
+- Eval shape: 8 examples, 2 rollouts per example, 256 max tokens
+- Deployment status after eval: unloaded
+
+| Metric | Iteration 1 strict baseline | Iteration 2 adapter | Delta |
+| --- | ---: | ---: | ---: |
+| reward avg | `0.703` | `0.907` | `+0.204` |
+| pass@1 | `0.938` | `1.000` | `+0.062` |
+| pass@2 | `1.000` | `1.000` | `+0.000` |
+| tool_correctness avg | `0.953` | `1.000` | `+0.047` |
+| final_response_quality avg | `0.286` | `0.729` | `+0.443` |
+| product_efficiency avg | `0.536` | `0.875` | `+0.339` |
+| average total tool calls | `3.000` | `1.812` | `-1.188` |
+| average `list_menu` calls | `1.625` | `1.062` | `-0.563` |
+| average `place_order` calls | `1.375` | `0.750` | `-0.625` |
+| max_turns_reached rate | `0.562` | `0.000` | `-0.562` |
+| average output tokens | `225.875` | `129.000` | `-96.875` |
+
+### Decision
+
+Iteration 2 succeeded. It did not trade correctness for brevity; it improved
+correctness to `1.000` while reducing tool calls, eliminating max-turn drift,
+and substantially improving final-response quality.
+
+The remaining quality issue is price formatting. One sampled final response
+said `₹518` instead of `$5.18`, while still receiving partial credit through
+other required fields. The next reward revision should make price-format
+correctness stricter and add eval cases that distinguish cents from dollars.
+
+### Spend
+
+- Wallet after Iteration 2: `$47.27`
+- Approximate total spend from the initial `$50.00`: `$2.73`
+- Budget remaining: about `$47.27`
+
+### Next Decision
+
+Do not move to a larger model yet. The small model is now strong on the current
+eval, so the next best use of budget is harder evaluation:
+
+- Add adversarial price-format tasks that require `$5.18` rather than `518` or
+  another currency symbol.
+- Add multi-item or follow-up-order tasks only if the product intends to support
+  them.
+- Add noisy natural-language variants for the same canonical order, such as
+  "whole milk" versus internal `whole`.
+- Add a true holdout set that is not reused during reward iteration.
+
+After the eval hardening, rerun Iteration 2 as the baseline and only then decide
+whether a 4B model is worth the extra cost.
