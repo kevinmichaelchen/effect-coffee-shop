@@ -1,44 +1,39 @@
 # Drizzle Postgres External Layer
 
-This package is a Postgres-backed External Layer implementation for the coffee
-application ports. It is intentionally separate from
-`@effect-coffee-shop/coffee-external-sqlite`; the composition root chooses one
-adapter layer at runtime.
+`@effect-coffee-shop/coffee-external-drizzle-postgres` provides a
+Postgres-backed implementation of the Coffee application ports.
 
-```ts
-import { DrizzlePostgresCoffeeAppLive as CoffeeAppLive } from "@effect-coffee-shop/coffee-external-drizzle-postgres";
-```
+## Exports
 
-## Ownership
-
-- Drizzle owns Postgres table definitions in `src/db/schema.ts`.
-- `drizzle-kit` owns generated Postgres migrations in `src/db/migrations`.
-- Runtime startup uses `drizzle-orm/effect-postgres/migrator`.
-- Repository adapters still satisfy the centralized Application Layer ports:
-  `MenuRepository`, `OrderRepository`, and `OrderIdGenerator`.
-- Rows are decoded with `effect/Schema` before they are mapped into domain
-  values.
+| Name | Description |
+| --- | --- |
+| `DrizzlePostgresCoffeeAppLive` | Complete Postgres Coffee application layer. |
+| `DrizzlePostgresCoffeeRepositoriesLive` | Combined Drizzle-backed Coffee repositories. |
+| `DrizzlePostgresSchemaLive` | Postgres migration and schema setup layer. |
+| `DrizzlePostgresSchemaReady` | Schema readiness service tag for Postgres startup. |
+| `CoffeeDb` | Effect service tag for the Drizzle database client. |
+| `PgCoffeeClientLive` | Postgres SQL client layer for Coffee storage. |
 
 ## Commands
 
-```sh
+```bash
 bun run --cwd packages/coffee/external/drizzle-postgres db:generate
 bun run --cwd packages/coffee/external/drizzle-postgres db:migrate
+bun run --cwd packages/coffee/external/drizzle-postgres typecheck
+bun run --cwd packages/coffee/external/drizzle-postgres lint
+bun run --cwd packages/coffee/external/drizzle-postgres lint:custom
+bun run --cwd packages/coffee/external/drizzle-postgres fmt:check
+bun run --cwd packages/coffee/external/drizzle-postgres test
 ```
 
-`db:migrate` reads `COFFEE_POSTGRES_URL`. The same variable is used by the live
-Effect layer.
+`db:migrate` and the live layer read `COFFEE_POSTGRES_URL`.
 
 ## Tests
 
-The repository contract suite runs only when `COFFEE_POSTGRES_TEST_URL` points
-at a disposable Postgres database:
+The Postgres repository contract suite runs only when
+`COFFEE_POSTGRES_TEST_URL` points at a disposable database:
 
-```sh
+```bash
 COFFEE_POSTGRES_TEST_URL=postgres://postgres:postgres@localhost:5432/effect_coffee_drizzle_test \
   bun run --cwd packages/coffee/external/drizzle-postgres test
 ```
-
-The suite applies migrations through the Effect layer, verifies migration
-idempotency, checks seeded menu data, exercises sequence-backed order IDs, and
-round-trips order persistence and filters.
