@@ -1,35 +1,19 @@
-import { Alert } from "#shared/ui/retroui/Alert.tsx";
-import { HeroBanner } from "#features/coffee-shop/components/HeroBanner.tsx";
-import { PageHeader } from "#features/coffee-shop/components/PageHeader.tsx";
+import {
+  WorkspaceAuthGate,
+  WorkspaceHeader,
+  WorkspaceWarning,
+} from "#features/coffee-shop/components/CoffeeWorkspaceShell.tsx";
+import { getCoffeeHeaderLinks } from "#features/coffee-shop/components/CoffeeWorkspaceLinks.ts";
 import { ReceiptDialog } from "#features/coffee-shop/components/ReceiptDialog.tsx";
+import { WorkspaceMetricStrip } from "#features/coffee-shop/components/WorkspaceMetricStrip.tsx";
 import { CustomerPanel } from "#features/coffee-shop/components/customer/CustomerPanel.tsx";
 import { CustomerOrdersPanel } from "#features/coffee-shop/components/customer/CustomerOrdersPanel.tsx";
 import { useCustomerWorkspace } from "#features/coffee-shop/hooks/useCustomerWorkspace.ts";
 import { usePasskeyAuth } from "#features/auth/hooks/usePasskeyAuth.ts";
-import { PasskeyGateCard } from "#features/auth/components/PasskeyGateCard.tsx";
-import { SessionCard } from "#features/auth/components/SessionCard.tsx";
-import { appRoutes } from "#app/routes.ts";
 import { isAuthenticatedViewer, type AuthenticatedViewer } from "#features/auth/lib/viewer.ts";
-import { getQueueLoad } from "#features/coffee-shop/lib/coffee.ts";
 
 function openOrdersSection(): void {
   document.getElementById("my-orders")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function getHeaderLinks() {
-  return [
-    { href: appRoutes.home, label: "Beanline Assistant", variant: "outline" as const },
-    { href: appRoutes.staff, label: "Staff queue", variant: "outline" as const },
-  ];
-}
-
-function WorkspaceWarning({ message }: { message: string }) {
-  return (
-    <Alert status="warning">
-      <Alert.Title>Workspace warning</Alert.Title>
-      <Alert.Description>{message}</Alert.Description>
-    </Alert>
-  );
 }
 
 function CustomerAuthGate(inputProps: {
@@ -38,19 +22,12 @@ function CustomerAuthGate(inputProps: {
 }) {
   const { auth, viewer } = inputProps;
 
-  return viewer !== null ? (
-    <SessionCard isPending={auth.isPending} viewer={viewer} onSignOut={auth.signOut} />
-  ) : (
-    <PasskeyGateCard
+  return (
+    <WorkspaceAuthGate
+      auth={auth}
       description="Create a customer account with one passkey, then come back with a single tap."
-      displayName={auth.displayName}
-      errorMessage={auth.errorMessage}
-      isPending={auth.isPending}
-      pendingAction={auth.pendingAction}
       title="Sign in before placing an order"
-      onCreateAccount={auth.createAccount}
-      onDisplayNameChange={auth.setDisplayName}
-      onSignIn={auth.signIn}
+      viewer={viewer}
     />
   );
 }
@@ -75,7 +52,7 @@ function CustomerWorkspacePanels(inputProps: {
   } = inputProps;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_26rem]">
       <CustomerPanel
         draft={draftState.draft}
         menu={menu}
@@ -97,6 +74,20 @@ function CustomerWorkspacePanels(inputProps: {
   );
 }
 
+function CustomerMetricStrip(inputProps: { active: number; history: number; menu: number }) {
+  const { active, history, menu } = inputProps;
+
+  return (
+    <WorkspaceMetricStrip
+      metrics={[
+        { label: "Menu", value: String(menu) },
+        { label: "Active", value: String(active) },
+        { label: "History", value: String(history) },
+      ]}
+    />
+  );
+}
+
 function CustomerWorkspaceView(inputProps: {
   auth: ReturnType<typeof usePasskeyAuth>;
   workspace: ReturnType<typeof useCustomerWorkspace>;
@@ -105,48 +96,11 @@ function CustomerWorkspaceView(inputProps: {
   const signedInViewer = isAuthenticatedViewer(workspace.viewer) ? workspace.viewer : null;
 
   return (
-    <main className="mx-auto grid min-h-screen w-full max-w-7xl gap-5 px-4 py-4 lg:px-6">
-      <PageHeader
-        activeOrders={workspace.activeOrders.length}
-        badgeLabel="Coffee shop"
-        footerLabel="Order for yourself with passkey-scoped tickets"
-        navLinks={getHeaderLinks()}
-        theme={workspace.theme}
-        title="Customer workspace"
-        totalOrders={workspace.orders.length}
-        onToggleTheme={workspace.toggleTheme}
-      />
-      <HeroBanner
-        badgeLabel="Passkey + D1"
-        description="Your order history is scoped to your account, while the same D1-backed queue still powers the staff side."
-        isRefreshingText={
-          workspace.ordersQuery.isFetching
-            ? "Refreshing your tickets…"
-            : "Your tickets are synced with the live HTTP API."
-        }
-        metrics={[
-          { label: "Menu items", value: String(workspace.menu.length) },
-          { label: "Active orders", value: String(workspace.activeOrders.length) },
-          { label: "History", value: String(workspace.historyOrders.length) },
-        ]}
-        queueLoad={getQueueLoad(workspace.activeOrders.length)}
-        title="Place an order without seeing anyone else’s."
-      />
-      {workspace.errorMessage !== null ? (
-        <WorkspaceWarning message={workspace.errorMessage} />
-      ) : null}
+    <main className="mx-auto grid min-h-screen w-full max-w-7xl gap-5 px-4 py-5 lg:px-6">
+      <CustomerWorkspaceHeader workspace={workspace} />
+      <WorkspaceWarning message={workspace.errorMessage} />
       <CustomerAuthGate auth={auth} viewer={signedInViewer} />
-      {signedInViewer !== null ? (
-        <CustomerWorkspacePanels
-          activeOrders={workspace.activeOrders}
-          createOrderMutation={workspace.createOrderMutation}
-          draftState={workspace.draftState}
-          historyOrders={workspace.historyOrders}
-          menu={workspace.menu}
-          ordersQuery={workspace.ordersQuery}
-          submitOrder={workspace.submitOrder}
-        />
-      ) : null}
+      <CustomerSignedInWorkspace signedInViewer={signedInViewer} workspace={workspace} />
       <ReceiptDialog
         actionLabel="Open my orders"
         order={workspace.receiptOrder}
@@ -154,6 +108,49 @@ function CustomerWorkspaceView(inputProps: {
         onOpenOrders={openOrdersSection}
       />
     </main>
+  );
+}
+
+function CustomerWorkspaceHeader(inputProps: {
+  workspace: ReturnType<typeof useCustomerWorkspace>;
+}) {
+  const { workspace } = inputProps;
+
+  return (
+    <WorkspaceHeader
+      activeOrders={workspace.activeOrders.length}
+      footerLabel="Order for yourself with passkey-scoped tickets"
+      navLinks={getCoffeeHeaderLinks("staff")}
+      theme={workspace.theme}
+      title="Customer workspace"
+      totalOrders={workspace.orders.length}
+      onToggleTheme={workspace.toggleTheme}
+    >
+      <CustomerMetricStrip
+        active={workspace.activeOrders.length}
+        history={workspace.historyOrders.length}
+        menu={workspace.menu.length}
+      />
+    </WorkspaceHeader>
+  );
+}
+
+function CustomerSignedInWorkspace(inputProps: {
+  signedInViewer: AuthenticatedViewer | null;
+  workspace: ReturnType<typeof useCustomerWorkspace>;
+}) {
+  const { signedInViewer, workspace } = inputProps;
+
+  return signedInViewer === null ? null : (
+    <CustomerWorkspacePanels
+      activeOrders={workspace.activeOrders}
+      createOrderMutation={workspace.createOrderMutation}
+      draftState={workspace.draftState}
+      historyOrders={workspace.historyOrders}
+      menu={workspace.menu}
+      ordersQuery={workspace.ordersQuery}
+      submitOrder={workspace.submitOrder}
+    />
   );
 }
 

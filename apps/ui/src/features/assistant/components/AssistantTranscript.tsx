@@ -1,9 +1,10 @@
-import { useEffect, useRef, type ReactNode, type RefObject } from "react";
+import type { ReactNode } from "react";
 import { Alert } from "#shared/ui/retroui/Alert.tsx";
 import { Button } from "#shared/ui/retroui/Button.tsx";
 import { Card } from "#shared/ui/retroui/Card.tsx";
 import { AssistantComposer } from "#features/assistant/components/AssistantComposer.tsx";
 import { AssistantStatusPanel } from "#features/assistant/components/AssistantStatusPanel.tsx";
+import { TranscriptViewport } from "#features/assistant/components/TranscriptViewport.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 import type {
   AssistantDisplayMessage,
@@ -29,56 +30,56 @@ interface AssistantTranscriptProps {
 }
 
 export function AssistantTranscript(inputProps: AssistantTranscriptProps) {
-  const {
-    activityControl,
-    connectionStatus,
-    errorMessage,
-    input,
-    isBusy,
-    latestActivity,
-    messages,
-    onInputChange,
-    onPromptClick,
-    onReset,
-    onSubmit,
-    prompts,
-    status,
-  } = inputProps;
-  const transcriptViewportRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const viewport = transcriptViewportRef.current;
-    if (viewport === null) {
-      return;
-    }
-
-    viewport.scrollTop = viewport.scrollHeight;
-  }, [isBusy, messages.length]);
+  const props = inputProps;
 
   return (
-    <Card className="w-full border-border bg-card">
-      <Card.Content className="grid gap-4 p-5">
+    <section className="grid flex-1 gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <ConversationPanel {...props} />
+      <AssistantRail {...props} />
+    </section>
+  );
+}
+
+function ConversationPanel(inputProps: AssistantTranscriptProps) {
+  const { activityControl, errorMessage, messages, onReset } = inputProps;
+
+  return (
+    <Card className="min-h-[34rem] w-full">
+      <Card.Content className="flex h-full flex-col gap-4 p-4">
         <TranscriptHeader activityControl={activityControl} onReset={onReset} />
-        <AssistantStatusPanel connectionStatus={connectionStatus} isBusy={isBusy} status={status} />
-        {errorMessage !== null ? (
-          <Alert status="warning">
-            <Alert.Title>Assistant warning</Alert.Title>
-            <Alert.Description>{errorMessage}</Alert.Description>
-          </Alert>
-        ) : null}
-        <PromptStrip prompts={prompts} onPromptClick={onPromptClick} />
-        <TranscriptViewport messages={messages} viewportRef={transcriptViewportRef} />
-        <AssistantComposer
-          {...getBusyDetailProp(status, latestActivity)}
-          helpText="Cmd/Ctrl + Enter sends the prompt to the same-origin Worker."
-          input={input}
-          isBusy={isBusy}
-          submitLabel={isBusy ? "Calling live tools…" : "Send"}
-          onInputChange={onInputChange}
-          onSubmit={onSubmit}
-        />
+        <AssistantWarning message={errorMessage} />
+        <TranscriptViewport messages={messages} />
+        <ComposerSlot {...inputProps} />
       </Card.Content>
     </Card>
+  );
+}
+
+function AssistantRail(inputProps: AssistantTranscriptProps) {
+  const { connectionStatus, isBusy, onPromptClick, prompts, status } = inputProps;
+
+  return (
+    <Card className="w-full">
+      <Card.Content className="grid gap-4 p-4">
+        <AssistantStatusPanel connectionStatus={connectionStatus} isBusy={isBusy} status={status} />
+        <PromptStrip prompts={prompts} onPromptClick={onPromptClick} />
+      </Card.Content>
+    </Card>
+  );
+}
+
+function ComposerSlot(inputProps: AssistantTranscriptProps) {
+  const { input, isBusy, latestActivity, onInputChange, onSubmit, status } = inputProps;
+
+  return (
+    <AssistantComposer
+      {...getBusyDetailProp(status, latestActivity)}
+      input={input}
+      isBusy={isBusy}
+      submitLabel={isBusy ? "Calling live tools..." : "Send"}
+      onInputChange={onInputChange}
+      onSubmit={onSubmit}
+    />
   );
 }
 
@@ -105,16 +106,20 @@ function getBusyDetailProp(
   return busyDetail === undefined ? {} : { busyDetail };
 }
 
-interface PromptStripProps {
-  onPromptClick: (prompt: string) => void;
-  prompts: readonly string[];
-}
-
 function PromptStrip({ onPromptClick, prompts }: PromptStripProps) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="grid gap-2">
+      <Text as="h3" className="text-base font-semibold">
+        Suggested
+      </Text>
       {prompts.map((prompt) => (
-        <Button key={prompt} size="sm" variant="outline" onClick={() => onPromptClick(prompt)}>
+        <Button
+          key={prompt}
+          className="h-auto min-h-9 justify-start whitespace-normal py-2 text-left leading-snug"
+          size="sm"
+          variant="outline"
+          onClick={() => onPromptClick(prompt)}
+        >
           {prompt}
         </Button>
       ))}
@@ -122,24 +127,23 @@ function PromptStrip({ onPromptClick, prompts }: PromptStripProps) {
   );
 }
 
-interface TranscriptViewportProps {
-  messages: readonly AssistantDisplayMessage[];
-  viewportRef: RefObject<HTMLDivElement | null>;
+interface PromptStripProps {
+  onPromptClick: (prompt: string) => void;
+  prompts: readonly string[];
 }
 
-function TranscriptViewport({ messages, viewportRef }: TranscriptViewportProps) {
+function TranscriptHeader({ activityControl, onReset }: TranscriptHeaderProps) {
   return (
-    <div
-      ref={viewportRef}
-      className="grid min-h-80 max-h-[32rem] gap-3 overflow-y-auto border-2 border-border bg-background p-4 pr-3"
-    >
-      {messages.length === 0 ? (
-        <EmptyTranscript />
-      ) : (
-        messages.map((message) => (
-          <TranscriptBubble key={message.id} content={message.content} speaker={message.role} />
-        ))
-      )}
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <Text as="h2" className="text-xl font-semibold leading-tight">
+        Conversation
+      </Text>
+      <div className="flex flex-wrap gap-3">
+        {activityControl}
+        <Button variant="outline" onClick={onReset}>
+          Clear
+        </Button>
+      </div>
     </div>
   );
 }
@@ -149,63 +153,11 @@ interface TranscriptHeaderProps {
   onReset: () => void;
 }
 
-function TranscriptHeader({ activityControl, onReset }: TranscriptHeaderProps) {
-  return (
-    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
-      <div className="grid gap-2">
-        <Text as="h2" className="text-3xl leading-none md:text-4xl">
-          Chat with Beanline over Workers AI.
-        </Text>
-        <Text as="p" className="max-w-3xl text-sm text-muted-foreground md:text-base">
-          The assistant runs through your Cloudflare Worker, calls coffee tools server-side, and
-          shares the same D1-backed state as the customer and staff workspaces.
-        </Text>
-      </div>
-      <div className="flex flex-wrap gap-3">
-        {activityControl}
-        <Button variant="outline" onClick={onReset}>
-          Clear transcript
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function EmptyTranscript() {
-  return (
-    <div className="grid content-center gap-3 text-center">
-      <Text as="h3" className="text-2xl leading-none">
-        No messages yet.
-      </Text>
-      <Text as="p" className="mx-auto max-w-xl text-sm text-muted-foreground">
-        Ask Beanline to list the menu, place an order, inspect the queue, or explain what just
-        changed in the coffee shop.
-      </Text>
-    </div>
-  );
-}
-
-interface TranscriptBubbleProps {
-  content: string;
-  speaker: AssistantDisplayMessage["role"];
-}
-
-function TranscriptBubble({ content, speaker }: TranscriptBubbleProps) {
-  const bubbleTone =
-    speaker === "assistant"
-      ? "border-border bg-card text-card-foreground"
-      : "border-black bg-primary text-primary-foreground";
-  const labelTone =
-    speaker === "assistant" ? "text-muted-foreground" : "text-primary-foreground/70";
-
-  return (
-    <div className={`ml-0 grid gap-2 border-2 p-3 shadow-sm ${bubbleTone}`}>
-      <Text as="p" className={`text-xs uppercase tracking-[0.08em] ${labelTone}`}>
-        {speaker === "assistant" ? "Beanline" : "You"}
-      </Text>
-      <Text as="p" className="font-sans text-sm leading-6 whitespace-pre-wrap">
-        {content}
-      </Text>
-    </div>
+function AssistantWarning({ message }: { message: string | null }) {
+  return message === null ? null : (
+    <Alert status="warning">
+      <Alert.Title>Assistant warning</Alert.Title>
+      <Alert.Description>{message}</Alert.Description>
+    </Alert>
   );
 }

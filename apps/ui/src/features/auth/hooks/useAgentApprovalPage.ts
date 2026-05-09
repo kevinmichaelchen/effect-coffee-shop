@@ -58,24 +58,25 @@ function getApprovalError(input: {
   return routeError ?? viewerError ?? approvalsError ?? resolutionError ?? null;
 }
 
-export function useAgentApprovalPage() {
-  const { agentId, userCode } = getRouteContext();
-  const auth = usePasskeyAuth();
-  const queryClient = useQueryClient();
-  const { theme, toggleTheme } = useThemePreference();
-  const viewerQuery = useViewerQuery();
-  const viewer = viewerQuery.data;
-  const signedInViewer = viewer !== undefined && isAuthenticatedViewer(viewer) ? viewer : null;
-  const routeError = getRouteError(agentId, userCode);
-  const approvalsQuery = useQuery({
+function useApprovalsQuery(input: {
+  agentId: string | null;
+  signedInViewer: AuthenticatedViewer | null;
+}) {
+  const { agentId, signedInViewer } = input;
+
+  return useQuery({
     enabled: isReviewContextComplete(signedInViewer, agentId),
     queryFn: fetchPendingAgentApprovals,
     queryKey: pendingAgentApprovalsQueryKey,
     refetchInterval: 5_000,
     staleTime: 1_000,
   });
-  const [resolutionStatus, setResolutionStatus] = useState<ResolutionStatus>(null);
-  const resolutionMutation = useMutation({
+}
+
+function useResolutionMutation(setResolutionStatus: (status: ResolutionStatus) => void) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
     mutationFn: resolveAgentApproval,
     onSuccess: async (result) => {
       setResolutionStatus(result.status);
@@ -85,6 +86,52 @@ export function useAgentApprovalPage() {
       ]);
     },
   });
+}
+
+function createResolvePendingApproval(input: {
+  agentId: string | null;
+  resolutionMutation: ReturnType<typeof useResolutionMutation>;
+  userCode: string | null;
+}) {
+  const { agentId, resolutionMutation, userCode } = input;
+
+  return async function resolvePendingApproval(action: "approve" | "deny"): Promise<void> {
+    if (agentId === null || userCode === null) {
+      return;
+    }
+
+    await resolutionMutation.mutateAsync({ action, agentId, userCode });
+  };
+}
+
+function getSignedInViewer(viewer: ReturnType<typeof useViewerQuery>["data"]) {
+  return viewer !== undefined && isAuthenticatedViewer(viewer) ? viewer : null;
+}
+
+function useApprovalResolution(agentId: string | null, userCode: string | null) {
+  const [resolutionStatus, setResolutionStatus] = useState<ResolutionStatus>(null);
+  const resolutionMutation = useResolutionMutation(setResolutionStatus);
+  const resolvePendingApproval = createResolvePendingApproval({
+    agentId,
+    resolutionMutation,
+    userCode,
+  });
+
+  return { resolutionMutation, resolutionStatus, resolvePendingApproval };
+}
+
+export function useAgentApprovalPage() {
+  const { agentId, userCode } = getRouteContext();
+  const auth = usePasskeyAuth();
+  const { theme, toggleTheme } = useThemePreference();
+  const viewerQuery = useViewerQuery();
+  const signedInViewer = getSignedInViewer(viewerQuery.data);
+  const routeError = getRouteError(agentId, userCode);
+  const approvalsQuery = useApprovalsQuery({ agentId, signedInViewer });
+  const { resolutionMutation, resolutionStatus, resolvePendingApproval } = useApprovalResolution(
+    agentId,
+    userCode,
+  );
   const pendingApproval = getPendingApproval(agentId, approvalsQuery.data ?? []);
   const approvalError = getApprovalError({
     approvalsError: approvalsQuery.error?.message,
@@ -92,18 +139,6 @@ export function useAgentApprovalPage() {
     routeError,
     viewerError: viewerQuery.error?.message,
   });
-
-  async function resolvePendingApproval(action: "approve" | "deny"): Promise<void> {
-    if (agentId === null || userCode === null) {
-      return;
-    }
-
-    await resolutionMutation.mutateAsync({
-      action,
-      agentId,
-      userCode,
-    });
-  }
 
   return {
     approvalError,

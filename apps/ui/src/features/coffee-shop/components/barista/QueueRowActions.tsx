@@ -15,7 +15,7 @@ export function QueueRowActions({ order, pending, onAction }: QueueRowActionsPro
         <Button
           key={option.action}
           size="sm"
-          variant={option.action === "cancel" ? "outline" : "default"}
+          variant={option.action === "cancel" ? "ghost" : "outline"}
           onClick={() => onAction(order.id, option.action)}
           disabled={pending}
         >

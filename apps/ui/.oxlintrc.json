@@ -21,21 +21,41 @@
     "typescript/no-unsafe-return": "error",
     "typescript/no-unsafe-type-assertion": "error",
     "typescript/no-unnecessary-type-assertion": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "react",
+            "importNames": ["useEffect"],
+            "message": "useEffect is banned in the UI workspace. Model effects at the boundary or use event/query state instead."
+          }
+        ]
+      }
+    ],
+    "no-restricted-properties": [
+      "error",
+      {
+        "object": "React",
+        "property": "useEffect",
+        "message": "useEffect is banned in the UI workspace."
+      }
+    ],
     "promise-function-async": "error"
   },
   "overrides": [
     {
       "files": ["src/**/*.{ts,tsx}", "vite.config.ts"],
       "rules": {
-        "complexity": ["error", { "max": 8 }],
-        "max-depth": ["error", { "max": 4 }],
-        "max-lines": ["error", { "max": 220, "skipBlankLines": true, "skipComments": true }],
+        "complexity": ["error", { "max": 6 }],
+        "max-depth": ["error", { "max": 3 }],
+        "max-lines": ["error", { "max": 180, "skipBlankLines": true, "skipComments": true }],
         "max-lines-per-function": [
           "error",
-          { "max": 60, "skipBlankLines": true, "skipComments": true }
+          { "max": 45, "skipBlankLines": true, "skipComments": true }
         ],
         "max-params": ["error", { "max": 4 }],
-        "max-statements": ["error", { "max": 16 }],
+        "max-statements": ["error", { "max": 12 }],
         "react/jsx-key": "error"
       }
     }

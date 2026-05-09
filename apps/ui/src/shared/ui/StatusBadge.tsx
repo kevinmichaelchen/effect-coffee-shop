@@ -4,11 +4,11 @@ import { getStatusLabel } from "#features/coffee-shop/lib/coffee.ts";
 import type { OrderStatus } from "#features/coffee-shop/lib/coffee.ts";
 
 const badgeClasses: Record<OrderStatus, string> = {
-  pending: "bg-yellow-300 text-yellow-900",
-  brewing: "bg-sky-300 text-sky-950",
-  ready: "bg-green-300 text-green-900",
-  "picked-up": "bg-black text-white",
-  cancelled: "bg-rose-300 text-rose-900",
+  pending: "bg-muted text-muted-foreground",
+  brewing: "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100",
+  ready: "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100",
+  "picked-up": "bg-primary text-primary-foreground",
+  cancelled: "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100",
 };
 
 interface StatusBadgeProps {
@@ -18,7 +18,7 @@ interface StatusBadgeProps {
 export function StatusBadge({ status }: StatusBadgeProps) {
   return (
     <Badge
-      className={cn("rounded-none px-2.5 py-1 uppercase tracking-[0.08em]", badgeClasses[status])}
+      className={cn("rounded-full px-2.5 py-1 text-xs font-medium", badgeClasses[status])}
       size="sm"
     >
       {getStatusLabel(status)}

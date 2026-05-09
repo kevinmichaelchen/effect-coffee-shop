@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export type ThemePreference = "light" | "dark";
 
@@ -13,19 +13,23 @@ function applyTheme(theme: ThemePreference): void {
   window.localStorage.setItem(storageKey, theme);
 }
 
+function readInitialTheme(): ThemePreference {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  const theme = readStoredTheme();
+  applyTheme(theme);
+  return theme;
+}
+
 export function useThemePreference() {
-  const [theme, setTheme] = useState<ThemePreference>(() => {
-    if (typeof window === "undefined") {
-      return "light";
-    }
-
-    return readStoredTheme();
-  });
-
-  useEffect(() => applyTheme(theme), [theme]);
+  const [theme, setTheme] = useState<ThemePreference>(readInitialTheme);
 
   function toggleTheme(): void {
-    setTheme((currentTheme) => (currentTheme === "light" ? "dark" : "light"));
+    const nextTheme = theme === "light" ? "dark" : "light";
+    applyTheme(nextTheme);
+    setTheme(nextTheme);
   }
 
   return { theme, toggleTheme };
