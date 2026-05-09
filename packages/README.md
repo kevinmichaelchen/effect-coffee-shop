@@ -12,6 +12,8 @@ under `packages/coffee`, while shared host utilities stay directly under
 - `coffee/core`: Coffee bounded-context Onion Core.
 - `coffee/external/in-memory`: in-memory Coffee External Layer.
 - `coffee/external/sqlite`: SQLFU-backed SQLite/D1 Coffee External Layer.
+- `coffee/external/drizzle-postgres`: Drizzle-backed Postgres Coffee External
+  Layer.
 - `coffee/actions`: shared coffee action contracts used by MCP tools,
   assistant tools, and Agent Auth capability execution.
 - `coffee/presentation/http`: Effect HTTP API routes, web handler construction,
