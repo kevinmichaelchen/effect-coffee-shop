@@ -415,3 +415,163 @@ eval, so the next best use of budget is harder evaluation:
 
 After the eval hardening, rerun Iteration 2 as the baseline and only then decide
 whether a 4B model is worth the extra cost.
+
+## Iteration 3: Price-Format Hardening
+
+### Plan
+
+The Iteration 2 adapter became the champion, but it still exposed a product
+quality bug: accepted orders could be operationally correct while the final
+receipt rendered the total as cents or the wrong currency. That is a real user
+value issue for a coffee ordering assistant because the customer-facing
+confirmation must be trustworthy, not just the backend tool call.
+
+Iteration 3 therefore changed the environment before changing the model:
+
+- Environment version: `0.1.4`
+- Added split: `hard_eval`
+- Added rubric: `price_format`
+- New reward weights:
+
+| Reward component | Weight |
+| --- | ---: |
+| `tool_correctness` | `0.45` |
+| `final_response_quality` | `0.25` |
+| `product_efficiency` | `0.20` |
+| `price_format` | `0.10` |
+
+The `hard_eval` split keeps price-sensitive and noisy phrasing examples
+separate from training. It includes cases such as "whole milk" natural language
+that must become the canonical internal value `whole`, and accepted orders that
+must mention the exact dollar string, for example `$5.18`.
+
+### Explicit Hard-Holdout Baseline
+
+One important process correction: standalone hosted evals must pass explicit
+environment args. Earlier training-config evals already used `split = "eval"`,
+but ad hoc hosted evals can otherwise fall back to the environment default.
+From this point forward, hard-holdout comparisons use:
+
+```sh
+--env-args '{"split":"hard_eval"}'
+```
+
+The Iteration 2 champion was redeployed and evaluated against environment
+`0.1.4`.
+
+- Adapter: `rqvfrcdy4xt95oka37b0xjyu`
+- Hosted eval id: `uio6f0cvm0h9xp7pu18gevsb`
+- Eval shape: 8 examples, 2 rollouts per example, 256 max tokens
+
+| Metric | Iteration 2 on `hard_eval` |
+| --- | ---: |
+| reward avg | `0.835` |
+| pass@1 | `1.000` |
+| pass@2 | `1.000` |
+| tool_correctness avg | `1.000` |
+| final_response_quality avg | `0.622` |
+| product_efficiency avg | `0.837` |
+| price_format avg | `0.625` |
+| average total tool calls | `1.812` |
+| average `list_menu` calls | `1.062` |
+| average `place_order` calls | `0.750` |
+| max_turns_reached rate | `0.062` |
+| average output tokens | `142.062` |
+
+This confirmed the remaining weakness precisely. The model was still perfectly
+correct at tool use on the hard split, but several accepted-order confirmations
+said values like `518 cents` instead of `$5.18`.
+
+### Experiment A: Raw-Base Price Hardening
+
+- Run: `jkpq2tll4nf95s6m2d1m5k12`
+- Config: `effect-coffee-ordering-qwen-0.8b-price-hardening`
+- Start point: raw `Qwen/Qwen3.5-0.8B`
+- Environment version: `0.1.4`
+- Max steps: `40`
+- Cost: `$0.85`
+
+Trainer metrics:
+
+| Checkpoint | Hard eval Avg@2 | Mean eval completion length | Decision |
+| --- | ---: | ---: | --- |
+| step 0 | `0.4181` | `427.625` | raw baseline under hard reward |
+| step 22 | `0.6908` | `610.625` | below champion |
+| final | `0.7571` | `720.063` | rejected |
+
+The run improved over the raw base but did not beat the Iteration 2 champion.
+It also moved in the wrong direction on verbosity, so no external deployment
+eval was run.
+
+### Experiment B: Warm-Start Price Hardening
+
+Prime Hosted Training supports warm-starting from a checkpoint by setting
+`checkpoint_id`. Iteration 2 had one ready checkpoint:
+
+- Source run: `pa17nnag3uslv49ydyyjhy85`
+- Checkpoint: `oo8lrytspz37lfsdlloubig7`
+- Checkpoint step: `25`
+
+The hypothesis was that continuing from the Iteration 2 policy would preserve
+tool-use gains while learning the stricter receipt formatting reward.
+
+- Run: `olb4i92pisuegkinsaqhoeif`
+- Config: `effect-coffee-ordering-qwen-0.8b-warm-price-hardening`
+- Start point: Iteration 2 step-25 checkpoint
+- Environment version: `0.1.4`
+- Max steps: `45`
+- Cost: `$0.39`
+
+Trainer metrics:
+
+| Checkpoint | Hard eval Avg@2 | Mean eval completion length | Decision |
+| --- | ---: | ---: | --- |
+| step 32 | `0.7237` | `674.438` | below champion |
+| step 41 | `0.7354` | `617.188` | below champion |
+| final | `0.7471` | `742.000` | rejected |
+
+This was the right low-cost experiment, but it did not work. It preserved much
+of the tool correctness during training batches, yet the held-out policy was
+still worse than the Iteration 2 champion and more verbose.
+
+### Decision
+
+Do not promote either Iteration 3 adapter. The champion remains:
+
+- Adapter: `rqvfrcdy4xt95oka37b0xjyu`
+- Model string when deployed:
+  `Qwen/Qwen3.5-0.8B:rqvfrcdy4xt95oka37b0xjyu`
+- Champion hard-holdout reward: `0.835`
+
+Iteration 3 was still valuable: it produced a stricter, explicit holdout and
+showed that simply adding a price-format reward is not enough. The likely
+failure mode is sparse, weak pressure on the final answer style. The model can
+learn operational tool correctness, but receipt wording needs more direct
+training signal.
+
+### Spend
+
+- Wallet after Iteration 3: `$45.94`
+- Iteration 3 incremental spend: `$1.24`
+- Approximate total spend from the initial `$50.00`: `$4.06`
+- Budget remaining: `$45.94`
+
+The budget gate held: no expensive larger-model run was started, and rejected
+adapters were not externally evaluated.
+
+### Next Decision
+
+Before spending on a larger base model, make the reward less sparse:
+
+- Add more accepted-order training tasks whose prompts explicitly ask for a
+  final total in dollars.
+- Increase `price_format` weight only after verifying it does not reduce tool
+  correctness.
+- Add a direct final-answer style rubric that rewards one short receipt
+  sentence after successful `place_order`.
+- Consider a small SFT-style warmup or seed examples if Hosted Training supports
+  it cleanly; the desired receipt format is deterministic and may not need RL
+  exploration.
+- Keep the Iteration 2 champion as the production candidate unless the next
+  experiment beats `0.835` on `hard_eval` and improves `price_format` above
+  `0.625` without raising tool calls.
