@@ -1,0 +1,23 @@
+[project]
+name = "effect-coffee-ordering"
+description = "Tool-use environment for training coffee-shop ordering assistants."
+tags = ["tool-use", "coffee", "ordering", "train", "eval"]
+version = "0.1.6"
+requires-python = ">=3.10"
+dependencies = [
+    "verifiers @ git+https://github.com/PrimeIntellect-ai/verifiers.git@3b77145e14a9bcdaf180a49e7df97dbf2d7bb150",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = ["effect_coffee_ordering.py", "pyproject.toml"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.verifiers.eval]
+num_examples = 5
+rollouts_per_example = 1

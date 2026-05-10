@@ -1,0 +1,45 @@
+name = "effect-coffee-ordering-qwen-2b-v015"
+model = "Qwen/Qwen3.5-2B"
+
+max_steps = 50
+batch_size = 128
+rollouts_per_example = 8
+oversampling_factor = 1.0
+learning_rate = 1e-4
+lora_alpha = 16
+max_async_level = 1
+
+[sampling]
+max_tokens = 256
+temperature = 0.7
+
+[[env]]
+id = "kevinmichaelchen/effect-coffee-ordering"
+version = "0.1.5"
+args = { split = "train" }
+
+[val]
+interval = 5
+num_examples = 8
+rollouts_per_example = 2
+
+[eval]
+interval = 25
+num_examples = 8
+rollouts_per_example = 2
+eval_base_model = true
+
+[[eval.env]]
+id = "kevinmichaelchen/effect-coffee-ordering"
+version = "0.1.5"
+args = { split = "hard_eval" }
+num_examples = 8
+rollouts_per_example = 2
+
+[adapters]
+interval = 25
+keep_last = 2
+
+[checkpoints]
+interval = 25
+keep_cloud = 2
