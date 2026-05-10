@@ -1,7 +1,10 @@
 name = "effect-coffee-ordering-qwen-0.8b-receipt-drill-warmup"
 model = "Qwen/Qwen3.5-0.8B"
-checkpoint_id = "rqvfrcdy4xt95oka37b0xjyu"
+checkpoint_id = "oo8lrytspz37lfsdlloubig7"
 
+# Warm-starts from the available Iteration 2 checkpoint. The final champion
+# adapter rqvfrcdy4xt95oka37b0xjyu is deployable, but not accepted as a
+# Hosted Training checkpoint_id by the current Prime CLI.
 # Publish the checked-in environment as version 0.1.6 before launching this.
 # This is the deterministic fallback if hosted SFT is still unavailable.
 max_steps = 25

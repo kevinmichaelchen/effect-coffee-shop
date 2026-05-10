@@ -122,8 +122,11 @@ experiments/prime-intellect/effect-coffee-ordering/configs/rl/effect-coffee-orde
 ```
 
 Use this only after publishing the checked-in environment as `0.1.6`. It starts
-from the current champion adapter, uses lower rollout volume than the broader
-RL runs, and gates on `hard_eval`.
+from the available Iteration 2 checkpoint `oo8lrytspz37lfsdlloubig7`, uses lower
+rollout volume than the broader RL runs, and gates on `hard_eval`. The final
+champion adapter `rqvfrcdy4xt95oka37b0xjyu` remains the promotion baseline, but
+the current Prime CLI does not accept that adapter id as a Hosted Training
+`checkpoint_id`.
 
 This is less direct than SFT, but it keeps the same principle: force many
 unambiguous examples of exact dollar receipt wording before spending on broader

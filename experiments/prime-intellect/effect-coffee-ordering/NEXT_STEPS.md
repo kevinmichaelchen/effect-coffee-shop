@@ -24,6 +24,11 @@ when something is unavailable, and give a compact receipt with the right price.
 Main remaining weakness: successful final confirmations are sometimes too
 verbose or use bad price formatting.
 
+Hosted Training warm-start note: use checkpoint
+`oo8lrytspz37lfsdlloubig7`. The final champion adapter
+`rqvfrcdy4xt95oka37b0xjyu` is deployable for inference/eval, but the current
+Prime CLI rejects it as a `checkpoint_id` for new training runs.
+
 ## Receipt Run
 
 Use the small budget-capped receipt-drill warmup. Environment

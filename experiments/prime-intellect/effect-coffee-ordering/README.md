@@ -52,6 +52,10 @@ The environment source includes a `receipt_drill` split with the same 22
 receipt/refusal cases as the SFT corpus. Publish that environment snapshot as
 version `0.1.6` before launching the warmup config.
 
+Warm-start configs use checkpoint `oo8lrytspz37lfsdlloubig7` from the champion's
+source run. Keep comparing candidates against the final champion adapter
+`rqvfrcdy4xt95oka37b0xjyu`.
+
 ## Product Readiness Expansion
 
 The environment source also includes a `product_readiness` split for cases that
