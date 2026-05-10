@@ -39,6 +39,7 @@ eval_base_model = false
 
 [[eval.env]]
 id = "kevinmichaelchen/effect-coffee-ordering"
+name = "effect-coffee-hard-eval"
 version = "0.1.7"
 args = { split = "hard_eval" }
 num_examples = 8
@@ -46,6 +47,7 @@ rollouts_per_example = 2
 
 [[eval.env]]
 id = "kevinmichaelchen/effect-coffee-ordering"
+name = "effect-coffee-product-readiness"
 version = "0.1.7"
 args = { split = "product_readiness" }
 num_examples = 16
