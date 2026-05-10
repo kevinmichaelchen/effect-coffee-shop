@@ -6,14 +6,18 @@ wheels, and hosted eval outputs remain under `.context/` and are not checked in.
 
 ## Contents
 
+- `NEXT_STEPS.md` - short handoff with the next run command and promotion gate.
 - `environment/` - Prime Verifiers environment source published as
   `kevinmichaelchen/effect-coffee-ordering`.
 - `configs/rl/` - hosted RL training configs used for the recorded runs.
 - `scripts/build_effect_coffee_receipt_sft.py` - deterministic receipt-format
-  corpus generator.
-- `data/effect_coffee_sft/` - generated supervised receipt-format corpora.
+  and product-behavior corpus generator.
+- `data/effect_coffee_sft/` - generated supervised receipt-format and
+  product-behavior corpora.
 - `configs/rl/effect-coffee-ordering-qwen-0.8b-receipt-drill-warmup.toml` -
   deterministic warmup fallback if hosted SFT is unavailable.
+- `configs/rl/effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml` -
+  broader cashier-behavior warmup after publishing environment `0.1.7`.
 
 ## Current Champion
 
@@ -47,6 +51,24 @@ avoid cents/wrong-currency wording, and stay short.
 The environment source includes a `receipt_drill` split with the same 22
 receipt/refusal cases as the SFT corpus. Publish that environment snapshot as
 version `0.1.6` before launching the warmup config.
+
+## Product Readiness Expansion
+
+The environment source also includes a `product_readiness` split for cases that
+define a better coffee-shop assistant beyond receipts:
+
+- multi-item/cart requests,
+- substitutions and unavailable ingredients,
+- ambiguous orders that need clarification,
+- modifier edge cases,
+- pickup timing, customer name, and order notes,
+- concise refusal behavior.
+
+Publish the checked-in environment as version `0.1.7` before launching:
+
+```sh
+prime --plain train configs/rl/effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml --yes
+```
 
 ## Prime Hosted RL
 

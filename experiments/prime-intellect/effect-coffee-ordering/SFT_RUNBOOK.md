@@ -29,9 +29,16 @@ Corpora:
 | --- | ---: | --- |
 | `data/effect_coffee_sft/receipt_final_response_sft.jsonl` | `22` | First SFT target. Teaches final receipt wording directly. |
 | `data/effect_coffee_sft/receipt_tool_trajectory_sft.jsonl` | `22` | Follow-up target. Teaches full tool-call plus final receipt traces. |
+| `data/effect_coffee_sft/product_behavior_final_response_sft.jsonl` | `16` | Broader cashier behavior: clarification, substitutions, unsupported carts, notes, and concise refusals. |
+| `data/effect_coffee_sft/product_behavior_tool_trajectory_sft.jsonl` | `16` | Full tool-call traces for the broader cashier behavior set. |
 
 Start with `receipt_final_response_sft.jsonl`. It has the least blast radius
 because it only teaches post-tool receipt wording.
+
+Then use `product_behavior_final_response_sft.jsonl` before any broad RL spend.
+It teaches what "good" means for customer behavior without changing tool
+discipline. Use the product behavior trajectory corpus only after final-response
+behavior improves, because trajectory tuning has a larger blast radius.
 
 ## Local Mac Status
 
@@ -121,3 +128,13 @@ RL runs, and gates on `hard_eval`.
 This is less direct than SFT, but it keeps the same principle: force many
 unambiguous examples of exact dollar receipt wording before spending on broader
 RL again.
+
+For product-readiness behavior, publish the checked-in environment as `0.1.7`
+and use:
+
+```text
+experiments/prime-intellect/effect-coffee-ordering/configs/rl/effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml
+```
+
+This split covers multi-item/cart requests, substitutions, ambiguous orders,
+modifier edge cases, unavailable ingredients, notes, and concise refusals.

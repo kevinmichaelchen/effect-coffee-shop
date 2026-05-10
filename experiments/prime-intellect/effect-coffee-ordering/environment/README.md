@@ -8,7 +8,7 @@
 ### Datasets
 - **Primary dataset(s)**: Synthetic customer requests based on the Effect Coffee Shop domain model.
 - **Source links**: Local app menu and order rules.
-- **Split sizes**: 20 train examples, 8 eval examples, 8 hard eval examples, 22 receipt drill examples.
+- **Split sizes**: 20 train examples, 8 eval examples, 8 hard eval examples, 22 receipt drill examples, 16 product readiness examples.
 
 ### Task
 - **Type**: tool use
@@ -36,7 +36,7 @@ Document any supported environment arguments and their meaning. Example:
 
 | Arg | Type | Default | Description |
 | --- | ---- | ------- | ----------- |
-| `split` | str | `"train"` | Use `"train"`, `"eval"`, `"hard_eval"`, or `"receipt_drill"` examples |
+| `split` | str | `"train"` | Use `"train"`, `"eval"`, `"hard_eval"`, `"receipt_drill"`, or `"product_readiness"` examples |
 | `num_examples` | int | `-1` | Limit dataset size; use -1 for all examples |
 
 ### Metrics
@@ -47,3 +47,19 @@ Summarize key metrics your rubric emits and how they’re interpreted.
 | `reward` | Main scalar reward (weighted sum of criteria) |
 | `tool_correctness` | Correct tool choice and structured order/refusal behavior |
 | `final_response_quality` | Customer-facing confirmation or refusal quality |
+| `product_efficiency` | Avoids extra tools, unsupported cart behavior, and verbose responses |
+| `price_format` | Successful receipts use exact `$x.xx` dollar totals |
+| `receipt_style` | Successful receipts include drink, order id, exact total, and no post-success tools |
+
+### Product Readiness
+
+The `product_readiness` split expands the definition of a good model beyond
+receipt formatting. It covers:
+
+- multi-item and cart requests, which should be handled as unsupported one-drink
+  workflows until cart tools exist,
+- substitutions and unavailable ingredients,
+- ambiguous orders that need clarification,
+- modifier edge cases such as decaf, shot limits, temperature, and milk rules,
+- pickup time and preparation notes through the existing `notes` field,
+- concise refusal behavior.

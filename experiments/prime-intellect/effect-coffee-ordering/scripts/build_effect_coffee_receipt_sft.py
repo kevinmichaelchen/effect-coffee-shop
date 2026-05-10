@@ -106,6 +106,97 @@ REFUSAL_EXAMPLES = [
     ),
 ]
 
+PRODUCT_SUCCESS_EXAMPLES = [
+    (
+        "Order a medium extra-hot oat latte for Sol, no foam, pickup at 8:15.",
+        "latte",
+        "medium",
+        "oat",
+        "extra-hot",
+        1,
+        "Sol",
+        "no foam; pickup 8:15",
+    ),
+    (
+        "Order a small hot cappuccino for Luca and keep the receipt short.",
+        "cappuccino",
+        "small",
+        "whole",
+        "hot",
+        1,
+        "Luca",
+        "",
+    ),
+    (
+        "Order a medium iced americano for Jamie and note light ice.",
+        "americano",
+        "medium",
+        "none",
+        "iced",
+        1,
+        "Jamie",
+        "light ice",
+    ),
+]
+
+PRODUCT_MENU_EXAMPLES = [
+    (
+        "Oat milk is out today. What can I get that does not need oat milk?",
+        "You can choose Espresso, Americano, or Tea as-is. Latte, Cappuccino, and Cold Brew can use whole or almond milk instead.",
+    ),
+    (
+        "What non-dairy milks can I get for a latte?",
+        "Latte supports oat milk and almond milk.",
+    ),
+    (
+        "What's the cheapest hot drink?",
+        "Espresso is the cheapest hot drink at $3.00.",
+    ),
+    (
+        "I need something vegan and iced. What are my options?",
+        "Iced Americano and iced Tea work without milk; Cold Brew can use oat or almond milk.",
+    ),
+]
+
+PRODUCT_REFUSAL_EXAMPLES = [
+    (
+        "Can you start a cart with a medium oat latte for Ava and a small espresso for Ben?",
+        "I can place one drink at a time. Which drink should I start with?",
+    ),
+    (
+        "I added a cappuccino by mistake. Remove it and make the cart a large iced americano for Jo.",
+        "I cannot manage a cart yet; I can place one drink at a time.",
+    ),
+    (
+        "No oat milk today; please order a medium hot oat latte for Ina.",
+        "Oat milk is unavailable. A latte can use whole or almond milk instead.",
+    ),
+    (
+        "I'll have my usual.",
+        "Which drink, size, and name should I use?",
+    ),
+    (
+        "Make it iced for Jordan.",
+        "Which drink and size should I make iced for Jordan?",
+    ),
+    (
+        "Can I get a decaf medium hot latte for Ren?",
+        "Decaf is not available in the current options.",
+    ),
+    (
+        "Make Morgan a cold brew with three shots.",
+        "Cold Brew supports at most 2 shots.",
+    ),
+    (
+        "Can I get an iced cappuccino for Imani?",
+        "Cappuccino is only available hot or extra-hot.",
+    ),
+    (
+        "Order a large iced tea with two shots for Remy.",
+        "Tea supports 0 shots.",
+    ),
+]
+
 
 def calculate_price_cents(drink_id: str, size: str, shots: int) -> int:
     item = MENU[drink_id]
@@ -126,6 +217,7 @@ def order_payload(
     temperature: str,
     shots: int,
     customer_name: str,
+    notes: str = "",
 ) -> dict[str, Any]:
     item = MENU[drink_id]
     return {
@@ -134,13 +226,18 @@ def order_payload(
         "drink_name": item["name"],
         "id": "order-simulated-0001",
         "milk": milk,
-        "notes": "",
+        "notes": notes,
         "price_cents": calculate_price_cents(drink_id, size, shots),
         "shots": shots,
         "size": size,
         "status": "pending",
         "temperature": temperature,
     }
+
+
+def menu_tool_result() -> str:
+    rows = [{"id": drink_id, **item} for drink_id, item in MENU.items()]
+    return json.dumps({"menu": rows}, sort_keys=True)
 
 
 def final_receipt(order: dict[str, Any]) -> str:
@@ -155,7 +252,7 @@ def tool_arguments(order: dict[str, Any]) -> str:
         "temperature": order["temperature"],
         "shots": order["shots"],
         "customer_name": order["customer_name"],
-        "notes": "",
+        "notes": order["notes"],
     }
     return json.dumps(args, sort_keys=True)
 
@@ -179,6 +276,37 @@ def final_response_rows() -> list[dict[str, str]]:
         )
         rows.append({"prompt": prompt, "completion": final_receipt(order)})
     for question, answer in REFUSAL_EXAMPLES:
+        prompt = "\n".join([SYSTEM_PROMPT, "", f"User request: {question}", "Write only the final customer-facing response."])
+        rows.append({"prompt": prompt, "completion": answer})
+    return rows
+
+
+def product_behavior_final_response_rows() -> list[dict[str, str]]:
+    rows = []
+    for question, drink_id, size, milk, temperature, shots, customer_name, notes in PRODUCT_SUCCESS_EXAMPLES:
+        order = order_payload(drink_id, size, milk, temperature, shots, customer_name, notes)
+        prompt = "\n".join(
+            [
+                SYSTEM_PROMPT,
+                "",
+                f"User request: {question}",
+                f"place_order result: {tool_result(order)}",
+                "Write only the final customer-facing confirmation.",
+            ]
+        )
+        rows.append({"prompt": prompt, "completion": final_receipt(order)})
+    for question, answer in PRODUCT_MENU_EXAMPLES:
+        prompt = "\n".join(
+            [
+                SYSTEM_PROMPT,
+                "",
+                f"User request: {question}",
+                f"list_menu result: {menu_tool_result()}",
+                "Write only the final customer-facing response.",
+            ]
+        )
+        rows.append({"prompt": prompt, "completion": answer})
+    for question, answer in PRODUCT_REFUSAL_EXAMPLES:
         prompt = "\n".join([SYSTEM_PROMPT, "", f"User request: {question}", "Write only the final customer-facing response."])
         rows.append({"prompt": prompt, "completion": answer})
     return rows
@@ -223,6 +351,70 @@ def tool_trajectory_rows() -> list[dict[str, Any]]:
     return rows
 
 
+def product_behavior_tool_trajectory_rows() -> list[dict[str, Any]]:
+    rows = []
+    for index, (question, drink_id, size, milk, temperature, shots, customer_name, notes) in enumerate(
+        PRODUCT_SUCCESS_EXAMPLES, 1
+    ):
+        order = order_payload(drink_id, size, milk, temperature, shots, customer_name, notes)
+        call_id = f"call_product_order_{index:04d}"
+        rows.append(
+            {
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": question},
+                    {
+                        "role": "assistant",
+                        "content": "",
+                        "tool_calls": [
+                            {
+                                "id": call_id,
+                                "type": "function",
+                                "function": {"name": "place_order", "arguments": tool_arguments(order)},
+                            }
+                        ],
+                    },
+                    {"role": "tool", "tool_call_id": call_id, "name": "place_order", "content": tool_result(order)},
+                    {"role": "assistant", "content": final_receipt(order)},
+                ]
+            }
+        )
+    for index, (question, answer) in enumerate(PRODUCT_MENU_EXAMPLES, 1):
+        call_id = f"call_product_menu_{index:04d}"
+        rows.append(
+            {
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": question},
+                    {
+                        "role": "assistant",
+                        "content": "",
+                        "tool_calls": [
+                            {
+                                "id": call_id,
+                                "type": "function",
+                                "function": {"name": "list_menu", "arguments": "{}"},
+                            }
+                        ],
+                    },
+                    {"role": "tool", "tool_call_id": call_id, "name": "list_menu", "content": menu_tool_result()},
+                    {"role": "assistant", "content": answer},
+                ]
+            }
+        )
+    for question, answer in PRODUCT_REFUSAL_EXAMPLES:
+        rows.append(
+            {
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": question},
+                    {"role": "assistant", "content": answer},
+                ]
+            }
+        )
+    return rows
+
+
 def validate_final_response_rows(rows: list[dict[str, str]]) -> None:
     for row in rows:
         completion = row["completion"]
@@ -245,28 +437,47 @@ def main() -> None:
     output_dir = Path("data/effect_coffee_sft")
     final_rows = final_response_rows()
     trajectory_rows = tool_trajectory_rows()
+    product_final_rows = product_behavior_final_response_rows()
+    product_trajectory_rows = product_behavior_tool_trajectory_rows()
     validate_final_response_rows(final_rows)
+    validate_final_response_rows(product_final_rows)
     write_jsonl(output_dir / "receipt_final_response_sft.jsonl", final_rows)
     write_jsonl(output_dir / "receipt_tool_trajectory_sft.jsonl", trajectory_rows)
+    write_jsonl(output_dir / "product_behavior_final_response_sft.jsonl", product_final_rows)
+    write_jsonl(output_dir / "product_behavior_tool_trajectory_sft.jsonl", product_trajectory_rows)
     (output_dir / "README.md").write_text(
         "\n".join(
             [
                 "# Effect Coffee Receipt SFT Data",
                 "",
-                "Generated deterministic receipt-format corpora.",
+                "Generated deterministic receipt-format and product-behavior corpora.",
                 "",
                 "- `receipt_final_response_sft.jsonl`: prompt/completion rows focused on final receipt wording.",
                 "- `receipt_tool_trajectory_sft.jsonl`: raw messages rows with tool calls, tool results, and final receipts.",
+                "- `product_behavior_final_response_sft.jsonl`: prompt/completion rows for broader cashier behavior.",
+                "- `product_behavior_tool_trajectory_sft.jsonl`: raw messages rows for broader cashier behavior.",
                 "",
                 f"Final-response rows: {len(final_rows)}",
                 f"Tool-trajectory rows: {len(trajectory_rows)}",
+                f"Product-behavior final-response rows: {len(product_final_rows)}",
+                f"Product-behavior tool-trajectory rows: {len(product_trajectory_rows)}",
                 "",
                 "Validation rules: successful receipts use exact `$x.xx` totals, avoid cents/wrong-currency wording, and stay short.",
                 "",
             ]
         )
     )
-    print(json.dumps({"final_response_rows": len(final_rows), "tool_trajectory_rows": len(trajectory_rows)}, sort_keys=True))
+    print(
+        json.dumps(
+            {
+                "final_response_rows": len(final_rows),
+                "product_behavior_final_response_rows": len(product_final_rows),
+                "product_behavior_tool_trajectory_rows": len(product_trajectory_rows),
+                "tool_trajectory_rows": len(trajectory_rows),
+            },
+            sort_keys=True,
+        )
+    )
 
 
 if __name__ == "__main__":

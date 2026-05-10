@@ -759,6 +759,144 @@ RECEIPT_DRILL_TASKS = [
     },
 ]
 
+PRODUCT_READINESS_TASKS = [
+    {
+        "question": "Can you start a cart with a medium oat latte for Ava and a small espresso for Ben?",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["one drink", "time"],
+        },
+    },
+    {
+        "question": "I added a cappuccino by mistake. Remove it and make the cart a large iced americano for Jo.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["cart", "one drink"],
+        },
+    },
+    {
+        "question": "Oat milk is out today. What can I get that does not need oat milk?",
+        "info": {
+            "expected_action": "list_menu",
+            "required_terms": ["Espresso", "Americano", "Tea", "almond", "whole"],
+        },
+    },
+    {
+        "question": "No oat milk today; please order a medium hot oat latte for Ina.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["oat", "whole", "almond"],
+        },
+    },
+    {
+        "question": "I'll have my usual.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["which drink", "size", "name"],
+        },
+    },
+    {
+        "question": "Make it iced for Jordan.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["which drink", "size"],
+        },
+    },
+    {
+        "question": "Can I get a decaf medium hot latte for Ren?",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["decaf", "not available"],
+        },
+    },
+    {
+        "question": "Make Morgan a cold brew with three shots.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["cold brew", "2", "shots"],
+        },
+    },
+    {
+        "question": "What non-dairy milks can I get for a latte?",
+        "info": {
+            "expected_action": "list_menu",
+            "required_terms": ["Latte", "oat", "almond"],
+        },
+    },
+    {
+        "question": "Order a medium extra-hot oat latte for Sol, no foam, pickup at 8:15.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "latte",
+                "size": "medium",
+                "milk": "oat",
+                "temperature": "extra-hot",
+                "shots": 1,
+                "customer_name": "Sol",
+                "notes": "no foam; pickup 8:15",
+            },
+        },
+    },
+    {
+        "question": "Order a small hot cappuccino for Luca and keep the receipt short.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "cappuccino",
+                "size": "small",
+                "milk": "whole",
+                "temperature": "hot",
+                "shots": 1,
+                "customer_name": "Luca",
+            },
+        },
+    },
+    {
+        "question": "Can I get an iced cappuccino for Imani?",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["cappuccino", "hot", "extra-hot"],
+        },
+    },
+    {
+        "question": "What's the cheapest hot drink?",
+        "info": {
+            "expected_action": "list_menu",
+            "required_terms": ["Espresso", "$3.00"],
+        },
+    },
+    {
+        "question": "I need something vegan and iced. What are my options?",
+        "info": {
+            "expected_action": "list_menu",
+            "required_terms": ["Americano", "Tea", "Cold Brew"],
+        },
+    },
+    {
+        "question": "Order a large iced tea with two shots for Remy.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["tea", "shots", "0"],
+        },
+    },
+    {
+        "question": "Order a medium iced americano for Jamie and note light ice.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "americano",
+                "size": "medium",
+                "milk": "none",
+                "temperature": "iced",
+                "shots": 1,
+                "customer_name": "Jamie",
+                "notes": "light ice",
+            },
+        },
+    },
+]
+
 
 async def list_menu() -> str:
     """List the current coffee menu.
@@ -870,14 +1008,7 @@ async def tool_correctness(completion, info) -> float:
         expected_order = info["expected_order"]
         if order is None:
             return 0.0
-        checks = [
-            order.get("drink_id") == expected_order["drink_id"],
-            order.get("size") == expected_order["size"],
-            order.get("milk") == expected_order["milk"],
-            order.get("temperature") == expected_order["temperature"],
-            order.get("shots") == expected_order["shots"],
-            order.get("customer_name") == expected_order["customer_name"],
-        ]
+        checks = [order.get(key) == value for key, value in expected_order.items()]
         return sum(1.0 for check in checks if check) / len(checks)
 
     if expected_action == "list_menu":
@@ -1110,12 +1241,14 @@ def load_environment(split: str = "train", num_examples: int = -1, **kwargs) -> 
     eval_dataset = to_dataset(EVAL_TASKS)
     hard_eval_dataset = to_dataset(HARD_EVAL_TASKS)
     receipt_drill_dataset = to_dataset(RECEIPT_DRILL_TASKS)
+    product_readiness_dataset = to_dataset(PRODUCT_READINESS_TASKS)
 
     datasets = {
         "train": train_dataset,
         "eval": eval_dataset,
         "hard_eval": hard_eval_dataset,
         "receipt_drill": receipt_drill_dataset,
+        "product_readiness": product_readiness_dataset,
     }
     selected_dataset = datasets.get(split, train_dataset)
     if num_examples > 0:
