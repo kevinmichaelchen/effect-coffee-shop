@@ -7,86 +7,60 @@ import type { Cart } from "@effect-coffee-shop/coffee-core/domain/cart";
 import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
 import { CartRepository } from "@effect-coffee-shop/coffee-core/application/ports/CartRepository";
 import { SqlCartItemModel, toCartItem, toSqlCartItemSave } from "./models.ts";
+import { deleteCartByOwner } from "./queries/.generated/delete-cart-by-owner.sql.ts";
+import { deleteCartItemsByOwner } from "./queries/.generated/delete-cart-items-by-owner.sql.ts";
+import { insertCart } from "./queries/.generated/insert-cart.sql.ts";
+import { listCartItems } from "./queries/.generated/list-cart-items.sql.ts";
+import { saveCartItem } from "./queries/.generated/save-cart-item.sql.ts";
 
 const decodeSqlCartItems = Schema.decodeUnknownEffect(Schema.Array(SqlCartItemModel));
-
-const insertCartSql = `
-insert into carts (owner_user_id)
-values (?)
-on conflict (owner_user_id) do nothing
-`.trim();
-
-const insertCartItemSql = `
-insert into cart_items (
-  owner_user_id,
-  id,
-  position,
-  drink_id,
-  size,
-  milk,
-  temperature,
-  shots,
-  notes,
-  quantity
-)
-values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`.trim();
-
-const listCartItemsSql = `
-select owner_user_id, id, position, drink_id, size, milk, temperature, shots, notes, quantity
-from cart_items
-where owner_user_id = ?
-order by position
-`.trim();
 
 const emptyCart = (ownerUserId: string): Cart => ({
   ownerUserId,
   items: [],
 });
 
-const loadCart = (sqlClient: SqlClient.SqlClient, ownerUserId: string) =>
-  sqlClient.unsafe<Record<string, unknown>>(listCartItemsSql, [ownerUserId]).pipe(
-    Effect.flatMap(decodeSqlCartItems),
-    Effect.map((items): Cart => ({ ownerUserId, items: items.map(toCartItem) })),
-  );
-
 const makeSqlCartQueries = Effect.gen(function* () {
   const sqlClient = yield* SqlClient.SqlClient;
 
   const save = Effect.fn("SqlCartRepository.save")(function* (cart: Cart) {
-    yield* sqlClient.unsafe(insertCartSql, [cart.ownerUserId]);
-    yield* sqlClient.unsafe("delete from cart_items where owner_user_id = ?", [cart.ownerUserId]);
+    yield* insertCart({ owner_user_id: cart.ownerUserId }).pipe(
+      Effect.provideService(SqlClient.SqlClient, sqlClient),
+    );
+    yield* deleteCartItemsByOwner({ owner_user_id: cart.ownerUserId }).pipe(
+      Effect.provideService(SqlClient.SqlClient, sqlClient),
+    );
     yield* Effect.forEach(
       cart.items.map((item, position) => toSqlCartItemSave(cart.ownerUserId, item, position)),
-      (item) =>
-        sqlClient.unsafe(insertCartItemSql, [
-          item.owner_user_id,
-          item.id,
-          item.position,
-          item.drink_id,
-          item.size,
-          item.milk,
-          item.temperature,
-          item.shots,
-          item.notes,
-          item.quantity,
-        ]),
+      (item) => saveCartItem({ item }).pipe(Effect.provideService(SqlClient.SqlClient, sqlClient)),
       { discard: true },
     );
     return cart;
   });
 
   const clear = Effect.fn("SqlCartRepository.clear")(function* (ownerUserId: string) {
-    yield* sqlClient.unsafe("delete from cart_items where owner_user_id = ?", [ownerUserId]);
-    yield* sqlClient.unsafe("delete from carts where owner_user_id = ?", [ownerUserId]);
+    yield* deleteCartItemsByOwner({ owner_user_id: ownerUserId }).pipe(
+      Effect.provideService(SqlClient.SqlClient, sqlClient),
+    );
+    yield* deleteCartByOwner({ owner_user_id: ownerUserId }).pipe(
+      Effect.provideService(SqlClient.SqlClient, sqlClient),
+    );
     return emptyCart(ownerUserId);
   });
 
   const getByOwnerUserId = Effect.fn("SqlCartRepository.getByOwnerUserId")(function* (
     ownerUserId: string,
   ) {
-    const cart = yield* loadCart(sqlClient, ownerUserId);
-    return cart.items.length === 0 ? Option.none<Cart>() : Option.some(cart);
+    const rows = yield* listCartItems({ owner_user_id: ownerUserId }).pipe(
+      Effect.provideService(SqlClient.SqlClient, sqlClient),
+      Effect.flatMap(decodeSqlCartItems),
+    );
+    const cart: Cart = { ownerUserId, items: rows.map(toCartItem) };
+
+    return Option.match(Option.fromUndefinedOr(cart.items[0]), {
+      onNone: () => Option.none<Cart>(),
+      onSome: () => Option.some(cart),
+    });
   });
 
   return { clear, getByOwnerUserId, save } as const;

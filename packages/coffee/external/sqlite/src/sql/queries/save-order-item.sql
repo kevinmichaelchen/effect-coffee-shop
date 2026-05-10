@@ -1,0 +1,30 @@
+insert into
+  order_items (
+    order_id,
+    position,
+    drink_id,
+    drink_name,
+    size,
+    milk,
+    temperature,
+    shots,
+    notes,
+    quantity,
+    unit_price_cents,
+    line_total_cents
+  )
+values
+  (
+    :item.order_id,
+    :item.position,
+    :item.drink_id,
+    :item.drink_name,
+    :item.size,
+    :item.milk,
+    :item.temperature,
+    :item.shots,
+    :item.notes,
+    :item.quantity,
+    :item.unit_price_cents,
+    :item.line_total_cents
+  );

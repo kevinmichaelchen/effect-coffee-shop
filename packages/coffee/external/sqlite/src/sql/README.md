@@ -99,15 +99,23 @@ Prefer checked-in named query files over inline SQL strings. For example:
 - `list-orders-by-owner.sql`
 - `list-orders-by-status.sql`
 - `list-orders-by-owner-and-status.sql`
+- `list-order-items.sql`
 - `seed-menu-item.sql`
+- `delete-order-items-by-order-id.sql`
+- `insert-cart.sql`
+- `list-cart-items.sql`
+- `save-cart-item.sql`
+- `delete-cart-items-by-owner.sql`
+- `delete-cart-by-owner.sql`
 
 For optional list filters, prefer a small set of named queries over dynamic SQL
 construction. That preserves stable query names for generated functions,
 observability, and freshness checks.
 
-Order persistence uses a single SQLite upsert with `returning`. If SQLFU's
-analyzer stops accepting that shape in a future release, keep separate insert
-and update query files rather than hand-editing generated output.
+Order and cart persistence use checked-in query files for each stable operation.
+If SQLFU's analyzer stops accepting a query shape in a future release, keep
+separate named query files rather than hand-editing generated output or moving
+SQL back into repository code.
 
 ## Better Auth Schema
 

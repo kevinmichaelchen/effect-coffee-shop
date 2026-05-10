@@ -2,10 +2,17 @@ import * as Effect from "effect/Effect";
 import { SqlClient } from "effect/unstable/sql";
 
 const sql = `
-select *
+select
+  id,
+  customer_name,
+  owner_user_id,
+  status,
+  total_price_cents,
+  created_at
 from orders
-where id = ?
-limit 1;
+left join order_items on order_items.order_id = orders.id
+where orders.id = ?
+order by orders.created_at, orders.id;
 `.trim();
 const query = (params: findOrderById.Params) => ({ name: "findOrderById", sql, args: [params.id] });
 
@@ -18,7 +25,7 @@ export const findOrderById = Object.assign(
         generatedQuery.sql,
         generatedQuery.args,
       );
-      return rows.length > 0 ? rows[0] : null;
+      return rows;
     });
   },
   { sql, query },
@@ -32,15 +39,8 @@ export namespace findOrderById {
     id: string;
     customer_name: string;
     owner_user_id: string;
-    drink_id: string;
-    drink_name: string;
-    size: string;
-    milk: string;
-    temperature: string;
-    shots: number;
-    notes?: string;
     status: string;
-    price_cents: number;
+    total_price_cents: number;
     created_at: string;
   };
 }

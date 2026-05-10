@@ -88,6 +88,23 @@ export type ApprovalRequestRow = {
   updatedAt: Date;
 };
 
+export type CartItemsRow = {
+  owner_user_id: string;
+  id: string;
+  position: number;
+  drink_id: string;
+  size: string;
+  milk: string;
+  temperature: string;
+  shots: number;
+  notes: string | null;
+  quantity: number;
+};
+
+export type CartsRow = {
+  owner_user_id: string;
+};
+
 export type MenuItemsRow = {
   id: string;
   name: string;
@@ -99,10 +116,9 @@ export type MenuItemsRow = {
   max_shots: number;
 };
 
-export type OrdersRow = {
-  id: string;
-  customer_name: string;
-  owner_user_id: string;
+export type OrderItemsRow = {
+  order_id: string;
+  position: number;
   drink_id: string;
   drink_name: string;
   size: string;
@@ -110,8 +126,17 @@ export type OrdersRow = {
   temperature: string;
   shots: number;
   notes: string | null;
+  quantity: number;
+  unit_price_cents: number;
+  line_total_cents: number;
+};
+
+export type OrdersRow = {
+  id: string;
+  customer_name: string;
+  owner_user_id: string;
   status: string;
-  price_cents: number;
+  total_price_cents: number;
   created_at: string;
 };
 
