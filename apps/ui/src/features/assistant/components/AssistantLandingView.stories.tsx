@@ -52,7 +52,7 @@ export const Running: Story = {
 export const Failure: Story = {
   args: {
     connectionStatus: "error",
-    errorMessage: "Workers AI is unavailable. Set Cloudflare credentials for local Bun runs.",
+    errorMessage: "Set a Beanline AI provider and model before using the assistant.",
     events: [],
     messages: [],
     status: errorStoryStatus,

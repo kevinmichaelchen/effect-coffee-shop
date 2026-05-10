@@ -1,5 +1,6 @@
 import * as Option from "effect/Option";
 import {
+  createAssistantModelRunnerLayer,
   getAssistantModel,
   handleAssistantRequest,
 } from "@effect-coffee-shop/coffee-assistant/handler";
@@ -35,8 +36,8 @@ const getAssistantAiConfig = (runtime: CloudflareRuntime): AssistantAiConfig | u
     onNone: () => undefined,
     onSome: (binding) =>
       Option.match(runtime.config.aiGatewayId, {
-        onNone: () => ({ binding, kind: "binding" }),
-        onSome: (gatewayId) => ({ binding, gatewayId, kind: "binding" }),
+        onNone: () => ({ binding, kind: "workers-ai-binding" }),
+        onSome: (gatewayId) => ({ binding, gatewayId, kind: "workers-ai-binding" }),
       }),
   });
 
@@ -62,12 +63,19 @@ export const cloudflareAssistantMount: CloudflareMount<CloudflareWorkerEnv> = {
           staffUserIds: runtime.config.staffUserIds,
         });
 
+        const ai = getAssistantAiConfig(runtime);
+        const modelLayer = Option.match(Option.fromNullishOr(ai), {
+          onNone: () => undefined,
+          onSome: createAssistantModelRunnerLayer,
+        });
+
         return cloudflareResponse(
           await handleAssistantRequest(rewriteApiRequest(request), {
             actor,
-            ai: getAssistantAiConfig(runtime),
             appLayer,
+            gatewayEnabled: Option.isSome(runtime.config.aiGatewayId),
             model: getAssistantModel(),
+            modelLayer,
           }),
           actorLogFields(actor),
         );

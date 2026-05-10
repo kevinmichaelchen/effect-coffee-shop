@@ -32,19 +32,19 @@ export const storyAssistantEvents: readonly AssistantToolActivity[] = [
 ];
 
 export const readyStoryStatus: AssistantStatus = {
-  detail: "Same-origin Worker route is open for live menu and order tools.",
+  detail: "Same-origin Beanline route is open for live menu and order tools.",
   label: "Live route ready",
   phase: "ready",
 };
 
 export const runningStoryStatus: AssistantStatus = {
-  detail: "Opening the Worker stream for this run.",
-  label: "Running on Cloudflare Workers AI",
+  detail: "Opening the Beanline stream for this run.",
+  label: "Running Beanline",
   phase: "running",
 };
 
 export const errorStoryStatus: AssistantStatus = {
-  detail: "Workers AI is unavailable. Set Cloudflare credentials for local Bun runs.",
+  detail: "Set a Beanline AI provider and model before using the assistant.",
   label: "Assistant unavailable",
   phase: "error",
 };

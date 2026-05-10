@@ -1,4 +1,3 @@
-import type { AiTextGenerationToolLegacyInput } from "@cloudflare/workers-types";
 import {
   type CoffeeActionJsonSchema,
   emptyActionJsonSchema,
@@ -7,9 +6,7 @@ import {
   placeOrderActionJsonSchema,
 } from "@effect-coffee-shop/coffee-actions/json-schema";
 
-type AssistantToolParameters = NonNullable<AiTextGenerationToolLegacyInput["parameters"]>;
-
-function toAssistantToolParameters(schema: CoffeeActionJsonSchema): AssistantToolParameters {
+function toAssistantToolParameters(schema: CoffeeActionJsonSchema): CoffeeActionJsonSchema {
   return {
     properties: { ...schema.properties },
     required: [...schema.required],

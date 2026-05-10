@@ -95,3 +95,6 @@ bun run hooks:run:pre-push
   affected mode against the current branch.
 - `bun run tsgo:patch` opts into the Effect TypeScript language service binary;
   `bun run tsgo:unpatch` restores the stock native TypeScript binary.
+- Local Beanline AI provider setup is documented in
+  [`apps/ui/README.md`](./apps/ui/README.md) and
+  [`coffee/assistant`](./packages/coffee/assistant).

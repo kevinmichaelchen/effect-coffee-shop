@@ -33,7 +33,8 @@ import {
   logAssistantToolActivity,
 } from "./observability.ts";
 import {
-  type AssistantAiConfig,
+  type AssistantModelRunner,
+  createAssistantModelRunnerLayer,
   getAssistantModel,
   getBunAssistantAiConfig,
   runAssistantConversation,
@@ -52,9 +53,10 @@ const coffeeAssistantSystemPrompt = [
 
 interface AssistantHandlerOptions {
   readonly actor: AppActor;
-  readonly ai: AssistantAiConfig | undefined;
   readonly appLayer: Layer.Layer<never, any, any>;
-  readonly model?: string;
+  readonly gatewayEnabled?: boolean;
+  readonly model: string | undefined;
+  readonly modelLayer: Layer.Layer<AssistantModelRunner> | undefined;
 }
 type AssistantToolActivityRecordInput = {
   readonly detail: string;
@@ -70,8 +72,12 @@ export async function handleAssistantRequest(
     return new Response("Method Not Allowed", { status: 405 });
   }
 
-  if (options.ai === undefined) {
-    return unavailableResponse();
+  if (options.modelLayer === undefined) {
+    return unavailableResponse("Configure a Beanline AI provider before using the assistant.");
+  }
+
+  if (options.model === undefined) {
+    return unavailableResponse("Set COFFEE_ASSISTANT_MODEL for the selected Beanline AI provider.");
   }
 
   const body = await parseAssistantRequestBody(request);
@@ -85,10 +91,11 @@ export async function handleAssistantRequest(
 
   void streamAssistantResponse({
     actor: options.actor,
-    ai: options.ai,
     appLayer: options.appLayer,
     body,
-    model: options.model ?? getAssistantModel(),
+    gatewayEnabled: options.gatewayEnabled ?? false,
+    model: options.model,
+    modelLayer: options.modelLayer,
     queue,
   }).catch((error) => queue.fail(error));
 
@@ -100,16 +107,17 @@ export async function handleAssistantRequest(
   });
 }
 
-export { getAssistantModel, getBunAssistantAiConfig };
+export { createAssistantModelRunnerLayer, getAssistantModel, getBunAssistantAiConfig };
 
 type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;
 
 async function streamAssistantResponse(input: {
   readonly actor: AppActor;
-  readonly ai: AssistantAiConfig;
   readonly appLayer: Layer.Layer<never, any, any>;
   readonly body: AssistantRequestBody;
+  readonly gatewayEnabled: boolean;
   readonly model: string;
+  readonly modelLayer: Layer.Layer<AssistantModelRunner>;
   readonly queue: AssistantChunkQueue<AssistantStreamChunk>;
 }): Promise<void> {
   const messageId = createAssistantStreamId("msg");
@@ -136,21 +144,22 @@ async function streamAssistantResponse(input: {
   input.queue.push(createAssistantRunStartedChunk(runId, input.model));
   logAssistantRunStarted({
     actor: input.actor,
-    gatewayEnabled: input.ai.kind === "binding" && input.ai.gatewayId !== undefined,
+    gatewayEnabled: input.gatewayEnabled,
     model: input.model,
     runId,
   });
 
   try {
-    const response = await runAssistantConversation({
-      ai: input.ai,
-      gatewayEventId: runId,
-      gatewayMetadata: createAssistantGatewayMetadata(input.actor, runId),
-      messages: toAssistantModelMessages(input.body.messages),
-      model: input.model,
-      systemPrompt: coffeeAssistantSystemPrompt,
-      tools: createCoffeeAssistantTools(runApp, emitActivity),
-    });
+    const response = await Effect.runPromise(
+      runAssistantConversation({
+        eventId: runId,
+        messages: toAssistantModelMessages(input.body.messages),
+        model: input.model,
+        requestMetadata: createAssistantGatewayMetadata(input.actor, runId),
+        systemPrompt: coffeeAssistantSystemPrompt,
+        tools: createCoffeeAssistantTools(runApp, emitActivity),
+      }).pipe(Effect.provide(input.modelLayer)),
+    );
 
     input.queue.push(createAssistantTextStartChunk(messageId, input.model));
     input.queue.push(createAssistantTextContentChunk(messageId, input.model, response));
@@ -194,11 +203,8 @@ function connectAbortSignal(signal: AbortSignal): AbortController {
   return abortController;
 }
 
-function unavailableResponse(): Response {
-  return new Response(
-    "Workers AI is unavailable. Configure the Cloudflare AI binding or set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN for local Bun runs.",
-    {
-      status: 503,
-    },
-  );
+function unavailableResponse(message: string): Response {
+  return new Response(message, {
+    status: 503,
+  });
 }

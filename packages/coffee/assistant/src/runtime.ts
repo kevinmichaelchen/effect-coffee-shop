@@ -1,207 +1,205 @@
-import type {
-  AiTextGenerationInput,
-  AiTextGenerationOutput,
-  AiTextGenerationToolLegacyOutput,
-  RoleScopedChatInput,
-} from "@cloudflare/workers-types";
-import { runWorkersAiOverRest } from "./rest.ts";
-import type { AssistantToolDefinition } from "./tools/definitions.ts";
-import {
-  createGatewayOptions,
-  extractAssistantText,
-  isToolCall,
-  stripToolExecutor,
-  toWorkersAiMessages,
-  type AssistantGatewayMetadata,
-  type AssistantGatewayOptions,
-  type AssistantRunnableTool,
-} from "./workers-ai-format.ts";
 import type { ModelMessage } from "@tanstack/ai";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
+import {
+  type AssistantConversationMessage,
+  type AssistantModelError,
+  type AssistantModelRunnerService,
+  type AssistantRequestMetadata,
+  type AssistantToolCall,
+  type AssistantToolDefinition,
+  AssistantModelRunner,
+  getAssistantToolName,
+  toAssistantConversationMessages,
+} from "./model.ts";
+import { type OllamaConfig, makeOllamaRunner } from "./ollama-runtime.ts";
+import { type WorkersAiConfig, makeWorkersAiRunner } from "./workers-ai-runtime.ts";
+
+export type { AssistantModelRunner, AssistantModelRunnerService } from "./model.ts";
 
 const maxAssistantToolRounds = 4;
 const assistantMaxTokens = 256;
-const defaultAssistantModel = "@cf/meta/llama-3.1-8b-instruct-fast";
+const defaultOllamaEndpoint = "http://localhost:11434";
 const assistantToolLoopExhaustedMessage =
   "I couldn't finish the request because the tool loop did not converge.";
 
-interface WorkersAiBinding {
-  run(
-    model: string,
-    inputs: AiTextGenerationInput,
-    options?: AssistantGatewayOptions,
-  ): Promise<AiTextGenerationOutput>;
-}
-
-export type AssistantAiConfig =
-  | {
-      readonly kind: "binding";
-      readonly binding: WorkersAiBinding;
-      readonly gatewayId?: string;
-    }
-  | {
-      readonly kind: "rest";
-      readonly accountId: string;
-      readonly apiKey: string;
-    };
-
-interface AssistantAiRunner {
-  readonly run: (
-    model: string,
-    inputs: AiTextGenerationInput,
-    metadata?: AssistantGatewayMetadata,
-    eventId?: string,
-  ) => Promise<AiTextGenerationOutput>;
-}
+export type AssistantAiConfig = OllamaConfig | WorkersAiConfig;
 
 interface AssistantConversationRoundInput {
-  readonly availableTools: readonly AssistantRunnableTool[];
-  readonly conversation: RoleScopedChatInput[];
-  readonly gatewayEventId: string | undefined;
-  readonly gatewayMetadata: AssistantGatewayMetadata | undefined;
+  readonly conversation: readonly AssistantConversationMessage[];
+  readonly eventId: string | undefined;
   readonly model: string;
+  readonly requestMetadata: AssistantRequestMetadata | undefined;
   readonly round: number;
-  readonly runner: AssistantAiRunner;
   readonly tools: readonly AssistantToolDefinition[];
 }
 
 export function getBunAssistantAiConfig(
   env: Record<string, string | undefined>,
 ): AssistantAiConfig | undefined {
-  const accountId = env.CLOUDFLARE_ACCOUNT_ID?.trim();
-  const apiKey = env.CLOUDFLARE_API_TOKEN?.trim();
+  const provider = readOptionalEnv(env.COFFEE_ASSISTANT_PROVIDER);
+  const ollamaEndpoint =
+    readOptionalEnv(env.COFFEE_ASSISTANT_OLLAMA_URL) ?? readOptionalEnv(env.OLLAMA_HOST);
+
+  if (provider === "ollama" || ollamaEndpoint !== undefined) {
+    return {
+      kind: "ollama",
+      endpoint: ollamaEndpoint ?? defaultOllamaEndpoint,
+    };
+  }
+
+  const accountId = readOptionalEnv(env.CLOUDFLARE_ACCOUNT_ID);
+  const apiKey = readOptionalEnv(env.CLOUDFLARE_API_TOKEN);
 
   if (!accountId || !apiKey) {
     return undefined;
   }
 
   return {
-    kind: "rest",
+    kind: "workers-ai-rest",
     accountId,
     apiKey,
   };
 }
 
-export function getAssistantModel(env?: Record<string, string | undefined>): string {
-  const model = env?.COFFEE_ASSISTANT_MODEL?.trim();
+export function getAssistantModel(
+  env?: Record<string, string | undefined>,
+  ai?: AssistantAiConfig,
+): string | undefined {
+  const model = readOptionalEnv(env?.COFFEE_ASSISTANT_MODEL);
 
-  if (!model) {
-    return defaultAssistantModel;
+  if (model) {
+    return model;
   }
 
-  return model;
+  if (ai?.kind === "ollama") {
+    return undefined;
+  }
+
+  return getDefaultWorkersAiModel();
 }
 
-export async function runAssistantConversation(input: {
-  readonly ai: AssistantAiConfig;
-  readonly gatewayEventId?: string;
-  readonly gatewayMetadata?: AssistantGatewayMetadata;
+function getDefaultWorkersAiModel(): string {
+  return "@cf/meta/llama-3.1-8b-instruct-fast";
+}
+
+function readOptionalEnv(value: string | undefined): string | undefined {
+  const trimmedValue = value?.trim();
+
+  if (!trimmedValue) {
+    return undefined;
+  }
+
+  return trimmedValue;
+}
+
+export function createAssistantModelRunner(config: AssistantAiConfig): AssistantModelRunnerService {
+  if (config.kind === "ollama") {
+    return makeOllamaRunner(config);
+  }
+
+  return makeWorkersAiRunner(config);
+}
+
+export function createAssistantModelRunnerLayer(
+  config: AssistantAiConfig,
+): Layer.Layer<AssistantModelRunner> {
+  return Layer.succeed(AssistantModelRunner)(createAssistantModelRunner(config));
+}
+
+export function runAssistantConversation(input: {
+  readonly eventId?: string;
   readonly messages: readonly ModelMessage[];
   readonly model: string;
+  readonly requestMetadata?: AssistantRequestMetadata;
   readonly systemPrompt: string;
   readonly tools: readonly AssistantToolDefinition[];
-}): Promise<string> {
-  const runner = createAssistantAiRunner(input.ai);
-  const conversation = toWorkersAiMessages(input.messages, input.systemPrompt);
-  const availableTools = input.tools.map(stripToolExecutor);
+}): Effect.Effect<string, AssistantModelError, AssistantModelRunner> {
+  const conversation = toAssistantConversationMessages(input.messages, input.systemPrompt);
 
   return runAssistantConversationRound({
-    availableTools,
     conversation,
-    gatewayEventId: input.gatewayEventId,
-    gatewayMetadata: input.gatewayMetadata,
+    eventId: input.eventId,
     model: input.model,
+    requestMetadata: input.requestMetadata,
     round: 0,
-    runner,
     tools: input.tools,
   });
 }
 
-async function runAssistantConversationRound(
+function runAssistantConversationRound(
   input: AssistantConversationRoundInput,
-): Promise<string> {
-  const response = await input.runner.run(
-    input.model,
-    {
-      max_tokens: assistantMaxTokens,
-      messages: input.conversation,
-      tools: input.availableTools,
-    },
-    input.gatewayMetadata,
-    input.gatewayEventId,
-  );
-  const toolCalls = response.tool_calls?.filter(isToolCall) ?? [];
+): Effect.Effect<string, AssistantModelError, AssistantModelRunner> {
+  return Effect.gen(function* () {
+    const runner = yield* AssistantModelRunner;
 
-  if (toolCalls.length === 0) {
-    return extractAssistantText(response);
-  }
+    return yield* runner
+      .run({
+        conversation: input.conversation,
+        eventId: input.eventId,
+        maxTokens: assistantMaxTokens,
+        model: input.model,
+        requestMetadata: input.requestMetadata,
+        tools: input.tools,
+      })
+      .pipe(
+        Effect.flatMap((response) => {
+          if (response.toolCalls.length === 0) {
+            return Effect.succeed(response.text);
+          }
 
-  if (input.round === maxAssistantToolRounds) {
-    return assistantToolLoopExhaustedMessage;
-  }
+          if (input.round === maxAssistantToolRounds) {
+            return Effect.succeed(assistantToolLoopExhaustedMessage);
+          }
 
-  await appendToolCallMessages(input.conversation, toolCalls, input.tools);
-
-  return runAssistantConversationRound({
-    availableTools: input.availableTools,
-    conversation: input.conversation,
-    gatewayEventId: input.gatewayEventId,
-    gatewayMetadata: input.gatewayMetadata,
-    model: input.model,
-    round: input.round + 1,
-    runner: input.runner,
-    tools: input.tools,
+          return appendToolCallMessages(input.conversation, response.toolCalls, input.tools).pipe(
+            Effect.flatMap((conversation) =>
+              runAssistantConversationRound({
+                conversation,
+                eventId: input.eventId,
+                model: input.model,
+                requestMetadata: input.requestMetadata,
+                round: input.round + 1,
+                tools: input.tools,
+              }),
+            ),
+          );
+        }),
+      );
   });
 }
 
-function createAssistantAiRunner(config: AssistantAiConfig): AssistantAiRunner {
-  if (config.kind === "binding") {
-    return {
-      run: async (model, inputs, metadata, eventId) => {
-        const options = createGatewayOptions(config.gatewayId, metadata, eventId);
-
-        if (options === undefined) {
-          return config.binding.run(model, inputs);
-        }
-
-        return config.binding.run(model, inputs, options);
-      },
-    };
-  }
-
-  return {
-    run: async (model, inputs) =>
-      runWorkersAiOverRest({
-        accountId: config.accountId,
-        apiKey: config.apiKey,
-        model,
-        request: inputs,
-      }),
-  };
+function appendToolCallMessages(
+  conversation: readonly AssistantConversationMessage[],
+  toolCalls: readonly AssistantToolCall[],
+  tools: readonly AssistantToolDefinition[],
+): Effect.Effect<readonly AssistantConversationMessage[]> {
+  return Effect.forEach(toolCalls, (toolCall) =>
+    executeToolCall(toolCall, tools).pipe(
+      Effect.map((content): readonly AssistantConversationMessage[] => [
+        {
+          role: "assistant",
+          content: JSON.stringify(toolCall),
+          toolCalls: [toolCall],
+        },
+        {
+          content,
+          name: toolCall.name,
+          role: "tool",
+        },
+      ]),
+    ),
+  ).pipe(Effect.map((messages) => conversation.concat(messages.flat())));
 }
 
-async function appendToolCallMessages(
-  conversation: RoleScopedChatInput[],
-  toolCalls: readonly AiTextGenerationToolLegacyOutput[],
+function executeToolCall(
+  toolCall: AssistantToolCall,
   tools: readonly AssistantToolDefinition[],
-): Promise<void> {
-  for (const toolCall of toolCalls) {
-    conversation.push({ role: "assistant", content: JSON.stringify(toolCall) });
-    conversation.push({
-      content: await executeToolCall(toolCall, tools),
-      name: toolCall.name,
-      role: "tool",
-    });
-  }
-}
-
-async function executeToolCall(
-  toolCall: AiTextGenerationToolLegacyOutput,
-  tools: readonly AssistantToolDefinition[],
-): Promise<string> {
-  const selectedTool = tools.find((tool) => tool.name === toolCall.name);
+): Effect.Effect<string> {
+  const selectedTool = tools.find((tool) => getAssistantToolName(tool) === toolCall.name);
 
   if (!selectedTool) {
-    return `Unknown tool requested: ${toolCall.name}`;
+    return Effect.succeed(`Unknown tool requested: ${toolCall.name}`);
   }
 
   return selectedTool.execute(toolCall.arguments);

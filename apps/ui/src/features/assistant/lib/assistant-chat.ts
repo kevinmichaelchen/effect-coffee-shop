@@ -52,7 +52,7 @@ export function getAssistantStatus(input: {
   if (isBusy) {
     return {
       detail: describeConnectionStatus(connectionStatus),
-      label: "Running on Cloudflare Workers AI",
+      label: "Running Beanline",
       phase: "running",
     };
   }
@@ -93,18 +93,18 @@ export function isAssistantToolActivity(value: unknown): value is AssistantToolA
 
 function describeConnectionStatus(connectionStatus: ConnectionStatus): string {
   if (connectionStatus === "connected") {
-    return "Same-origin Worker route is open for live menu and order tools.";
+    return "Same-origin Beanline route is open for live menu and order tools.";
   }
 
   if (connectionStatus === "connecting") {
-    return "Opening the Worker stream for this run.";
+    return "Opening the Beanline stream for this run.";
   }
 
   if (connectionStatus === "error") {
     return "The assistant stream hit a connection error.";
   }
 
-  return "The first prompt opens the Worker stream.";
+  return "The first prompt opens the Beanline stream.";
 }
 
 function extractMessageText(message: UIMessage): string {
