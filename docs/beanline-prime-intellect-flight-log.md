@@ -852,9 +852,12 @@ Added a prepared low-cost warmup config:
 
 - `experiments/prime-intellect/effect-coffee-ordering/configs/rl/effect-coffee-ordering-qwen-0.8b-receipt-drill-warmup.toml`
 
-The config starts from the current champion adapter
-`rqvfrcdy4xt95oka37b0xjyu`, uses the unpublished `0.1.6` environment snapshot,
-trains on `split=receipt_drill`, and evaluates against `split=hard_eval`.
+The config now starts from the available Iteration 2 checkpoint
+`oo8lrytspz37lfsdlloubig7`. The final champion adapter
+`rqvfrcdy4xt95oka37b0xjyu` is deployable for inference/eval, but the current
+Prime Hosted Training CLI rejects it as a `checkpoint_id` for new training
+runs. The config uses the `0.1.6` environment snapshot, trains on
+`split=receipt_drill`, and evaluates against `split=hard_eval`.
 
 ### Decision
 
@@ -863,3 +866,82 @@ No paid training was started. The checked-in environment was published as
 at an available environment version. Treat the warmup as a candidate only if it
 improves `price_format` above `0.625` without reducing tool correctness or
 increasing verbosity.
+
+## Iteration 7: Product-Readiness Expansion
+
+### Goal
+
+Teach Beanline to behave like a careful coffee-shop cashier, not only a receipt
+formatter: take one valid drink order, ask when the request is unclear, suggest
+valid alternatives when something is unavailable, preserve notes, and stay
+concise.
+
+### Artifacts Created
+
+Added a broader product-readiness path:
+
+- New environment split: `product_readiness`
+- Environment version: `kevinmichaelchen/effect-coffee-ordering@0.1.7`
+- Prime integration test action: passed in logs, 4 selected tests passing
+- Product-readiness examples: `16`
+- New SFT corpora:
+  - `data/effect_coffee_sft/product_behavior_final_response_sft.jsonl`
+  - `data/effect_coffee_sft/product_behavior_tool_trajectory_sft.jsonl`
+- New warmup config:
+  - `configs/rl/effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml`
+
+Coverage added:
+
+- multi-item/cart requests, which are refused as unsupported one-drink
+  workflows until cart tools exist,
+- substitutions and unavailable ingredients,
+- ambiguous orders that need clarification,
+- modifier edge cases,
+- pickup time and preparation notes through the existing `notes` field,
+- concise refusals.
+
+### Hosted RL Attempt
+
+The first launch attempts exposed useful Prime config constraints:
+
+- Pre-run validation failed because `checkpoint_id` used the deployable adapter
+  id `rqvfrcdy4xt95oka37b0xjyu`, but Hosted Training requires a READY
+  checkpoint id.
+- Pre-run validation then failed because warm-start `max_steps` must be greater
+  than the checkpoint step `25`.
+- Run `hnvs3sm4218bvorgc6gnki6i` failed config validation because two eval
+  entries used the same environment id without unique `name` fields.
+
+Those failures had `$0.00` usage.
+
+The corrected run:
+
+- Run: `e2s3bs35k9qwzlfbrfw0ol51`
+- Start point: checkpoint `oo8lrytspz37lfsdlloubig7`
+- Environment version: `0.1.7`
+- Train split: `product_readiness`
+- Eval splits: `hard_eval`, `product_readiness`
+- Stopped early after first interval eval
+- Final cost: `$0.1226`
+
+First interval eval:
+
+| Step | Hard eval Avg@2 | Hard mean completion length | Product-readiness Avg@2 | Product mean completion length |
+| ---: | ---: | ---: | ---: | ---: |
+| `32` | `0.7545` | `620.5625` | `0.7545` | `629.25` |
+
+### Decision
+
+Do not promote any product-readiness adapter from Iteration 7. The candidate
+missed the hard-eval reward gate (`0.7545` vs champion `0.830`) and moved badly
+in the wrong direction on verbosity.
+
+The champion remains:
+
+- Adapter: `rqvfrcdy4xt95oka37b0xjyu`
+- Champion `0.1.5 hard_eval` reward: `0.830`
+- Main weakness: `price_format = 0.625`
+
+The product-readiness definition is still useful, but do not rerun the current
+RL config unchanged. The safer next use is SFT or prompt optimization on
+`product_behavior_final_response_sft.jsonl`, then re-evaluate before more RL.

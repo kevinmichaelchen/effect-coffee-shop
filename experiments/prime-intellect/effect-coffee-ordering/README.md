@@ -68,11 +68,10 @@ define a better coffee-shop assistant beyond receipts:
 - pickup timing, customer name, and order notes,
 - concise refusal behavior.
 
-Publish the checked-in environment as version `0.1.7` before launching:
-
-```sh
-prime --plain train configs/rl/effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml --yes
-```
+Environment version `0.1.7` is published. The first product-readiness warmup run
+(`e2s3bs35k9qwzlfbrfw0ol51`) was stopped after the first interval eval because
+it failed the hard-eval reward and verbosity gates. Do not rerun that config
+unchanged.
 
 ## Prime Hosted RL
 

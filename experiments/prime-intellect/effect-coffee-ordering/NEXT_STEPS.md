@@ -40,7 +40,7 @@ cd experiments/prime-intellect/effect-coffee-ordering
 prime --plain train configs/rl/effect-coffee-ordering-qwen-0.8b-receipt-drill-warmup.toml --yes
 ```
 
-## Product-Readiness Run
+## Product-Readiness Status
 
 The process now has a broader `product_readiness` split and matching SFT corpora
 for:
@@ -52,23 +52,22 @@ for:
 - pickup timing, customer name, and order notes,
 - concise refusal behavior.
 
-Publish the checked-in environment as the next version before launching this
-run:
+Environment `kevinmichaelchen/effect-coffee-ordering@0.1.7` is published and
+Prime integration logs passed.
 
-```sh
-cd experiments/prime-intellect/effect-coffee-ordering
-prime --plain env push --path environment --owner kevinmichaelchen --visibility PRIVATE
-prime --plain env status kevinmichaelchen/effect-coffee-ordering --output json
-```
+Do not rerun `effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml`
+unchanged. Run `e2s3bs35k9qwzlfbrfw0ol51` was stopped after its first interval
+eval because it failed the promotion gate:
 
-Only run the product-readiness warmup after the new version is available as
-`0.1.7`:
+| Step | Hard eval Avg@2 | Hard mean completion length | Product-readiness Avg@2 | Product mean completion length |
+| ---: | ---: | ---: | ---: | ---: |
+| `32` | `0.7545` | `620.5625` | `0.7545` | `629.25` |
 
-```sh
-prime --plain train configs/rl/effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml --yes
-```
+Cost was `$0.1226`; no adapter was promoted. Prefer SFT or prompt optimization
+on `product_behavior_final_response_sft.jsonl` before spending more RL on this
+split.
 
-Track the run:
+Inspect the stopped run:
 
 ```sh
 prime --plain train list --mine --output json
