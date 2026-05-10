@@ -8,17 +8,7 @@ import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/er
 import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
 import { findMenuItemById } from "./queries/.generated/find-menu-item-by-id.sql.ts";
 import { listMenuItems } from "./queries/.generated/list-menu-items.sql.ts";
-import { SqlMenuItemModel } from "./models.ts";
-
-const toMenuItem = (item: SqlMenuItemModel): MenuItem => ({
-  id: item.id,
-  name: item.name,
-  kind: item.kind,
-  basePriceCents: item.base_price_cents,
-  availableMilks: item.available_milks,
-  availableTemperatures: item.available_temperatures,
-  maxShots: item.max_shots,
-});
+import { SqlMenuItemModel, toMenuItem } from "./models.ts";
 
 const decodeSqlMenuItems = Schema.decodeUnknownEffect(Schema.Array(SqlMenuItemModel));
 const decodeSqlMenuItem = Schema.decodeUnknownEffect(SqlMenuItemModel);

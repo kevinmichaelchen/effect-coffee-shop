@@ -4,10 +4,19 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import {
+  decodeCartItemIdInput,
+  decodeCheckoutCartInput,
+  decodeEmptyActionInput,
+  decodeItemOptionsInput,
   decodeListOrdersInput,
   decodeOrderIdInput,
+  decodeOrderItemInput,
   decodePlaceOrderInput,
+  decodeQuoteOrderInput,
+  decodeUpdateCartItemInput,
 } from "@effect-coffee-shop/coffee-actions/schemas";
+import { executeCoffeeAction } from "@effect-coffee-shop/coffee-actions/execute";
+import type { CoffeeActionName } from "@effect-coffee-shop/coffee-actions/specs";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
 import { coffeeAgentCapabilities } from "./capabilities.ts";
 import { formatToolFailure } from "@effect-coffee-shop/coffee-actions/format";
@@ -83,11 +92,26 @@ async function decodeAgentInput<A>(input: {
   return result.value;
 }
 
-async function runCoffeeEffect<A>(input: {
-  readonly effect: Effect.Effect<A, unknown, CoffeeOrderApp>;
+async function runAgentAction<A>(input: {
+  readonly action: CoffeeActionName;
+  readonly decode: (value: unknown) => Promise<A>;
+  readonly failureMessage: string;
+  readonly arguments: unknown;
   readonly runApp: CoffeeAppRunner;
 }) {
-  return input.runApp(input.effect.pipe(Effect.mapError(toExecutionError)));
+  const payload = input.arguments ?? {};
+
+  await decodeAgentInput({
+    decode: input.decode,
+    failureMessage: input.failureMessage,
+    value: payload,
+  });
+
+  return executeCoffeeAction({
+    action: input.action,
+    payload,
+    runApp: input.runApp,
+  }).catch((error) => Promise.reject(toExecutionError(error)));
 }
 
 export async function executeCoffeeAgentCapability(input: {
@@ -97,46 +121,112 @@ export async function executeCoffeeAgentCapability(input: {
 }) {
   switch (input.capability) {
     case "list_menu":
-      return runCoffeeEffect({
-        effect: CoffeeOrderApp.use((app) => app.listMenu()),
+      return runAgentAction({
+        action: "list_menu",
+        arguments: input.arguments,
+        decode: decodeEmptyActionInput,
+        failureMessage: "Invalid list_menu arguments.",
+        runApp: input.runApp,
+      });
+    case "get_item_options":
+      return runAgentAction({
+        action: "get_item_options",
+        arguments: input.arguments,
+        decode: decodeItemOptionsInput,
+        failureMessage: "Invalid get_item_options arguments.",
+        runApp: input.runApp,
+      });
+    case "validate_order":
+      return runAgentAction({
+        action: "validate_order",
+        arguments: input.arguments,
+        decode: decodeQuoteOrderInput,
+        failureMessage: "Invalid validate_order arguments.",
+        runApp: input.runApp,
+      });
+    case "quote_order":
+      return runAgentAction({
+        action: "quote_order",
+        arguments: input.arguments,
+        decode: decodeQuoteOrderInput,
+        failureMessage: "Invalid quote_order arguments.",
         runApp: input.runApp,
       });
     case "place_order": {
-      const payload = await decodeAgentInput({
+      return runAgentAction({
+        action: "place_order",
+        arguments: input.arguments,
         decode: decodePlaceOrderInput,
         failureMessage: "Invalid place_order arguments.",
-        value: input.arguments ?? {},
-      });
-
-      return runCoffeeEffect({
-        effect: CoffeeOrderApp.use((app) => app.placeOrder(payload)),
         runApp: input.runApp,
       });
     }
     case "get_order": {
-      const payload = await decodeAgentInput({
+      return runAgentAction({
+        action: "get_order",
+        arguments: input.arguments,
         decode: decodeOrderIdInput,
         failureMessage: "Invalid get_order arguments.",
-        value: input.arguments ?? {},
-      });
-
-      return runCoffeeEffect({
-        effect: CoffeeOrderApp.use((app) => app.getOrder(payload.orderId)),
         runApp: input.runApp,
       });
     }
     case "list_orders": {
-      const payload = await decodeAgentInput({
+      return runAgentAction({
+        action: "list_orders",
+        arguments: input.arguments,
         decode: decodeListOrdersInput,
         failureMessage: "Invalid list_orders arguments.",
-        value: input.arguments ?? {},
-      });
-
-      return runCoffeeEffect({
-        effect: CoffeeOrderApp.use((app) => app.listOrders(payload)),
         runApp: input.runApp,
       });
     }
+    case "get_cart":
+      return runAgentAction({
+        action: "get_cart",
+        arguments: input.arguments,
+        decode: decodeEmptyActionInput,
+        failureMessage: "Invalid get_cart arguments.",
+        runApp: input.runApp,
+      });
+    case "add_cart_item":
+      return runAgentAction({
+        action: "add_cart_item",
+        arguments: input.arguments,
+        decode: decodeOrderItemInput,
+        failureMessage: "Invalid add_cart_item arguments.",
+        runApp: input.runApp,
+      });
+    case "update_cart_item":
+      return runAgentAction({
+        action: "update_cart_item",
+        arguments: input.arguments,
+        decode: decodeUpdateCartItemInput,
+        failureMessage: "Invalid update_cart_item arguments.",
+        runApp: input.runApp,
+      });
+    case "remove_cart_item":
+      return runAgentAction({
+        action: "remove_cart_item",
+        arguments: input.arguments,
+        decode: decodeCartItemIdInput,
+        failureMessage: "Invalid remove_cart_item arguments.",
+        runApp: input.runApp,
+      });
+    case "clear_cart":
+      return runAgentAction({
+        action: "clear_cart",
+        arguments: input.arguments,
+        decode: decodeEmptyActionInput,
+        failureMessage: "Invalid clear_cart arguments.",
+        runApp: input.runApp,
+      });
+    case "checkout_cart":
+      return runAgentAction({
+        action: "checkout_cart",
+        arguments: input.arguments,
+        decode: decodeCheckoutCartInput,
+        failureMessage: "Invalid checkout_cart arguments.",
+        runApp: input.runApp,
+      });
     default:
       return Promise.reject(
         new UnsupportedAgentCapabilityError({

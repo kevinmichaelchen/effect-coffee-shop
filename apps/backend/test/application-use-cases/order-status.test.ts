@@ -16,8 +16,12 @@ import {
 
 const baseOrderRequest = {
   customerName: "Avery",
-  drinkId: "latte",
-  size: "medium",
+  items: [
+    {
+      drinkId: "latte",
+      size: "medium",
+    },
+  ],
 } as const;
 
 const validTransitionPrograms = [

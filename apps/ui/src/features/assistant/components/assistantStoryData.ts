@@ -22,7 +22,8 @@ export const storyAssistantEvents: readonly AssistantToolActivity[] = [
   {
     kind: "tool-call",
     label: "place_order",
-    detail: '{\n  "drinkId": "latte",\n  "size": "medium",\n  "milk": "oat",\n  "shots": 2\n}',
+    detail:
+      '{\n  "items": [\n    {\n      "drinkId": "latte",\n      "size": "medium",\n      "milk": "oat",\n      "shots": 2\n    }\n  ]\n}',
   },
   {
     kind: "tool-result",

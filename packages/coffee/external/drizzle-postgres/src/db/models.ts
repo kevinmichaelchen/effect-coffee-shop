@@ -1,5 +1,7 @@
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { createSelectSchema } from "drizzle-orm/effect-schema";
+import { CartItemIdSchema, type CartItem } from "@effect-coffee-shop/coffee-core/domain/cart";
 import {
   DrinkIdSchema,
   DrinkKindSchema,
@@ -8,12 +10,14 @@ import {
   TemperatureSchema,
   type MenuItem,
 } from "@effect-coffee-shop/coffee-core/domain/menu";
+import { moneyFromCents, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
 import {
   OrderIdSchema,
   OrderStatusSchema,
   type CoffeeOrder,
+  type CoffeeOrderItem,
 } from "@effect-coffee-shop/coffee-core/domain/order";
-import { menuItemsTable, ordersTable } from "./schema.ts";
+import { cartItemsTable, menuItemsTable, orderItemsTable, ordersTable } from "./schema.ts";
 
 export const DrizzleMenuItemRowSchema = createSelectSchema(menuItemsTable, {
   id: DrinkIdSchema,
@@ -24,12 +28,24 @@ export const DrizzleMenuItemRowSchema = createSelectSchema(menuItemsTable, {
 
 export const DrizzleOrderRowSchema = createSelectSchema(ordersTable, {
   id: OrderIdSchema,
+  status: OrderStatusSchema,
+  createdAt: Schema.DateTimeUtcFromString,
+});
+
+export const DrizzleOrderItemRowSchema = createSelectSchema(orderItemsTable, {
+  orderId: OrderIdSchema,
   drinkId: DrinkIdSchema,
   size: DrinkSizeSchema,
   milk: MilkSchema,
   temperature: TemperatureSchema,
-  status: OrderStatusSchema,
-  createdAt: Schema.DateTimeUtcFromString,
+});
+
+export const DrizzleCartItemRowSchema = createSelectSchema(cartItemsTable, {
+  id: CartItemIdSchema,
+  drinkId: DrinkIdSchema,
+  size: DrinkSizeSchema,
+  milk: MilkSchema,
+  temperature: TemperatureSchema,
 });
 
 export const OrderIdSequenceRowSchema = Schema.Struct({
@@ -38,47 +54,105 @@ export const OrderIdSequenceRowSchema = Schema.Struct({
 
 type DrizzleMenuItemRow = typeof DrizzleMenuItemRowSchema.Type;
 type DrizzleOrderRow = typeof DrizzleOrderRowSchema.Type;
+type DrizzleOrderItemRow = typeof DrizzleOrderItemRowSchema.Type;
+type DrizzleCartItemRow = typeof DrizzleCartItemRowSchema.Type;
 
 export const toMenuItem = (item: DrizzleMenuItemRow): MenuItem => ({
   id: item.id,
   name: item.name,
   kind: item.kind,
-  basePriceCents: item.basePriceCents,
+  basePrice: moneyFromCents(item.basePriceCents),
   availableMilks: item.availableMilks,
   availableTemperatures: item.availableTemperatures,
   maxShots: item.maxShots,
 });
 
-export const toCoffeeOrder = (order: DrizzleOrderRow): CoffeeOrder => ({
+const toCoffeeOrderItem = (item: DrizzleOrderItemRow): CoffeeOrderItem => ({
+  drinkId: item.drinkId,
+  drinkName: item.drinkName,
+  size: item.size,
+  milk: item.milk,
+  temperature: item.temperature,
+  shots: item.shots,
+  quantity: item.quantity,
+  unitPrice: moneyFromCents(item.unitPriceCents),
+  lineTotal: moneyFromCents(item.lineTotalCents),
+  ...Option.match(Option.fromNullishOr(item.notes), {
+    onNone: () => ({}),
+    onSome: (notes) => ({ notes }),
+  }),
+});
+
+export const toCoffeeOrder = (
+  order: DrizzleOrderRow,
+  items: readonly DrizzleOrderItemRow[],
+): CoffeeOrder => ({
   id: order.id,
   customerName: order.customerName,
   ownerUserId: order.ownerUserId,
-  drinkId: order.drinkId,
-  drinkName: order.drinkName,
-  size: order.size,
-  milk: order.milk,
-  temperature: order.temperature,
-  shots: order.shots,
+  items: items.map(toCoffeeOrderItem),
   status: order.status,
-  priceCents: order.priceCents,
+  totalPrice: moneyFromCents(order.totalPriceCents),
   createdAt: order.createdAt,
-  ...(order.notes === null ? {} : { notes: order.notes }),
 });
 
 export const toOrderInsert = (order: CoffeeOrder): typeof ordersTable.$inferInsert => ({
   id: order.id,
   customerName: order.customerName,
   ownerUserId: order.ownerUserId,
-  drinkId: order.drinkId,
-  drinkName: order.drinkName,
-  size: order.size,
-  milk: order.milk,
-  temperature: order.temperature,
-  shots: order.shots,
-  notes: order.notes ?? null,
   status: order.status,
-  priceCents: order.priceCents,
+  totalPriceCents: moneyToCents(order.totalPrice),
   createdAt: Schema.encodeSync(Schema.DateTimeUtcFromString)(order.createdAt),
+});
+
+export const toOrderItemInsert = (
+  orderId: string,
+  item: CoffeeOrderItem,
+  position: number,
+): typeof orderItemsTable.$inferInsert => ({
+  orderId,
+  position,
+  drinkId: item.drinkId,
+  drinkName: item.drinkName,
+  size: item.size,
+  milk: item.milk,
+  temperature: item.temperature,
+  shots: item.shots,
+  notes: item.notes ?? null,
+  quantity: item.quantity,
+  unitPriceCents: moneyToCents(item.unitPrice),
+  lineTotalCents: moneyToCents(item.lineTotal),
+});
+
+export const toCartItem = (item: DrizzleCartItemRow): CartItem => ({
+  id: item.id,
+  drinkId: item.drinkId,
+  size: item.size,
+  milk: item.milk,
+  temperature: item.temperature,
+  shots: item.shots,
+  quantity: item.quantity,
+  ...Option.match(Option.fromNullishOr(item.notes), {
+    onNone: () => ({}),
+    onSome: (notes) => ({ notes }),
+  }),
+});
+
+export const toCartItemInsert = (
+  ownerUserId: string,
+  item: CartItem,
+  position: number,
+): typeof cartItemsTable.$inferInsert => ({
+  ownerUserId,
+  id: item.id,
+  position,
+  drinkId: item.drinkId,
+  size: item.size,
+  milk: item.milk ?? "none",
+  temperature: item.temperature ?? "hot",
+  shots: item.shots ?? 0,
+  notes: item.notes ?? null,
+  quantity: item.quantity,
 });
 
 export const toMenuItemSeed = (
@@ -89,7 +163,7 @@ export const toMenuItemSeed = (
   name: item.name,
   kind: item.kind,
   sortOrder,
-  basePriceCents: item.basePriceCents,
+  basePriceCents: moneyToCents(item.basePrice),
   availableMilks: item.availableMilks,
   availableTemperatures: item.availableTemperatures,
   maxShots: item.maxShots,

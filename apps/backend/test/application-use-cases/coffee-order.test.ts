@@ -23,11 +23,15 @@ describe("coffee order workflow", () => {
     Effect.gen(function* () {
       const created = yield* placeOrder({
         customerName: "Avery",
-        drinkId: "latte",
-        size: "large",
-        milk: "oat",
-        temperature: "extra-hot",
-        shots: 2,
+        items: [
+          {
+            drinkId: "latte",
+            size: "large",
+            milk: "oat",
+            temperature: "extra-hot",
+            shots: 2,
+          },
+        ],
       });
       const loaded = yield* getOrder(created.id);
       const brewing = yield* startBrewing(created.id);
@@ -51,9 +55,7 @@ describe("coffee order workflow", () => {
       const error = yield* Effect.flip(
         placeOrder({
           customerName: "Morgan",
-          drinkId: "tea",
-          size: "small",
-          shots: 1,
+          items: [{ drinkId: "tea", size: "small", shots: 1 }],
         }),
       );
 
@@ -65,13 +67,11 @@ describe("coffee order workflow", () => {
     Effect.gen(function* () {
       const first = yield* placeOrder({
         customerName: "Avery",
-        drinkId: "latte",
-        size: "medium",
+        items: [{ drinkId: "latte", size: "medium" }],
       });
       const second = yield* placeOrder({
         customerName: "Morgan",
-        drinkId: "tea",
-        size: "small",
+        items: [{ drinkId: "tea", size: "small" }],
       });
       const encodedFirst = yield* Schema.encodeUnknownEffect(Schema.UnknownFromJsonString)(first);
 

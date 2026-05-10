@@ -11,6 +11,11 @@ import {
 } from "@effect-coffee-shop/coffee-core/domain/menu";
 import { orderStatuses } from "@effect-coffee-shop/coffee-core/domain/order";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
+import {
+  toCoffeeOrderView,
+  toCoffeeOrdersView,
+  toMenuView,
+} from "@effect-coffee-shop/coffee-core/application/contracts";
 import { prettyJson } from "@effect-coffee-shop/backend-host/json";
 
 const customerName = Flag.string("customer-name").pipe(
@@ -41,17 +46,21 @@ const createOrder = Command.make("create", {
       const app = yield* CoffeeOrderApp;
       const order = yield* app.placeOrder({
         customerName,
-        drinkId: drink,
-        size,
-        ...Option.match(milk, { onNone: () => ({}), onSome: (milk) => ({ milk }) }),
-        ...Option.match(temperature, {
-          onNone: () => ({}),
-          onSome: (temperature) => ({ temperature }),
-        }),
-        ...Option.match(shots, { onNone: () => ({}), onSome: (shots) => ({ shots }) }),
-        ...Option.match(notes, { onNone: () => ({}), onSome: (notes) => ({ notes }) }),
+        items: [
+          {
+            drinkId: drink,
+            size,
+            ...Option.match(milk, { onNone: () => ({}), onSome: (milk) => ({ milk }) }),
+            ...Option.match(temperature, {
+              onNone: () => ({}),
+              onSome: (temperature) => ({ temperature }),
+            }),
+            ...Option.match(shots, { onNone: () => ({}), onSome: (shots) => ({ shots }) }),
+            ...Option.match(notes, { onNone: () => ({}), onSome: (notes) => ({ notes }) }),
+          },
+        ],
       });
-      yield* Console.log(prettyJson(order));
+      yield* Console.log(prettyJson(toCoffeeOrderView(order)));
     }),
   ),
 );
@@ -64,7 +73,7 @@ const getOrderCommand = Command.make("get", {
     Effect.fn("CoffeeCli.getOrder")(function* ({ orderId }) {
       const app = yield* CoffeeOrderApp;
       const order = yield* app.getOrder(orderId);
-      yield* Console.log(prettyJson(order));
+      yield* Console.log(prettyJson(toCoffeeOrderView(order)));
     }),
   ),
 );
@@ -79,7 +88,7 @@ const listOrdersCommand = Command.make("list", {
       const orders = yield* app.listOrders(
         Option.match(status, { onNone: () => ({}), onSome: (status) => ({ status }) }),
       );
-      yield* Console.log(prettyJson(orders));
+      yield* Console.log(prettyJson(toCoffeeOrdersView(orders)));
     }),
   ),
 );
@@ -92,7 +101,7 @@ const cancelOrderCommand = Command.make("cancel", {
     Effect.fn("CoffeeCli.cancelOrder")(function* ({ orderId }) {
       const app = yield* CoffeeOrderApp;
       const order = yield* app.cancelOrder(orderId);
-      yield* Console.log(prettyJson(order));
+      yield* Console.log(prettyJson(toCoffeeOrderView(order)));
     }),
   ),
 );
@@ -108,7 +117,7 @@ const listMenuCommand = Command.make("list").pipe(
     Effect.fn("CoffeeCli.listMenu")(function* () {
       const app = yield* CoffeeOrderApp;
       const menu = yield* app.listMenu();
-      yield* Console.log(prettyJson(menu));
+      yield* Console.log(prettyJson(toMenuView(menu)));
     }),
   ),
 );
@@ -126,7 +135,7 @@ const startCommand = Command.make("start", {
     Effect.fn("CoffeeCli.startBrewing")(function* ({ orderId }) {
       const app = yield* CoffeeOrderApp;
       const order = yield* app.startBrewing(orderId);
-      yield* Console.log(prettyJson(order));
+      yield* Console.log(prettyJson(toCoffeeOrderView(order)));
     }),
   ),
 );
@@ -139,7 +148,7 @@ const readyCommand = Command.make("ready", {
     Effect.fn("CoffeeCli.markReady")(function* ({ orderId }) {
       const app = yield* CoffeeOrderApp;
       const order = yield* app.markReady(orderId);
-      yield* Console.log(prettyJson(order));
+      yield* Console.log(prettyJson(toCoffeeOrderView(order)));
     }),
   ),
 );
@@ -152,7 +161,7 @@ const pickupCommand = Command.make("pickup", {
     Effect.fn("CoffeeCli.pickUpOrder")(function* ({ orderId }) {
       const app = yield* CoffeeOrderApp;
       const order = yield* app.pickUpOrder(orderId);
-      yield* Console.log(prettyJson(order));
+      yield* Console.log(prettyJson(toCoffeeOrderView(order)));
     }),
   ),
 );

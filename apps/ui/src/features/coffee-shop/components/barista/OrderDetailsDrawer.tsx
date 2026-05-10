@@ -3,6 +3,7 @@ import { Drawer } from "#shared/ui/retroui/Drawer.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 import { StatusBadge } from "#shared/ui/StatusBadge.tsx";
 import { formatOrderTime, formatPrice, getOrderActions } from "#features/coffee-shop/lib/coffee.ts";
+import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
 interface OrderDetailsDrawerProps {
@@ -20,20 +21,15 @@ export function OrderDetailsDrawer(inputProps: OrderDetailsDrawerProps) {
       {order !== null ? (
         <Drawer.Content className="border-l border-border">
           <Drawer.Header>
-            <Drawer.Title>{order.drinkName}</Drawer.Title>
+            <Drawer.Title>{getOrderTitle(order)}</Drawer.Title>
             <Drawer.Description>Ticket {order.id}</Drawer.Description>
           </Drawer.Header>
           <div className="grid gap-4 px-4 pb-4">
             <StatusBadge status={order.status} />
             <DetailLine label="Customer" value={order.customerName} />
             <DetailLine label="Opened" value={formatOrderTime(order.createdAt)} />
-            <DetailLine
-              label="Build"
-              value={`${order.size} · ${order.temperature} · ${order.milk}`}
-            />
-            <DetailLine label="Shots" value={String(order.shots)} />
-            <DetailLine label="Total" value={formatPrice(order.priceCents)} />
-            {order.notes !== undefined ? <DetailLine label="Notes" value={order.notes} /> : null}
+            <DetailLine label="Items" value={formatOrderItems(order)} />
+            <DetailLine label="Total" value={formatPrice(order.totalPriceCents)} />
           </div>
           <Drawer.Footer>
             {getOrderActions(order.status).map((option) => (

@@ -1,5 +1,6 @@
 import * as Schema from "effect/Schema";
 import { DrinkIdSchema, DrinkSizeSchema, MilkSchema, TemperatureSchema } from "./menu.ts";
+import { MoneySchema } from "./money.ts";
 
 export const orderStatuses = ["pending", "brewing", "ready", "picked-up", "cancelled"] as const;
 export type OrderStatus = (typeof orderStatuses)[number];
@@ -12,10 +13,7 @@ export const OrderIdSchema = Schema.String.check(Schema.isPattern(orderIdPattern
 });
 export type OrderId = typeof OrderIdSchema.Type;
 
-export const CoffeeOrderSchema = Schema.Struct({
-  id: OrderIdSchema,
-  customerName: Schema.String,
-  ownerUserId: Schema.String,
+export const CoffeeOrderItemSchema = Schema.Struct({
   drinkId: DrinkIdSchema,
   drinkName: Schema.String,
   size: DrinkSizeSchema,
@@ -23,8 +21,19 @@ export const CoffeeOrderSchema = Schema.Struct({
   temperature: TemperatureSchema,
   shots: Schema.Int,
   notes: Schema.optionalKey(Schema.String),
+  quantity: Schema.Int,
+  unitPrice: MoneySchema,
+  lineTotal: MoneySchema,
+}).annotate({ identifier: "CoffeeOrderItem" });
+export type CoffeeOrderItem = typeof CoffeeOrderItemSchema.Type;
+
+export const CoffeeOrderSchema = Schema.Struct({
+  id: OrderIdSchema,
+  customerName: Schema.String,
+  ownerUserId: Schema.String,
+  items: Schema.Array(CoffeeOrderItemSchema),
   status: OrderStatusSchema,
-  priceCents: Schema.Int,
+  totalPrice: MoneySchema,
   createdAt: Schema.DateTimeUtc,
 }).annotate({ identifier: "CoffeeOrder" });
 export type CoffeeOrder = typeof CoffeeOrderSchema.Type;

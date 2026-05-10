@@ -87,8 +87,7 @@ const placeLatteOrder = (request: McpRequest) =>
     name: "place_order",
     arguments: {
       customerName: "Avery",
-      drinkId: "latte",
-      size: "medium",
+      items: [{ drinkId: "latte", size: "medium" }],
     },
   });
 
@@ -106,14 +105,23 @@ const verifyCatalogSurface = (request: McpRequest) =>
     assert.strictEqual(initialize.protocolVersion, "2025-06-18");
     assert.strictEqual(initialize.serverInfo.name, "Coffee Orders MCP");
     assert.deepStrictEqual(toolNames, [
+      "add_cart_item",
       "cancel_order",
+      "checkout_cart",
+      "clear_cart",
+      "get_cart",
+      "get_item_options",
       "get_order",
       "list_menu",
       "list_orders",
       "mark_ready",
       "pick_up_order",
       "place_order",
+      "quote_order",
+      "remove_cart_item",
       "start_brewing",
+      "update_cart_item",
+      "validate_order",
     ]);
     assert.deepStrictEqual(resourceUris, ["coffee://menu", "coffee://orders/open"]);
     assert.deepStrictEqual(promptNames, ["recommend-drink", "summarize-open-orders"]);

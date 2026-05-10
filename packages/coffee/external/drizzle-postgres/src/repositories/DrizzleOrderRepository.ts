@@ -12,27 +12,18 @@ import type {
 import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
 import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
 import { CoffeeDb } from "../db/Db.ts";
-import { DrizzleOrderRowSchema, toCoffeeOrder, toOrderInsert } from "../db/models.ts";
-import { ordersTable } from "../db/schema.ts";
+import {
+  DrizzleOrderItemRowSchema,
+  DrizzleOrderRowSchema,
+  toCoffeeOrder,
+  toOrderInsert,
+  toOrderItemInsert,
+} from "../db/models.ts";
+import { orderItemsTable, ordersTable } from "../db/schema.ts";
 
 const decodeOrderRow = Schema.decodeUnknownEffect(DrizzleOrderRowSchema);
 const decodeOrderRows = Schema.decodeUnknownEffect(Schema.Array(DrizzleOrderRowSchema));
-
-const decodeSavedOrder = (rows: ReadonlyArray<unknown>) =>
-  Effect.gen(function* () {
-    const row = yield* Option.match(Arr.head(rows), {
-      onNone: () => Effect.die("DrizzleOrderRepository.save returned no rows"),
-      onSome: Effect.succeed,
-    });
-    const decoded = yield* decodeOrderRow(row);
-    return toCoffeeOrder(decoded);
-  });
-
-const decodeOptionalOrder = (rows: ReadonlyArray<unknown>) =>
-  Option.match(Arr.head(rows), {
-    onNone: () => Effect.succeed(Option.none<CoffeeOrder>()),
-    onSome: (row) => decodeOrderRow(row).pipe(Effect.map(toCoffeeOrder), Effect.map(Option.some)),
-  });
+const decodeOrderItemRows = Schema.decodeUnknownEffect(Schema.Array(DrizzleOrderItemRowSchema));
 
 const listWhere = (filters: ListOrdersFilters) =>
   and(
@@ -53,38 +44,64 @@ export const DrizzleOrderRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* CoffeeDb;
 
-    const save = (order: CoffeeOrder) => {
+    const loadOrderItems = Effect.fnUntraced(function* (orderId: OrderId) {
+      return yield* db
+        .select()
+        .from(orderItemsTable)
+        .where(eq(orderItemsTable.orderId, orderId))
+        .orderBy(asc(orderItemsTable.position))
+        .pipe(Effect.flatMap(decodeOrderItemRows));
+    });
+
+    const hydrateOrder = Effect.fnUntraced(function* (order: typeof DrizzleOrderRowSchema.Type) {
+      const items = yield* loadOrderItems(order.id);
+      return toCoffeeOrder(order, items);
+    });
+
+    const decodeOptionalOrder = (rows: ReadonlyArray<unknown>) =>
+      Option.match(Arr.head(rows), {
+        onNone: () => Effect.succeed(Option.none<CoffeeOrder>()),
+        onSome: (row) =>
+          decodeOrderRow(row).pipe(Effect.flatMap(hydrateOrder), Effect.map(Option.some)),
+      });
+
+    const save = Effect.fn("DrizzleOrderRepository.save")(function* (order: CoffeeOrder) {
       const row = toOrderInsert(order);
 
-      return db
-        .insert(ordersTable)
-        .values(row)
-        .onConflictDoUpdate({
-          target: ordersTable.id,
-          set: row,
-        })
-        .returning()
-        .pipe(Effect.flatMap(decodeSavedOrder));
-    };
+      yield* db.insert(ordersTable).values(row).onConflictDoUpdate({
+        target: ordersTable.id,
+        set: row,
+      });
+      yield* db.delete(orderItemsTable).where(eq(orderItemsTable.orderId, order.id));
+      yield* Effect.forEach(
+        order.items.map((item, position) => toOrderItemInsert(order.id, item, position)),
+        (item) => db.insert(orderItemsTable).values(item),
+        { discard: true },
+      );
 
-    const getById = (orderId: OrderId) =>
-      db
+      return order;
+    });
+
+    const getById = Effect.fnUntraced(function* (orderId: OrderId) {
+      return yield* db
         .select()
         .from(ordersTable)
         .where(eq(ordersTable.id, orderId))
         .limit(1)
         .pipe(Effect.flatMap(decodeOptionalOrder));
+    });
 
-    const list = (filters: ListOrdersFilters = {}) =>
-      db
+    const list = Effect.fnUntraced(function* (filters: ListOrdersFilters = {}) {
+      return yield* db
         .select()
         .from(ordersTable)
         .where(listWhere(filters))
         .orderBy(asc(ordersTable.createdAt), asc(ordersTable.id))
         .pipe(
           Effect.flatMap(decodeOrderRows),
-          Effect.map((orders) => orders.map(toCoffeeOrder)),
+          Effect.flatMap((orders) => Effect.forEach(orders, hydrateOrder)),
         );
+    });
 
     return OrderRepository.of({
       save: (order) =>

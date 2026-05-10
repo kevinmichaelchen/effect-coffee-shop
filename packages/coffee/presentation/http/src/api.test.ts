@@ -18,13 +18,13 @@ import { CoffeeHttpApi } from "./api.ts";
 const CreatedOrderResponseSchema = Schema.Struct({
   id: OrderIdSchema,
   status: Schema.Literal("pending"),
+  totalPriceCents: Schema.Int,
   createdAt: Schema.String,
 });
 
 const orderPayload = {
   customerName: "Avery",
-  drinkId: "latte",
-  size: "medium",
+  items: [{ drinkId: "latte", size: "medium" }],
 } as const;
 
 describe("http api success responses", () => {
@@ -66,8 +66,7 @@ describe("http api error responses", () => {
       const response = yield* HttpClient.post("/orders", {
         body: HttpBody.jsonUnsafe({
           customerName: "   ",
-          drinkId: "latte",
-          size: "medium",
+          items: [{ drinkId: "latte", size: "medium" }],
         }),
       });
       const body = yield* Schema.decodeUnknownEffect(InvalidOrderInputError)(yield* response.json);

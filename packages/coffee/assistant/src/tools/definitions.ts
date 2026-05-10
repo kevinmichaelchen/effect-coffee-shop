@@ -4,14 +4,23 @@ import {
   type CoffeeAppRunner,
 } from "@effect-coffee-shop/coffee-actions/execute";
 import {
+  AddCartItemTool,
   CancelOrderTool,
+  CheckoutCartTool,
+  ClearCartTool,
   GetOrderTool,
+  GetCartTool,
+  GetItemOptionsTool,
   ListMenuTool,
   ListOrdersTool,
   MarkReadyTool,
   PickUpOrderTool,
   PlaceOrderTool,
+  QuoteOrderTool,
+  RemoveCartItemTool,
   StartBrewingTool,
+  UpdateCartItemTool,
+  ValidateOrderTool,
 } from "@effect-coffee-shop/coffee-actions/toolkit";
 import * as Effect from "effect/Effect";
 import * as Match from "effect/Match";
@@ -23,10 +32,16 @@ import {
   serializeToolResult,
 } from "@effect-coffee-shop/coffee-actions/format";
 import {
+  cartItemIdToolParameters,
+  checkoutCartToolParameters,
   emptyToolParameters,
+  itemOptionsToolParameters,
   listOrdersToolParameters,
+  orderItemToolParameters,
   orderIdToolParameters,
   placeOrderToolParameters,
+  quoteOrderToolParameters,
+  updateCartItemToolParameters,
 } from "./parameters.ts";
 
 export function getAssistantToolActivityEvent(): string {
@@ -42,6 +57,9 @@ export function createCoffeeAssistantTools(
 ) {
   return [
     createListMenuTool(runApp, emitActivity),
+    createGetItemOptionsTool(runApp, emitActivity),
+    createValidateOrderTool(runApp, emitActivity),
+    createQuoteOrderTool(runApp, emitActivity),
     createPlaceOrderTool(runApp, emitActivity),
     createGetOrderTool(runApp, emitActivity),
     createListOrdersTool(runApp, emitActivity),
@@ -49,6 +67,12 @@ export function createCoffeeAssistantTools(
     createOrderIdTool("mark_ready", emitActivity, runApp),
     createOrderIdTool("pick_up_order", emitActivity, runApp),
     createOrderIdTool("cancel_order", emitActivity, runApp),
+    createGetCartTool(runApp, emitActivity),
+    createAddCartItemTool(runApp, emitActivity),
+    createUpdateCartItemTool(runApp, emitActivity),
+    createRemoveCartItemTool(runApp, emitActivity),
+    createClearCartTool(runApp, emitActivity),
+    createCheckoutCartTool(runApp, emitActivity),
   ] as const satisfies readonly AssistantToolDefinition[];
 }
 
@@ -72,6 +96,36 @@ function createPlaceOrderTool(runApp: CoffeeAppRunner, emitActivity: AssistantTo
   });
 }
 
+function createGetItemOptionsTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
+  return createAppTool({
+    action: "get_item_options",
+    emitActivity,
+    parameters: itemOptionsToolParameters,
+    runApp,
+    tool: GetItemOptionsTool,
+  });
+}
+
+function createValidateOrderTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
+  return createAppTool({
+    action: "validate_order",
+    emitActivity,
+    parameters: quoteOrderToolParameters,
+    runApp,
+    tool: ValidateOrderTool,
+  });
+}
+
+function createQuoteOrderTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
+  return createAppTool({
+    action: "quote_order",
+    emitActivity,
+    parameters: quoteOrderToolParameters,
+    runApp,
+    tool: QuoteOrderTool,
+  });
+}
+
 function createGetOrderTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
   return createAppTool({
     action: "get_order",
@@ -89,6 +143,66 @@ function createListOrdersTool(runApp: CoffeeAppRunner, emitActivity: AssistantTo
     parameters: listOrdersToolParameters,
     runApp,
     tool: ListOrdersTool,
+  });
+}
+
+function createGetCartTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
+  return createAppTool({
+    action: "get_cart",
+    emitActivity,
+    parameters: emptyToolParameters,
+    runApp,
+    tool: GetCartTool,
+  });
+}
+
+function createAddCartItemTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
+  return createAppTool({
+    action: "add_cart_item",
+    emitActivity,
+    parameters: orderItemToolParameters,
+    runApp,
+    tool: AddCartItemTool,
+  });
+}
+
+function createUpdateCartItemTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
+  return createAppTool({
+    action: "update_cart_item",
+    emitActivity,
+    parameters: updateCartItemToolParameters,
+    runApp,
+    tool: UpdateCartItemTool,
+  });
+}
+
+function createRemoveCartItemTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
+  return createAppTool({
+    action: "remove_cart_item",
+    emitActivity,
+    parameters: cartItemIdToolParameters,
+    runApp,
+    tool: RemoveCartItemTool,
+  });
+}
+
+function createClearCartTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
+  return createAppTool({
+    action: "clear_cart",
+    emitActivity,
+    parameters: emptyToolParameters,
+    runApp,
+    tool: ClearCartTool,
+  });
+}
+
+function createCheckoutCartTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
+  return createAppTool({
+    action: "checkout_cart",
+    emitActivity,
+    parameters: checkoutCartToolParameters,
+    runApp,
+    tool: CheckoutCartTool,
   });
 }
 

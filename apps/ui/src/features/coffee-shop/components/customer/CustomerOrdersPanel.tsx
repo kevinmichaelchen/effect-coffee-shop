@@ -3,6 +3,7 @@ import { Card } from "#shared/ui/retroui/Card.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 import { StatusBadge } from "#shared/ui/StatusBadge.tsx";
 import { formatOrderTime, formatPrice } from "#features/coffee-shop/lib/coffee.ts";
+import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";
 
 interface CustomerOrdersPanelProps {
@@ -70,12 +71,15 @@ function OrderRow({ order }: { order: CoffeeOrder }) {
     <div className="grid gap-2 rounded-md border border-border bg-background p-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Text as="h4" className="font-semibold">
-          {order.drinkName}
+          {getOrderTitle(order)}
         </Text>
         <StatusBadge status={order.status} />
       </div>
       <Text as="p" className="text-sm text-muted-foreground">
-        {order.id} · {formatPrice(order.priceCents)} · {formatOrderTime(order.createdAt)}
+        {order.id} · {formatPrice(order.totalPriceCents)} · {formatOrderTime(order.createdAt)}
+      </Text>
+      <Text as="p" className="text-sm text-muted-foreground">
+        {formatOrderItems(order)}
       </Text>
     </div>
   );

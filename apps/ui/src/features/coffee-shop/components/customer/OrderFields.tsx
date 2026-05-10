@@ -86,6 +86,23 @@ function ShotsField({ draft, item, onUpdateDraft }: CustomizationFieldsProps) {
   );
 }
 
+function QuantityField({
+  draft,
+  onUpdateDraft,
+}: Pick<CustomizationFieldsProps, "draft" | "onUpdateDraft">) {
+  return (
+    <TextField
+      label="Quantity"
+      min={1}
+      type="number"
+      value={draft.quantity}
+      onChange={(value: string) =>
+        onUpdateDraft("quantity", Math.max(Number.parseInt(value || "1", 10) || 1, 1))
+      }
+    />
+  );
+}
+
 function CustomizationFields(inputProps: CustomizationFieldsProps) {
   const { draft, item, onUpdateDraft } = inputProps;
 
@@ -105,6 +122,11 @@ function CustomizationFields(inputProps: CustomizationFieldsProps) {
         </FieldCell>
         <FieldCell>
           <ShotsField draft={draft} item={item} onUpdateDraft={onUpdateDraft} />
+        </FieldCell>
+      </FieldRow>
+      <FieldRow>
+        <FieldCell>
+          <QuantityField draft={draft} onUpdateDraft={onUpdateDraft} />
         </FieldCell>
       </FieldRow>
     </>

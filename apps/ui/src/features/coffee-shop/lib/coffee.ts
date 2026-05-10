@@ -23,6 +23,13 @@ export interface CoffeeOrder {
   readonly id: string;
   readonly customerName: string;
   readonly ownerUserId: string;
+  readonly items: readonly CoffeeOrderItem[];
+  readonly status: OrderStatus;
+  readonly totalPriceCents: number;
+  readonly createdAt: string;
+}
+
+export interface CoffeeOrderItem {
   readonly drinkId: string;
   readonly drinkName: string;
   readonly size: DrinkSize;
@@ -30,18 +37,23 @@ export interface CoffeeOrder {
   readonly temperature: Temperature;
   readonly shots: number;
   readonly notes?: string | undefined;
-  readonly status: OrderStatus;
-  readonly priceCents: number;
-  readonly createdAt: string;
+  readonly quantity: number;
+  readonly unitPriceCents: number;
+  readonly lineTotalCents: number;
 }
 
 export interface PlaceOrderRequest {
-  drinkId: string;
-  size: DrinkSize;
-  milk?: Milk;
-  temperature?: Temperature;
-  shots?: number;
-  notes?: string;
+  items: readonly OrderItemRequest[];
+}
+
+export interface OrderItemRequest {
+  readonly drinkId: string;
+  readonly size: DrinkSize;
+  readonly milk?: Milk;
+  readonly temperature?: Temperature;
+  readonly shots?: number;
+  readonly notes?: string;
+  readonly quantity?: number;
 }
 
 export interface OrderDraft {
@@ -50,6 +62,7 @@ export interface OrderDraft {
   milk: Milk;
   temperature: Temperature;
   shots: number;
+  quantity: number;
   notes: string;
 }
 
@@ -146,6 +159,7 @@ export function createOrderDraft(item: MenuItem): OrderDraft {
     milk: defaultMilkFor(item),
     temperature: defaultTemperatureFor(item),
     shots: defaultShotsFor(item),
+    quantity: 1,
     notes: "",
   };
 }
@@ -156,6 +170,7 @@ export function normalizeDraftForItem(draft: OrderDraft, item: MenuItem): OrderD
     ? draft.temperature
     : defaultTemperatureFor(item);
   const shots = Math.min(Math.max(draft.shots, 0), item.maxShots);
+  const quantity = Math.max(Math.trunc(draft.quantity), 1);
 
   return {
     ...draft,
@@ -163,17 +178,23 @@ export function normalizeDraftForItem(draft: OrderDraft, item: MenuItem): OrderD
     milk,
     temperature,
     shots: item.kind === "tea" ? 0 : shots,
+    quantity,
   };
 }
 
 export function toPlaceOrderRequest(draft: OrderDraft): PlaceOrderRequest {
   return {
-    drinkId: draft.drinkId,
-    size: draft.size,
-    milk: draft.milk,
-    temperature: draft.temperature,
-    shots: draft.shots,
-    notes: draft.notes,
+    items: [
+      {
+        drinkId: draft.drinkId,
+        size: draft.size,
+        milk: draft.milk,
+        temperature: draft.temperature,
+        shots: draft.shots,
+        quantity: draft.quantity,
+        notes: draft.notes,
+      },
+    ],
   };
 }
 

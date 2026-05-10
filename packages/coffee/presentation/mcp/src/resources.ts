@@ -3,6 +3,11 @@ import * as McpSchema from "effect/unstable/ai/McpSchema";
 import * as McpServer from "effect/unstable/ai/McpServer";
 import { OrderIdSchema } from "@effect-coffee-shop/coffee-core/domain/order";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
+import {
+  toCoffeeOrderView,
+  toCoffeeOrdersView,
+  toMenuView,
+} from "@effect-coffee-shop/coffee-core/application/contracts";
 import { prettyJson } from "@effect-coffee-shop/backend-host/json";
 
 export const MenuResource = McpServer.resource({
@@ -10,7 +15,10 @@ export const MenuResource = McpServer.resource({
   name: "Coffee Menu",
   description: "The current coffee menu",
   mimeType: "application/json",
-  content: CoffeeOrderApp.use((app) => app.listMenu()).pipe(Effect.map(prettyJson)),
+  content: CoffeeOrderApp.use((app) => app.listMenu()).pipe(
+    Effect.map(toMenuView),
+    Effect.map(prettyJson),
+  ),
 });
 
 export const OpenOrdersResource = McpServer.resource({
@@ -22,6 +30,7 @@ export const OpenOrdersResource = McpServer.resource({
     Effect.map((orders) =>
       orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
     ),
+    Effect.map(toCoffeeOrdersView),
     Effect.map(prettyJson),
   ),
 });
@@ -41,6 +50,6 @@ export const OrderResource = McpServer.resource`coffee://orders/${orderIdParam}`
   content: Effect.fn("CoffeeMcp.orderResource")(function* (_uri, orderId) {
     const app = yield* CoffeeOrderApp;
     const order = yield* app.getOrder(orderId);
-    return prettyJson(order);
+    return prettyJson(toCoffeeOrderView(order));
   }),
 });
