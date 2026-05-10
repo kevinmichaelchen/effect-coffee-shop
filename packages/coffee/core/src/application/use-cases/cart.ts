@@ -1,5 +1,6 @@
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import type { DrinkNotFoundError, InvalidOrderInputError } from "../../domain/errors.ts";
 import type { Cart, CartItem } from "../../domain/cart.ts";
 import { sumMoney } from "../../domain/money.ts";
@@ -12,6 +13,7 @@ import type {
   OrderItemInput,
   UpdateCartItemRequest,
 } from "../contracts.ts";
+import { OrderItemsInputSchema } from "../contracts.ts";
 import { InternalAppError, internalAppErrorFromPersistence } from "../errors.ts";
 import { CartItemIdGenerator } from "../ports/CartItemIdGenerator.ts";
 import { CartRepository } from "../ports/CartRepository.ts";
@@ -20,6 +22,8 @@ import { OrderIdGenerator } from "../ports/OrderIdGenerator.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 import { invalidOrderInput, resolveOrderItem, toOrderItemInput } from "./orderItems.ts";
 import { placeOrder } from "./placeOrder.ts";
+
+const decodeOrderItemsInput = Schema.decodeUnknownEffect(OrderItemsInputSchema);
 
 const emptyCart = (ownerUserId: string): Cart => ({
   ownerUserId,
@@ -214,8 +218,11 @@ export const checkoutCart = Effect.fn("CoffeeOrders.checkoutCart")(function* (
     return yield* invalidOrderInput("cart must include at least one item");
   }
 
+  const items = yield* decodeOrderItemsInput(cart.items.map(toOrderItemInput)).pipe(
+    Effect.mapError(() => invalidOrderInput("cart must include at least one item")),
+  );
   const order = yield* placeOrder({
-    items: cart.items.map(toOrderItemInput),
+    items,
     ...(input.customerName === undefined ? {} : { customerName: input.customerName }),
   });
   const cartRepository = yield* CartRepository;

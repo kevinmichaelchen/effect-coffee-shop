@@ -15,111 +15,94 @@ import {
   QuoteOrderRequestSchema,
   UpdateCartItemRequestSchema,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
+import type * as Schema from "effect/Schema";
 import { AppErrorSchema, EmptyActionInputSchema, OrderIdActionInputSchema } from "./schemas.ts";
 
+const actionSpec = <Parameters extends Schema.Top, Success extends Schema.Top>(input: {
+  readonly description: string;
+  readonly parameters: Parameters;
+  readonly success: Success;
+}) => ({
+  ...input,
+  failure: AppErrorSchema,
+});
+
+const orderStatusActionSpec = (description: string) =>
+  actionSpec({
+    description,
+    parameters: OrderIdActionInputSchema,
+    success: CoffeeOrderViewSchema,
+  });
+
+const cartViewActionSpec = <Parameters extends Schema.Top>(
+  description: string,
+  parameters: Parameters,
+) =>
+  actionSpec({
+    description,
+    parameters,
+    success: CartViewSchema,
+  });
+
 export const coffeeActionSpecs = {
-  list_menu: {
+  list_menu: actionSpec({
     description: "List the current coffee menu",
     parameters: EmptyActionInputSchema,
     success: MenuViewSchema,
-    failure: AppErrorSchema,
-  },
-  get_item_options: {
+  }),
+  get_item_options: actionSpec({
     description: "Get valid options and defaults for one menu item",
     parameters: ItemOptionsRequestSchema,
     success: ItemOptionsViewSchema,
-    failure: AppErrorSchema,
-  },
-  validate_order: {
+  }),
+  validate_order: actionSpec({
     description: "Validate a proposed multi-item coffee order",
     parameters: QuoteOrderRequestSchema,
     success: OrderValidationViewSchema,
-    failure: AppErrorSchema,
-  },
-  quote_order: {
+  }),
+  quote_order: actionSpec({
     description: "Quote a proposed multi-item coffee order",
     parameters: QuoteOrderRequestSchema,
     success: OrderQuoteViewSchema,
-    failure: AppErrorSchema,
-  },
-  place_order: {
+  }),
+  place_order: actionSpec({
     description: "Create a new multi-item coffee order",
     parameters: PlaceOrderRequestSchema,
     success: CoffeeOrderViewSchema,
-    failure: AppErrorSchema,
-  },
-  get_order: {
+  }),
+  get_order: actionSpec({
     description: "Fetch one order by id",
     parameters: OrderIdActionInputSchema,
     success: CoffeeOrderViewSchema,
-    failure: AppErrorSchema,
-  },
-  list_orders: {
+  }),
+  list_orders: actionSpec({
     description: "List orders, optionally filtered by status",
     parameters: ListOrdersRequestSchema,
     success: CoffeeOrdersViewSchema,
-    failure: AppErrorSchema,
-  },
-  start_brewing: {
-    description: "Move an order from pending to brewing",
-    parameters: OrderIdActionInputSchema,
-    success: CoffeeOrderViewSchema,
-    failure: AppErrorSchema,
-  },
-  mark_ready: {
-    description: "Move an order from brewing to ready",
-    parameters: OrderIdActionInputSchema,
-    success: CoffeeOrderViewSchema,
-    failure: AppErrorSchema,
-  },
-  pick_up_order: {
-    description: "Move an order from ready to picked-up",
-    parameters: OrderIdActionInputSchema,
-    success: CoffeeOrderViewSchema,
-    failure: AppErrorSchema,
-  },
-  cancel_order: {
-    description: "Cancel a pending or brewing order",
-    parameters: OrderIdActionInputSchema,
-    success: CoffeeOrderViewSchema,
-    failure: AppErrorSchema,
-  },
-  get_cart: {
-    description: "Fetch the signed-in actor's current cart",
-    parameters: EmptyActionInputSchema,
-    success: CartViewSchema,
-    failure: AppErrorSchema,
-  },
-  add_cart_item: {
-    description: "Add a validated item to the signed-in actor's cart",
-    parameters: OrderItemInputSchema,
-    success: CartViewSchema,
-    failure: AppErrorSchema,
-  },
-  update_cart_item: {
-    description: "Update one item in the signed-in actor's cart",
-    parameters: UpdateCartItemRequestSchema,
-    success: CartViewSchema,
-    failure: AppErrorSchema,
-  },
-  remove_cart_item: {
-    description: "Remove one item from the signed-in actor's cart",
-    parameters: CartItemIdRequestSchema,
-    success: CartViewSchema,
-    failure: AppErrorSchema,
-  },
-  clear_cart: {
-    description: "Clear the signed-in actor's cart",
-    parameters: EmptyActionInputSchema,
-    success: CartViewSchema,
-    failure: AppErrorSchema,
-  },
-  checkout_cart: {
+  }),
+  start_brewing: orderStatusActionSpec("Move an order from pending to brewing"),
+  mark_ready: orderStatusActionSpec("Move an order from brewing to ready"),
+  pick_up_order: orderStatusActionSpec("Move an order from ready to picked-up"),
+  cancel_order: orderStatusActionSpec("Cancel a pending or brewing order"),
+  get_cart: cartViewActionSpec("Fetch the signed-in actor's current cart", EmptyActionInputSchema),
+  add_cart_item: cartViewActionSpec(
+    "Add a validated item to the signed-in actor's cart",
+    OrderItemInputSchema,
+  ),
+  update_cart_item: cartViewActionSpec(
+    "Update one item in the signed-in actor's cart",
+    UpdateCartItemRequestSchema,
+  ),
+  remove_cart_item: cartViewActionSpec(
+    "Remove one item from the signed-in actor's cart",
+    CartItemIdRequestSchema,
+  ),
+  clear_cart: cartViewActionSpec("Clear the signed-in actor's cart", EmptyActionInputSchema),
+  checkout_cart: actionSpec({
     description: "Place the signed-in actor's cart as one multi-item order",
     parameters: CheckoutCartRequestSchema,
     success: CoffeeOrderViewSchema,
-    failure: AppErrorSchema,
-  },
+  }),
 } as const;
 
 export type CoffeeActionName = keyof typeof coffeeActionSpecs;

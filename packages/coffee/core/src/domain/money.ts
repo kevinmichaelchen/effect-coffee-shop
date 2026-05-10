@@ -1,14 +1,18 @@
 import * as Equal from "effect/Equal";
 import * as Hash from "effect/Hash";
 import * as Schema from "effect/Schema";
+import * as SchemaTransformation from "effect/SchemaTransformation";
 
 export const CurrencySchema = Schema.Literal("USD");
 export type Currency = typeof CurrencySchema.Type;
+export const MinorUnitsInputSchema = Schema.Int.check(Schema.isGreaterThanOrEqualTo(0));
+export const MinorUnitsSchema = MinorUnitsInputSchema.pipe(Schema.brand("MinorUnits"));
+export type MinorUnits = typeof MinorUnitsSchema.Type;
 
 export class Money
   extends Schema.Class<Money>("Money")({
     currency: CurrencySchema,
-    minorUnits: Schema.Int,
+    minorUnits: MinorUnitsSchema,
   })
   implements Equal.Equal
 {
@@ -27,16 +31,28 @@ export class Money
 
 export const MoneySchema = Money;
 
+export const MoneyFromCentsSchema = MinorUnitsInputSchema.pipe(
+  Schema.decodeTo(
+    MoneySchema,
+    SchemaTransformation.transform({
+      decode: (minorUnits) => ({
+        currency: "USD",
+        minorUnits,
+      }),
+      encode: (money) => money.minorUnits,
+    }),
+  ),
+).annotate({ identifier: "MoneyFromCents" });
+
+const minorUnitsFromNumber = Schema.decodeUnknownSync(MinorUnitsSchema);
+
 export const zeroMoney: Money = new Money({
   currency: "USD",
-  minorUnits: 0,
+  minorUnits: minorUnitsFromNumber(0),
 });
 
 export const moneyFromCents = (cents: number): Money =>
-  new Money({
-    currency: "USD",
-    minorUnits: cents,
-  });
+  Schema.decodeUnknownSync(MoneyFromCentsSchema)(cents);
 
 export const moneyToCents = (money: Money): number => money.minorUnits;
 

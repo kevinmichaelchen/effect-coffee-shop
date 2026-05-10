@@ -5,11 +5,13 @@ import {
   DrinkIdSchema,
   DrinkKindSchema,
   DrinkSizeSchema,
+  MenuItemSchema,
   MilkSchema,
   TemperatureSchema,
   type MenuItem,
 } from "../domain/menu.ts";
 import { MoneySchema, moneyToCents } from "../domain/money.ts";
+import { QuantityInputSchema, ShotCountInputSchema } from "../domain/order-primitives.ts";
 import {
   CoffeeOrderItemSchema,
   OrderIdSchema,
@@ -25,20 +27,25 @@ export const OrderItemInputSchema = Schema.Struct({
   size: BoundaryStringSchema,
   milk: Schema.optionalKey(BoundaryStringSchema),
   temperature: Schema.optionalKey(BoundaryStringSchema),
-  shots: Schema.optionalKey(Schema.Int),
+  shots: Schema.optionalKey(ShotCountInputSchema),
   notes: Schema.optionalKey(BoundaryStringSchema),
-  quantity: Schema.optionalKey(Schema.Int),
+  quantity: Schema.optionalKey(QuantityInputSchema),
 }).annotate({ identifier: "OrderItemInput" });
 export type OrderItemInput = typeof OrderItemInputSchema.Type;
 
+export const OrderItemsInputSchema = Schema.NonEmptyArray(OrderItemInputSchema).annotate({
+  identifier: "OrderItemsInput",
+});
+export type OrderItemsInput = typeof OrderItemsInputSchema.Type;
+
 export const PlaceOrderRequestSchema = Schema.Struct({
   customerName: Schema.optionalKey(BoundaryStringSchema),
-  items: Schema.Array(OrderItemInputSchema),
+  items: OrderItemsInputSchema,
 }).annotate({ identifier: "PlaceOrderRequest" });
 export type PlaceOrderRequest = typeof PlaceOrderRequestSchema.Type;
 
 export const QuoteOrderRequestSchema = Schema.Struct({
-  items: Schema.Array(OrderItemInputSchema),
+  items: OrderItemsInputSchema,
 }).annotate({ identifier: "QuoteOrderRequest" });
 export type QuoteOrderRequest = typeof QuoteOrderRequestSchema.Type;
 
@@ -53,9 +60,9 @@ export const UpdateCartItemRequestSchema = Schema.Struct({
   size: Schema.optionalKey(BoundaryStringSchema),
   milk: Schema.optionalKey(BoundaryStringSchema),
   temperature: Schema.optionalKey(BoundaryStringSchema),
-  shots: Schema.optionalKey(Schema.Int),
+  shots: Schema.optionalKey(ShotCountInputSchema),
   notes: Schema.optionalKey(BoundaryStringSchema),
-  quantity: Schema.optionalKey(Schema.Int),
+  quantity: Schema.optionalKey(QuantityInputSchema),
 }).annotate({ identifier: "UpdateCartItemRequest" });
 export type UpdateCartItemRequest = typeof UpdateCartItemRequestSchema.Type;
 
@@ -75,7 +82,7 @@ export const ListOrdersRequestSchema = Schema.Struct({
 export type ListOrdersRequest = typeof ListOrdersRequestSchema.Type;
 
 export const OrderQuoteSchema = Schema.Struct({
-  items: Schema.Array(CoffeeOrderItemSchema),
+  items: Schema.NonEmptyArray(CoffeeOrderItemSchema),
   totalPrice: MoneySchema,
 }).annotate({ identifier: "OrderQuote" });
 export type OrderQuote = typeof OrderQuoteSchema.Type;
@@ -94,21 +101,13 @@ export const CartSnapshotSchema = Schema.Struct({
 export type CartSnapshot = typeof CartSnapshotSchema.Type;
 
 export const ItemOptionsSchema = Schema.Struct({
-  item: Schema.Struct({
-    id: DrinkIdSchema,
-    name: Schema.String,
-    kind: DrinkKindSchema,
-    basePrice: MoneySchema,
-    availableMilks: Schema.Array(MilkSchema),
-    availableTemperatures: Schema.Array(TemperatureSchema),
-    maxShots: Schema.Int,
-  }),
+  item: MenuItemSchema,
   availableSizes: Schema.Array(DrinkSizeSchema),
   defaultSize: DrinkSizeSchema,
   defaultMilk: MilkSchema,
   defaultTemperature: TemperatureSchema,
-  defaultShots: Schema.Int,
-  defaultQuantity: Schema.Int,
+  defaultShots: ShotCountInputSchema,
+  defaultQuantity: QuantityInputSchema,
 }).annotate({ identifier: "ItemOptions" });
 export type ItemOptions = typeof ItemOptionsSchema.Type;
 
@@ -119,7 +118,7 @@ export const MenuItemViewSchema = Schema.Struct({
   basePriceCents: Schema.Int,
   availableMilks: Schema.Array(MilkSchema),
   availableTemperatures: Schema.Array(TemperatureSchema),
-  maxShots: Schema.Int,
+  maxShots: ShotCountInputSchema,
 }).annotate({ identifier: "MenuItemView" });
 export type MenuItemView = typeof MenuItemViewSchema.Type;
 
@@ -134,9 +133,9 @@ export const CoffeeOrderItemViewSchema = Schema.Struct({
   size: DrinkSizeSchema,
   milk: MilkSchema,
   temperature: TemperatureSchema,
-  shots: Schema.Int,
+  shots: ShotCountInputSchema,
   notes: Schema.optionalKey(Schema.String),
-  quantity: Schema.Int,
+  quantity: QuantityInputSchema,
   unitPriceCents: Schema.Int,
   lineTotalCents: Schema.Int,
 }).annotate({ identifier: "CoffeeOrderItemView" });
@@ -146,7 +145,7 @@ export const CoffeeOrderViewSchema = Schema.Struct({
   id: OrderIdSchema,
   customerName: Schema.String,
   ownerUserId: Schema.String,
-  items: Schema.Array(CoffeeOrderItemViewSchema),
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewSchema),
   status: OrderStatusSchema,
   totalPriceCents: Schema.Int,
   createdAt: Schema.DateTimeUtc,
@@ -159,14 +158,14 @@ export const CoffeeOrdersViewSchema = Schema.Array(CoffeeOrderViewSchema).annota
 export type CoffeeOrdersView = typeof CoffeeOrdersViewSchema.Type;
 
 export const OrderQuoteViewSchema = Schema.Struct({
-  items: Schema.Array(CoffeeOrderItemViewSchema),
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewSchema),
   totalPriceCents: Schema.Int,
 }).annotate({ identifier: "OrderQuoteView" });
 export type OrderQuoteView = typeof OrderQuoteViewSchema.Type;
 
 export const OrderValidationViewSchema = Schema.Struct({
   valid: Schema.Literal(true),
-  items: Schema.Array(CoffeeOrderItemViewSchema),
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewSchema),
   totalPriceCents: Schema.Int,
 }).annotate({ identifier: "OrderValidationView" });
 export type OrderValidationView = typeof OrderValidationViewSchema.Type;
@@ -190,10 +189,18 @@ export const ItemOptionsViewSchema = Schema.Struct({
   defaultSize: DrinkSizeSchema,
   defaultMilk: MilkSchema,
   defaultTemperature: TemperatureSchema,
-  defaultShots: Schema.Int,
-  defaultQuantity: Schema.Int,
+  defaultShots: ShotCountInputSchema,
+  defaultQuantity: QuantityInputSchema,
 }).annotate({ identifier: "ItemOptionsView" });
 export type ItemOptionsView = typeof ItemOptionsViewSchema.Type;
+
+const mapNonEmpty = <A, B>(
+  items: readonly [A, ...Array<A>],
+  f: (item: A) => B,
+): readonly [B, ...Array<B>] => {
+  const [head, ...tail] = items;
+  return [f(head), ...tail.map(f)];
+};
 
 export const toMenuItemView = (item: MenuItem): MenuItemView => ({
   id: item.id,
@@ -227,7 +234,7 @@ export const toCoffeeOrderView = (order: CoffeeOrder): CoffeeOrderView => ({
   id: order.id,
   customerName: order.customerName,
   ownerUserId: order.ownerUserId,
-  items: order.items.map(toCoffeeOrderItemView),
+  items: mapNonEmpty(order.items, toCoffeeOrderItemView),
   status: order.status,
   totalPriceCents: moneyToCents(order.totalPrice),
   createdAt: order.createdAt,
@@ -237,7 +244,7 @@ export const toCoffeeOrdersView = (orders: readonly CoffeeOrder[]): CoffeeOrders
   orders.map(toCoffeeOrderView);
 
 export const toOrderQuoteView = (quote: OrderQuote): OrderQuoteView => ({
-  items: quote.items.map(toCoffeeOrderItemView),
+  items: mapNonEmpty(quote.items, toCoffeeOrderItemView),
   totalPriceCents: moneyToCents(quote.totalPrice),
 });
 

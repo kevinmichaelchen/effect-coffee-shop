@@ -196,11 +196,11 @@ describe("place order", () => {
       const order = yield* placeOrder(request);
       const item = order.items[0];
 
-      assert.strictEqual(order.customerName, expected.customerName);
+      assert.strictEqual(String(order.customerName), expected.customerName);
       assert.ok(item !== undefined);
       assert.strictEqual(item.milk, expected.milk);
       assert.strictEqual(item.temperature, expected.temperature);
-      assert.strictEqual(item.shots, expected.shots);
+      assert.strictEqual(Number(item.shots), expected.shots);
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 

@@ -1,5 +1,6 @@
 import * as Schema from "effect/Schema";
 import { DrinkIdSchema, DrinkSizeSchema, MilkSchema, TemperatureSchema } from "./menu.ts";
+import { QuantitySchema, ShotCountSchema } from "./order-primitives.ts";
 
 const cartItemIdPattern = /^cart-item-\d+$/;
 
@@ -14,9 +15,9 @@ export const CartItemSchema = Schema.Struct({
   size: DrinkSizeSchema,
   milk: Schema.optionalKey(MilkSchema),
   temperature: Schema.optionalKey(TemperatureSchema),
-  shots: Schema.optionalKey(Schema.Int),
+  shots: Schema.optionalKey(ShotCountSchema),
   notes: Schema.optionalKey(Schema.String),
-  quantity: Schema.Int,
+  quantity: QuantitySchema,
 }).annotate({ identifier: "CartItem" });
 export type CartItem = typeof CartItemSchema.Type;
 

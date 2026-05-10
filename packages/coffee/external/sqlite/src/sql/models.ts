@@ -1,17 +1,24 @@
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { Model } from "effect/unstable/schema";
-import { CartItemIdSchema, type CartItem } from "@effect-coffee-shop/coffee-core/domain/cart";
+import {
+  CartItemIdSchema,
+  CartItemSchema,
+  type CartItem,
+} from "@effect-coffee-shop/coffee-core/domain/cart";
 import {
   DrinkIdSchema,
   DrinkKindSchema,
   DrinkSizeSchema,
+  MenuItemSchema,
   MilkSchema,
   TemperatureSchema,
   type MenuItem,
 } from "@effect-coffee-shop/coffee-core/domain/menu";
-import { moneyFromCents, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
+import { MoneyFromCentsSchema, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
 import {
+  CoffeeOrderItemSchema,
+  CoffeeOrderSchema,
   OrderIdSchema,
   OrderStatusSchema,
   type CoffeeOrder,
@@ -68,6 +75,12 @@ export class SqlCartItemModel extends Model.Class<SqlCartItemModel>("SqlCartItem
 type SqlOrder = typeof SqlOrderModel.Type;
 type SqlOrderItem = typeof SqlOrderItemModel.Type;
 type SqlCartItem = typeof SqlCartItemModel.Type;
+
+const decodeCartItem = Schema.decodeUnknownSync(CartItemSchema);
+const decodeCoffeeOrder = Schema.decodeUnknownSync(CoffeeOrderSchema);
+const decodeCoffeeOrderItem = Schema.decodeUnknownSync(CoffeeOrderItemSchema);
+const decodeMenuItem = Schema.decodeUnknownSync(MenuItemSchema);
+const decodeMoneyFromCents = Schema.decodeUnknownSync(MoneyFromCentsSchema);
 
 export interface SqlOrderSave {
   readonly id: string;
@@ -162,55 +175,59 @@ export const toSqlCartItemSave = (
   quantity: item.quantity,
 });
 
-export const toCartItem = (item: SqlCartItem): CartItem => ({
-  id: item.id,
-  drinkId: item.drink_id,
-  size: item.size,
-  milk: item.milk,
-  temperature: item.temperature,
-  shots: item.shots,
-  quantity: item.quantity,
-  ...Option.match(Option.fromNullishOr(item.notes), {
-    onNone: () => ({}),
-    onSome: (notes) => ({ notes }),
-  }),
-});
+export const toCartItem = (item: SqlCartItem): CartItem =>
+  decodeCartItem({
+    id: item.id,
+    drinkId: item.drink_id,
+    size: item.size,
+    milk: item.milk,
+    temperature: item.temperature,
+    shots: item.shots,
+    quantity: item.quantity,
+    ...Option.match(Option.fromNullishOr(item.notes), {
+      onNone: () => ({}),
+      onSome: (notes) => ({ notes }),
+    }),
+  });
 
-const toCoffeeOrderItem = (item: SqlOrderItem): CoffeeOrderItem => ({
-  drinkId: item.drink_id,
-  drinkName: item.drink_name,
-  size: item.size,
-  milk: item.milk,
-  temperature: item.temperature,
-  shots: item.shots,
-  quantity: item.quantity,
-  unitPrice: moneyFromCents(item.unit_price_cents),
-  lineTotal: moneyFromCents(item.line_total_cents),
-  ...Option.match(Option.fromNullishOr(item.notes), {
-    onNone: () => ({}),
-    onSome: (notes) => ({ notes }),
-  }),
-});
+const toCoffeeOrderItem = (item: SqlOrderItem): CoffeeOrderItem =>
+  decodeCoffeeOrderItem({
+    drinkId: item.drink_id,
+    drinkName: item.drink_name,
+    size: item.size,
+    milk: item.milk,
+    temperature: item.temperature,
+    shots: item.shots,
+    quantity: item.quantity,
+    unitPrice: decodeMoneyFromCents(item.unit_price_cents),
+    lineTotal: decodeMoneyFromCents(item.line_total_cents),
+    ...Option.match(Option.fromNullishOr(item.notes), {
+      onNone: () => ({}),
+      onSome: (notes) => ({ notes }),
+    }),
+  });
 
-export const toCoffeeOrder = (order: SqlOrder, items: readonly SqlOrderItem[]): CoffeeOrder => ({
-  id: order.id,
-  customerName: order.customer_name,
-  ownerUserId: order.owner_user_id,
-  items: items.map(toCoffeeOrderItem),
-  status: order.status,
-  totalPrice: moneyFromCents(order.total_price_cents),
-  createdAt: order.created_at,
-});
+export const toCoffeeOrder = (order: SqlOrder, items: readonly SqlOrderItem[]): CoffeeOrder =>
+  decodeCoffeeOrder({
+    id: order.id,
+    customerName: order.customer_name,
+    ownerUserId: order.owner_user_id,
+    items: items.map(toCoffeeOrderItem),
+    status: order.status,
+    totalPrice: decodeMoneyFromCents(order.total_price_cents),
+    createdAt: order.created_at,
+  });
 
-export const toMenuItem = (item: SqlMenuItemModel): MenuItem => ({
-  id: item.id,
-  name: item.name,
-  kind: item.kind,
-  basePrice: moneyFromCents(item.base_price_cents),
-  availableMilks: item.available_milks,
-  availableTemperatures: item.available_temperatures,
-  maxShots: item.max_shots,
-});
+export const toMenuItem = (item: SqlMenuItemModel): MenuItem =>
+  decodeMenuItem({
+    id: item.id,
+    name: item.name,
+    kind: item.kind,
+    basePrice: decodeMoneyFromCents(item.base_price_cents),
+    availableMilks: item.available_milks,
+    availableTemperatures: item.available_temperatures,
+    maxShots: item.max_shots,
+  });
 
 export const toSqlMenuItemSeed = (item: MenuItem, sortOrder: number): SqlMenuItemSeed => ({
   id: item.id,

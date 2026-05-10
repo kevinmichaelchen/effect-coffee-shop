@@ -55,6 +55,28 @@ const toActorSummary = (actor: AppActor): ActorSummary =>
       }
     : anonymousActor;
 
+const orderIdParams = {
+  orderId: OrderIdSchema,
+};
+
+const orderStatusErrors = [
+  AuthenticationRequiredError,
+  InvalidOrderStatusTransitionError,
+  OrderNotFoundError,
+  StaffRoleRequiredError,
+  InternalAppError,
+];
+
+const orderStatusEndpoint = <Name extends string, Path extends `/${string}`>(
+  name: Name,
+  path: Path,
+) =>
+  HttpApiEndpoint.post(name, path, {
+    params: orderIdParams,
+    success: CoffeeOrderViewSchema,
+    error: orderStatusErrors,
+  });
+
 class HealthApi extends HttpApiGroup.make("health", { topLevel: true }).add(
   HttpApiEndpoint.get("check", "/health", {
     success: HealthStatusSchema,
@@ -102,58 +124,10 @@ class OrdersApi extends HttpApiGroup.make("orders")
       success: CoffeeOrderViewSchema,
       error: [AuthenticationRequiredError, OrderNotFoundError, InternalAppError],
     }),
-    HttpApiEndpoint.post("startBrewing", "/:orderId/start-brewing", {
-      params: {
-        orderId: OrderIdSchema,
-      },
-      success: CoffeeOrderViewSchema,
-      error: [
-        AuthenticationRequiredError,
-        InvalidOrderStatusTransitionError,
-        OrderNotFoundError,
-        StaffRoleRequiredError,
-        InternalAppError,
-      ],
-    }),
-    HttpApiEndpoint.post("markReady", "/:orderId/mark-ready", {
-      params: {
-        orderId: OrderIdSchema,
-      },
-      success: CoffeeOrderViewSchema,
-      error: [
-        AuthenticationRequiredError,
-        InvalidOrderStatusTransitionError,
-        OrderNotFoundError,
-        StaffRoleRequiredError,
-        InternalAppError,
-      ],
-    }),
-    HttpApiEndpoint.post("pickUp", "/:orderId/pick-up", {
-      params: {
-        orderId: OrderIdSchema,
-      },
-      success: CoffeeOrderViewSchema,
-      error: [
-        AuthenticationRequiredError,
-        InvalidOrderStatusTransitionError,
-        OrderNotFoundError,
-        StaffRoleRequiredError,
-        InternalAppError,
-      ],
-    }),
-    HttpApiEndpoint.post("cancel", "/:orderId/cancel", {
-      params: {
-        orderId: OrderIdSchema,
-      },
-      success: CoffeeOrderViewSchema,
-      error: [
-        AuthenticationRequiredError,
-        InvalidOrderStatusTransitionError,
-        OrderNotFoundError,
-        StaffRoleRequiredError,
-        InternalAppError,
-      ],
-    }),
+    orderStatusEndpoint("startBrewing", "/:orderId/start-brewing"),
+    orderStatusEndpoint("markReady", "/:orderId/mark-ready"),
+    orderStatusEndpoint("pickUp", "/:orderId/pick-up"),
+    orderStatusEndpoint("cancel", "/:orderId/cancel"),
   )
   .prefix("/orders") {}
 

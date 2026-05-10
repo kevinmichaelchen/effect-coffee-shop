@@ -1,17 +1,24 @@
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { createSelectSchema } from "drizzle-orm/effect-schema";
-import { CartItemIdSchema, type CartItem } from "@effect-coffee-shop/coffee-core/domain/cart";
+import {
+  CartItemIdSchema,
+  CartItemSchema,
+  type CartItem,
+} from "@effect-coffee-shop/coffee-core/domain/cart";
 import {
   DrinkIdSchema,
   DrinkKindSchema,
   DrinkSizeSchema,
+  MenuItemSchema,
   MilkSchema,
   TemperatureSchema,
   type MenuItem,
 } from "@effect-coffee-shop/coffee-core/domain/menu";
-import { moneyFromCents, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
+import { MoneyFromCentsSchema, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
 import {
+  CoffeeOrderItemSchema,
+  CoffeeOrderSchema,
   OrderIdSchema,
   OrderStatusSchema,
   type CoffeeOrder,
@@ -57,44 +64,53 @@ type DrizzleOrderRow = typeof DrizzleOrderRowSchema.Type;
 type DrizzleOrderItemRow = typeof DrizzleOrderItemRowSchema.Type;
 type DrizzleCartItemRow = typeof DrizzleCartItemRowSchema.Type;
 
-export const toMenuItem = (item: DrizzleMenuItemRow): MenuItem => ({
-  id: item.id,
-  name: item.name,
-  kind: item.kind,
-  basePrice: moneyFromCents(item.basePriceCents),
-  availableMilks: item.availableMilks,
-  availableTemperatures: item.availableTemperatures,
-  maxShots: item.maxShots,
-});
+const decodeCartItem = Schema.decodeUnknownSync(CartItemSchema);
+const decodeCoffeeOrder = Schema.decodeUnknownSync(CoffeeOrderSchema);
+const decodeCoffeeOrderItem = Schema.decodeUnknownSync(CoffeeOrderItemSchema);
+const decodeMenuItem = Schema.decodeUnknownSync(MenuItemSchema);
+const decodeMoneyFromCents = Schema.decodeUnknownSync(MoneyFromCentsSchema);
 
-const toCoffeeOrderItem = (item: DrizzleOrderItemRow): CoffeeOrderItem => ({
-  drinkId: item.drinkId,
-  drinkName: item.drinkName,
-  size: item.size,
-  milk: item.milk,
-  temperature: item.temperature,
-  shots: item.shots,
-  quantity: item.quantity,
-  unitPrice: moneyFromCents(item.unitPriceCents),
-  lineTotal: moneyFromCents(item.lineTotalCents),
-  ...Option.match(Option.fromNullishOr(item.notes), {
-    onNone: () => ({}),
-    onSome: (notes) => ({ notes }),
-  }),
-});
+export const toMenuItem = (item: DrizzleMenuItemRow): MenuItem =>
+  decodeMenuItem({
+    id: item.id,
+    name: item.name,
+    kind: item.kind,
+    basePrice: decodeMoneyFromCents(item.basePriceCents),
+    availableMilks: item.availableMilks,
+    availableTemperatures: item.availableTemperatures,
+    maxShots: item.maxShots,
+  });
+
+const toCoffeeOrderItem = (item: DrizzleOrderItemRow): CoffeeOrderItem =>
+  decodeCoffeeOrderItem({
+    drinkId: item.drinkId,
+    drinkName: item.drinkName,
+    size: item.size,
+    milk: item.milk,
+    temperature: item.temperature,
+    shots: item.shots,
+    quantity: item.quantity,
+    unitPrice: decodeMoneyFromCents(item.unitPriceCents),
+    lineTotal: decodeMoneyFromCents(item.lineTotalCents),
+    ...Option.match(Option.fromNullishOr(item.notes), {
+      onNone: () => ({}),
+      onSome: (notes) => ({ notes }),
+    }),
+  });
 
 export const toCoffeeOrder = (
   order: DrizzleOrderRow,
   items: readonly DrizzleOrderItemRow[],
-): CoffeeOrder => ({
-  id: order.id,
-  customerName: order.customerName,
-  ownerUserId: order.ownerUserId,
-  items: items.map(toCoffeeOrderItem),
-  status: order.status,
-  totalPrice: moneyFromCents(order.totalPriceCents),
-  createdAt: order.createdAt,
-});
+): CoffeeOrder =>
+  decodeCoffeeOrder({
+    id: order.id,
+    customerName: order.customerName,
+    ownerUserId: order.ownerUserId,
+    items: items.map(toCoffeeOrderItem),
+    status: order.status,
+    totalPrice: decodeMoneyFromCents(order.totalPriceCents),
+    createdAt: order.createdAt,
+  });
 
 export const toOrderInsert = (order: CoffeeOrder): typeof ordersTable.$inferInsert => ({
   id: order.id,
@@ -124,19 +140,20 @@ export const toOrderItemInsert = (
   lineTotalCents: moneyToCents(item.lineTotal),
 });
 
-export const toCartItem = (item: DrizzleCartItemRow): CartItem => ({
-  id: item.id,
-  drinkId: item.drinkId,
-  size: item.size,
-  milk: item.milk,
-  temperature: item.temperature,
-  shots: item.shots,
-  quantity: item.quantity,
-  ...Option.match(Option.fromNullishOr(item.notes), {
-    onNone: () => ({}),
-    onSome: (notes) => ({ notes }),
-  }),
-});
+export const toCartItem = (item: DrizzleCartItemRow): CartItem =>
+  decodeCartItem({
+    id: item.id,
+    drinkId: item.drinkId,
+    size: item.size,
+    milk: item.milk,
+    temperature: item.temperature,
+    shots: item.shots,
+    quantity: item.quantity,
+    ...Option.match(Option.fromNullishOr(item.notes), {
+      onNone: () => ({}),
+      onSome: (notes) => ({ notes }),
+    }),
+  });
 
 export const toCartItemInsert = (
   ownerUserId: string,

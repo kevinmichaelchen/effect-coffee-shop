@@ -1,5 +1,6 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Match from "effect/Match";
 import * as Schema from "effect/Schema";
 import {
   DrinkNotFoundError,
@@ -10,6 +11,10 @@ import {
   AuthenticationRequiredError,
   requireSignedInActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import {
+  CustomerNameSchema,
+  type CustomerName,
+} from "@effect-coffee-shop/coffee-core/domain/order-primitives";
 import {
   InternalAppError,
   internalAppErrorFromPersistence,
@@ -25,16 +30,13 @@ import { OrderRepository } from "../ports/OrderRepository.ts";
 import { type PlaceOrderRequest } from "../contracts.ts";
 import { invalidOrderInput, resolveOrderQuote } from "./orderItems.ts";
 
-const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
+const decodeCustomerName = Schema.decodeUnknownEffect(CustomerNameSchema);
 
 const validateCustomerName = Effect.fnUntraced(function* (
   customerName: string,
-): Effect.fn.Return<string, InvalidOrderInputError> {
-  return yield* Effect.succeed(decodeTrimmedString(customerName)).pipe(
-    Effect.filterOrFail(
-      (trimmedCustomerName) => trimmedCustomerName.length > 0,
-      () => invalidOrderInput("customerName must not be blank"),
-    ),
+): Effect.fn.Return<CustomerName, InvalidOrderInputError> {
+  return yield* decodeCustomerName(customerName).pipe(
+    Effect.mapError(() => invalidOrderInput("customerName must not be blank")),
   );
 });
 
@@ -48,12 +50,13 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
   const actor = yield* requireSignedInActor();
   const orderIdGenerator = yield* OrderIdGenerator;
   const orderRepository = yield* OrderRepository;
-  const customerNameByActorKind = {
-    customer: Effect.succeed(actor.displayName),
-    staff: Effect.succeed(actor.displayName),
-    system: validateCustomerName(request.customerName ?? actor.displayName),
-  };
-  const customerName = yield* customerNameByActorKind[actor.kind];
+  const customerNameInput = Match.value(actor.kind).pipe(
+    Match.when("customer", () => actor.displayName),
+    Match.when("staff", () => actor.displayName),
+    Match.when("system", () => request.customerName ?? actor.displayName),
+    Match.exhaustive,
+  );
+  const customerName = yield* validateCustomerName(customerNameInput);
 
   yield* annotateObservabilitySpan({
     ...actorObservabilityAttributes(actor),

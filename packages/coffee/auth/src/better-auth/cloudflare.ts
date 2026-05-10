@@ -21,6 +21,7 @@ import {
 const longEnoughDevelopmentSecret = "dev-better-auth-secret-please-change-me-0001";
 
 const decodeResolvedActor = Schema.decodeUnknownSync(AppActorSchema);
+const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
 
 function getRequestOrigin(request: Request | undefined): string | undefined {
   return request === undefined ? undefined : new URL(request.url).origin;
@@ -31,7 +32,7 @@ function getRequestHost(request: Request | undefined): string | undefined {
 }
 
 function getBetterAuthSecret(secret: string | undefined): string {
-  return secret?.trim() || longEnoughDevelopmentSecret;
+  return decodeTrimmedString(secret ?? "") || longEnoughDevelopmentSecret;
 }
 
 function buildAuthOptions(input: {
@@ -120,7 +121,7 @@ export async function resolveCloudflareActor(input: {
   readonly secret: string | undefined;
   readonly staffUserIds: ReadonlySet<string>;
 }): Promise<AppActor> {
-  if ((input.secret?.trim() ?? "") === "") {
+  if (decodeTrimmedString(input.secret ?? "") === "") {
     return anonymousActor;
   }
 
@@ -134,7 +135,7 @@ export async function resolveCloudflareActor(input: {
   }
 
   return decodeResolvedActor({
-    displayName: session.user.name.trim() || session.user.email,
+    displayName: decodeTrimmedString(session.user.name) || session.user.email,
     kind: input.staffUserIds.has(session.user.id) ? "staff" : "customer",
     userId: session.user.id,
   });

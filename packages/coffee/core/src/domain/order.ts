@@ -1,6 +1,7 @@
 import * as Schema from "effect/Schema";
 import { DrinkIdSchema, DrinkSizeSchema, MilkSchema, TemperatureSchema } from "./menu.ts";
 import { MoneySchema } from "./money.ts";
+import { CustomerNameSchema, QuantitySchema, ShotCountSchema } from "./order-primitives.ts";
 
 export const orderStatuses = ["pending", "brewing", "ready", "picked-up", "cancelled"] as const;
 export type OrderStatus = (typeof orderStatuses)[number];
@@ -19,9 +20,9 @@ export const CoffeeOrderItemSchema = Schema.Struct({
   size: DrinkSizeSchema,
   milk: MilkSchema,
   temperature: TemperatureSchema,
-  shots: Schema.Int,
+  shots: ShotCountSchema,
   notes: Schema.optionalKey(Schema.String),
-  quantity: Schema.Int,
+  quantity: QuantitySchema,
   unitPrice: MoneySchema,
   lineTotal: MoneySchema,
 }).annotate({ identifier: "CoffeeOrderItem" });
@@ -29,9 +30,9 @@ export type CoffeeOrderItem = typeof CoffeeOrderItemSchema.Type;
 
 export const CoffeeOrderSchema = Schema.Struct({
   id: OrderIdSchema,
-  customerName: Schema.String,
+  customerName: CustomerNameSchema,
   ownerUserId: Schema.String,
-  items: Schema.Array(CoffeeOrderItemSchema),
+  items: Schema.NonEmptyArray(CoffeeOrderItemSchema),
   status: OrderStatusSchema,
   totalPrice: MoneySchema,
   createdAt: Schema.DateTimeUtc,
@@ -48,10 +49,7 @@ export interface ListOrdersFilters {
   readonly status?: OrderStatus;
 }
 
-const matches = <T extends string>(choices: readonly T[], value: string): value is T =>
-  choices.some((choice) => choice === value);
-
-export const isOrderStatus = (value: string): value is OrderStatus => matches(orderStatuses, value);
+export const isOrderStatus = Schema.is(OrderStatusSchema);
 
 const validTransitions: Record<OrderStatus, ReadonlyArray<OrderStatus>> = {
   pending: ["brewing", "cancelled"],

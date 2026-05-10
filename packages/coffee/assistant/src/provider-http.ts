@@ -1,4 +1,5 @@
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { AssistantModelRequestError, AssistantModelResponseDecodeError } from "./model.ts";
 
@@ -33,7 +34,7 @@ export function createProviderStatusMessage(input: {
   return `${input.provider} request failed with ${input.status}: ${trimmedBody}`;
 }
 
-export function postJson(input: {
+function postJson(input: {
   readonly body: unknown;
   readonly headers?: HeadersInit;
   readonly provider: string;
@@ -54,6 +55,38 @@ export function postJson(input: {
         message: `${input.provider} request failed before receiving a response.`,
         provider: input.provider,
       }),
+  });
+}
+
+export function postJsonResponse<A, E>(input: {
+  readonly body: unknown;
+  readonly headers?: HeadersInit;
+  readonly onResponse: (response: Response) => Effect.Effect<A, E>;
+  readonly onStatusError: (response: Response) => Effect.Effect<never, AssistantModelRequestError>;
+  readonly provider: string;
+  readonly url: string;
+}): Effect.Effect<A, AssistantModelRequestError | E> {
+  return Effect.gen(function* () {
+    const request = Option.match(Option.fromNullishOr(input.headers), {
+      onNone: () => ({
+        body: input.body,
+        provider: input.provider,
+        url: input.url,
+      }),
+      onSome: (headers) => ({
+        body: input.body,
+        headers,
+        provider: input.provider,
+        url: input.url,
+      }),
+    });
+    const response = yield* postJson(request);
+
+    if (!response.ok) {
+      return yield* input.onStatusError(response);
+    }
+
+    return yield* input.onResponse(response);
   });
 }
 

@@ -1,5 +1,10 @@
 import * as Option from "effect/Option";
-import { readCloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
+import {
+  readCloudflareRuntime,
+  revealOptionalSecret,
+  revealSecret,
+  type CloudflareWorkerEnv,
+} from "../env.ts";
 import {
   cloudflarePathname,
   cloudflareResponse,
@@ -28,7 +33,7 @@ const ensureAuthPersistence = async (env: CloudflareWorkerEnv): Promise<void> =>
 
   return ensureCloudflareAuthPersistence({
     db: runtime.bindings.db,
-    secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
+    secret: revealOptionalSecret(runtime.config.betterAuthSecret),
   });
 };
 
@@ -45,7 +50,7 @@ const handleAuthRequest = async (request: Request, env: CloudflareWorkerEnv): Pr
     appLayer: makeCloudflareCoffeeAppLive(runtime.bindings.db),
     db: runtime.bindings.db,
     request,
-    secret: runtime.config.betterAuthSecret.value,
+    secret: revealSecret(runtime.config.betterAuthSecret.value),
   }).handler(request);
 };
 

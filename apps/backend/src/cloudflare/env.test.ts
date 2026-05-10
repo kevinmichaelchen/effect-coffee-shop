@@ -4,6 +4,7 @@ import type {
   D1Database,
 } from "@cloudflare/workers-types";
 import * as Option from "effect/Option";
+import * as Redacted from "effect/Redacted";
 import { Miniflare } from "miniflare";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -56,7 +57,9 @@ describe("cloudflare runtime config", () => {
     expect(Option.isSome(runtime.bindings.ai)).toBe(true);
     expect(Option.isSome(runtime.bindings.assets)).toBe(true);
     expect(Option.getOrUndefined(runtime.config.aiGatewayId)).toBe("gateway-123");
-    expect(Option.getOrUndefined(runtime.config.betterAuthSecret)).toBe("secret-123");
+    expect(Option.map(runtime.config.betterAuthSecret, Redacted.value)).toEqual(
+      Option.some("secret-123"),
+    );
     expect([...runtime.config.staffUserIds]).toEqual(["staff-a", "staff-b"]);
   });
 

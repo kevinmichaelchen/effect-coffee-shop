@@ -1,6 +1,7 @@
 import type { ModelMessage } from "@tanstack/ai";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Schema from "effect/Schema";
 import {
   type AssistantConversationMessage,
   type AssistantModelError,
@@ -22,6 +23,7 @@ const assistantMaxTokens = 256;
 const defaultOllamaEndpoint = "http://localhost:11434";
 const assistantToolLoopExhaustedMessage =
   "I couldn't finish the request because the tool loop did not converge.";
+const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
 
 export type AssistantAiConfig = OllamaConfig | WorkersAiConfig;
 
@@ -84,7 +86,7 @@ function getDefaultWorkersAiModel(): string {
 }
 
 function readOptionalEnv(value: string | undefined): string | undefined {
-  const trimmedValue = value?.trim();
+  const trimmedValue = decodeTrimmedString(value ?? "");
 
   if (!trimmedValue) {
     return undefined;

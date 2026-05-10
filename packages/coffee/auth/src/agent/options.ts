@@ -2,6 +2,8 @@ import type { AgentAuthOptions, AgentSession } from "@better-auth/agent-auth";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Match from "effect/Match";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import {
   decodeCartItemIdInput,
@@ -24,6 +26,12 @@ import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/Coff
 import { CurrentActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;
+
+interface AgentActionInput {
+  readonly action: CoffeeActionName;
+  readonly decode: (value: unknown) => Promise<unknown>;
+  readonly failureMessage: string;
+}
 
 const toAgentActor = (session: AgentSession) => ({
   displayName: session.user.name.trim() || session.user.email,
@@ -114,126 +122,74 @@ async function runAgentAction<A>(input: {
   }).catch((error) => Promise.reject(toExecutionError(error)));
 }
 
+const agentActionInput = (
+  action: CoffeeActionName,
+  decode: (value: unknown) => Promise<unknown>,
+): AgentActionInput => ({
+  action,
+  decode,
+  failureMessage: `Invalid ${action} arguments.`,
+});
+
+const agentActionInputFor = (capability: string): Option.Option<AgentActionInput> =>
+  Match.value(capability).pipe(
+    Match.when("list_menu", () =>
+      Option.some(agentActionInput("list_menu", decodeEmptyActionInput)),
+    ),
+    Match.when("get_item_options", () =>
+      Option.some(agentActionInput("get_item_options", decodeItemOptionsInput)),
+    ),
+    Match.when("validate_order", () =>
+      Option.some(agentActionInput("validate_order", decodeQuoteOrderInput)),
+    ),
+    Match.when("quote_order", () =>
+      Option.some(agentActionInput("quote_order", decodeQuoteOrderInput)),
+    ),
+    Match.when("place_order", () =>
+      Option.some(agentActionInput("place_order", decodePlaceOrderInput)),
+    ),
+    Match.when("get_order", () => Option.some(agentActionInput("get_order", decodeOrderIdInput))),
+    Match.when("list_orders", () =>
+      Option.some(agentActionInput("list_orders", decodeListOrdersInput)),
+    ),
+    Match.when("get_cart", () => Option.some(agentActionInput("get_cart", decodeEmptyActionInput))),
+    Match.when("add_cart_item", () =>
+      Option.some(agentActionInput("add_cart_item", decodeOrderItemInput)),
+    ),
+    Match.when("update_cart_item", () =>
+      Option.some(agentActionInput("update_cart_item", decodeUpdateCartItemInput)),
+    ),
+    Match.when("remove_cart_item", () =>
+      Option.some(agentActionInput("remove_cart_item", decodeCartItemIdInput)),
+    ),
+    Match.when("clear_cart", () =>
+      Option.some(agentActionInput("clear_cart", decodeEmptyActionInput)),
+    ),
+    Match.when("checkout_cart", () =>
+      Option.some(agentActionInput("checkout_cart", decodeCheckoutCartInput)),
+    ),
+    Match.orElse(() => Option.none()),
+  );
+
 export async function executeCoffeeAgentCapability(input: {
   readonly arguments: unknown;
   readonly capability: string;
   readonly runApp: CoffeeAppRunner;
 }) {
-  switch (input.capability) {
-    case "list_menu":
-      return runAgentAction({
-        action: "list_menu",
-        arguments: input.arguments,
-        decode: decodeEmptyActionInput,
-        failureMessage: "Invalid list_menu arguments.",
-        runApp: input.runApp,
-      });
-    case "get_item_options":
-      return runAgentAction({
-        action: "get_item_options",
-        arguments: input.arguments,
-        decode: decodeItemOptionsInput,
-        failureMessage: "Invalid get_item_options arguments.",
-        runApp: input.runApp,
-      });
-    case "validate_order":
-      return runAgentAction({
-        action: "validate_order",
-        arguments: input.arguments,
-        decode: decodeQuoteOrderInput,
-        failureMessage: "Invalid validate_order arguments.",
-        runApp: input.runApp,
-      });
-    case "quote_order":
-      return runAgentAction({
-        action: "quote_order",
-        arguments: input.arguments,
-        decode: decodeQuoteOrderInput,
-        failureMessage: "Invalid quote_order arguments.",
-        runApp: input.runApp,
-      });
-    case "place_order": {
-      return runAgentAction({
-        action: "place_order",
-        arguments: input.arguments,
-        decode: decodePlaceOrderInput,
-        failureMessage: "Invalid place_order arguments.",
-        runApp: input.runApp,
-      });
-    }
-    case "get_order": {
-      return runAgentAction({
-        action: "get_order",
-        arguments: input.arguments,
-        decode: decodeOrderIdInput,
-        failureMessage: "Invalid get_order arguments.",
-        runApp: input.runApp,
-      });
-    }
-    case "list_orders": {
-      return runAgentAction({
-        action: "list_orders",
-        arguments: input.arguments,
-        decode: decodeListOrdersInput,
-        failureMessage: "Invalid list_orders arguments.",
-        runApp: input.runApp,
-      });
-    }
-    case "get_cart":
-      return runAgentAction({
-        action: "get_cart",
-        arguments: input.arguments,
-        decode: decodeEmptyActionInput,
-        failureMessage: "Invalid get_cart arguments.",
-        runApp: input.runApp,
-      });
-    case "add_cart_item":
-      return runAgentAction({
-        action: "add_cart_item",
-        arguments: input.arguments,
-        decode: decodeOrderItemInput,
-        failureMessage: "Invalid add_cart_item arguments.",
-        runApp: input.runApp,
-      });
-    case "update_cart_item":
-      return runAgentAction({
-        action: "update_cart_item",
-        arguments: input.arguments,
-        decode: decodeUpdateCartItemInput,
-        failureMessage: "Invalid update_cart_item arguments.",
-        runApp: input.runApp,
-      });
-    case "remove_cart_item":
-      return runAgentAction({
-        action: "remove_cart_item",
-        arguments: input.arguments,
-        decode: decodeCartItemIdInput,
-        failureMessage: "Invalid remove_cart_item arguments.",
-        runApp: input.runApp,
-      });
-    case "clear_cart":
-      return runAgentAction({
-        action: "clear_cart",
-        arguments: input.arguments,
-        decode: decodeEmptyActionInput,
-        failureMessage: "Invalid clear_cart arguments.",
-        runApp: input.runApp,
-      });
-    case "checkout_cart":
-      return runAgentAction({
-        action: "checkout_cart",
-        arguments: input.arguments,
-        decode: decodeCheckoutCartInput,
-        failureMessage: "Invalid checkout_cart arguments.",
-        runApp: input.runApp,
-      });
-    default:
-      return Promise.reject(
+  return Option.match(agentActionInputFor(input.capability), {
+    onNone: () =>
+      Promise.reject(
         new UnsupportedAgentCapabilityError({
           capability: input.capability,
         }),
-      );
-  }
+      ),
+    onSome: (actionInput) =>
+      runAgentAction({
+        ...actionInput,
+        arguments: input.arguments,
+        runApp: input.runApp,
+      }),
+  });
 }
 
 export function createCoffeeAgentAuthOptions(input: {

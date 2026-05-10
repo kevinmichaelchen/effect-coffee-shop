@@ -1,6 +1,7 @@
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { MoneySchema, moneyFromCents, scaleMoney, addMoney, type Money } from "./money.ts";
+import { ShotCountSchema, type ShotCount } from "./order-primitives.ts";
 
 export const drinkIds = [
   "espresso",
@@ -27,21 +28,21 @@ export const temperatures = ["hot", "iced", "extra-hot"] as const;
 export type Temperature = (typeof temperatures)[number];
 export const TemperatureSchema = Schema.Literals(temperatures);
 
-const MenuItemSchema = Schema.Struct({
+export const MenuItemSchema = Schema.Struct({
   id: DrinkIdSchema,
   name: Schema.String,
   kind: DrinkKindSchema,
   basePrice: MoneySchema,
   availableMilks: Schema.Array(MilkSchema),
   availableTemperatures: Schema.Array(TemperatureSchema),
-  maxShots: Schema.Int,
+  maxShots: ShotCountSchema,
 }).annotate({ identifier: "MenuItem" });
 export type MenuItem = typeof MenuItemSchema.Type;
 
 export const MenuSchema = Schema.Array(MenuItemSchema).annotate({ identifier: "Menu" });
 export type Menu = typeof MenuSchema.Type;
 
-export const menuItems = [
+export const menuItems = Schema.decodeUnknownSync(MenuSchema)([
   {
     id: "espresso",
     name: "Espresso",
@@ -96,7 +97,9 @@ export const menuItems = [
     availableTemperatures: ["hot", "iced"],
     maxShots: 0,
   },
-] satisfies ReadonlyArray<MenuItem>;
+]);
+
+const shotCount = Schema.decodeUnknownSync(ShotCountSchema);
 
 const sizeMultipliers: Record<DrinkSize, number> = {
   small: 1,
@@ -104,9 +107,9 @@ const sizeMultipliers: Record<DrinkSize, number> = {
   large: 1.3,
 };
 
-const defaultShotsByKind: Record<MenuItem["kind"], number> = {
-  espresso: 1,
-  tea: 0,
+const defaultShotsByKind: Record<MenuItem["kind"], ShotCount> = {
+  espresso: shotCount(1),
+  tea: shotCount(0),
 };
 
 export const defaultMilkFor = (item: MenuItem): Milk =>
@@ -118,9 +121,9 @@ export const defaultMilkFor = (item: MenuItem): Milk =>
 export const defaultTemperatureFor = (item: MenuItem): Temperature =>
   item.availableTemperatures[0] ?? "hot";
 
-export const defaultShotsFor = (item: MenuItem): number => defaultShotsByKind[item.kind];
+export const defaultShotsFor = (item: MenuItem): ShotCount => defaultShotsByKind[item.kind];
 
-export const calculatePrice = (item: MenuItem, size: DrinkSize, shots: number): Money => {
+export const calculatePrice = (item: MenuItem, size: DrinkSize, shots: ShotCount): Money => {
   const scaledBase = scaleMoney(item.basePrice, sizeMultipliers[size]);
   const includedShots = defaultShotsFor(item);
   const extraShots = Math.max(shots - includedShots, 0);

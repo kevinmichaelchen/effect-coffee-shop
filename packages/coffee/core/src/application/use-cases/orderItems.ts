@@ -23,7 +23,16 @@ import {
   type Temperature,
 } from "@effect-coffee-shop/coffee-core/domain/menu";
 import { multiplyMoney, sumMoney } from "@effect-coffee-shop/coffee-core/domain/money";
-import type { CoffeeOrderItem } from "@effect-coffee-shop/coffee-core/domain/order";
+import {
+  QuantitySchema,
+  ShotCountSchema,
+  type Quantity,
+  type ShotCount,
+} from "@effect-coffee-shop/coffee-core/domain/order-primitives";
+import {
+  CoffeeOrderItemSchema,
+  type CoffeeOrderItem,
+} from "@effect-coffee-shop/coffee-core/domain/order";
 import type { OrderItemInput, OrderQuote } from "../contracts.ts";
 import { InternalAppError, internalAppErrorFromPersistence } from "../errors.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
@@ -32,7 +41,10 @@ const defaultQuantity = 1;
 const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
 const decodeDrinkSize = Schema.decodeUnknownEffect(DrinkSizeSchema);
 const decodeMilk = Schema.decodeUnknownEffect(MilkSchema);
+const decodeQuantity = Schema.decodeUnknownEffect(QuantitySchema);
+const decodeShotCount = Schema.decodeUnknownEffect(ShotCountSchema);
 const decodeTemperature = Schema.decodeUnknownEffect(TemperatureSchema);
+const decodeResolvedItems = Schema.decodeUnknownEffect(Schema.NonEmptyArray(CoffeeOrderItemSchema));
 
 const trimmedOrUndefined = (value: string | undefined): string | undefined =>
   Option.getOrUndefined(
@@ -107,14 +119,14 @@ const resolveTemperature = Effect.fnUntraced(function* (
 const resolveShots = Effect.fnUntraced(function* (
   menuItem: MenuItem,
   shots: number | undefined,
-): Effect.fn.Return<number, InvalidOrderInputError> {
+): Effect.fn.Return<ShotCount, InvalidOrderInputError> {
   const selectedShots = shots ?? defaultShotsFor(menuItem);
 
-  return yield* Effect.succeed(selectedShots).pipe(
-    Effect.filterOrFail(
-      (shotCount) => Number.isInteger(shotCount) && shotCount >= 0,
-      () => invalidOrderInput("shots must be a non-negative integer"),
-    ),
+  const shotCount = yield* decodeShotCount(selectedShots).pipe(
+    Effect.mapError(() => invalidOrderInput("shots must be a non-negative integer")),
+  );
+
+  return yield* Effect.succeed(shotCount).pipe(
     Effect.filterOrFail(
       (shotCount) => menuItem.kind !== "tea" || shotCount === 0,
       () => invalidOrderInput("Tea drinks do not support extra shots"),
@@ -128,14 +140,11 @@ const resolveShots = Effect.fnUntraced(function* (
 
 const resolveQuantity = Effect.fnUntraced(function* (
   quantity: number | undefined,
-): Effect.fn.Return<number, InvalidOrderInputError> {
+): Effect.fn.Return<Quantity, InvalidOrderInputError> {
   const selectedQuantity = quantity ?? defaultQuantity;
 
-  return yield* Effect.succeed(selectedQuantity).pipe(
-    Effect.filterOrFail(
-      (value) => Number.isInteger(value) && value >= 1,
-      () => invalidOrderInput("quantity must be a positive integer"),
-    ),
+  return yield* decodeQuantity(selectedQuantity).pipe(
+    Effect.mapError(() => invalidOrderInput("quantity must be a positive integer")),
   );
 });
 
@@ -203,7 +212,10 @@ export const resolveOrderQuote = Effect.fnUntraced(function* (
     ),
   );
 
-  const resolvedItems = yield* Effect.forEach(items, resolveOrderItem);
+  const resolvedItemArray = yield* Effect.forEach(items, resolveOrderItem);
+  const resolvedItems = yield* decodeResolvedItems(resolvedItemArray).pipe(
+    Effect.mapError(() => invalidOrderInput("items must include at least one drink")),
+  );
 
   return {
     items: resolvedItems,

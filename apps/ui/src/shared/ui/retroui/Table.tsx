@@ -1,11 +1,29 @@
 import {
+  createElement,
   forwardRef,
+  type ElementType,
   type HTMLAttributes,
   type TdHTMLAttributes,
   type ThHTMLAttributes,
 } from "react";
 
 import { cn } from "#shared/lib/utils.ts";
+
+const tablePart = <Element extends HTMLElement, Props extends HTMLAttributes<Element>>(
+  displayName: string,
+  element: ElementType,
+  defaultClassName: string,
+) => {
+  const Component = forwardRef<Element, Props>(({ className, ...props }, ref) =>
+    createElement(element, {
+      ...props,
+      ref,
+      className: cn(defaultClassName, className),
+    }),
+  );
+  Component.displayName = displayName;
+  return Component;
+};
 
 const Table = forwardRef<HTMLTableElement, HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
@@ -20,80 +38,47 @@ const Table = forwardRef<HTMLTableElement, HTMLAttributes<HTMLTableElement>>(
 );
 Table.displayName = "Table";
 
-const TableHeader = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => (
-    <thead
-      ref={ref}
-      className={cn("[&_tr]:border-b bg-primary text-primary-foreground font-head", className)}
-      {...props}
-    />
-  ),
+const TableHeader = tablePart<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
+  "TableHeader",
+  "thead",
+  "[&_tr]:border-b bg-primary text-primary-foreground font-head",
 );
-TableHeader.displayName = "TableHeader";
 
-const TableBody = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => (
-    <tbody ref={ref} className={cn("[&_tr:last-child]:border-0", className)} {...props} />
-  ),
+const TableBody = tablePart<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
+  "TableBody",
+  "tbody",
+  "[&_tr:last-child]:border-0",
 );
-TableBody.displayName = "TableBody";
 
-const TableFooter = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => (
-    <tfoot
-      ref={ref}
-      className={cn("border-t bg-accent font-medium [&>tr]:last:border-b-0", className)}
-      {...props}
-    />
-  ),
+const TableFooter = tablePart<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
+  "TableFooter",
+  "tfoot",
+  "border-t bg-accent font-medium [&>tr]:last:border-b-0",
 );
-TableFooter.displayName = "TableFooter";
 
-const TableRow = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTableRowElement>>(
-  ({ className, ...props }, ref) => (
-    <tr
-      ref={ref}
-      className={cn(
-        "border-b transition-colors hover:bg-primary/50 hover:text-primary-foreground data-[state=selected]:bg-muted",
-        className,
-      )}
-      {...props}
-    />
-  ),
+const TableRow = tablePart<HTMLTableRowElement, HTMLAttributes<HTMLTableRowElement>>(
+  "TableRow",
+  "tr",
+  "border-b transition-colors hover:bg-primary/50 hover:text-primary-foreground data-[state=selected]:bg-muted",
 );
-TableRow.displayName = "TableRow";
 
-const TableHead = forwardRef<HTMLTableCellElement, ThHTMLAttributes<HTMLTableCellElement>>(
-  ({ className, ...props }, ref) => (
-    <th
-      ref={ref}
-      className={cn(
-        "h-10 md:h-12 px-4 text-left align-middle font-medium text-primary-foreground [&:has([role=checkbox])]:pr-0",
-        className,
-      )}
-      {...props}
-    />
-  ),
+const TableHead = tablePart<HTMLTableCellElement, ThHTMLAttributes<HTMLTableCellElement>>(
+  "TableHead",
+  "th",
+  "h-10 md:h-12 px-4 text-left align-middle font-medium text-primary-foreground [&:has([role=checkbox])]:pr-0",
 );
-TableHead.displayName = "TableHead";
 
-const TableCell = forwardRef<HTMLTableCellElement, TdHTMLAttributes<HTMLTableCellElement>>(
-  ({ className, ...props }, ref) => (
-    <td
-      ref={ref}
-      className={cn("p-2 md:p-3 align-middle [&:has([role=checkbox])]:pr-0", className)}
-      {...props}
-    />
-  ),
+const TableCell = tablePart<HTMLTableCellElement, TdHTMLAttributes<HTMLTableCellElement>>(
+  "TableCell",
+  "td",
+  "p-2 md:p-3 align-middle [&:has([role=checkbox])]:pr-0",
 );
-TableCell.displayName = "TableCell";
 
-const TableCaption = forwardRef<HTMLTableCaptionElement, HTMLAttributes<HTMLTableCaptionElement>>(
-  ({ className, ...props }, ref) => (
-    <caption ref={ref} className={cn("my-2 text-sm text-muted-foreground", className)} {...props} />
-  ),
+const TableCaption = tablePart<HTMLTableCaptionElement, HTMLAttributes<HTMLTableCaptionElement>>(
+  "TableCaption",
+  "caption",
+  "my-2 text-sm text-muted-foreground",
 );
-TableCaption.displayName = "TableCaption";
 
 const TableObj = Object.assign(Table, {
   Header: TableHeader,

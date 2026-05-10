@@ -1,11 +1,12 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import { assert, describe, it } from "@effect/vitest";
 import { menuItems } from "../../domain/menu.ts";
 import { moneyFromCents } from "../../domain/money.ts";
-import type { Cart } from "../../domain/cart.ts";
-import type { CoffeeOrder } from "../../domain/order.ts";
+import { CartSchema } from "../../domain/cart.ts";
+import { CoffeeOrderSchema, type CoffeeOrder } from "../../domain/order.ts";
 import type { PersistenceError } from "../errors.ts";
 import { CartRepository } from "../ports/CartRepository.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
@@ -13,37 +14,45 @@ import { OrderRepository } from "../ports/OrderRepository.ts";
 
 type RepositoryServices = CartRepository | MenuRepository | OrderRepository;
 type RunTest = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) => Promise<A>;
+type CoffeeOrderOverrides = Pick<CoffeeOrder, "id"> & {
+  readonly createdAt?: CoffeeOrder["createdAt"];
+  readonly customerName?: string;
+  readonly items?: unknown;
+  readonly ownerUserId?: string;
+  readonly status?: CoffeeOrder["status"];
+  readonly totalPrice?: CoffeeOrder["totalPrice"];
+};
 
 const utc = (iso: string) => Option.getOrThrow(DateTime.make(iso));
 const initialTime = utc("2026-01-01T10:00:00.000Z");
 const laterTime = utc("2026-01-01T10:05:00.000Z");
 const latestTime = utc("2026-01-01T10:10:00.000Z");
+const decodeCart = Schema.decodeUnknownSync(CartSchema);
+const decodeCoffeeOrder = Schema.decodeUnknownSync(CoffeeOrderSchema);
 
-const makeOrder = ({
-  id,
-  ...overrides
-}: Partial<CoffeeOrder> & Pick<CoffeeOrder, "id">): CoffeeOrder => ({
-  id,
-  customerName: "Avery",
-  ownerUserId: "user-avery",
-  items: [
-    {
-      drinkId: "latte",
-      drinkName: "Latte",
-      size: "medium",
-      milk: "whole",
-      temperature: "hot",
-      shots: 1,
-      quantity: 1,
-      unitPrice: moneyFromCents(500),
-      lineTotal: moneyFromCents(500),
-    },
-  ],
-  status: "pending",
-  totalPrice: moneyFromCents(500),
-  createdAt: initialTime,
-  ...overrides,
-});
+const makeOrder = ({ id, ...overrides }: CoffeeOrderOverrides): CoffeeOrder =>
+  decodeCoffeeOrder({
+    id,
+    customerName: "Avery",
+    ownerUserId: "user-avery",
+    items: [
+      {
+        drinkId: "latte",
+        drinkName: "Latte",
+        size: "medium",
+        milk: "whole",
+        temperature: "hot",
+        shots: 1,
+        quantity: 1,
+        unitPrice: moneyFromCents(500),
+        lineTotal: moneyFromCents(500),
+      },
+    ],
+    status: "pending",
+    totalPrice: moneyFromCents(500),
+    createdAt: initialTime,
+    ...overrides,
+  });
 
 const makeReadyOrder = ({
   id,
@@ -114,7 +123,7 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
       "round-trips and clears actor carts",
       Effect.gen(function* () {
         const cartRepository = yield* CartRepository;
-        const cart = {
+        const cart = decodeCart({
           ownerUserId: "user-avery",
           items: [
             {
@@ -128,7 +137,7 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
               notes: "extra foam",
             },
           ],
-        } satisfies Cart;
+        });
 
         const saved = yield* cartRepository.save(cart);
         const loaded = yield* cartRepository.getByOwnerUserId(cart.ownerUserId);
