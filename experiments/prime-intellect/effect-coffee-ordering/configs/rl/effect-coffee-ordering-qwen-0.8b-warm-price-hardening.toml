@@ -1,0 +1,46 @@
+name = "effect-coffee-ordering-qwen-0.8b-warm-price-hardening"
+model = "Qwen/Qwen3.5-0.8B"
+checkpoint_id = "oo8lrytspz37lfsdlloubig7"
+
+max_steps = 45
+batch_size = 128
+rollouts_per_example = 8
+oversampling_factor = 1.0
+learning_rate = 1e-4
+lora_alpha = 16
+max_async_level = 1
+
+[sampling]
+max_tokens = 256
+temperature = 0.7
+
+[[env]]
+id = "kevinmichaelchen/effect-coffee-ordering"
+version = "0.1.4"
+args = { split = "train" }
+
+[val]
+interval = 5
+num_examples = 8
+rollouts_per_example = 2
+
+[eval]
+interval = 10
+num_examples = 8
+rollouts_per_example = 2
+eval_base_model = false
+
+[[eval.env]]
+id = "kevinmichaelchen/effect-coffee-ordering"
+version = "0.1.4"
+args = { split = "hard_eval" }
+num_examples = 8
+rollouts_per_example = 2
+
+[adapters]
+interval = 10
+keep_last = 2
+
+[checkpoints]
+interval = 10
+keep_cloud = 2

@@ -745,13 +745,16 @@ have been using, so no new hosted training spend was started for this step.
 
 ### Artifact Created
 
-Generated deterministic SFT-style corpora under the Prime lab workspace:
+Generated deterministic SFT-style corpora under the Prime lab workspace, then
+promoted the reproducible source artifacts into the repository:
 
-- `.context/prime-intellect/lab/data/effect_coffee_sft/receipt_final_response_sft.jsonl`
-- `.context/prime-intellect/lab/data/effect_coffee_sft/receipt_tool_trajectory_sft.jsonl`
-- `.context/prime-intellect/lab/data/effect_coffee_sft/README.md`
+- `experiments/prime-intellect/effect-coffee-ordering/data/effect_coffee_sft/receipt_final_response_sft.jsonl`
+- `experiments/prime-intellect/effect-coffee-ordering/data/effect_coffee_sft/receipt_tool_trajectory_sft.jsonl`
+- `experiments/prime-intellect/effect-coffee-ordering/data/effect_coffee_sft/README.md`
 - Generator:
-  `.context/prime-intellect/lab/scripts/build_effect_coffee_receipt_sft.py`
+  `experiments/prime-intellect/effect-coffee-ordering/scripts/build_effect_coffee_receipt_sft.py`
+- Environment/config snapshot:
+  `experiments/prime-intellect/effect-coffee-ordering/`
 
 Dataset shape:
 
@@ -787,6 +790,14 @@ installed:
 ```text
 error: Failed to spawn: `sft`
 Caused by: No such file or directory
+```
+
+Installing Prime-RL SFT from the official GitHub source on this Mac was also
+not viable because current `prime-rl` depends on CUDA Torch wheels:
+
+```text
+prime-rl==0.4.0 depends on torch>=2.9.0
+torch>=2.9.0+cu128 has no wheels with a matching platform tag: macosx arm64
 ```
 
 Therefore the decision is to preserve the supervised data artifact and avoid
