@@ -824,3 +824,41 @@ Next viable options:
   returning to the normal `train` and `hard_eval` splits.
 - Keep larger-model RL paused until one of those supervised-format paths shows
   an improvement in exact dollar totals without regressing tool correctness.
+
+## Iteration 6: Receipt-Drill Warmup Fallback
+
+### Plan
+
+After checking the current CLI and pulled docs, hosted SFT is not launchable
+from this workspace yet. `prime train configs` exposes the hosted RL
+environment-run shape, while Prime-RL SFT is documented for a self-managed
+Linux GPU runtime. The Lab launch blog also says hosted SFT support is still
+forthcoming.
+
+The next best no-spend step is therefore to make the deterministic SFT signal
+available as an environment split, so we can run a small warmup only after the
+environment source is published.
+
+### Artifact Created
+
+Added a `receipt_drill` split to the checked-in environment source:
+
+- `experiments/prime-intellect/effect-coffee-ordering/environment/effect_coffee_ordering.py`
+- `22` examples total:
+  - `18` valid orders that explicitly require compact `$x.xx` receipts,
+  - `4` crisp refusals that preserve the no-bad-order behavior.
+
+Added a prepared low-cost warmup config:
+
+- `experiments/prime-intellect/effect-coffee-ordering/configs/rl/effect-coffee-ordering-qwen-0.8b-receipt-drill-warmup.toml`
+
+The config starts from the current champion adapter
+`rqvfrcdy4xt95oka37b0xjyu`, uses the unpublished `0.1.6` environment snapshot,
+trains on `split=receipt_drill`, and evaluates against `split=hard_eval`.
+
+### Decision
+
+No paid training was started. Before use, publish the checked-in environment as
+`0.1.6`, then treat this warmup as a candidate only if it improves
+`price_format` above `0.625` without reducing tool correctness or increasing
+verbosity.

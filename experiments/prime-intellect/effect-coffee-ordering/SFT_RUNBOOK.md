@@ -53,6 +53,13 @@ Results:
 
 Conclusion: run SFT on a Linux GPU runtime, not this Mac.
 
+## Hosted Training Status
+
+The current `prime train configs` surface exposes hosted RL configuration
+fields, and the Lab launch blog says hosted SFT support is still forthcoming.
+So there is no hosted SFT launch command to spend credits on from this
+workspace yet.
+
 ## Linux GPU / Prime Runtime Path
 
 On a Linux GPU host:
@@ -100,9 +107,16 @@ Required improvement:
 
 ## Fallback If SFT Is Still Unavailable
 
-Convert the deterministic corpus into a small `receipt_drill` environment split
-and use it as a short warmup before returning to normal RL on `train` and
-validation on `hard_eval`.
+The checked-in environment source includes a `receipt_drill` split with 22
+deterministic examples matching the SFT corpus shape:
+
+```text
+experiments/prime-intellect/effect-coffee-ordering/configs/rl/effect-coffee-ordering-qwen-0.8b-receipt-drill-warmup.toml
+```
+
+Use this only after publishing the checked-in environment as `0.1.6`. It starts
+from the current champion adapter, uses lower rollout volume than the broader
+RL runs, and gates on `hard_eval`.
 
 This is less direct than SFT, but it keeps the same principle: force many
 unambiguous examples of exact dollar receipt wording before spending on broader

@@ -1,0 +1,48 @@
+name = "effect-coffee-ordering-qwen-0.8b-receipt-drill-warmup"
+model = "Qwen/Qwen3.5-0.8B"
+checkpoint_id = "rqvfrcdy4xt95oka37b0xjyu"
+
+# Publish the checked-in environment as version 0.1.6 before launching this.
+# This is the deterministic fallback if hosted SFT is still unavailable.
+max_steps = 25
+batch_size = 64
+rollouts_per_example = 4
+oversampling_factor = 1.0
+learning_rate = 3e-5
+lora_alpha = 16
+max_async_level = 1
+
+[sampling]
+max_tokens = 160
+temperature = 0.4
+
+[[env]]
+id = "kevinmichaelchen/effect-coffee-ordering"
+version = "0.1.6"
+args = { split = "receipt_drill" }
+
+[val]
+interval = 5
+num_examples = 8
+rollouts_per_example = 2
+
+[eval]
+interval = 5
+num_examples = 8
+rollouts_per_example = 2
+eval_base_model = false
+
+[[eval.env]]
+id = "kevinmichaelchen/effect-coffee-ordering"
+version = "0.1.6"
+args = { split = "hard_eval" }
+num_examples = 8
+rollouts_per_example = 2
+
+[adapters]
+interval = 5
+keep_last = 2
+
+[checkpoints]
+interval = 5
+keep_cloud = 2

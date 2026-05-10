@@ -12,6 +12,8 @@ wheels, and hosted eval outputs remain under `.context/` and are not checked in.
 - `scripts/build_effect_coffee_receipt_sft.py` - deterministic receipt-format
   corpus generator.
 - `data/effect_coffee_sft/` - generated supervised receipt-format corpora.
+- `configs/rl/effect-coffee-ordering-qwen-0.8b-receipt-drill-warmup.toml` -
+  deterministic warmup fallback if hosted SFT is unavailable.
 
 ## Current Champion
 
@@ -39,6 +41,12 @@ Expected output:
 
 The generator validates that successful receipts use exact `$x.xx` totals,
 avoid cents/wrong-currency wording, and stay short.
+
+## Receipt Drill Fallback
+
+The environment source includes a `receipt_drill` split with the same 22
+receipt/refusal cases as the SFT corpus. Publish that environment snapshot as
+version `0.1.6` before launching the warmup config.
 
 ## Prime Hosted RL
 

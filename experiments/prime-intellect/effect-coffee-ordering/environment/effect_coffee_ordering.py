@@ -476,6 +476,289 @@ HARD_EVAL_TASKS = [
     },
 ]
 
+RECEIPT_DRILL_TASKS = [
+    {
+        "question": "Order a medium hot whole milk latte with one shot for Rowan. Final reply must be exactly one short receipt with drink, order id, and dollar total.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "latte",
+                "size": "medium",
+                "milk": "whole",
+                "temperature": "hot",
+                "shots": 1,
+                "customer_name": "Rowan",
+            },
+        },
+    },
+    {
+        "question": "Can you ring up a large iced oat latte with two shots for Avery? Confirm only drink, order id, and `$x.xx` total.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "latte",
+                "size": "large",
+                "milk": "oat",
+                "temperature": "iced",
+                "shots": 2,
+                "customer_name": "Avery",
+            },
+        },
+    },
+    {
+        "question": "Please put in a small hot espresso for Mina. End with one concise receipt using dollars, not cents.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "espresso",
+                "size": "small",
+                "milk": "none",
+                "temperature": "hot",
+                "shots": 1,
+                "customer_name": "Mina",
+            },
+        },
+    },
+    {
+        "question": "Tessa needs a large iced americano. Confirm only the drink, order id, and exact dollar total.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "americano",
+                "size": "large",
+                "milk": "none",
+                "temperature": "iced",
+                "shots": 1,
+                "customer_name": "Tessa",
+            },
+        },
+    },
+    {
+        "question": "Aria wants a medium iced cold brew with oat milk and two shots. Give a one-sentence receipt with `$x.xx` price.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "cold-brew",
+                "size": "medium",
+                "milk": "oat",
+                "temperature": "iced",
+                "shots": 2,
+                "customer_name": "Aria",
+            },
+        },
+    },
+    {
+        "question": "Order a medium extra-hot almond cappuccino for Jules. Keep the final receipt under twelve words.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "cappuccino",
+                "size": "medium",
+                "milk": "almond",
+                "temperature": "extra-hot",
+                "shots": 1,
+                "customer_name": "Jules",
+            },
+        },
+    },
+    {
+        "question": "A small iced tea for Devon, please. Receipt only: drink, order id, dollar total.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "tea",
+                "size": "small",
+                "milk": "none",
+                "temperature": "iced",
+                "shots": 0,
+                "customer_name": "Devon",
+            },
+        },
+    },
+    {
+        "question": "Make Priya a large iced cold brew with whole milk. Do not mention cents in the receipt.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "cold-brew",
+                "size": "large",
+                "milk": "whole",
+                "temperature": "iced",
+                "shots": 1,
+                "customer_name": "Priya",
+            },
+        },
+    },
+    {
+        "question": "Blair wants a medium hot latte with whole milk. Reply with a compact receipt and dollar total.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "latte",
+                "size": "medium",
+                "milk": "whole",
+                "temperature": "hot",
+                "shots": 1,
+                "customer_name": "Blair",
+            },
+        },
+    },
+    {
+        "question": "Ellis needs a large iced americano. After placing it, stop using tools and give the receipt.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "americano",
+                "size": "large",
+                "milk": "none",
+                "temperature": "iced",
+                "shots": 1,
+                "customer_name": "Ellis",
+            },
+        },
+    },
+    {
+        "question": "Sam wants a small hot espresso. Final answer should be short and include `$x.xx`.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "espresso",
+                "size": "small",
+                "milk": "none",
+                "temperature": "hot",
+                "shots": 1,
+                "customer_name": "Sam",
+            },
+        },
+    },
+    {
+        "question": "Create a large iced cold brew with almond milk and two shots for Riley. Give only the receipt.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "cold-brew",
+                "size": "large",
+                "milk": "almond",
+                "temperature": "iced",
+                "shots": 2,
+                "customer_name": "Riley",
+            },
+        },
+    },
+    {
+        "question": "Put in a small iced tea for Harper. Confirm with drink, order id, and exact dollar total.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "tea",
+                "size": "small",
+                "milk": "none",
+                "temperature": "iced",
+                "shots": 0,
+                "customer_name": "Harper",
+            },
+        },
+    },
+    {
+        "question": "Order a medium extra-hot cappuccino with oat milk for Noor. The final total must be in dollars.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "cappuccino",
+                "size": "medium",
+                "milk": "oat",
+                "temperature": "extra-hot",
+                "shots": 1,
+                "customer_name": "Noor",
+            },
+        },
+    },
+    {
+        "question": "Kai would like a medium iced americano. Receipt format: drink order id `$x.xx`.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "americano",
+                "size": "medium",
+                "milk": "none",
+                "temperature": "iced",
+                "shots": 1,
+                "customer_name": "Kai",
+            },
+        },
+    },
+    {
+        "question": "Morgan wants a small hot latte with almond milk. Keep the confirmation to one sentence.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "latte",
+                "size": "small",
+                "milk": "almond",
+                "temperature": "hot",
+                "shots": 1,
+                "customer_name": "Morgan",
+            },
+        },
+    },
+    {
+        "question": "Casey needs a large extra-hot cappuccino with whole milk. Return a short receipt with dollars.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "cappuccino",
+                "size": "large",
+                "milk": "whole",
+                "temperature": "extra-hot",
+                "shots": 1,
+                "customer_name": "Casey",
+            },
+        },
+    },
+    {
+        "question": "Please ring up a medium iced latte with oat milk and three shots for Nia. Receipt only, exact `$x.xx` price.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "latte",
+                "size": "medium",
+                "milk": "oat",
+                "temperature": "iced",
+                "shots": 3,
+                "customer_name": "Nia",
+            },
+        },
+    },
+    {
+        "question": "Can I get a medium hot americano with whole milk for Quinn?",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["Americano", "milk", "none"],
+        },
+    },
+    {
+        "question": "Please order an extra-hot cold brew for Lee.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["Cold Brew", "iced"],
+        },
+    },
+    {
+        "question": "Can you make tea with oat milk for Morgan?",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["Tea", "milk", "none"],
+        },
+    },
+    {
+        "question": "Make a large mocha with almond milk for Robin.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["mocha", "menu", "latte"],
+        },
+    },
+]
+
 
 async def list_menu() -> str:
     """List the current coffee menu.
@@ -826,11 +1109,13 @@ def load_environment(split: str = "train", num_examples: int = -1, **kwargs) -> 
     train_dataset = to_dataset(TRAIN_TASKS)
     eval_dataset = to_dataset(EVAL_TASKS)
     hard_eval_dataset = to_dataset(HARD_EVAL_TASKS)
+    receipt_drill_dataset = to_dataset(RECEIPT_DRILL_TASKS)
 
     datasets = {
         "train": train_dataset,
         "eval": eval_dataset,
         "hard_eval": hard_eval_dataset,
+        "receipt_drill": receipt_drill_dataset,
     }
     selected_dataset = datasets.get(split, train_dataset)
     if num_examples > 0:

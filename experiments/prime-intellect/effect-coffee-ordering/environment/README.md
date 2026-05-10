@@ -8,7 +8,7 @@
 ### Datasets
 - **Primary dataset(s)**: Synthetic customer requests based on the Effect Coffee Shop domain model.
 - **Source links**: Local app menu and order rules.
-- **Split sizes**: 14 train examples, 8 eval examples.
+- **Split sizes**: 20 train examples, 8 eval examples, 8 hard eval examples, 22 receipt drill examples.
 
 ### Task
 - **Type**: tool use
@@ -36,7 +36,7 @@ Document any supported environment arguments and their meaning. Example:
 
 | Arg | Type | Default | Description |
 | --- | ---- | ------- | ----------- |
-| `split` | str | `"train"` | Use `"train"` or `"eval"` examples |
+| `split` | str | `"train"` | Use `"train"`, `"eval"`, `"hard_eval"`, or `"receipt_drill"` examples |
 | `num_examples` | int | `-1` | Limit dataset size; use -1 for all examples |
 
 ### Metrics
