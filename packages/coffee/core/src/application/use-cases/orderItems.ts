@@ -29,6 +29,7 @@ import { InternalAppError, internalAppErrorFromPersistence } from "../errors.ts"
 import { MenuRepository } from "../ports/MenuRepository.ts";
 
 const defaultQuantity = 1;
+const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
 const decodeDrinkSize = Schema.decodeUnknownEffect(DrinkSizeSchema);
 const decodeMilk = Schema.decodeUnknownEffect(MilkSchema);
 const decodeTemperature = Schema.decodeUnknownEffect(TemperatureSchema);
@@ -36,7 +37,7 @@ const decodeTemperature = Schema.decodeUnknownEffect(TemperatureSchema);
 const trimmedOrUndefined = (value: string | undefined): string | undefined =>
   Option.getOrUndefined(
     Option.fromUndefinedOr(value).pipe(
-      Option.map((input) => input.trim()),
+      Option.map(decodeTrimmedString),
       Option.filter((input) => input.length > 0),
     ),
   );

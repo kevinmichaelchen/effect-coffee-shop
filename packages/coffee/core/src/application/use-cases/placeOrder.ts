@@ -1,5 +1,6 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
 import {
   DrinkNotFoundError,
   InvalidOrderInputError,
@@ -24,10 +25,12 @@ import { OrderRepository } from "../ports/OrderRepository.ts";
 import { type PlaceOrderRequest } from "../contracts.ts";
 import { invalidOrderInput, resolveOrderQuote } from "./orderItems.ts";
 
+const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
+
 const validateCustomerName = Effect.fnUntraced(function* (
   customerName: string,
 ): Effect.fn.Return<string, InvalidOrderInputError> {
-  return yield* Effect.succeed(customerName.trim()).pipe(
+  return yield* Effect.succeed(decodeTrimmedString(customerName)).pipe(
     Effect.filterOrFail(
       (trimmedCustomerName) => trimmedCustomerName.length > 0,
       () => invalidOrderInput("customerName must not be blank"),

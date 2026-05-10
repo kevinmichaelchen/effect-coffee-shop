@@ -18,19 +18,21 @@ import {
   type CoffeeOrderItem,
 } from "../domain/order.ts";
 
+const BoundaryStringSchema = Schema.Trim;
+
 export const OrderItemInputSchema = Schema.Struct({
-  drinkId: Schema.String,
-  size: Schema.String,
-  milk: Schema.optionalKey(Schema.String),
-  temperature: Schema.optionalKey(Schema.String),
+  drinkId: BoundaryStringSchema,
+  size: BoundaryStringSchema,
+  milk: Schema.optionalKey(BoundaryStringSchema),
+  temperature: Schema.optionalKey(BoundaryStringSchema),
   shots: Schema.optionalKey(Schema.Int),
-  notes: Schema.optionalKey(Schema.String),
+  notes: Schema.optionalKey(BoundaryStringSchema),
   quantity: Schema.optionalKey(Schema.Int),
 }).annotate({ identifier: "OrderItemInput" });
 export type OrderItemInput = typeof OrderItemInputSchema.Type;
 
 export const PlaceOrderRequestSchema = Schema.Struct({
-  customerName: Schema.optionalKey(Schema.String),
+  customerName: Schema.optionalKey(BoundaryStringSchema),
   items: Schema.Array(OrderItemInputSchema),
 }).annotate({ identifier: "PlaceOrderRequest" });
 export type PlaceOrderRequest = typeof PlaceOrderRequestSchema.Type;
@@ -41,18 +43,18 @@ export const QuoteOrderRequestSchema = Schema.Struct({
 export type QuoteOrderRequest = typeof QuoteOrderRequestSchema.Type;
 
 export const ItemOptionsRequestSchema = Schema.Struct({
-  drinkId: Schema.String,
+  drinkId: BoundaryStringSchema,
 }).annotate({ identifier: "ItemOptionsRequest" });
 export type ItemOptionsRequest = typeof ItemOptionsRequestSchema.Type;
 
 export const UpdateCartItemRequestSchema = Schema.Struct({
   cartItemId: CartItemIdSchema,
-  drinkId: Schema.optionalKey(Schema.String),
-  size: Schema.optionalKey(Schema.String),
-  milk: Schema.optionalKey(Schema.String),
-  temperature: Schema.optionalKey(Schema.String),
+  drinkId: Schema.optionalKey(BoundaryStringSchema),
+  size: Schema.optionalKey(BoundaryStringSchema),
+  milk: Schema.optionalKey(BoundaryStringSchema),
+  temperature: Schema.optionalKey(BoundaryStringSchema),
   shots: Schema.optionalKey(Schema.Int),
-  notes: Schema.optionalKey(Schema.String),
+  notes: Schema.optionalKey(BoundaryStringSchema),
   quantity: Schema.optionalKey(Schema.Int),
 }).annotate({ identifier: "UpdateCartItemRequest" });
 export type UpdateCartItemRequest = typeof UpdateCartItemRequestSchema.Type;
@@ -63,12 +65,12 @@ export const CartItemIdRequestSchema = Schema.Struct({
 export type CartItemIdRequest = typeof CartItemIdRequestSchema.Type;
 
 export const CheckoutCartRequestSchema = Schema.Struct({
-  customerName: Schema.optionalKey(Schema.String),
+  customerName: Schema.optionalKey(BoundaryStringSchema),
 }).annotate({ identifier: "CheckoutCartRequest" });
 export type CheckoutCartRequest = typeof CheckoutCartRequestSchema.Type;
 
 export const ListOrdersRequestSchema = Schema.Struct({
-  status: Schema.optionalKey(Schema.String),
+  status: Schema.optionalKey(BoundaryStringSchema),
 }).annotate({ identifier: "ListOrdersRequest" });
 export type ListOrdersRequest = typeof ListOrdersRequestSchema.Type;
 

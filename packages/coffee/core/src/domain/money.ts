@@ -1,23 +1,42 @@
+import * as Equal from "effect/Equal";
+import * as Hash from "effect/Hash";
 import * as Schema from "effect/Schema";
 
 export const CurrencySchema = Schema.Literal("USD");
 export type Currency = typeof CurrencySchema.Type;
 
-export const MoneySchema = Schema.Struct({
-  currency: CurrencySchema,
-  minorUnits: Schema.Int,
-}).annotate({ identifier: "Money" });
-export type Money = typeof MoneySchema.Type;
+export class Money
+  extends Schema.Class<Money>("Money")({
+    currency: CurrencySchema,
+    minorUnits: Schema.Int,
+  })
+  implements Equal.Equal
+{
+  [Equal.symbol](that: Equal.Equal): boolean {
+    return (
+      Schema.is(Money)(that) &&
+      this.currency === that.currency &&
+      this.minorUnits === that.minorUnits
+    );
+  }
 
-export const zeroMoney: Money = {
+  [Hash.symbol](): number {
+    return Hash.combine(Hash.hash(this.currency), Hash.number(this.minorUnits));
+  }
+}
+
+export const MoneySchema = Money;
+
+export const zeroMoney: Money = new Money({
   currency: "USD",
   minorUnits: 0,
-};
-
-export const moneyFromCents = (cents: number): Money => ({
-  currency: "USD",
-  minorUnits: cents,
 });
+
+export const moneyFromCents = (cents: number): Money =>
+  new Money({
+    currency: "USD",
+    minorUnits: cents,
+  });
 
 export const moneyToCents = (money: Money): number => money.minorUnits;
 
