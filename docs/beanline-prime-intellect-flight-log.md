@@ -728,3 +728,88 @@ more direct supervised receipt-format signal before more RL:
   short 0.8B experiment.
 - Only revisit 2B/4B after the final-answer signal is strong enough that the
   larger model's receipt prior can be captured without losing tool correctness.
+
+## Iteration 5: Supervised Receipt-Format Artifact
+
+### Plan
+
+The user asked to proceed with a direct supervised receipt-format signal before
+more RL spend. This follows the Iteration 4 conclusion: the model can learn
+tool behavior with RL, but the remaining weakness is deterministic final
+receipt wording. RL has been an inefficient way to teach that exact formatting.
+
+Prime-RL's local documentation describes an SFT trainer that can consume either
+prompt/completion rows or raw `messages` conversations, including tool-calling
+conversations. The Hosted Training CLI currently exposes the RL config path we
+have been using, so no new hosted training spend was started for this step.
+
+### Artifact Created
+
+Generated deterministic SFT-style corpora under the Prime lab workspace:
+
+- `.context/prime-intellect/lab/data/effect_coffee_sft/receipt_final_response_sft.jsonl`
+- `.context/prime-intellect/lab/data/effect_coffee_sft/receipt_tool_trajectory_sft.jsonl`
+- `.context/prime-intellect/lab/data/effect_coffee_sft/README.md`
+- Generator:
+  `.context/prime-intellect/lab/scripts/build_effect_coffee_receipt_sft.py`
+
+Dataset shape:
+
+| Corpus | Rows | Purpose |
+| --- | ---: | --- |
+| `receipt_final_response_sft.jsonl` | `22` | prompt/completion rows focused directly on final customer receipts |
+| `receipt_tool_trajectory_sft.jsonl` | `22` | raw messages rows with tool calls, tool results, and final receipt |
+
+The successful-order completions use the compact target style:
+
+```text
+Latte order-simulated-0001 $5.18.
+```
+
+Validation was run locally. Successful receipts must:
+
+- include the exact `$x.xx` total,
+- avoid `cent`, `cents`, and wrong-currency symbols,
+- stay short,
+- preserve the canonical simulated order id.
+
+### SFT Path Check
+
+Local docs show the SFT entrypoint as:
+
+```sh
+uv run sft ...
+```
+
+But the current Prime lab environment does not have an `sft` executable
+installed:
+
+```text
+error: Failed to spawn: `sft`
+Caused by: No such file or directory
+```
+
+Therefore the decision is to preserve the supervised data artifact and avoid
+spending more RL budget until an SFT-capable runtime is available or we choose a
+deliberate environment reshaping step.
+
+### Decision
+
+No model was promoted, no RL run was started, and no adapter was deployed.
+
+The champion remains:
+
+- Adapter: `rqvfrcdy4xt95oka37b0xjyu`
+- Champion `0.1.5 hard_eval` reward: `0.830`
+- Main weakness: `price_format = 0.625`
+
+Next viable options:
+
+- Install or provision an SFT-capable Prime-RL runtime and run the
+  `receipt_final_response_sft` corpus first, because it targets the exact final
+  answer weakness with the least behavioral blast radius.
+- If SFT remains unavailable, convert the deterministic corpus into a stricter
+  `receipt_drill` environment split and use it only as a short warmup before
+  returning to the normal `train` and `hard_eval` splits.
+- Keep larger-model RL paused until one of those supervised-format paths shows
+  an improvement in exact dollar totals without regressing tool correctness.
