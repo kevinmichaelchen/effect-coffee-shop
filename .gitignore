@@ -20,6 +20,7 @@ storybook-static
 .wrangler
 .sqlfu
 **/.sqlfu
+**/.prime
 
 # Fiberplane local issue tracking
 .fp/

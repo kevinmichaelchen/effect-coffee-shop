@@ -858,7 +858,8 @@ trains on `split=receipt_drill`, and evaluates against `split=hard_eval`.
 
 ### Decision
 
-No paid training was started. Before use, publish the checked-in environment as
-`0.1.6`, then treat this warmup as a candidate only if it improves
-`price_format` above `0.625` without reducing tool correctness or increasing
-verbosity.
+No paid training was started. The checked-in environment was published as
+`kevinmichaelchen/effect-coffee-ordering@0.1.6` so the warmup config now points
+at an available environment version. Treat the warmup as a candidate only if it
+improves `price_format` above `0.625` without reducing tool correctness or
+increasing verbosity.
