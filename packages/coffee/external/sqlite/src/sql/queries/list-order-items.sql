@@ -12,5 +12,5 @@ select
   unit_price_cents,
   line_total_cents
 from order_items
-where order_id = :order_id
+where order_id = :orderId
 order by position;

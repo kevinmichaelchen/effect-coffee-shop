@@ -20,7 +20,7 @@ order by position;
 const query = (params: listCartItems.Params) => ({
   name: "listCartItems",
   sql,
-  args: [params.owner_user_id],
+  args: [params.ownerUserId],
 });
 
 export const listCartItems = Object.assign(
@@ -40,7 +40,7 @@ export const listCartItems = Object.assign(
 
 export namespace listCartItems {
   export type Params = {
-    owner_user_id: string;
+    ownerUserId: string;
   };
   export type Result = {
     owner_user_id: string;

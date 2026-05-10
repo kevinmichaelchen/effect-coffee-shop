@@ -186,6 +186,18 @@ describe("cloudflare worker", () => {
     });
   });
 
+  it("returns unavailable for auth routes when the auth secret is absent", async () => {
+    await withTestEnv(async ({ assetsFetch, env }) => {
+      const response = await fetchWorker(new Request("http://example.com/api/auth/session"), env);
+
+      expect(response.status).toBe(503);
+      expect(await response.text()).toBe(
+        "Better Auth is unavailable. Configure BETTER_AUTH_SECRET.",
+      );
+      expect(assetsFetch).not.toHaveBeenCalled();
+    });
+  });
+
   it("exposes the agent discovery document from the well-known path", async () => {
     await withTestEnv(async ({ assetsFetch, env }) => {
       const response = await fetchWorker(

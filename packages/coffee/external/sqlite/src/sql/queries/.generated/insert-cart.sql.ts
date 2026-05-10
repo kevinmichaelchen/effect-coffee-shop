@@ -11,7 +11,7 @@ on conflict (owner_user_id) do nothing;
 const query = (params: insertCart.Params) => ({
   name: "insertCart",
   sql,
-  args: [params.owner_user_id],
+  args: [params.ownerUserId],
 });
 
 export const insertCart = Object.assign(
@@ -27,6 +27,6 @@ export const insertCart = Object.assign(
 
 export namespace insertCart {
   export type Params = {
-    owner_user_id: string;
+    ownerUserId: string;
   };
 }

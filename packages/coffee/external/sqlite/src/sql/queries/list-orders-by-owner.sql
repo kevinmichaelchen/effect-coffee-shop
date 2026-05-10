@@ -6,5 +6,5 @@ select
   total_price_cents,
   created_at
 from orders
-where owner_user_id = :owner_user_id
+where owner_user_id = :ownerUserId
 order by created_at, id;

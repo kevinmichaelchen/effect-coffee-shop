@@ -26,11 +26,11 @@ const query = (params: saveOrder.Params) => ({
   sql,
   args: [
     params.order.id,
-    params.order.customer_name,
-    params.order.owner_user_id,
+    params.order.customerName,
+    params.order.ownerUserId,
     params.order.status,
-    params.order.total_price_cents,
-    params.order.created_at,
+    params.order.totalPriceCents,
+    params.order.createdAt,
   ],
 });
 
@@ -49,11 +49,11 @@ export namespace saveOrder {
   export type Params = {
     order: {
       id: string;
-      customer_name: string;
-      owner_user_id: string;
+      customerName: string;
+      ownerUserId: string;
       status: string;
-      total_price_cents: number;
-      created_at: string;
+      totalPriceCents: number;
+      createdAt: string;
     };
   };
 }

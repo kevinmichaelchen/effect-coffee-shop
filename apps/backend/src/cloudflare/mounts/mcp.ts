@@ -1,4 +1,4 @@
-import { readCloudflareRuntime, revealOptionalSecret, type CloudflareWorkerEnv } from "../env.ts";
+import { readCloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
 import {
   cloudflarePathname,
   cloudflareResponse,
@@ -24,7 +24,6 @@ export const cloudflareMcpMount: CloudflareMount<CloudflareWorkerEnv> = {
 
     await ensureCloudflareAuthPersistence({
       db: runtime.bindings.db,
-      secret: revealOptionalSecret(runtime.config.betterAuthSecret),
     });
 
     return cloudflareResponse(

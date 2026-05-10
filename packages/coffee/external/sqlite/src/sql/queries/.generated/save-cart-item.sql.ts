@@ -33,10 +33,10 @@ const query = (params: saveCartItem.Params) => ({
   name: "saveCartItem",
   sql,
   args: [
-    params.item.owner_user_id,
+    params.item.ownerUserId,
     params.item.id,
     params.item.position,
-    params.item.drink_id,
+    params.item.drinkId,
     params.item.size,
     params.item.milk,
     params.item.temperature,
@@ -60,10 +60,10 @@ export const saveCartItem = Object.assign(
 export namespace saveCartItem {
   export type Params = {
     item: {
-      owner_user_id: string;
+      ownerUserId: string;
       id: string;
       position: number;
-      drink_id: string;
+      drinkId: string;
       size: string;
       milk: string;
       temperature: string;

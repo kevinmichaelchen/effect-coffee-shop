@@ -8,7 +8,7 @@ where owner_user_id = ?;
 const query = (params: deleteCartByOwner.Params) => ({
   name: "deleteCartByOwner",
   sql,
-  args: [params.owner_user_id],
+  args: [params.ownerUserId],
 });
 
 export const deleteCartByOwner = Object.assign(
@@ -24,6 +24,6 @@ export const deleteCartByOwner = Object.assign(
 
 export namespace deleteCartByOwner {
   export type Params = {
-    owner_user_id: string;
+    ownerUserId: string;
   };
 }

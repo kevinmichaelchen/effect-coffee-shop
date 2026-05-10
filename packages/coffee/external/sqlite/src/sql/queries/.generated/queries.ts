@@ -22,17 +22,17 @@ export const sqlfuQuerySources = [
   {
     sqlFile: "delete-cart-by-owner.sql",
     generatedFile: "delete-cart-by-owner.sql.ts",
-    sourceSql: "delete from carts\nwhere owner_user_id = :owner_user_id;\n",
+    sourceSql: "delete from carts\nwhere owner_user_id = :ownerUserId;\n",
   },
   {
     sqlFile: "delete-cart-items-by-owner.sql",
     generatedFile: "delete-cart-items-by-owner.sql.ts",
-    sourceSql: "delete from cart_items\nwhere owner_user_id = :owner_user_id;\n",
+    sourceSql: "delete from cart_items\nwhere owner_user_id = :ownerUserId;\n",
   },
   {
     sqlFile: "delete-order-items-by-order-id.sql",
     generatedFile: "delete-order-items-by-order-id.sql.ts",
-    sourceSql: "delete from order_items\nwhere order_id = :order_id;\n",
+    sourceSql: "delete from order_items\nwhere order_id = :orderId;\n",
   },
   {
     sqlFile: "find-menu-item-by-id.sql",
@@ -50,13 +50,13 @@ export const sqlfuQuerySources = [
     sqlFile: "insert-cart.sql",
     generatedFile: "insert-cart.sql.ts",
     sourceSql:
-      "insert into\n  carts (owner_user_id)\nvalues\n  (:owner_user_id)\non conflict (owner_user_id) do nothing;\n",
+      "insert into\n  carts (owner_user_id)\nvalues\n  (:ownerUserId)\non conflict (owner_user_id) do nothing;\n",
   },
   {
     sqlFile: "list-cart-items.sql",
     generatedFile: "list-cart-items.sql.ts",
     sourceSql:
-      "select\n  owner_user_id,\n  id,\n  position,\n  drink_id,\n  size,\n  milk,\n  temperature,\n  shots,\n  notes,\n  quantity\nfrom cart_items\nwhere owner_user_id = :owner_user_id\norder by position;\n",
+      "select\n  owner_user_id,\n  id,\n  position,\n  drink_id,\n  size,\n  milk,\n  temperature,\n  shots,\n  notes,\n  quantity\nfrom cart_items\nwhere owner_user_id = :ownerUserId\norder by position;\n",
   },
   {
     sqlFile: "list-menu-items.sql",
@@ -68,7 +68,7 @@ export const sqlfuQuerySources = [
     sqlFile: "list-order-items.sql",
     generatedFile: "list-order-items.sql.ts",
     sourceSql:
-      "select\n  order_id,\n  position,\n  drink_id,\n  drink_name,\n  size,\n  milk,\n  temperature,\n  shots,\n  notes,\n  quantity,\n  unit_price_cents,\n  line_total_cents\nfrom order_items\nwhere order_id = :order_id\norder by position;\n",
+      "select\n  order_id,\n  position,\n  drink_id,\n  drink_name,\n  size,\n  milk,\n  temperature,\n  shots,\n  notes,\n  quantity,\n  unit_price_cents,\n  line_total_cents\nfrom order_items\nwhere order_id = :orderId\norder by position;\n",
   },
   {
     sqlFile: "list-orders.sql",
@@ -80,13 +80,13 @@ export const sqlfuQuerySources = [
     sqlFile: "list-orders-by-owner.sql",
     generatedFile: "list-orders-by-owner.sql.ts",
     sourceSql:
-      "select\n  id,\n  customer_name,\n  owner_user_id,\n  status,\n  total_price_cents,\n  created_at\nfrom orders\nwhere owner_user_id = :owner_user_id\norder by created_at, id;\n",
+      "select\n  id,\n  customer_name,\n  owner_user_id,\n  status,\n  total_price_cents,\n  created_at\nfrom orders\nwhere owner_user_id = :ownerUserId\norder by created_at, id;\n",
   },
   {
     sqlFile: "list-orders-by-owner-and-status.sql",
     generatedFile: "list-orders-by-owner-and-status.sql.ts",
     sourceSql:
-      "select\n  id,\n  customer_name,\n  owner_user_id,\n  status,\n  total_price_cents,\n  created_at\nfrom orders\nwhere owner_user_id = :owner_user_id and status = :status\norder by created_at, id;\n",
+      "select\n  id,\n  customer_name,\n  owner_user_id,\n  status,\n  total_price_cents,\n  created_at\nfrom orders\nwhere owner_user_id = :ownerUserId and status = :status\norder by created_at, id;\n",
   },
   {
     sqlFile: "list-orders-by-status.sql",
@@ -98,24 +98,24 @@ export const sqlfuQuerySources = [
     sqlFile: "save-cart-item.sql",
     generatedFile: "save-cart-item.sql.ts",
     sourceSql:
-      "insert into\n  cart_items (\n    owner_user_id,\n    id,\n    position,\n    drink_id,\n    size,\n    milk,\n    temperature,\n    shots,\n    notes,\n    quantity\n  )\nvalues\n  (\n    :item.owner_user_id,\n    :item.id,\n    :item.position,\n    :item.drink_id,\n    :item.size,\n    :item.milk,\n    :item.temperature,\n    :item.shots,\n    :item.notes,\n    :item.quantity\n  );\n",
+      "insert into\n  cart_items (\n    owner_user_id,\n    id,\n    position,\n    drink_id,\n    size,\n    milk,\n    temperature,\n    shots,\n    notes,\n    quantity\n  )\nvalues\n  (\n    :item.ownerUserId,\n    :item.id,\n    :item.position,\n    :item.drinkId,\n    :item.size,\n    :item.milk,\n    :item.temperature,\n    :item.shots,\n    :item.notes,\n    :item.quantity\n  );\n",
   },
   {
     sqlFile: "save-order.sql",
     generatedFile: "save-order.sql.ts",
     sourceSql:
-      "insert into\n  orders (id, customer_name, owner_user_id, status, total_price_cents, created_at)\nvalues\n  (\n    :order.id,\n    :order.customer_name,\n    :order.owner_user_id,\n    :order.status,\n    :order.total_price_cents,\n    :order.created_at\n  )\non conflict (id) do update\nset\n  customer_name = excluded.customer_name,\n  owner_user_id = excluded.owner_user_id,\n  status = excluded.status,\n  total_price_cents = excluded.total_price_cents,\n  created_at = excluded.created_at;\n",
+      "insert into\n  orders (id, customer_name, owner_user_id, status, total_price_cents, created_at)\nvalues\n  (\n    :order.id,\n    :order.customerName,\n    :order.ownerUserId,\n    :order.status,\n    :order.totalPriceCents,\n    :order.createdAt\n  )\non conflict (id) do update\nset\n  customer_name = excluded.customer_name,\n  owner_user_id = excluded.owner_user_id,\n  status = excluded.status,\n  total_price_cents = excluded.total_price_cents,\n  created_at = excluded.created_at;\n",
   },
   {
     sqlFile: "save-order-item.sql",
     generatedFile: "save-order-item.sql.ts",
     sourceSql:
-      "insert into\n  order_items (\n    order_id,\n    position,\n    drink_id,\n    drink_name,\n    size,\n    milk,\n    temperature,\n    shots,\n    notes,\n    quantity,\n    unit_price_cents,\n    line_total_cents\n  )\nvalues\n  (\n    :item.order_id,\n    :item.position,\n    :item.drink_id,\n    :item.drink_name,\n    :item.size,\n    :item.milk,\n    :item.temperature,\n    :item.shots,\n    :item.notes,\n    :item.quantity,\n    :item.unit_price_cents,\n    :item.line_total_cents\n  );\n",
+      "insert into\n  order_items (\n    order_id,\n    position,\n    drink_id,\n    drink_name,\n    size,\n    milk,\n    temperature,\n    shots,\n    notes,\n    quantity,\n    unit_price_cents,\n    line_total_cents\n  )\nvalues\n  (\n    :item.orderId,\n    :item.position,\n    :item.drinkId,\n    :item.drinkName,\n    :item.size,\n    :item.milk,\n    :item.temperature,\n    :item.shots,\n    :item.notes,\n    :item.quantity,\n    :item.unitPriceCents,\n    :item.lineTotalCents\n  );\n",
   },
   {
     sqlFile: "seed-menu-item.sql",
     generatedFile: "seed-menu-item.sql.ts",
     sourceSql:
-      "insert into\n  menu_items (\n    id,\n    name,\n    kind,\n    sort_order,\n    base_price_cents,\n    available_milks,\n    available_temperatures,\n    max_shots\n  )\nvalues\n  (\n    :item.id,\n    :item.name,\n    :item.kind,\n    :item.sort_order,\n    :item.base_price_cents,\n    :item.available_milks,\n    :item.available_temperatures,\n    :item.max_shots\n  )\non conflict (id) do update\nset\n  name = excluded.name,\n  kind = excluded.kind,\n  sort_order = excluded.sort_order,\n  base_price_cents = excluded.base_price_cents,\n  available_milks = excluded.available_milks,\n  available_temperatures = excluded.available_temperatures,\n  max_shots = excluded.max_shots;\n",
+      "insert into\n  menu_items (\n    id,\n    name,\n    kind,\n    sort_order,\n    base_price_cents,\n    available_milks,\n    available_temperatures,\n    max_shots\n  )\nvalues\n  (\n    :item.id,\n    :item.name,\n    :item.kind,\n    :item.sortOrder,\n    :item.basePriceCents,\n    :item.availableMilks,\n    :item.availableTemperatures,\n    :item.maxShots\n  )\non conflict (id) do update\nset\n  name = excluded.name,\n  kind = excluded.kind,\n  sort_order = excluded.sort_order,\n  base_price_cents = excluded.base_price_cents,\n  available_milks = excluded.available_milks,\n  available_temperatures = excluded.available_temperatures,\n  max_shots = excluded.max_shots;\n",
   },
 ];

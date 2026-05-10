@@ -34,7 +34,7 @@ const hydrateOrder = Effect.fnUntraced(function* (
   sqlClient: SqlClient.SqlClient,
   order: typeof SqlOrderModel.Type,
 ) {
-  const items = yield* listOrderItems({ order_id: order.id }).pipe(
+  const items = yield* listOrderItems({ orderId: order.id }).pipe(
     Effect.provideService(SqlClient.SqlClient, sqlClient),
     Effect.flatMap(decodeSqlOrderItems),
   );
@@ -48,7 +48,7 @@ const makeSqlOrderQueries = Effect.gen(function* () {
     const record = toSqlOrderSave(order);
 
     yield* saveOrder({ order: record }).pipe(Effect.provideService(SqlClient.SqlClient, sqlClient));
-    yield* deleteOrderItemsByOrderId({ order_id: order.id }).pipe(
+    yield* deleteOrderItemsByOrderId({ orderId: order.id }).pipe(
       Effect.provideService(SqlClient.SqlClient, sqlClient),
     );
     yield* Effect.forEach(
@@ -80,10 +80,10 @@ const makeSqlOrderQueries = Effect.gen(function* () {
         }),
       onSome: (ownerUserId) =>
         Option.match(Option.fromUndefinedOr(filters.status), {
-          onNone: () => listOrdersByOwner({ owner_user_id: ownerUserId }),
+          onNone: () => listOrdersByOwner({ ownerUserId }),
           onSome: (status) =>
             listOrdersByOwnerAndStatus({
-              owner_user_id: ownerUserId,
+              ownerUserId,
               status,
             }),
         }),

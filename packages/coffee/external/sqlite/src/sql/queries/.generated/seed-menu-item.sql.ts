@@ -41,11 +41,11 @@ const query = (params: seedMenuItem.Params) => ({
     params.item.id,
     params.item.name,
     params.item.kind,
-    params.item.sort_order,
-    params.item.base_price_cents,
-    params.item.available_milks,
-    params.item.available_temperatures,
-    params.item.max_shots,
+    params.item.sortOrder,
+    params.item.basePriceCents,
+    params.item.availableMilks,
+    params.item.availableTemperatures,
+    params.item.maxShots,
   ],
 });
 
@@ -66,11 +66,11 @@ export namespace seedMenuItem {
       id: string;
       name: string;
       kind: string;
-      sort_order: number;
-      base_price_cents: number;
-      available_milks: string;
-      available_temperatures: string;
-      max_shots: number;
+      sortOrder: number;
+      basePriceCents: number;
+      availableMilks: string;
+      availableTemperatures: string;
+      maxShots: number;
     };
   };
 }

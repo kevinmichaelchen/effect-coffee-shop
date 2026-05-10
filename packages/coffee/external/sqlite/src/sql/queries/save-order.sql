@@ -3,11 +3,11 @@ insert into
 values
   (
     :order.id,
-    :order.customer_name,
-    :order.owner_user_id,
+    :order.customerName,
+    :order.ownerUserId,
     :order.status,
-    :order.total_price_cents,
-    :order.created_at
+    :order.totalPriceCents,
+    :order.createdAt
   )
 on conflict (id) do update
 set

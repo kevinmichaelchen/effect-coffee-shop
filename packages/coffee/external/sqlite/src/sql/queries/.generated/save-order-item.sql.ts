@@ -37,18 +37,18 @@ const query = (params: saveOrderItem.Params) => ({
   name: "saveOrderItem",
   sql,
   args: [
-    params.item.order_id,
+    params.item.orderId,
     params.item.position,
-    params.item.drink_id,
-    params.item.drink_name,
+    params.item.drinkId,
+    params.item.drinkName,
     params.item.size,
     params.item.milk,
     params.item.temperature,
     params.item.shots,
     params.item.notes,
     params.item.quantity,
-    params.item.unit_price_cents,
-    params.item.line_total_cents,
+    params.item.unitPriceCents,
+    params.item.lineTotalCents,
   ],
 });
 
@@ -66,18 +66,18 @@ export const saveOrderItem = Object.assign(
 export namespace saveOrderItem {
   export type Params = {
     item: {
-      order_id: string;
+      orderId: string;
       position: number;
-      drink_id: string;
-      drink_name: string;
+      drinkId: string;
+      drinkName: string;
       size: string;
       milk: string;
       temperature: string;
       shots: number;
       notes: string | null;
       quantity: number;
-      unit_price_cents: number;
-      line_total_cents: number;
+      unitPriceCents: number;
+      lineTotalCents: number;
     };
   };
 }

@@ -13,10 +13,10 @@ insert into
   )
 values
   (
-    :item.owner_user_id,
+    :item.ownerUserId,
     :item.id,
     :item.position,
-    :item.drink_id,
+    :item.drinkId,
     :item.size,
     :item.milk,
     :item.temperature,

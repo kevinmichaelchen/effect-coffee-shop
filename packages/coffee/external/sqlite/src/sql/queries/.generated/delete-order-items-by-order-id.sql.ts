@@ -8,7 +8,7 @@ where order_id = ?;
 const query = (params: deleteOrderItemsByOrderId.Params) => ({
   name: "deleteOrderItemsByOrderId",
   sql,
-  args: [params.order_id],
+  args: [params.orderId],
 });
 
 export const deleteOrderItemsByOrderId = Object.assign(
@@ -24,6 +24,6 @@ export const deleteOrderItemsByOrderId = Object.assign(
 
 export namespace deleteOrderItemsByOrderId {
   export type Params = {
-    order_id: string;
+    orderId: string;
   };
 }

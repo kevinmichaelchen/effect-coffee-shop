@@ -15,16 +15,16 @@ insert into
   )
 values
   (
-    :item.order_id,
+    :item.orderId,
     :item.position,
-    :item.drink_id,
-    :item.drink_name,
+    :item.drinkId,
+    :item.drinkName,
     :item.size,
     :item.milk,
     :item.temperature,
     :item.shots,
     :item.notes,
     :item.quantity,
-    :item.unit_price_cents,
-    :item.line_total_cents
+    :item.unitPriceCents,
+    :item.lineTotalCents
   );

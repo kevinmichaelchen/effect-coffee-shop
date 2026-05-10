@@ -22,7 +22,7 @@ order by position;
 const query = (params: listOrderItems.Params) => ({
   name: "listOrderItems",
   sql,
-  args: [params.order_id],
+  args: [params.orderId],
 });
 
 export const listOrderItems = Object.assign(
@@ -42,7 +42,7 @@ export const listOrderItems = Object.assign(
 
 export namespace listOrderItems {
   export type Params = {
-    order_id: string;
+    orderId: string;
   };
   export type Result = {
     order_id: string;

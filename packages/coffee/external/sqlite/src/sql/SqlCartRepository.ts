@@ -24,10 +24,10 @@ const makeSqlCartQueries = Effect.gen(function* () {
   const sqlClient = yield* SqlClient.SqlClient;
 
   const save = Effect.fn("SqlCartRepository.save")(function* (cart: Cart) {
-    yield* insertCart({ owner_user_id: cart.ownerUserId }).pipe(
+    yield* insertCart({ ownerUserId: cart.ownerUserId }).pipe(
       Effect.provideService(SqlClient.SqlClient, sqlClient),
     );
-    yield* deleteCartItemsByOwner({ owner_user_id: cart.ownerUserId }).pipe(
+    yield* deleteCartItemsByOwner({ ownerUserId: cart.ownerUserId }).pipe(
       Effect.provideService(SqlClient.SqlClient, sqlClient),
     );
     yield* Effect.forEach(
@@ -39,10 +39,10 @@ const makeSqlCartQueries = Effect.gen(function* () {
   });
 
   const clear = Effect.fn("SqlCartRepository.clear")(function* (ownerUserId: string) {
-    yield* deleteCartItemsByOwner({ owner_user_id: ownerUserId }).pipe(
+    yield* deleteCartItemsByOwner({ ownerUserId }).pipe(
       Effect.provideService(SqlClient.SqlClient, sqlClient),
     );
-    yield* deleteCartByOwner({ owner_user_id: ownerUserId }).pipe(
+    yield* deleteCartByOwner({ ownerUserId }).pipe(
       Effect.provideService(SqlClient.SqlClient, sqlClient),
     );
     return emptyCart(ownerUserId);
@@ -51,7 +51,7 @@ const makeSqlCartQueries = Effect.gen(function* () {
   const getByOwnerUserId = Effect.fn("SqlCartRepository.getByOwnerUserId")(function* (
     ownerUserId: string,
   ) {
-    const rows = yield* listCartItems({ owner_user_id: ownerUserId }).pipe(
+    const rows = yield* listCartItems({ ownerUserId }).pipe(
       Effect.provideService(SqlClient.SqlClient, sqlClient),
       Effect.flatMap(decodeSqlCartItems),
     );

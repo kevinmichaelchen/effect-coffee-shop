@@ -16,7 +16,7 @@ order by created_at, id;
 const query = (params: listOrdersByOwner.Params) => ({
   name: "listOrdersByOwner",
   sql,
-  args: [params.owner_user_id],
+  args: [params.ownerUserId],
 });
 
 export const listOrdersByOwner = Object.assign(
@@ -36,7 +36,7 @@ export const listOrdersByOwner = Object.assign(
 
 export namespace listOrdersByOwner {
   export type Params = {
-    owner_user_id: string;
+    ownerUserId: string;
   };
   export type Result = {
     id: string;

@@ -10,5 +10,5 @@ select
   notes,
   quantity
 from cart_items
-where owner_user_id = :owner_user_id
+where owner_user_id = :ownerUserId
 order by position;

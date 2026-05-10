@@ -15,7 +15,6 @@ export const resolveCloudflareRequestActor = async (input: {
 
   await ensureCloudflareAuthPersistence({
     db: runtime.bindings.db,
-    secret,
   });
 
   const actor = await resolveCloudflareActor({
