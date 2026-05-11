@@ -7,7 +7,7 @@ checkpoint_id = "oo8lrytspz37lfsdlloubig7"
 # Hosted Training checkpoint_id by the current Prime CLI.
 # max_steps is absolute from the source checkpoint's step 25, so 50 means 25
 # additional warmup steps.
-# Publish the checked-in environment as version 0.1.16 before launching this.
+# Publish the checked-in environment as version 0.1.17 before launching this.
 # This broadens training from receipt formatting into cashier product behavior.
 max_steps = 50
 batch_size = 64
@@ -23,7 +23,7 @@ temperature = 0.4
 
 [[env]]
 id = "kevinmichaelchen/effect-coffee-ordering"
-version = "0.1.16"
+version = "0.1.17"
 args = { split = "product_readiness" }
 
 [val]
@@ -40,7 +40,7 @@ eval_base_model = false
 [[eval.env]]
 id = "kevinmichaelchen/effect-coffee-ordering"
 name = "effect-coffee-hard-eval"
-version = "0.1.16"
+version = "0.1.17"
 args = { split = "hard_eval" }
 num_examples = 8
 rollouts_per_example = 2
@@ -48,7 +48,7 @@ rollouts_per_example = 2
 [[eval.env]]
 id = "kevinmichaelchen/effect-coffee-ordering"
 name = "effect-coffee-product-readiness"
-version = "0.1.16"
+version = "0.1.17"
 args = { split = "product_readiness" }
 num_examples = 16
 rollouts_per_example = 2

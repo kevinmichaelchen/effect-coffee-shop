@@ -45,11 +45,11 @@ Summarize key metrics your rubric emits and how they’re interpreted.
 | Metric | Meaning |
 | ------ | ------- |
 | `reward` | Main scalar reward (weighted sum of criteria) |
-| `tool_correctness` | Correct tool choice and structured order/refusal behavior |
-| `final_response_quality` | Customer-facing confirmation or refusal quality |
-| `product_efficiency` | Avoids extra tools, unsupported cart behavior, and verbose responses |
-| `price_format` | Successful receipts use exact `$x.xx` dollar totals |
-| `receipt_style` | Successful receipts include drink, order id, exact total, and no post-success tools |
+| `tool_correctness` | Correct tool choice and structured order/confirmation/refusal behavior |
+| `final_response_quality` | Customer-facing confirmation, receipt, or refusal quality |
+| `product_efficiency` | Avoids premature purchase tools, extra tools, unsupported cart behavior, and verbose responses |
+| `price_format` | Confirmations and receipts use exact `$x.xx` dollar totals |
+| `receipt_style` | Successful receipts include drink, order id, exact total, and confirmation flows ask before purchase |
 
 ### Product Readiness
 

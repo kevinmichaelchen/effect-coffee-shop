@@ -705,13 +705,14 @@ PRODUCT_READINESS_TASKS = [
     {
         "question": "Can you start a cart with a medium oat latte for Ava and a small espresso for Ben?",
         "info": {
-            "expected_action": "place_order",
-            "expected_tool_names": ["add_cart_item", "checkout_cart"],
-            "expected_tool_sequence": ["add_cart_item", "add_cart_item", "checkout_cart"],
-            "expected_tool_counts": {"add_cart_item": 2, "checkout_cart": 1},
+            "expected_action": "confirm_order",
+            "expected_tool_names": ["add_cart_item"],
+            "expected_tool_sequence": ["add_cart_item", "add_cart_item"],
+            "expected_tool_counts": {"add_cart_item": 2, "checkout_cart": 0},
             "expected_order": {
                 "customer_name": "Ava",
             },
+            "required_terms": ["Latte", "Espresso", "Ava", "$8.18", "Should I place"],
             "expected_items": [
                 {
                     "drink_id": "latte",
@@ -735,13 +736,14 @@ PRODUCT_READINESS_TASKS = [
     {
         "question": "Start a cart by adding a cappuccino by mistake. Remove it and make the cart a large iced americano for Jo.",
         "info": {
-            "expected_action": "place_order",
-            "expected_tool_names": ["add_cart_item", "remove_cart_item", "checkout_cart"],
-            "expected_tool_sequence": ["add_cart_item", "remove_cart_item", "add_cart_item", "checkout_cart"],
-            "expected_tool_counts": {"add_cart_item": 2, "remove_cart_item": 1, "checkout_cart": 1},
+            "expected_action": "confirm_order",
+            "expected_tool_names": ["add_cart_item", "remove_cart_item"],
+            "expected_tool_sequence": ["add_cart_item", "remove_cart_item", "add_cart_item"],
+            "expected_tool_counts": {"add_cart_item": 2, "remove_cart_item": 1, "checkout_cart": 0},
             "expected_order": {
                 "customer_name": "Jo",
             },
+            "required_terms": ["Americano", "Jo", "$4.55", "Should I place"],
             "expected_items": [
                 {
                     "drink_id": "americano",
@@ -806,30 +808,48 @@ PRODUCT_READINESS_TASKS = [
     {
         "question": "Order a medium extra-hot oat latte for Sol, no foam, pickup at 8:15.",
         "info": {
-            "expected_action": "place_order",
+            "expected_action": "confirm_order",
+            "expected_tool_names": ["quote_order"],
+            "expected_tool_sequence": ["quote_order"],
+            "expected_tool_counts": {"quote_order": 1, "place_order": 0},
+            "required_terms": ["Latte", "Sol", "$5.18", "Should I place"],
             "expected_order": {
-                "drink_id": "latte",
-                "size": "medium",
-                "milk": "oat",
-                "temperature": "extra-hot",
-                "shots": 1,
                 "customer_name": "Sol",
-                "notes": "no foam; pickup 8:15",
             },
+            "expected_items": [
+                {
+                    "drink_id": "latte",
+                    "size": "medium",
+                    "milk": "oat",
+                    "temperature": "extra-hot",
+                    "shots": 1,
+                    "quantity": 1,
+                    "notes": "no foam; pickup 8:15",
+                }
+            ],
         },
     },
     {
         "question": "Order a small hot cappuccino for Luca and keep the receipt short.",
         "info": {
-            "expected_action": "place_order",
+            "expected_action": "confirm_order",
+            "expected_tool_names": ["quote_order"],
+            "expected_tool_sequence": ["quote_order"],
+            "expected_tool_counts": {"quote_order": 1, "place_order": 0},
+            "required_terms": ["Cappuccino", "Luca", "$4.25", "Should I place"],
             "expected_order": {
-                "drink_id": "cappuccino",
-                "size": "small",
-                "milk": "whole",
-                "temperature": "hot",
-                "shots": 1,
                 "customer_name": "Luca",
             },
+            "expected_items": [
+                {
+                    "drink_id": "cappuccino",
+                    "size": "small",
+                    "milk": "whole",
+                    "temperature": "hot",
+                    "shots": 1,
+                    "quantity": 1,
+                }
+            ],
         },
     },
     {
@@ -863,16 +883,25 @@ PRODUCT_READINESS_TASKS = [
     {
         "question": "Order a medium iced americano for Jamie and note light ice.",
         "info": {
-            "expected_action": "place_order",
+            "expected_action": "confirm_order",
+            "expected_tool_names": ["quote_order"],
+            "expected_tool_sequence": ["quote_order"],
+            "expected_tool_counts": {"quote_order": 1, "place_order": 0},
+            "required_terms": ["Americano", "Jamie", "$4.02", "Should I place"],
             "expected_order": {
-                "drink_id": "americano",
-                "size": "medium",
-                "milk": "none",
-                "temperature": "iced",
-                "shots": 1,
                 "customer_name": "Jamie",
-                "notes": "light ice",
             },
+            "expected_items": [
+                {
+                    "drink_id": "americano",
+                    "size": "medium",
+                    "milk": "none",
+                    "temperature": "iced",
+                    "shots": 1,
+                    "quantity": 1,
+                    "notes": "light ice",
+                }
+            ],
         },
     },
 ]
@@ -1282,6 +1311,23 @@ async def tool_correctness(completion, info) -> float:
         checks.extend(expected_tool_path_checks(info, used_tool_names))
         return sum(1.0 for check in checks if check) / len(checks)
 
+    if expected_action == "confirm_order":
+        payloads = tool_payloads(completion)
+        proposed_items = proposed_order_items(payloads)
+        expected_items = info.get("expected_items", [])
+        used_tool_names = tool_names(completion)
+        required_terms = info["required_terms"]
+        checks = [
+            accepted_order(completion) is None,
+            final_assistant_text(completion) != "",
+            confirmation_text(final_assistant_text(completion)),
+        ]
+        checks.extend(compare_expected_items(proposed_items, expected_items))
+        checks.extend(term.lower() in text.lower() for term in required_terms)
+        checks.extend(any(name == expected_name for name in used_tool_names) for expected_name in info.get("expected_tool_names", []))
+        checks.extend(expected_tool_path_checks(info, used_tool_names))
+        return sum(1.0 for check in checks if check) / len(checks)
+
     if expected_action == "list_menu":
         has_menu_tool_result = any("available_temperatures" in content for content in tool_contents(completion))
         required_terms = info["required_terms"]
@@ -1311,6 +1357,14 @@ async def final_response_quality(completion, info) -> float:
         concise_score = concise_text_score(text, max_words=32)
         return 0.75 * required_score + 0.25 * concise_score
 
+    if expected_action == "confirm_order":
+        required_terms = info["required_terms"]
+        term_score = sum(1.0 for term in required_terms if term.lower() in text) / len(required_terms)
+        confirmation_score = float(confirmation_text(text))
+        safety_score = float(accepted_order(completion) is None)
+        concise_score = concise_text_score(text, max_words=40)
+        return 0.45 * term_score + 0.25 * confirmation_score + 0.2 * safety_score + 0.1 * concise_score
+
     if expected_action == "list_menu":
         required_terms = info["required_terms"]
         term_score = sum(1.0 for term in required_terms if term.lower() in text) / len(required_terms)
@@ -1324,6 +1378,10 @@ async def final_response_quality(completion, info) -> float:
 
 
 async def price_format(completion, info) -> float:
+    if info["expected_action"] == "confirm_order":
+        total_cents = proposed_total_cents(tool_payloads(completion))
+        return float(total_cents is not None and price_text_has_exact_dollars(final_assistant_text(completion), total_cents))
+
     if info["expected_action"] != "place_order":
         return 1.0
 
@@ -1338,6 +1396,20 @@ async def price_format(completion, info) -> float:
 
 
 async def receipt_style(completion, info) -> float:
+    if info["expected_action"] == "confirm_order":
+        final_text = final_assistant_text(completion)
+        total_cents = proposed_total_cents(tool_payloads(completion))
+        normalized_text = final_text.lower()
+        checks = [
+            accepted_order(completion) is None,
+            confirmation_text(final_text),
+            total_cents is not None and price_text_has_exact_dollars(final_text, total_cents),
+            "cent" not in normalized_text,
+            "₹" not in normalized_text,
+            len(final_text.split()) <= 40,
+        ]
+        return sum(1.0 for check in checks if check) / len(checks)
+
     if info["expected_action"] != "place_order":
         return 1.0
 
@@ -1366,6 +1438,7 @@ async def product_efficiency(completion, info) -> float:
     menu_calls = count_menu_results(payloads)
     order_calls = count_order_results(payloads)
     cart_calls = count_cart_results(payloads)
+    quote_calls = count_quote_results(payloads)
     final_text = final_assistant_text(completion)
 
     if expected_action == "place_order":
@@ -1384,6 +1457,21 @@ async def product_efficiency(completion, info) -> float:
         if expected_tool_names:
             checks.extend(any(name == expected_name for name in used_tool_names) for expected_name in expected_tool_names)
             checks.append(cart_calls >= max(len(expected_tool_names) - 1, 0))
+        checks.extend(expected_tool_path_checks(info, used_tool_names))
+        return sum(1.0 for check in checks if check) / len(checks)
+
+    if expected_action == "confirm_order":
+        used_tool_names = tool_names(completion)
+        total_cents = proposed_total_cents(payloads)
+        checks = [
+            menu_calls <= 1,
+            order_calls == 0,
+            quote_calls + cart_calls >= 1,
+            final_text != "",
+            confirmation_text(final_text),
+            concise_text_score(final_text, max_words=40) >= 0.75,
+            total_cents is not None and price_text_has_exact_dollars(final_text, total_cents),
+        ]
         checks.extend(expected_tool_path_checks(info, used_tool_names))
         return sum(1.0 for check in checks if check) / len(checks)
 
@@ -1456,7 +1544,10 @@ def expected_tool_path_checks(info: dict[str, Any], used_tool_names: list[str]) 
     if expected_sequence:
         checks.append(tool_sequence_contains(used_tool_names, expected_sequence))
     if isinstance(expected_counts, dict):
-        checks.extend(used_tool_names.count(name) >= count for name, count in expected_counts.items())
+        checks.extend(
+            used_tool_names.count(name) == 0 if count <= 0 else used_tool_names.count(name) >= count
+            for name, count in expected_counts.items()
+        )
     return checks
 
 
@@ -1478,6 +1569,44 @@ def count_order_results(payloads: list[Any]) -> int:
 
 def count_cart_results(payloads: list[Any]) -> int:
     return sum(1 for payload in payloads if isinstance(payload, dict) and payload.get("ok") is True and "cart" in payload)
+
+
+def count_quote_results(payloads: list[Any]) -> int:
+    return sum(
+        1
+        for payload in payloads
+        if isinstance(payload, dict)
+        and payload.get("ok") is True
+        and isinstance(payload.get("items"), list)
+        and "total_price_cents" in payload
+        and "order" not in payload
+    )
+
+
+def proposed_order_items(payloads: list[Any]) -> list[dict[str, Any]]:
+    for payload in reversed(payloads):
+        if isinstance(payload, dict) and isinstance(payload.get("items"), list):
+            return payload["items"]
+        if isinstance(payload, dict) and isinstance(payload.get("cart"), dict):
+            cart_items = payload["cart"].get("items", [])
+            if isinstance(cart_items, list):
+                return [
+                    cart_item["item"]
+                    for cart_item in cart_items
+                    if isinstance(cart_item, dict) and isinstance(cart_item.get("item"), dict)
+                ]
+    return []
+
+
+def proposed_total_cents(payloads: list[Any]) -> int | None:
+    for payload in reversed(payloads):
+        if isinstance(payload, dict) and isinstance(payload.get("total_price_cents"), int):
+            return payload["total_price_cents"]
+        if isinstance(payload, dict) and isinstance(payload.get("cart"), dict):
+            total = payload["cart"].get("total_price_cents")
+            if isinstance(total, int):
+                return total
+    return None
 
 
 def no_tools_after_success(completion) -> bool:
@@ -1507,10 +1636,19 @@ def concise_text_score(text: str, max_words: int) -> float:
 def price_text_is_exact_dollars(text: str, order: dict[str, Any] | None) -> bool:
     if order is None:
         return False
+    return price_text_has_exact_dollars(text, order["price_cents"])
+
+
+def price_text_has_exact_dollars(text: str, price_cents: int) -> bool:
     normalized_text = text.lower()
-    expected_price = cents_to_dollars(order["price_cents"]).lower()
-    wrong_markers = ["₹", " cents", " cent", f"${order['price_cents']}"]
+    expected_price = cents_to_dollars(price_cents).lower()
+    wrong_markers = ["₹", " cents", " cent", f"${price_cents}"]
     return expected_price in normalized_text and not any(marker in normalized_text for marker in wrong_markers)
+
+
+def confirmation_text(text: str) -> bool:
+    normalized_text = text.lower()
+    return "?" in text and any(phrase in normalized_text for phrase in ["should i place", "place it", "confirm"])
 
 
 def tool_contents(completion) -> list[str]:
