@@ -2,85 +2,19 @@ import asyncio
 import json
 from typing import Any
 
+from coffee_domain import (
+    MENU,
+    SIZE_MULTIPLIERS,
+    SYSTEM_PROMPT,
+    calculate_price_cents,
+    cents_to_dollars,
+    default_milk,
+    default_shots,
+    default_temperature,
+    find_menu_item,
+)
 from datasets import Dataset
 import verifiers as vf
-
-
-MENU = [
-    {
-        "id": "espresso",
-        "name": "Espresso",
-        "kind": "espresso",
-        "base_price_cents": 300,
-        "available_milks": ["none"],
-        "available_temperatures": ["hot"],
-        "max_shots": 4,
-    },
-    {
-        "id": "americano",
-        "name": "Americano",
-        "kind": "espresso",
-        "base_price_cents": 350,
-        "available_milks": ["none"],
-        "available_temperatures": ["hot", "iced"],
-        "max_shots": 4,
-    },
-    {
-        "id": "latte",
-        "name": "Latte",
-        "kind": "espresso",
-        "base_price_cents": 450,
-        "available_milks": ["whole", "oat", "almond", "none"],
-        "available_temperatures": ["hot", "iced", "extra-hot"],
-        "max_shots": 4,
-    },
-    {
-        "id": "cappuccino",
-        "name": "Cappuccino",
-        "kind": "espresso",
-        "base_price_cents": 425,
-        "available_milks": ["whole", "oat", "almond", "none"],
-        "available_temperatures": ["hot", "extra-hot"],
-        "max_shots": 4,
-    },
-    {
-        "id": "cold-brew",
-        "name": "Cold Brew",
-        "kind": "espresso",
-        "base_price_cents": 400,
-        "available_milks": ["whole", "oat", "almond", "none"],
-        "available_temperatures": ["iced"],
-        "max_shots": 2,
-    },
-    {
-        "id": "tea",
-        "name": "Tea",
-        "kind": "tea",
-        "base_price_cents": 325,
-        "available_milks": ["none"],
-        "available_temperatures": ["hot", "iced"],
-        "max_shots": 0,
-    },
-]
-
-SIZE_MULTIPLIERS = {
-    "small": 1.0,
-    "medium": 1.15,
-    "large": 1.3,
-}
-
-SYSTEM_PROMPT = """You are Beanline, the Effect Coffee Shop ordering assistant.
-Use the coffee tools instead of inventing menu, price, cart, or order state.
-Use the smallest useful tool path.
-For a complete one-shot order, call place_order directly. Do not call list_menu or get_item_options first unless the user asks about menu/options or the order is uncertain.
-Use list_menu for general menu, substitution, unavailable ingredient, or recommendation questions.
-Use get_item_options for a specific drink's defaults and valid options when the user asks or a drink option is unclear.
-Use validate_order or quote_order only when options, price, or defaults are uncertain.
-Use cart tools for multi-item cart workflows, then checkout_cart.
-Safe defaults are allowed: medium size when size is missing, whole milk for milk-capable drinks, none for no-milk drinks, the drink's default temperature, one espresso shot, zero tea shots, and quantity one.
-Ask one short clarifying question when the drink, customer name, or another order-critical field is missing.
-After place_order or checkout_cart succeeds, stop using tools and give one concise confirmation with drink summary, order id, and exact $x.xx total.
-If the request is invalid, do not place an order. Give one concise correction or valid alternative."""
 
 
 TRAIN_TASKS = [
@@ -773,6 +707,8 @@ PRODUCT_READINESS_TASKS = [
         "info": {
             "expected_action": "place_order",
             "expected_tool_names": ["add_cart_item", "checkout_cart"],
+            "expected_tool_sequence": ["add_cart_item", "add_cart_item", "checkout_cart"],
+            "expected_tool_counts": {"add_cart_item": 2, "checkout_cart": 1},
             "expected_order": {
                 "customer_name": "Ava",
             },
@@ -801,6 +737,8 @@ PRODUCT_READINESS_TASKS = [
         "info": {
             "expected_action": "place_order",
             "expected_tool_names": ["add_cart_item", "remove_cart_item", "checkout_cart"],
+            "expected_tool_sequence": ["add_cart_item", "remove_cart_item", "add_cart_item", "checkout_cart"],
+            "expected_tool_counts": {"add_cart_item": 2, "remove_cart_item": 1, "checkout_cart": 1},
             "expected_order": {
                 "customer_name": "Jo",
             },
@@ -1082,7 +1020,7 @@ async def add_cart_item(
         return json.dumps(quote, sort_keys=True)
     cart = rollout_cart()
     for item in quote["items"]:
-        cart.append({"cart_item_id": f"cart-item-{len(cart) + 1:04d}", "item": item})
+        cart.append({"cart_item_id": next_cart_item_id(), "item": item})
     return json.dumps({"ok": True, "cart": cart_payload()}, sort_keys=True)
 
 
@@ -1123,13 +1061,13 @@ async def remove_cart_item(cart_item_id: str) -> str:
     cart = rollout_cart()
     if not any(entry["cart_item_id"] == cart_item_id for entry in cart):
         return json.dumps({"ok": False, "error": f"cart item {cart_item_id} was not found"}, sort_keys=True)
-    _CARTS[cart_key()] = [entry for entry in cart if entry["cart_item_id"] != cart_item_id]
+    rollout_cart_state()["items"] = [entry for entry in cart if entry["cart_item_id"] != cart_item_id]
     return json.dumps({"ok": True, "cart": cart_payload()}, sort_keys=True)
 
 
 async def clear_cart() -> str:
     """Clear the current simulated cart."""
-    _CARTS[cart_key()] = []
+    reset_cart()
     return json.dumps({"ok": True, "cart": cart_payload()}, sort_keys=True)
 
 
@@ -1139,11 +1077,11 @@ async def checkout_cart(customer_name: str = "") -> str:
     if not cart:
         return json.dumps({"ok": False, "error": "cart must include at least one item"}, sort_keys=True)
     order = order_payload([entry["item"] for entry in cart], customer_name)
-    _CARTS[cart_key()] = []
+    reset_cart()
     return json.dumps({"ok": True, "order": order}, sort_keys=True)
 
 
-_CARTS: dict[int, list[dict[str, Any]]] = {}
+_CARTS: dict[int, dict[str, Any]] = {}
 
 
 def cart_key() -> int:
@@ -1152,10 +1090,25 @@ def cart_key() -> int:
 
 
 def rollout_cart() -> list[dict[str, Any]]:
+    return rollout_cart_state()["items"]
+
+
+def rollout_cart_state() -> dict[str, Any]:
     key = cart_key()
     if key not in _CARTS:
-        _CARTS[key] = []
+        _CARTS[key] = {"items": [], "next_id": 1}
     return _CARTS[key]
+
+
+def next_cart_item_id() -> str:
+    state = rollout_cart_state()
+    item_id = f"cart-item-{state['next_id']:04d}"
+    state["next_id"] += 1
+    return item_id
+
+
+def reset_cart() -> None:
+    _CARTS[cart_key()] = {"items": [], "next_id": 1}
 
 
 def cart_payload() -> dict[str, Any]:
@@ -1176,24 +1129,6 @@ def parse_items_json(items_json: str) -> list[dict[str, Any]] | dict[str, Any] |
     if isinstance(parsed, list) and all(isinstance(item, dict) for item in parsed):
         return parsed
     return {"ok": False, "error": "items_json must be a JSON object or array of order items."}
-
-
-def find_menu_item(drink_id: str) -> dict[str, Any] | None:
-    matches = [item for item in MENU if item["id"] == drink_id]
-    return matches[0] if matches else None
-
-
-def default_milk(item: dict[str, Any]) -> str:
-    milks = item["available_milks"]
-    return "whole" if "whole" in milks else milks[0]
-
-
-def default_temperature(item: dict[str, Any]) -> str:
-    return item["available_temperatures"][0]
-
-
-def default_shots(item: dict[str, Any]) -> int:
-    return 0 if item["kind"] == "tea" else 1
 
 
 def validate_order_item(
@@ -1217,13 +1152,6 @@ def validate_order_item(
     if quantity < 1:
         return "Quantity must be a positive integer."
     return None
-
-
-def calculate_price_cents(item: dict[str, Any], size: str, shots: int) -> int:
-    scaled_base = round(item["base_price_cents"] * SIZE_MULTIPLIERS[size])
-    included_shots = default_shots(item)
-    extra_shots = max(shots - included_shots, 0)
-    return scaled_base + extra_shots * 75
 
 
 def quote_payload(
@@ -1351,6 +1279,7 @@ async def tool_correctness(completion, info) -> float:
         expected_tool_names = info.get("expected_tool_names", [])
         used_tool_names = tool_names(completion)
         checks.extend(any(name == expected_name for name in used_tool_names) for expected_name in expected_tool_names)
+        checks.extend(expected_tool_path_checks(info, used_tool_names))
         return sum(1.0 for check in checks if check) / len(checks)
 
     if expected_action == "list_menu":
@@ -1455,6 +1384,7 @@ async def product_efficiency(completion, info) -> float:
         if expected_tool_names:
             checks.extend(any(name == expected_name for name in used_tool_names) for expected_name in expected_tool_names)
             checks.append(cart_calls >= max(len(expected_tool_names) - 1, 0))
+        checks.extend(expected_tool_path_checks(info, used_tool_names))
         return sum(1.0 for check in checks if check) / len(checks)
 
     if expected_action == "list_menu":
@@ -1517,6 +1447,25 @@ def compare_expected_items(actual_items: Any, expected_items: list[dict[str, Any
         checks.extend(actual_item.get(key) == value for key, value in expected_item.items())
     checks.append(len(actual_items) == len(expected_items))
     return checks
+
+
+def expected_tool_path_checks(info: dict[str, Any], used_tool_names: list[str]) -> list[bool]:
+    expected_sequence = info.get("expected_tool_sequence", [])
+    expected_counts = info.get("expected_tool_counts", {})
+    checks = []
+    if expected_sequence:
+        checks.append(tool_sequence_contains(used_tool_names, expected_sequence))
+    if isinstance(expected_counts, dict):
+        checks.extend(used_tool_names.count(name) >= count for name, count in expected_counts.items())
+    return checks
+
+
+def tool_sequence_contains(used_tool_names: list[str], expected_sequence: list[str]) -> bool:
+    remaining = list(expected_sequence)
+    for name in used_tool_names:
+        if remaining and name == remaining[0]:
+            remaining.pop(0)
+    return not remaining
 
 
 def count_menu_results(payloads: list[Any]) -> int:
@@ -1591,10 +1540,6 @@ def json_payload(content: str) -> Any:
         return json.loads(content)
     except json.JSONDecodeError:
         return None
-
-
-def cents_to_dollars(cents: int) -> str:
-    return f"${cents / 100:.2f}"
 
 
 def to_dataset(rows: list[dict[str, Any]]) -> Dataset:

@@ -1,77 +1,12 @@
 import json
 from pathlib import Path
+import sys
 from typing import Any
 
+ENVIRONMENT_DIR = Path(__file__).resolve().parents[1] / "environment"
+sys.path.insert(0, str(ENVIRONMENT_DIR))
 
-MENU = {
-    "espresso": {
-        "name": "Espresso",
-        "kind": "espresso",
-        "base_price_cents": 300,
-        "available_milks": ["none"],
-        "available_temperatures": ["hot"],
-        "max_shots": 4,
-    },
-    "americano": {
-        "name": "Americano",
-        "kind": "espresso",
-        "base_price_cents": 350,
-        "available_milks": ["none"],
-        "available_temperatures": ["hot", "iced"],
-        "max_shots": 4,
-    },
-    "latte": {
-        "name": "Latte",
-        "kind": "espresso",
-        "base_price_cents": 450,
-        "available_milks": ["whole", "oat", "almond", "none"],
-        "available_temperatures": ["hot", "iced", "extra-hot"],
-        "max_shots": 4,
-    },
-    "cappuccino": {
-        "name": "Cappuccino",
-        "kind": "espresso",
-        "base_price_cents": 425,
-        "available_milks": ["whole", "oat", "almond", "none"],
-        "available_temperatures": ["hot", "extra-hot"],
-        "max_shots": 4,
-    },
-    "cold-brew": {
-        "name": "Cold Brew",
-        "kind": "espresso",
-        "base_price_cents": 400,
-        "available_milks": ["whole", "oat", "almond", "none"],
-        "available_temperatures": ["iced"],
-        "max_shots": 2,
-    },
-    "tea": {
-        "name": "Tea",
-        "kind": "tea",
-        "base_price_cents": 325,
-        "available_milks": ["none"],
-        "available_temperatures": ["hot", "iced"],
-        "max_shots": 0,
-    },
-}
-
-SIZE_MULTIPLIERS = {
-    "small": 1.0,
-    "medium": 1.15,
-    "large": 1.3,
-}
-
-SYSTEM_PROMPT = """You are Beanline, the Effect Coffee Shop ordering assistant.
-Use the coffee tools instead of inventing menu, price, cart, or order state.
-Use the smallest useful tool path.
-For a complete one-shot order, call place_order directly. Do not call list_menu or get_item_options first unless the user asks about menu/options or the order is uncertain.
-Use list_menu for general menu, substitution, unavailable ingredient, or recommendation questions.
-Use get_item_options for a specific drink's defaults and valid options when the user asks or a drink option is unclear.
-Use validate_order or quote_order only when options, price, or defaults are uncertain.
-Use cart tools for multi-item cart workflows, then checkout_cart.
-Safe defaults are allowed: medium size when size is missing, whole milk for milk-capable drinks, none for no-milk drinks, the drink's default temperature, one espresso shot, zero tea shots, and quantity one.
-Ask one short clarifying question when the drink, customer name, or another order-critical field is missing.
-After place_order or checkout_cart succeeds, stop using tools and give one concise confirmation with drink summary, order id, and exact $x.xx total.
-If the request is invalid or ambiguous, do not place an order. Give one concise correction or valid alternative."""
+from coffee_domain import MENU_BY_ID, SYSTEM_PROMPT, calculate_drink_price_cents, cents_to_dollars, menu_rows
 
 SUCCESS_EXAMPLES = [
     ("Order a medium hot whole milk latte with one shot for Rowan.", "latte", "medium", "whole", "hot", 1, "Rowan"),
@@ -217,18 +152,6 @@ PRODUCT_REFUSAL_EXAMPLES = [
 ]
 
 
-def calculate_price_cents(drink_id: str, size: str, shots: int) -> int:
-    item = MENU[drink_id]
-    scaled_base = round(item["base_price_cents"] * SIZE_MULTIPLIERS[size])
-    included_shots = 0 if item["kind"] == "tea" else 1
-    extra_shots = max(shots - included_shots, 0)
-    return scaled_base + extra_shots * 75
-
-
-def cents_to_dollars(cents: int) -> str:
-    return f"${cents / 100:.2f}"
-
-
 def order_payload(
     drink_id: str,
     size: str,
@@ -238,7 +161,7 @@ def order_payload(
     customer_name: str,
     notes: str = "",
 ) -> dict[str, Any]:
-    item = MENU[drink_id]
+    item = MENU_BY_ID[drink_id]
     return {
         "customer_name": customer_name,
         "drink_id": drink_id,
@@ -246,7 +169,7 @@ def order_payload(
         "id": "order-simulated-0001",
         "milk": milk,
         "notes": notes,
-        "price_cents": calculate_price_cents(drink_id, size, shots),
+        "price_cents": calculate_drink_price_cents(drink_id, size, shots),
         "shots": shots,
         "size": size,
         "status": "pending",
@@ -260,8 +183,8 @@ def multi_order_payload(
 ) -> dict[str, Any]:
     items = []
     for drink_id, size, milk, temperature, shots, quantity, notes in item_specs:
-        item = MENU[drink_id]
-        unit_price_cents = calculate_price_cents(drink_id, size, shots)
+        item = MENU_BY_ID[drink_id]
+        unit_price_cents = calculate_drink_price_cents(drink_id, size, shots)
         items.append(
             {
                 "drink_id": drink_id,
@@ -297,8 +220,7 @@ def multi_order_payload(
 
 
 def menu_tool_result() -> str:
-    rows = [{"id": drink_id, **item} for drink_id, item in MENU.items()]
-    return json.dumps({"menu": rows}, sort_keys=True)
+    return json.dumps({"menu": menu_rows()}, sort_keys=True)
 
 
 def final_receipt(order: dict[str, Any]) -> str:
@@ -459,11 +381,13 @@ def product_behavior_tool_trajectory_rows() -> list[dict[str, Any]]:
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": question},
         ]
+        next_cart_item_number = 1
         if mistaken_item is not None:
             drink_id, size, milk, temperature, shots, quantity, notes = mistaken_item
             mistaken_order = multi_order_payload([mistaken_item], customer_name)
             mistaken_payload = mistaken_order["items"][0]
             mistaken_cart_item = {"cart_item_id": "cart-item-0001", "item": mistaken_payload}
+            next_cart_item_number = 2
             add_call_id = f"call_product_cart_mistake_add_{index:04d}"
             remove_call_id = f"call_product_cart_mistake_remove_{index:04d}"
             messages.extend(
@@ -533,7 +457,8 @@ def product_behavior_tool_trajectory_rows() -> list[dict[str, Any]]:
         for item_index, (drink_id, size, milk, temperature, shots, quantity, notes) in enumerate(item_specs, 1):
             call_id = f"call_product_cart_add_{index:04d}_{item_index:04d}"
             item_payload = order["items"][item_index - 1]
-            cart_items.append({"cart_item_id": f"cart-item-{item_index:04d}", "item": item_payload})
+            cart_items.append({"cart_item_id": f"cart-item-{next_cart_item_number:04d}", "item": item_payload})
+            next_cart_item_number += 1
             messages.extend(
                 [
                     {
