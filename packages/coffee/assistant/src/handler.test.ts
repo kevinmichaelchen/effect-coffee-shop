@@ -190,8 +190,16 @@ const verifyUiMessages = async () => {
         expect.objectContaining({
           role: "system",
           content: expect.stringContaining(
-            "For a complete one-item order, call place_order directly.",
+            "read back the interpreted order and ask for confirmation before purchase",
           ),
+        }),
+        expect.objectContaining({
+          role: "system",
+          content: expect.stringContaining("do not call place_order or checkout_cart yet"),
+        }),
+        expect.objectContaining({
+          role: "system",
+          content: expect.stringContaining("Should I place it?"),
         }),
         expect.objectContaining({
           role: "system",

@@ -32,9 +32,10 @@ Prime CLI rejects it as a `checkpoint_id` for new training runs.
 ## Receipt Run
 
 Use the small budget-capped receipt-drill warmup only after fresh baselines on
-`kevinmichaelchen/effect-coffee-ordering@0.1.14`. Version `0.1.14` should be
+`kevinmichaelchen/effect-coffee-ordering@0.1.16`. Version `0.1.16` should be
 used for the next baseline because it contains the PR 47 hardening, prompt-only
-receipt/direct-tool-path tightening, and order-first tool presentation.
+receipt/direct-tool-path tightening, order-first tool presentation, and the
+confirmation-before-purchase policy.
 
 ```sh
 cd experiments/prime-intellect/effect-coffee-ordering
@@ -51,12 +52,14 @@ for:
 - ambiguous orders that need clarification,
 - modifier edge cases,
 - pickup timing, customer name, and order notes,
+- pre-purchase confirmation before real-money order submission,
 - concise refusal behavior.
 
-Environment `kevinmichaelchen/effect-coffee-ordering@0.1.14` is published and
-should be selected for new hosted baselines, evals, or training. It improved
-hard eval versus `0.1.11`, but product-readiness is still blocked by Prime
-inference 503 errors.
+Environment `kevinmichaelchen/effect-coffee-ordering@0.1.16` is published and
+should be selected for new hosted baselines, evals, or training. It changes the
+intended product behavior: Beanline should read back the interpreted order and
+ask for confirmation before calling `place_order` or `checkout_cart`.
+Product-readiness is still blocked by Prime inference 503 errors.
 
 Do not rerun `effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml`
 until the receipt drill or a prompt/SFT pass improves direct order behavior.
@@ -97,12 +100,12 @@ correct order fields but wrong final currency/amount style such as `₹520`
 instead of `$5.20`, plus repeated menu/option probes.
 
 Next best action is not another unchanged RL run. Retry product-readiness on
-`0.1.14` once Prime inference is stable, then use SFT on the final-response and
-tool-trajectory corpora or simplify the tool schema further so 0.8B has fewer
-equivalent ways to express one order.
+`0.1.16` once Prime inference is stable, then use SFT on the final-response and
+tool-trajectory corpora so 0.8B learns quote/readback/confirmation before
+purchase.
 
 Before any new hosted training spend, run fresh hosted baselines on
-`kevinmichaelchen/effect-coffee-ordering@0.1.14`; the warmup configs now pin
+`kevinmichaelchen/effect-coffee-ordering@0.1.16`; the warmup configs now pin
 that version.
 
 Inspect the stopped run:
@@ -157,9 +160,8 @@ resolve the latest published environment even when the command includes
 
 Current hosted blocker: product-readiness attempts on `0.1.14` reached and
 installed the `0.1.14` package, but failed before scoring with Prime inference
-503 auth-service errors. Also retry unloading `rqvfrcdy4xt95oka37b0xjyu`; the
-last unload attempts returned HTTP 500 and deployment status reported
-`UNLOAD_FAILED`.
+503 auth-service errors. Adapter `rqvfrcdy4xt95oka37b0xjyu` now reports
+`NOT_DEPLOYED` after the latest unload retry.
 
 ## Promote Only If
 
