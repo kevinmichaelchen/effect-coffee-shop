@@ -988,8 +988,8 @@ async def validate_order(
     """Validate a proposed multi-item coffee order.
 
     Args:
-        items_json: JSON array of proposed order items. Legacy single-drink
-            arguments are also accepted for compatibility.
+        items_json: JSON array or single JSON object of proposed order items.
+            Legacy single-drink arguments are also accepted for compatibility.
 
     Returns:
         A JSON payload with either validated normalized items or a validation error.
@@ -1016,8 +1016,8 @@ async def quote_order(
     """Quote a proposed multi-item coffee order.
 
     Args:
-        items_json: JSON array of proposed order items. Legacy single-drink
-            arguments are also accepted.
+        items_json: JSON array or single JSON object of proposed order items.
+            Legacy single-drink arguments are also accepted.
 
     Returns:
         A JSON payload with normalized items and total price.
@@ -1042,8 +1042,8 @@ async def place_order(
     """Create a simulated coffee order if the requested items are valid.
 
     Args:
-        items_json: JSON array of one or more order items. Legacy single-drink
-            arguments are also accepted.
+        items_json: JSON array or single JSON object of one or more order items.
+            Legacy single-drink arguments are also accepted.
         customer_name: Customer name for the order.
 
     Returns:
@@ -1168,9 +1168,11 @@ def parse_items_json(items_json: str) -> list[dict[str, Any]] | dict[str, Any] |
         parsed = json.loads(items_json)
     except json.JSONDecodeError:
         return {"ok": False, "error": "items_json must be a JSON array of order items."}
-    if not isinstance(parsed, list) or not all(isinstance(item, dict) for item in parsed):
-        return {"ok": False, "error": "items_json must be a JSON array of order items."}
-    return parsed
+    if isinstance(parsed, dict):
+        return [parsed]
+    if isinstance(parsed, list) and all(isinstance(item, dict) for item in parsed):
+        return parsed
+    return {"ok": False, "error": "items_json must be a JSON object or array of order items."}
 
 
 def find_menu_item(drink_id: str) -> dict[str, Any] | None:
@@ -1243,8 +1245,21 @@ def quote_payload(
             "quantity": quantity,
         }
     ]
+    hydrated_items = [
+        {
+            "drink_id": raw_item.get("drink_id") or raw_item.get("drinkId") or drink_id,
+            "drinkId": raw_item.get("drinkId") or raw_item.get("drink_id") or drink_id,
+            "size": raw_item.get("size") or size,
+            "milk": raw_item.get("milk") or milk,
+            "temperature": raw_item.get("temperature") or temperature,
+            "shots": raw_item.get("shots") if raw_item.get("shots") is not None else shots,
+            "notes": raw_item.get("notes") or notes,
+            "quantity": raw_item.get("quantity") if raw_item.get("quantity") is not None else quantity,
+        }
+        for raw_item in raw_items
+    ]
     normalized_items = []
-    for raw_item in raw_items:
+    for raw_item in hydrated_items:
         normalized_item = normalize_order_item(raw_item)
         if normalized_item.get("ok") is not True:
             return normalized_item
