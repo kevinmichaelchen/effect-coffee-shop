@@ -906,6 +906,125 @@ PRODUCT_READINESS_TASKS = [
     },
 ]
 
+CONFIRMATION_FIRST_TASKS = [
+    {
+        "question": "Order a medium hot whole milk latte for Rowan.",
+        "info": {
+            "expected_action": "confirm_order",
+            "expected_tool_names": ["prepare_order_confirmation"],
+            "expected_tool_sequence": ["prepare_order_confirmation"],
+            "expected_tool_counts": {"prepare_order_confirmation": 1, "place_order": 0},
+            "required_terms": ["Latte", "Rowan", "$5.18", "Should I place"],
+            "expected_order": {"customer_name": "Rowan"},
+            "expected_items": [
+                {
+                    "drink_id": "latte",
+                    "size": "medium",
+                    "milk": "whole",
+                    "temperature": "hot",
+                    "shots": 1,
+                    "quantity": 1,
+                }
+            ],
+        },
+    },
+    {
+        "question": "Can you start a cart with a medium oat latte for Ava and a small espresso for Ben?",
+        "info": {
+            "expected_action": "confirm_order",
+            "expected_tool_names": ["add_cart_item", "prepare_cart_confirmation"],
+            "expected_tool_sequence": ["add_cart_item", "add_cart_item", "prepare_cart_confirmation"],
+            "expected_tool_counts": {
+                "add_cart_item": 2,
+                "prepare_cart_confirmation": 1,
+                "checkout_cart": 0,
+            },
+            "required_terms": ["Latte", "Espresso", "Ava", "$8.18", "Should I place"],
+            "expected_order": {"customer_name": "Ava"},
+            "expected_items": [
+                {
+                    "drink_id": "latte",
+                    "size": "medium",
+                    "milk": "oat",
+                    "temperature": "hot",
+                    "shots": 1,
+                    "quantity": 1,
+                },
+                {
+                    "drink_id": "espresso",
+                    "size": "small",
+                    "milk": "none",
+                    "temperature": "hot",
+                    "shots": 1,
+                    "quantity": 1,
+                },
+            ],
+        },
+    },
+    {
+        "question": (
+            "I said a medium latte for Nia, but before you place anything make it a "
+            "large iced oat latte with two shots."
+        ),
+        "info": {
+            "expected_action": "confirm_order",
+            "expected_tool_names": ["prepare_order_confirmation"],
+            "expected_tool_sequence": ["prepare_order_confirmation"],
+            "expected_tool_counts": {"prepare_order_confirmation": 1, "place_order": 0},
+            "required_terms": ["Latte", "Nia", "$6.60", "Should I place"],
+            "expected_order": {"customer_name": "Nia"},
+            "expected_items": [
+                {
+                    "drink_id": "latte",
+                    "size": "large",
+                    "milk": "oat",
+                    "temperature": "iced",
+                    "shots": 2,
+                    "quantity": 1,
+                }
+            ],
+        },
+    },
+    {
+        "question": "Yes, place it.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["which order", "confirm", "before"],
+            "expected_tool_counts": {"place_order": 0, "checkout_cart": 0},
+        },
+    },
+    {
+        "question": "Order a small hot cappuccino for Luca. Actually, cancel that request.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["cancel", "not place", "order"],
+            "expected_tool_counts": {"prepare_order_confirmation": 0, "place_order": 0},
+        },
+    },
+    {
+        "question": "I confirmed the old latte, but now make Jamie a medium iced americano with light ice instead.",
+        "info": {
+            "expected_action": "confirm_order",
+            "expected_tool_names": ["prepare_order_confirmation"],
+            "expected_tool_sequence": ["prepare_order_confirmation"],
+            "expected_tool_counts": {"prepare_order_confirmation": 1, "place_order": 0},
+            "required_terms": ["Americano", "Jamie", "$4.02", "Should I place"],
+            "expected_order": {"customer_name": "Jamie"},
+            "expected_items": [
+                {
+                    "drink_id": "americano",
+                    "size": "medium",
+                    "milk": "none",
+                    "temperature": "iced",
+                    "shots": 1,
+                    "quantity": 1,
+                    "notes": "light ice",
+                }
+            ],
+        },
+    },
+]
+
 
 async def list_menu() -> str:
     """List the current coffee menu.
@@ -998,6 +1117,44 @@ async def quote_order(
     return json.dumps(quote_payload(items, drink_id, size, milk, temperature, shots, notes, quantity), sort_keys=True)
 
 
+async def prepare_order_confirmation(
+    items_json: str = "",
+    drink_id: str = "",
+    size: str = "",
+    milk: str = "",
+    temperature: str = "",
+    shots: int | None = None,
+    notes: str = "",
+    quantity: int | None = None,
+) -> str:
+    """Validate, price, and store a proposed order awaiting confirmation."""
+    items = parse_items_json(items_json)
+    if isinstance(items, dict):
+        return json.dumps(items, sort_keys=True)
+    quote = quote_payload(items, drink_id, size, milk, temperature, shots, notes, quantity)
+    if quote.get("ok") is not True:
+        return json.dumps(quote, sort_keys=True)
+    confirmation = pending_confirmation_payload(
+        "direct-order",
+        quote["items"],
+        quote["total_price_cents"],
+    )
+    save_pending_confirmation(confirmation)
+    return json.dumps({"ok": True, **confirmation}, sort_keys=True)
+
+
+async def prepare_cart_confirmation() -> str:
+    """Validate, price, and store the current simulated cart awaiting confirmation."""
+    cart = cart_payload()
+    cart_items = cart["items"]
+    if not cart_items:
+        return json.dumps({"ok": False, "error": "cart must include at least one item"}, sort_keys=True)
+    items = [entry["item"] for entry in cart_items]
+    confirmation = pending_confirmation_payload("cart", items, cart["total_price_cents"])
+    save_pending_confirmation(confirmation)
+    return json.dumps({"ok": True, **confirmation}, sort_keys=True)
+
+
 async def place_order(
     items_json: str = "",
     drink_id: str = "",
@@ -1008,6 +1165,7 @@ async def place_order(
     customer_name: str = "",
     notes: str = "",
     quantity: int | None = None,
+    confirmation_id: str = "",
 ) -> str:
     """Create a simulated coffee order if the requested items are valid.
 
@@ -1025,7 +1183,15 @@ async def place_order(
     quote = quote_payload(items, drink_id, size, milk, temperature, shots, notes, quantity)
     if quote.get("ok") is not True:
         return json.dumps(quote, sort_keys=True)
+    if confirmation_id and not pending_confirmation_matches(
+        confirmation_id,
+        "direct-order",
+        quote["items"],
+        quote["total_price_cents"],
+    ):
+        return json.dumps({"ok": False, "error": "confirm the updated order before placing it"}, sort_keys=True)
     order = order_payload(quote["items"], customer_name)
+    clear_pending_confirmation()
     return json.dumps({"ok": True, "order": order}, sort_keys=True)
 
 
@@ -1100,17 +1266,28 @@ async def clear_cart() -> str:
     return json.dumps({"ok": True, "cart": cart_payload()}, sort_keys=True)
 
 
-async def checkout_cart(customer_name: str = "") -> str:
+async def checkout_cart(customer_name: str = "", confirmation_id: str = "") -> str:
     """Place the current simulated cart as one multi-item order."""
     cart = rollout_cart()
     if not cart:
         return json.dumps({"ok": False, "error": "cart must include at least one item"}, sort_keys=True)
-    order = order_payload([entry["item"] for entry in cart], customer_name)
+    items = [entry["item"] for entry in cart]
+    total = sum(item["line_total_cents"] for item in items)
+    if confirmation_id and not pending_confirmation_matches(
+        confirmation_id,
+        "cart",
+        items,
+        total,
+    ):
+        return json.dumps({"ok": False, "error": "confirm the updated order before placing it"}, sort_keys=True)
+    order = order_payload(items, customer_name)
     reset_cart()
+    clear_pending_confirmation()
     return json.dumps({"ok": True, "order": order}, sort_keys=True)
 
 
 _CARTS: dict[int, dict[str, Any]] = {}
+_PENDING_CONFIRMATIONS: dict[int, dict[str, Any]] = {}
 
 
 def cart_key() -> int:
@@ -1144,6 +1321,57 @@ def cart_payload() -> dict[str, Any]:
     cart = rollout_cart()
     total = sum(entry["item"]["line_total_cents"] for entry in cart)
     return {"items": cart, "total_price_cents": total, "totalPriceCents": total}
+
+
+def pending_confirmation_payload(
+    source: str,
+    items: list[dict[str, Any]],
+    total_price_cents: int,
+) -> dict[str, Any]:
+    confirmation_id = f"confirmation-{cart_key():x}-{rollout_cart_state()['next_id']:04d}"
+    return {
+        "confirmation": {
+            "confirmation_id": confirmation_id,
+            "confirmationId": confirmation_id,
+            "source": source,
+            "status": "pending_confirmation",
+            "items": items,
+            "total_price_cents": total_price_cents,
+            "totalPriceCents": total_price_cents,
+        },
+        "confirmation_id": confirmation_id,
+        "confirmationId": confirmation_id,
+        "source": source,
+        "status": "pending_confirmation",
+        "items": items,
+        "total_price_cents": total_price_cents,
+        "totalPriceCents": total_price_cents,
+    }
+
+
+def save_pending_confirmation(confirmation: dict[str, Any]) -> None:
+    _PENDING_CONFIRMATIONS[cart_key()] = confirmation
+
+
+def clear_pending_confirmation() -> None:
+    _PENDING_CONFIRMATIONS.pop(cart_key(), None)
+
+
+def pending_confirmation_matches(
+    confirmation_id: str,
+    source: str,
+    items: list[dict[str, Any]],
+    total_price_cents: int,
+) -> bool:
+    pending = _PENDING_CONFIRMATIONS.get(cart_key())
+    if pending is None:
+        return False
+    return (
+        pending.get("confirmation_id") == confirmation_id
+        and pending.get("source") == source
+        and pending.get("items") == items
+        and pending.get("total_price_cents") == total_price_cents
+    )
 
 
 def parse_items_json(items_json: str) -> list[dict[str, Any]] | dict[str, Any] | None:
@@ -1699,6 +1927,7 @@ def load_environment(split: str = "train", num_examples: int = -1, **kwargs) -> 
     hard_eval_dataset = to_dataset(HARD_EVAL_TASKS)
     receipt_drill_dataset = to_dataset(RECEIPT_DRILL_TASKS)
     product_readiness_dataset = to_dataset(PRODUCT_READINESS_TASKS)
+    confirmation_first_dataset = to_dataset(CONFIRMATION_FIRST_TASKS)
 
     datasets = {
         "train": train_dataset,
@@ -1706,6 +1935,7 @@ def load_environment(split: str = "train", num_examples: int = -1, **kwargs) -> 
         "hard_eval": hard_eval_dataset,
         "receipt_drill": receipt_drill_dataset,
         "product_readiness": product_readiness_dataset,
+        "confirmation_first": confirmation_first_dataset,
     }
     selected_dataset = datasets.get(split, train_dataset)
     if num_examples > 0:
@@ -1718,6 +1948,8 @@ def load_environment(split: str = "train", num_examples: int = -1, **kwargs) -> 
     )
 
     ordering_tools = [
+        prepare_order_confirmation,
+        prepare_cart_confirmation,
         place_order,
         add_cart_item,
         checkout_cart,

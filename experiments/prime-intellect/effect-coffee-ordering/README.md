@@ -17,7 +17,7 @@ wheels, and hosted eval outputs remain under `.context/` and are not checked in.
 - `configs/rl/effect-coffee-ordering-qwen-0.8b-receipt-drill-warmup.toml` -
   deterministic warmup fallback if hosted SFT is unavailable.
 - `configs/rl/effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml` -
-  broader cashier-behavior warmup after publishing environment `0.1.7`.
+  broader cashier-behavior warmup after publishing the current environment.
 
 ## Current Champion
 
@@ -68,10 +68,14 @@ define a better coffee-shop assistant beyond receipts:
 - pickup timing, customer name, and order notes,
 - concise refusal behavior.
 
-Environment version `0.1.7` is published. The first product-readiness warmup run
-(`e2s3bs35k9qwzlfbrfw0ol51`) was stopped after the first interval eval because
-it failed the hard-eval reward and verbosity gates. Do not rerun that config
-unchanged.
+The source also includes a `confirmation_first` split for the real-money
+purchase boundary. It rewards prepare/readback/ask-first behavior and penalizes
+initial one-shot purchases, ambiguous "yes" submissions, cancel requests, and
+stale confirmations.
+
+The first product-readiness warmup run (`e2s3bs35k9qwzlfbrfw0ol51`) was stopped
+after the first interval eval because it failed the hard-eval reward and
+verbosity gates. Do not rerun that config unchanged.
 
 ## Prime Hosted RL
 

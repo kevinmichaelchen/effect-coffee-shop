@@ -59,6 +59,32 @@ class EnvironmentLogicTests(unittest.TestCase):
         self.assertEqual(len(environment.dataset), len(env.PRODUCT_READINESS_TASKS))
         self.assertEqual(len(environment.eval_dataset), len(env.PRODUCT_READINESS_TASKS))
 
+    def test_confirmation_first_uses_selected_dataset_for_eval(self):
+        environment = env.load_environment(split="confirmation_first")
+
+        self.assertEqual(len(environment.dataset), len(env.CONFIRMATION_FIRST_TASKS))
+        self.assertEqual(len(environment.eval_dataset), len(env.CONFIRMATION_FIRST_TASKS))
+
+    def test_prepare_order_confirmation_returns_pending_ticket(self):
+        async def run():
+            return await env.prepare_order_confirmation(
+                items_json=json.dumps(
+                    {
+                        "drink_id": "latte",
+                        "milk": "oat",
+                        "size": "medium",
+                    }
+                )
+            )
+
+        payload = json.loads(asyncio.run(run()))
+
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["status"], "pending_confirmation")
+        self.assertEqual(payload["source"], "direct-order")
+        self.assertEqual(payload["items"][0]["drink_id"], "latte")
+        self.assertIn("confirmation_id", payload)
+
     def test_place_order_accepts_single_item_json_payload(self):
         async def run():
             return await env.place_order(
@@ -102,7 +128,10 @@ class EnvironmentLogicTests(unittest.TestCase):
             ],
             "total_price_cents": 818,
         }
-        final_text = "I have a medium hot oat milk Latte and a small hot Espresso for Ava, total $8.18. Should I place it?"
+        final_text = (
+            "I have a medium hot oat milk Latte and a small hot Espresso for Ava, "
+            "total $8.18. Should I place it?"
+        )
         info = env.PRODUCT_READINESS_TASKS[0]["info"]
         good_completion = [
             {"role": "tool", "name": "add_cart_item", "content": json.dumps({"ok": True, "cart": first_cart})},
@@ -120,6 +149,39 @@ class EnvironmentLogicTests(unittest.TestCase):
 
         self.assertEqual(good_score, 1.0)
         self.assertLess(premature_checkout_score, good_score)
+
+    def test_confirmation_first_rewards_prepare_before_purchase(self):
+        item = env.quote_payload(None, "latte", "medium", "whole", "hot", 1, "", 1)["items"][0]
+        order = env.order_payload([item], "Rowan")
+        confirmation = {
+            "ok": True,
+            "confirmation_id": "confirmation-test-0001",
+            "source": "direct-order",
+            "status": "pending_confirmation",
+            "items": [item],
+            "total_price_cents": 518,
+        }
+        info = env.CONFIRMATION_FIRST_TASKS[0]["info"]
+        good_completion = [
+            {"role": "tool", "name": "prepare_order_confirmation", "content": json.dumps(confirmation)},
+            {
+                "role": "assistant",
+                "content": (
+                    "I have a medium hot whole milk Latte for Rowan, total $5.18. "
+                    "Should I place it?"
+                ),
+            },
+        ]
+        premature_order_completion = [
+            {"role": "tool", "name": "place_order", "content": json.dumps({"ok": True, "order": order})},
+            {"role": "assistant", "content": "Latte. Order order-simulated-0001. Total $5.18."},
+        ]
+
+        good_score = asyncio.run(env.product_efficiency(good_completion, info))
+        premature_order_score = asyncio.run(env.product_efficiency(premature_order_completion, info))
+
+        self.assertEqual(good_score, 1.0)
+        self.assertLess(premature_order_score, good_score)
 
     def test_price_format_rejects_wrong_currency_and_cent_totals(self):
         item = env.quote_payload(None, "latte", "medium", "whole", "hot", 1, "", 1)["items"][0]
@@ -142,6 +204,8 @@ class EnvironmentLogicTests(unittest.TestCase):
 
         self.assertIn("read back the interpreted order and ask for confirmation before purchase", prompt)
         self.assertIn("do not call place_order or checkout_cart yet", prompt)
+        self.assertIn("prepare_order_confirmation", prompt)
+        self.assertIn("confirmation_id", prompt)
         self.assertIn("Call place_order or checkout_cart only after the user explicitly confirms", prompt)
         self.assertIn("Should I place it?", prompt)
         self.assertIn("520 cents becomes $5.20", prompt)
@@ -151,7 +215,8 @@ class EnvironmentLogicTests(unittest.TestCase):
         environment = env.load_environment(split="hard_eval")
         tool_names = [tool.__name__ for tool in environment.tools]
 
-        self.assertEqual(tool_names[:3], ["place_order", "add_cart_item", "checkout_cart"])
+        self.assertEqual(tool_names[:3], ["prepare_order_confirmation", "prepare_cart_confirmation", "place_order"])
+        self.assertLess(tool_names.index("prepare_order_confirmation"), tool_names.index("place_order"))
         self.assertLess(tool_names.index("place_order"), tool_names.index("list_menu"))
         self.assertLess(tool_names.index("place_order"), tool_names.index("get_item_options"))
 

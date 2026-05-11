@@ -32,10 +32,11 @@ Prime CLI rejects it as a `checkpoint_id` for new training runs.
 ## Receipt Run
 
 Use the small budget-capped receipt-drill warmup only after fresh baselines on
-`kevinmichaelchen/effect-coffee-ordering@0.1.17`. Version `0.1.17` should be
-used for the next baseline because it contains the PR 47 hardening, prompt-only
-receipt/direct-tool-path tightening, order-first tool presentation, and the
-confirmation-before-purchase policy plus aligned product-readiness scoring.
+`kevinmichaelchen/effect-coffee-ordering@0.1.18` once published. Version
+`0.1.18` should be used for the next baseline because it contains the PR 47
+hardening, prompt-only receipt/direct-tool-path tightening, order-first tool
+presentation, confirmation-before-purchase policy, aligned product-readiness
+scoring, and the dedicated `confirmation_first` split.
 
 ```sh
 cd experiments/prime-intellect/effect-coffee-ordering
@@ -55,12 +56,13 @@ for:
 - pre-purchase confirmation before real-money order submission,
 - concise refusal behavior.
 
-Environment `kevinmichaelchen/effect-coffee-ordering@0.1.17` is published and
-should be selected for new hosted baselines, evals, or training. It changes the
-intended product behavior: Beanline should read back the interpreted order and
-ask for confirmation before calling `place_order` or `checkout_cart`.
-The product-readiness split now rewards this confirmation path instead of
-one-shot purchase on initial order requests.
+Environment source version `0.1.18` adds a dedicated `confirmation_first` split
+and should be published before the next hosted baselines, evals, or training.
+It changes the intended product behavior: Beanline should prepare a pending
+confirmation, read back the interpreted order, and ask for confirmation before
+calling `place_order` or `checkout_cart`. The product-readiness and
+confirmation-first splits reward this path instead of one-shot purchase on
+initial order requests.
 Product-readiness is still blocked by Prime inference 503 errors.
 
 Do not rerun `effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml`
@@ -101,14 +103,14 @@ The failure is still final receipt formatting and tool overuse. Rollouts showed
 correct order fields but wrong final currency/amount style such as `₹520`
 instead of `$5.20`, plus repeated menu/option probes.
 
-Next best action is not another unchanged RL run. Retry product-readiness on
-`0.1.17` once Prime inference is stable, then use SFT on the final-response and
-tool-trajectory corpora so 0.8B learns quote/readback/confirmation before
-purchase.
+Next best action is not another unchanged RL run. Publish and retry
+product-readiness plus `confirmation_first` on `0.1.18` once Prime inference is
+stable, then use SFT on the final-response and tool-trajectory corpora so 0.8B
+learns quote/readback/confirmation before purchase.
 
 Before any new hosted training spend, run fresh hosted baselines on
-`kevinmichaelchen/effect-coffee-ordering@0.1.17`; the warmup configs now pin
-that version.
+`kevinmichaelchen/effect-coffee-ordering@0.1.18` once published; the warmup
+configs now pin that version and include the `confirmation_first` eval.
 
 Inspect the stopped run:
 
