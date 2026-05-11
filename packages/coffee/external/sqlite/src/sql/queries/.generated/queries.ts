@@ -3,8 +3,11 @@
 export * from "./delete-cart-by-owner.sql.ts";
 export * from "./delete-cart-items-by-owner.sql.ts";
 export * from "./delete-order-items-by-order-id.sql.ts";
+export * from "./delete-pending-order-confirmation-by-owner.sql.ts";
+export * from "./delete-pending-order-confirmation-items-by-owner.sql.ts";
 export * from "./find-menu-item-by-id.sql.ts";
 export * from "./find-order-by-id.sql.ts";
+export * from "./find-pending-order-confirmation.sql.ts";
 export * from "./insert-cart.sql.ts";
 export * from "./list-cart-items.sql.ts";
 export * from "./list-menu-items.sql.ts";
@@ -13,9 +16,12 @@ export * from "./list-orders.sql.ts";
 export * from "./list-orders-by-owner.sql.ts";
 export * from "./list-orders-by-owner-and-status.sql.ts";
 export * from "./list-orders-by-status.sql.ts";
+export * from "./list-pending-order-confirmation-items.sql.ts";
 export * from "./save-cart-item.sql.ts";
 export * from "./save-order.sql.ts";
 export * from "./save-order-item.sql.ts";
+export * from "./save-pending-order-confirmation.sql.ts";
+export * from "./save-pending-order-confirmation-item.sql.ts";
 export * from "./seed-menu-item.sql.ts";
 
 export const sqlfuQuerySources = [
@@ -35,6 +41,16 @@ export const sqlfuQuerySources = [
     sourceSql: "delete from order_items\nwhere order_id = :orderId;\n",
   },
   {
+    sqlFile: "delete-pending-order-confirmation-by-owner.sql",
+    generatedFile: "delete-pending-order-confirmation-by-owner.sql.ts",
+    sourceSql: "delete from pending_order_confirmations\nwhere owner_user_id = ?;\n",
+  },
+  {
+    sqlFile: "delete-pending-order-confirmation-items-by-owner.sql",
+    generatedFile: "delete-pending-order-confirmation-items-by-owner.sql.ts",
+    sourceSql: "delete from pending_order_confirmation_items\nwhere owner_user_id = ?;\n",
+  },
+  {
     sqlFile: "find-menu-item-by-id.sql",
     generatedFile: "find-menu-item-by-id.sql.ts",
     sourceSql:
@@ -45,6 +61,12 @@ export const sqlfuQuerySources = [
     generatedFile: "find-order-by-id.sql.ts",
     sourceSql:
       "select\n  id,\n  customer_name,\n  owner_user_id,\n  status,\n  total_price_cents,\n  created_at\nfrom orders\nleft join order_items on order_items.order_id = orders.id\nwhere orders.id = :id\norder by orders.created_at, orders.id;\n",
+  },
+  {
+    sqlFile: "find-pending-order-confirmation.sql",
+    generatedFile: "find-pending-order-confirmation.sql.ts",
+    sourceSql:
+      "select\n  owner_user_id,\n  source,\n  total_price_cents,\n  updated_at\nfrom pending_order_confirmations\nwhere owner_user_id = ?;\n",
   },
   {
     sqlFile: "insert-cart.sql",
@@ -95,6 +117,12 @@ export const sqlfuQuerySources = [
       "select\n  id,\n  customer_name,\n  owner_user_id,\n  status,\n  total_price_cents,\n  created_at\nfrom orders\nwhere status = :status\norder by created_at, id;\n",
   },
   {
+    sqlFile: "list-pending-order-confirmation-items.sql",
+    generatedFile: "list-pending-order-confirmation-items.sql.ts",
+    sourceSql:
+      "select\n  owner_user_id,\n  position,\n  drink_id,\n  drink_name,\n  size,\n  milk,\n  temperature,\n  shots,\n  notes,\n  quantity,\n  unit_price_cents,\n  line_total_cents\nfrom pending_order_confirmation_items\nwhere owner_user_id = ?\norder by position;\n",
+  },
+  {
     sqlFile: "save-cart-item.sql",
     generatedFile: "save-cart-item.sql.ts",
     sourceSql:
@@ -111,6 +139,18 @@ export const sqlfuQuerySources = [
     generatedFile: "save-order-item.sql.ts",
     sourceSql:
       "insert into\n  order_items (\n    order_id,\n    position,\n    drink_id,\n    drink_name,\n    size,\n    milk,\n    temperature,\n    shots,\n    notes,\n    quantity,\n    unit_price_cents,\n    line_total_cents\n  )\nvalues\n  (\n    :item.orderId,\n    :item.position,\n    :item.drinkId,\n    :item.drinkName,\n    :item.size,\n    :item.milk,\n    :item.temperature,\n    :item.shots,\n    :item.notes,\n    :item.quantity,\n    :item.unitPriceCents,\n    :item.lineTotalCents\n  );\n",
+  },
+  {
+    sqlFile: "save-pending-order-confirmation.sql",
+    generatedFile: "save-pending-order-confirmation.sql.ts",
+    sourceSql:
+      "insert into\n  pending_order_confirmations (owner_user_id, source, total_price_cents, updated_at)\nvalues\n  (?, ?, ?, ?)\non conflict (owner_user_id) do update set\n  source = excluded.source,\n  total_price_cents = excluded.total_price_cents,\n  updated_at = excluded.updated_at;\n",
+  },
+  {
+    sqlFile: "save-pending-order-confirmation-item.sql",
+    generatedFile: "save-pending-order-confirmation-item.sql.ts",
+    sourceSql:
+      "insert into\n  pending_order_confirmation_items (\n    owner_user_id,\n    position,\n    drink_id,\n    drink_name,\n    size,\n    milk,\n    temperature,\n    shots,\n    notes,\n    quantity,\n    unit_price_cents,\n    line_total_cents\n  )\nvalues\n  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);\n",
   },
   {
     sqlFile: "seed-menu-item.sql",

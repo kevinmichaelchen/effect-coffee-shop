@@ -24,7 +24,20 @@ import {
   type CoffeeOrder,
   type CoffeeOrderItem,
 } from "@effect-coffee-shop/coffee-core/domain/order";
-import { cartItemsTable, menuItemsTable, orderItemsTable, ordersTable } from "./schema.ts";
+import {
+  pendingOrderConfirmationStatus,
+  PendingOrderConfirmationSchema,
+  PendingOrderConfirmationSourceSchema,
+  type PendingOrderConfirmation,
+} from "@effect-coffee-shop/coffee-core/domain/pending-order-confirmation";
+import {
+  cartItemsTable,
+  menuItemsTable,
+  orderItemsTable,
+  ordersTable,
+  pendingOrderConfirmationItemsTable,
+  pendingOrderConfirmationsTable,
+} from "./schema.ts";
 
 export const DrizzleMenuItemRowSchema = createSelectSchema(menuItemsTable, {
   id: DrinkIdSchema,
@@ -55,6 +68,24 @@ export const DrizzleCartItemRowSchema = createSelectSchema(cartItemsTable, {
   temperature: TemperatureSchema,
 });
 
+export const DrizzlePendingOrderConfirmationRowSchema = createSelectSchema(
+  pendingOrderConfirmationsTable,
+  {
+    source: PendingOrderConfirmationSourceSchema,
+    updatedAt: Schema.DateTimeUtcFromString,
+  },
+);
+
+export const DrizzlePendingOrderConfirmationItemRowSchema = createSelectSchema(
+  pendingOrderConfirmationItemsTable,
+  {
+    drinkId: DrinkIdSchema,
+    size: DrinkSizeSchema,
+    milk: MilkSchema,
+    temperature: TemperatureSchema,
+  },
+);
+
 export const OrderIdSequenceRowSchema = Schema.Struct({
   value: Schema.Int,
 });
@@ -63,12 +94,18 @@ type DrizzleMenuItemRow = typeof DrizzleMenuItemRowSchema.Type;
 type DrizzleOrderRow = typeof DrizzleOrderRowSchema.Type;
 type DrizzleOrderItemRow = typeof DrizzleOrderItemRowSchema.Type;
 type DrizzleCartItemRow = typeof DrizzleCartItemRowSchema.Type;
+type DrizzlePendingOrderConfirmationRow = typeof DrizzlePendingOrderConfirmationRowSchema.Type;
+type DrizzlePendingOrderConfirmationItemRow =
+  typeof DrizzlePendingOrderConfirmationItemRowSchema.Type;
 
 const decodeCartItem = Schema.decodeUnknownSync(CartItemSchema);
 const decodeCoffeeOrderType = Schema.decodeUnknownSync(Schema.toType(CoffeeOrderSchema));
 const decodeCoffeeOrderItem = Schema.decodeUnknownSync(CoffeeOrderItemSchema);
 const decodeMenuItem = Schema.decodeUnknownSync(MenuItemSchema);
 const decodeMoneyFromCents = Schema.decodeUnknownSync(MoneyFromCentsSchema);
+const decodePendingOrderConfirmation = Schema.decodeUnknownSync(
+  Schema.toType(PendingOrderConfirmationSchema),
+);
 
 export const toMenuItem = (item: DrizzleMenuItemRow): MenuItem =>
   decodeMenuItem({
@@ -98,6 +135,25 @@ const toCoffeeOrderItem = (item: DrizzleOrderItemRow): CoffeeOrderItem =>
     }),
   });
 
+const toPendingOrderConfirmationItem = (
+  item: DrizzlePendingOrderConfirmationItemRow,
+): CoffeeOrderItem =>
+  decodeCoffeeOrderItem({
+    drinkId: item.drinkId,
+    drinkName: item.drinkName,
+    size: item.size,
+    milk: item.milk,
+    temperature: item.temperature,
+    shots: item.shots,
+    quantity: item.quantity,
+    unitPrice: decodeMoneyFromCents(item.unitPriceCents),
+    lineTotal: decodeMoneyFromCents(item.lineTotalCents),
+    ...Option.match(Option.fromNullishOr(item.notes), {
+      onNone: () => ({}),
+      onSome: (notes) => ({ notes }),
+    }),
+  });
+
 export const toCoffeeOrder = (
   order: DrizzleOrderRow,
   items: readonly DrizzleOrderItemRow[],
@@ -110,6 +166,19 @@ export const toCoffeeOrder = (
     status: order.status,
     totalPrice: decodeMoneyFromCents(order.totalPriceCents),
     createdAt: order.createdAt,
+  });
+
+export const toPendingOrderConfirmation = (
+  confirmation: DrizzlePendingOrderConfirmationRow,
+  items: readonly DrizzlePendingOrderConfirmationItemRow[],
+): PendingOrderConfirmation =>
+  decodePendingOrderConfirmation({
+    ownerUserId: confirmation.ownerUserId,
+    source: confirmation.source,
+    status: pendingOrderConfirmationStatus,
+    items: items.map(toPendingOrderConfirmationItem),
+    totalPrice: decodeMoneyFromCents(confirmation.totalPriceCents),
+    updatedAt: confirmation.updatedAt,
   });
 
 export const toOrderInsert = (order: CoffeeOrder): typeof ordersTable.$inferInsert => ({
@@ -170,6 +239,34 @@ export const toCartItemInsert = (
   shots: Option.getOrElse(item.shots, () => 0),
   notes: Option.getOrNull(item.notes),
   quantity: item.quantity,
+});
+
+export const toPendingOrderConfirmationInsert = (
+  confirmation: PendingOrderConfirmation,
+): typeof pendingOrderConfirmationsTable.$inferInsert => ({
+  ownerUserId: confirmation.ownerUserId,
+  source: confirmation.source,
+  totalPriceCents: moneyToCents(confirmation.totalPrice),
+  updatedAt: Schema.encodeSync(Schema.DateTimeUtcFromString)(confirmation.updatedAt),
+});
+
+export const toPendingOrderConfirmationItemInsert = (
+  ownerUserId: string,
+  item: CoffeeOrderItem,
+  position: number,
+): typeof pendingOrderConfirmationItemsTable.$inferInsert => ({
+  ownerUserId,
+  position,
+  drinkId: item.drinkId,
+  drinkName: item.drinkName,
+  size: item.size,
+  milk: item.milk,
+  temperature: item.temperature,
+  shots: item.shots,
+  notes: Option.getOrNull(item.notes),
+  quantity: item.quantity,
+  unitPriceCents: moneyToCents(item.unitPrice),
+  lineTotalCents: moneyToCents(item.lineTotal),
 });
 
 export const toMenuItemSeed = (

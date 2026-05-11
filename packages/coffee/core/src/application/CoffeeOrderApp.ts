@@ -36,6 +36,7 @@ import { CartRepository } from "./ports/CartRepository.ts";
 import { MenuRepository } from "./ports/MenuRepository.ts";
 import { OrderIdGenerator } from "./ports/OrderIdGenerator.ts";
 import { OrderRepository } from "./ports/OrderRepository.ts";
+import { PendingOrderConfirmationRepository } from "./ports/PendingOrderConfirmationRepository.ts";
 import {
   cancelOrder,
   addCartItem,
@@ -50,11 +51,14 @@ import {
   placeOrder,
   pickUpOrder,
   quoteOrder,
+  prepareCartConfirmation,
+  prepareOrderConfirmation,
   removeCartItem,
   startBrewing,
   updateCartItem,
   validateOrder,
 } from "./use-cases/index.ts";
+import type { PendingOrderConfirmation } from "../domain/pending-order-confirmation.ts";
 
 export class CoffeeOrderApp extends Context.Service<
   CoffeeOrderApp,
@@ -69,6 +73,16 @@ export class CoffeeOrderApp extends Context.Service<
     readonly quoteOrder: (
       input: QuoteOrderRequest,
     ) => Effect.Effect<OrderQuote, DrinkNotFoundError | InvalidOrderInputError | InternalAppError>;
+    readonly prepareOrderConfirmation: (
+      input: QuoteOrderRequest,
+    ) => Effect.Effect<
+      PendingOrderConfirmation,
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
+    readonly prepareCartConfirmation: () => Effect.Effect<
+      PendingOrderConfirmation,
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
     readonly placeOrder: (
       input: PlaceOrderRequest,
     ) => Effect.Effect<
@@ -169,6 +183,7 @@ export class CoffeeOrderApp extends Context.Service<
       const cartRepository = yield* CartRepository;
       const orderIdGenerator = yield* OrderIdGenerator;
       const orderRepository = yield* OrderRepository;
+      const pendingOrderConfirmationRepository = yield* PendingOrderConfirmationRepository;
 
       return CoffeeOrderApp.of({
         listMenu: () => listMenu().pipe(Effect.provideService(MenuRepository, menuRepository)),
@@ -178,6 +193,23 @@ export class CoffeeOrderApp extends Context.Service<
           validateOrder(input).pipe(Effect.provideService(MenuRepository, menuRepository)),
         quoteOrder: (input) =>
           quoteOrder(input).pipe(Effect.provideService(MenuRepository, menuRepository)),
+        prepareOrderConfirmation: (input) =>
+          prepareOrderConfirmation(input).pipe(
+            Effect.provideService(MenuRepository, menuRepository),
+            Effect.provideService(
+              PendingOrderConfirmationRepository,
+              pendingOrderConfirmationRepository,
+            ),
+          ),
+        prepareCartConfirmation: () =>
+          prepareCartConfirmation().pipe(
+            Effect.provideService(CartRepository, cartRepository),
+            Effect.provideService(MenuRepository, menuRepository),
+            Effect.provideService(
+              PendingOrderConfirmationRepository,
+              pendingOrderConfirmationRepository,
+            ),
+          ),
         placeOrder: (input) =>
           placeOrder(input).pipe(
             Effect.provideService(MenuRepository, menuRepository),

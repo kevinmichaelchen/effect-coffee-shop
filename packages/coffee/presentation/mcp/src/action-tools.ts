@@ -10,6 +10,7 @@ import {
   toMenuView,
   toOrderQuoteView,
   toOrderValidationView,
+  toPendingOrderConfirmationView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
 import { CoffeeActionToolkit } from "@effect-coffee-shop/coffee-actions/toolkit";
 
@@ -24,6 +25,10 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
           validate_order: (input) =>
             app.validateOrder(input).pipe(Effect.map(toOrderValidationView)),
           quote_order: (input) => app.quoteOrder(input).pipe(Effect.map(toOrderQuoteView)),
+          prepare_order_confirmation: (input) =>
+            app.prepareOrderConfirmation(input).pipe(Effect.map(toPendingOrderConfirmationView)),
+          prepare_cart_confirmation: () =>
+            app.prepareCartConfirmation().pipe(Effect.map(toPendingOrderConfirmationView)),
           place_order: (input) => app.placeOrder(input).pipe(Effect.map(toCoffeeOrderView)),
           get_order: ({ orderId }) => app.getOrder(orderId).pipe(Effect.map(toCoffeeOrderView)),
           list_orders: (input) => app.listOrders(input).pipe(Effect.map(toCoffeeOrdersView)),

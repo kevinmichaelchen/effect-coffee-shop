@@ -8,6 +8,7 @@ import { CartRepository } from "@effect-coffee-shop/coffee-core/application/port
 import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
 import { OrderIdGenerator } from "@effect-coffee-shop/coffee-core/application/ports/OrderIdGenerator";
 import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
+import { PendingOrderConfirmationRepository } from "@effect-coffee-shop/coffee-core/application/ports/PendingOrderConfirmationRepository";
 import { defineRepositoryContract } from "@effect-coffee-shop/coffee-core/application/testing/repository-contract";
 import { CoffeeDb } from "../db/Db.ts";
 import { DrizzlePostgresSchemaLive } from "../db/migrate.ts";
@@ -19,9 +20,14 @@ type ContractServices =
   | CartRepository
   | MenuRepository
   | OrderIdGenerator
-  | OrderRepository;
+  | OrderRepository
+  | PendingOrderConfirmationRepository;
 type ContractRuntime = ManagedRuntime.ManagedRuntime<ContractServices, unknown>;
-type RepositoryServices = CartRepository | MenuRepository | OrderRepository;
+type RepositoryServices =
+  | CartRepository
+  | MenuRepository
+  | OrderRepository
+  | PendingOrderConfirmationRepository;
 
 const postgresTestUrl = process.env.COFFEE_POSTGRES_TEST_URL;
 const describeWithPostgres = postgresTestUrl === undefined ? describe.skip : describe;
@@ -45,6 +51,8 @@ const runRepositoryContract = <A>(effect: Effect.Effect<A, PersistenceError, Rep
 const resetDatabase = Effect.gen(function* () {
   const db = yield* CoffeeDb;
 
+  yield* db.execute(sql`delete from pending_order_confirmation_items`);
+  yield* db.execute(sql`delete from pending_order_confirmations`);
   yield* db.execute(sql`delete from cart_items`);
   yield* db.execute(sql`delete from carts`);
   yield* db.execute(sql`delete from order_items`);

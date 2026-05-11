@@ -9,8 +9,13 @@ import type { PersistenceError } from "@effect-coffee-shop/coffee-core/applicati
 import { CartRepository } from "@effect-coffee-shop/coffee-core/application/ports/CartRepository";
 import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
 import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
+import { PendingOrderConfirmationRepository } from "@effect-coffee-shop/coffee-core/application/ports/PendingOrderConfirmationRepository";
 
-type RepositoryServices = CartRepository | MenuRepository | OrderRepository;
+type RepositoryServices =
+  | CartRepository
+  | MenuRepository
+  | OrderRepository
+  | PendingOrderConfirmationRepository;
 
 export type SqlCoffeeRepositoriesTestHarness = {
   readonly run: <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) => Promise<A>;
@@ -42,6 +47,7 @@ export const createSqlCoffeeRepositoriesTestHarness =
           menuRepository: yield* MenuRepository,
           cartRepository: yield* CartRepository,
           orderRepository: yield* OrderRepository,
+          pendingOrderConfirmationRepository: yield* PendingOrderConfirmationRepository,
         };
       }).pipe(Effect.provide(repositoryLayer)),
     );
@@ -50,6 +56,9 @@ export const createSqlCoffeeRepositoriesTestHarness =
       Layer.succeed(MenuRepository)(repositories.menuRepository),
       Layer.succeed(CartRepository)(repositories.cartRepository),
       Layer.succeed(OrderRepository)(repositories.orderRepository),
+      Layer.succeed(PendingOrderConfirmationRepository)(
+        repositories.pendingOrderConfirmationRepository,
+      ),
     );
 
     const run = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) =>
@@ -58,6 +67,8 @@ export const createSqlCoffeeRepositoriesTestHarness =
     const reset = () =>
       db
         .batch([
+          db.prepare("DELETE FROM pending_order_confirmation_items"),
+          db.prepare("DELETE FROM pending_order_confirmations"),
           db.prepare("DELETE FROM cart_items"),
           db.prepare("DELETE FROM carts"),
           db.prepare("DELETE FROM order_items"),

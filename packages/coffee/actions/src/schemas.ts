@@ -46,5 +46,7 @@ export const decodeItemOptionsInput = Schema.decodeUnknownPromise(ItemOptionsReq
 export const decodeListOrdersInput = Schema.decodeUnknownPromise(ListOrdersRequestSchema);
 export const decodeOrderItemInput = Schema.decodeUnknownPromise(OrderItemInputSchema);
 export const decodePlaceOrderInput = Schema.decodeUnknownPromise(PlaceOrderRequestSchema);
+export const decodePrepareOrderConfirmationInput =
+  Schema.decodeUnknownPromise(QuoteOrderRequestSchema);
 export const decodeQuoteOrderInput = Schema.decodeUnknownPromise(QuoteOrderRequestSchema);
 export const decodeUpdateCartItemInput = Schema.decodeUnknownPromise(UpdateCartItemRequestSchema);

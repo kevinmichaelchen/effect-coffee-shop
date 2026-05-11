@@ -6,6 +6,14 @@ export const ListMenuTool = Tool.make("list_menu", coffeeActionSpecs.list_menu);
 export const GetItemOptionsTool = Tool.make("get_item_options", coffeeActionSpecs.get_item_options);
 export const ValidateOrderTool = Tool.make("validate_order", coffeeActionSpecs.validate_order);
 export const QuoteOrderTool = Tool.make("quote_order", coffeeActionSpecs.quote_order);
+export const PrepareOrderConfirmationTool = Tool.make(
+  "prepare_order_confirmation",
+  coffeeActionSpecs.prepare_order_confirmation,
+);
+export const PrepareCartConfirmationTool = Tool.make(
+  "prepare_cart_confirmation",
+  coffeeActionSpecs.prepare_cart_confirmation,
+);
 export const PlaceOrderTool = Tool.make("place_order", coffeeActionSpecs.place_order);
 export const GetOrderTool = Tool.make("get_order", coffeeActionSpecs.get_order);
 export const ListOrdersTool = Tool.make("list_orders", coffeeActionSpecs.list_orders);
@@ -25,6 +33,8 @@ export const CoffeeActionToolkit = Toolkit.make(
   GetItemOptionsTool,
   ValidateOrderTool,
   QuoteOrderTool,
+  PrepareOrderConfirmationTool,
+  PrepareCartConfirmationTool,
   PlaceOrderTool,
   GetOrderTool,
   ListOrdersTool,

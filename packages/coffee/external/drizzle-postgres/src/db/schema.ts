@@ -96,6 +96,43 @@ export const cartItemsTable = pgTable(
   (table) => [index("cart_items_owner_user_id_position_idx").on(table.ownerUserId, table.position)],
 );
 
+export const pendingOrderConfirmationsTable = pgTable("pending_order_confirmations", {
+  ownerUserId: text("owner_user_id").primaryKey(),
+  source: text("source").notNull(),
+  totalPriceCents: integer("total_price_cents").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const pendingOrderConfirmationItemsTable = pgTable(
+  "pending_order_confirmation_items",
+  {
+    ownerUserId: text("owner_user_id")
+      .notNull()
+      .references(() => pendingOrderConfirmationsTable.ownerUserId, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    drinkId: text("drink_id").notNull(),
+    drinkName: text("drink_name").notNull(),
+    size: text("size").notNull(),
+    milk: text("milk").notNull(),
+    temperature: text("temperature").notNull(),
+    shots: integer("shots").notNull(),
+    notes: text("notes"),
+    quantity: integer("quantity").notNull(),
+    unitPriceCents: integer("unit_price_cents").notNull(),
+    lineTotalCents: integer("line_total_cents").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "pending_order_confirmation_items_owner_position_pk",
+      columns: [table.ownerUserId, table.position],
+    }),
+    index("pending_order_confirmation_items_owner_position_idx").on(
+      table.ownerUserId,
+      table.position,
+    ),
+  ],
+);
+
 export const coffeeSchema = {
   cartItemsTable,
   cartsTable,
@@ -103,6 +140,8 @@ export const coffeeSchema = {
   orderIdSequence,
   orderItemsTable,
   ordersTable,
+  pendingOrderConfirmationItemsTable,
+  pendingOrderConfirmationsTable,
 };
 
 export const schema = {

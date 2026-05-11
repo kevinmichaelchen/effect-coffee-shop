@@ -9,6 +9,7 @@ import {
 import { InMemoryCartItemIdGeneratorLive } from "@effect-coffee-shop/coffee-external-in-memory/in-memory/InMemoryCartItemIdGenerator";
 import { InMemoryCartRepositoryLive } from "@effect-coffee-shop/coffee-external-in-memory/in-memory/InMemoryCartRepository";
 import { InMemoryOrderIdGeneratorLive } from "@effect-coffee-shop/coffee-external-in-memory/in-memory/InMemoryOrderIdGenerator";
+import { InMemoryPendingOrderConfirmationRepositoryLive } from "@effect-coffee-shop/coffee-external-in-memory/in-memory/InMemoryPendingOrderConfirmationRepository";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import {
   CurrentActor,
@@ -47,6 +48,7 @@ export const HttpApiPersistenceFailureTestLive = HttpRouter.serve(CoffeeHttpApiL
       InMemoryCartRepositoryLive,
       InMemoryMenuRepositoryLive,
       InMemoryOrderIdGeneratorLive,
+      InMemoryPendingOrderConfirmationRepositoryLive,
     ),
   ),
   Layer.provideMerge(NodeHttpServer.layerTest),

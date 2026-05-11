@@ -14,6 +14,7 @@ import {
   decodeOrderIdInput,
   decodeOrderItemInput,
   decodePlaceOrderInput,
+  decodePrepareOrderConfirmationInput,
   decodeQuoteOrderInput,
   decodeUpdateCartItemInput,
 } from "@effect-coffee-shop/coffee-actions/schemas";
@@ -144,6 +145,14 @@ const agentActionInputFor = (capability: string): Option.Option<AgentActionInput
     ),
     Match.when("quote_order", () =>
       Option.some(agentActionInput("quote_order", decodeQuoteOrderInput)),
+    ),
+    Match.when("prepare_order_confirmation", () =>
+      Option.some(
+        agentActionInput("prepare_order_confirmation", decodePrepareOrderConfirmationInput),
+      ),
+    ),
+    Match.when("prepare_cart_confirmation", () =>
+      Option.some(agentActionInput("prepare_cart_confirmation", decodeEmptyActionInput)),
     ),
     Match.when("place_order", () =>
       Option.some(agentActionInput("place_order", decodePlaceOrderInput)),

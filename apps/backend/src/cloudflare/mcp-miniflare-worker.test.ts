@@ -117,6 +117,8 @@ const verifyCatalogSurface = (request: McpRequest) =>
       "mark_ready",
       "pick_up_order",
       "place_order",
+      "prepare_cart_confirmation",
+      "prepare_order_confirmation",
       "quote_order",
       "remove_cart_item",
       "start_brewing",

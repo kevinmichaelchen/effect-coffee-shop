@@ -10,6 +10,7 @@ import {
   toMenuView,
   toOrderQuoteView,
   toOrderValidationView,
+  toPendingOrderConfirmationView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
 import {
   decodeCartItemIdInput,
@@ -20,6 +21,7 @@ import {
   decodeOrderIdInput,
   decodeOrderItemInput,
   decodePlaceOrderInput,
+  decodePrepareOrderConfirmationInput,
   decodeQuoteOrderInput,
   decodeUpdateCartItemInput,
 } from "./schemas.ts";
@@ -71,6 +73,14 @@ const actionHandlers = {
   ),
   quote_order: runDecodedAction(decodeQuoteOrderInput, (app, payload) =>
     app.quoteOrder(payload).pipe(Effect.map(toOrderQuoteView)),
+  ),
+  prepare_order_confirmation: runDecodedAction(
+    decodePrepareOrderConfirmationInput,
+    (app, payload) =>
+      app.prepareOrderConfirmation(payload).pipe(Effect.map(toPendingOrderConfirmationView)),
+  ),
+  prepare_cart_confirmation: runEmptyAction((app) =>
+    app.prepareCartConfirmation().pipe(Effect.map(toPendingOrderConfirmationView)),
   ),
   place_order: runDecodedAction(decodePlaceOrderInput, (app, payload) =>
     app.placeOrder(payload).pipe(Effect.map(toCoffeeOrderView)),

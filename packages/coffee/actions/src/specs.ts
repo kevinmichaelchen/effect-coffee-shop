@@ -11,6 +11,7 @@ import {
   OrderItemInputSchema,
   OrderQuoteViewSchema,
   OrderValidationViewSchema,
+  PendingOrderConfirmationViewSchema,
   PlaceOrderRequestSchema,
   QuoteOrderRequestSchema,
   UpdateCartItemRequestSchema,
@@ -64,6 +65,18 @@ export const coffeeActionSpecs = {
     description: "Quote a proposed multi-item coffee order",
     parameters: QuoteOrderRequestSchema,
     success: OrderQuoteViewSchema,
+  }),
+  prepare_order_confirmation: actionSpec({
+    description:
+      "Validate, price, and store a proposed order as awaiting explicit customer confirmation",
+    parameters: QuoteOrderRequestSchema,
+    success: PendingOrderConfirmationViewSchema,
+  }),
+  prepare_cart_confirmation: actionSpec({
+    description:
+      "Validate, price, and store the signed-in actor's cart as awaiting explicit customer confirmation",
+    parameters: EmptyActionInputSchema,
+    success: PendingOrderConfirmationViewSchema,
   }),
   place_order: actionSpec({
     description: "Create a new multi-item coffee order",

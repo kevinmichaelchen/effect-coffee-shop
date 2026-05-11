@@ -12,6 +12,10 @@ import {
   type MenuItem,
 } from "../domain/menu.ts";
 import { MoneyFromCentsSchema, MoneySchema } from "../domain/money.ts";
+import {
+  PendingOrderConfirmationSourceSchema,
+  type PendingOrderConfirmation,
+} from "../domain/pending-order-confirmation.ts";
 import { QuantityInputSchema, ShotCountInputSchema } from "../domain/order-primitives.ts";
 import {
   CoffeeOrderItemSchema,
@@ -141,6 +145,16 @@ export const CoffeeOrderItemViewSchema = Schema.Struct({
   lineTotalCents: Schema.Int,
 }).annotate({ identifier: "CoffeeOrderItemView" });
 export type CoffeeOrderItemView = typeof CoffeeOrderItemViewSchema.Type;
+
+export const PendingOrderConfirmationViewSchema = Schema.Struct({
+  ownerUserId: Schema.String,
+  source: PendingOrderConfirmationSourceSchema,
+  status: Schema.Literal("pending_confirmation"),
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewSchema),
+  totalPriceCents: Schema.Int,
+  updatedAt: Schema.DateTimeUtc,
+}).annotate({ identifier: "PendingOrderConfirmationView" });
+export type PendingOrderConfirmationView = typeof PendingOrderConfirmationViewSchema.Type;
 
 export const CoffeeOrderViewSchema = Schema.Struct({
   id: Schema.toEncoded(OrderIdSchema),
@@ -279,6 +293,19 @@ const CartViewModelSchema = Schema.Struct({
   }),
 );
 
+const PendingOrderConfirmationViewModelSchema = Schema.Struct({
+  ownerUserId: Schema.String,
+  source: PendingOrderConfirmationSourceSchema,
+  status: Schema.Literal("pending_confirmation"),
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewModelSchema),
+  totalPrice: MoneyFromCentsSchema,
+  updatedAt: Schema.DateTimeUtc,
+}).pipe(
+  Schema.encodeKeys({
+    totalPrice: "totalPriceCents",
+  }),
+);
+
 const ItemOptionsViewModelSchema = Schema.Struct({
   item: MenuItemViewModelSchema,
   availableSizes: Schema.Array(DrinkSizeSchema),
@@ -295,6 +322,9 @@ const encodeCoffeeOrderView = Schema.encodeSync(CoffeeOrderViewModelSchema);
 const encodeOrderQuoteView = Schema.encodeSync(OrderQuoteViewModelSchema);
 const encodeOrderValidationView = Schema.encodeSync(OrderValidationViewModelSchema);
 const encodeCartView = Schema.encodeSync(CartViewModelSchema);
+const encodePendingOrderConfirmationView = Schema.encodeSync(
+  PendingOrderConfirmationViewModelSchema,
+);
 const encodeItemOptionsView = Schema.encodeSync(ItemOptionsViewModelSchema);
 
 export const toMenuItemView = (item: MenuItem): MenuItemView =>
@@ -359,6 +389,18 @@ export const toCartView = (cart: CartSnapshot): CartView =>
       item: cartItem.item,
     })),
     totalPrice: cart.totalPrice,
+  });
+
+export const toPendingOrderConfirmationView = (
+  confirmation: PendingOrderConfirmation,
+): PendingOrderConfirmationView =>
+  encodePendingOrderConfirmationView({
+    ownerUserId: confirmation.ownerUserId,
+    source: confirmation.source,
+    status: confirmation.status,
+    items: confirmation.items,
+    totalPrice: confirmation.totalPrice,
+    updatedAt: confirmation.updatedAt,
   });
 
 export const toItemOptionsView = (options: ItemOptions): ItemOptionsView =>

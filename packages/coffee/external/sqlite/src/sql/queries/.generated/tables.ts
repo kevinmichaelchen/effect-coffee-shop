@@ -154,6 +154,28 @@ export type PasskeyRow = {
   aaguid: string | null;
 };
 
+export type PendingOrderConfirmationItemsRow = {
+  owner_user_id: string;
+  position: number;
+  drink_id: string;
+  drink_name: string;
+  size: string;
+  milk: string;
+  temperature: string;
+  shots: number;
+  notes: string | null;
+  quantity: number;
+  unit_price_cents: number;
+  line_total_cents: number;
+};
+
+export type PendingOrderConfirmationsRow = {
+  owner_user_id: string;
+  source: string;
+  total_price_cents: number;
+  updated_at: string;
+};
+
 export type SessionRow = {
   id: string;
   expiresAt: Date;

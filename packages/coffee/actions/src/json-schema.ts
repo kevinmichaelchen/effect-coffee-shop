@@ -82,6 +82,10 @@ export const placeOrderActionJsonSchema = actionJsonSchema(
 
 export const quoteOrderActionJsonSchema = placeOrderActionJsonSchema;
 
+export const prepareOrderConfirmationActionJsonSchema = quoteOrderActionJsonSchema;
+
+export const prepareCartConfirmationActionJsonSchema = emptyActionJsonSchema;
+
 export const orderItemActionJsonSchema = actionJsonSchema(orderItemProperties, ["drinkId", "size"]);
 
 export const updateCartItemActionJsonSchema = actionJsonSchema(

@@ -23,6 +23,12 @@ import {
   type CoffeeOrder,
   type CoffeeOrderItem,
 } from "@effect-coffee-shop/coffee-core/domain/order";
+import {
+  pendingOrderConfirmationStatus,
+  PendingOrderConfirmationSchema,
+  PendingOrderConfirmationSourceSchema,
+  type PendingOrderConfirmation,
+} from "@effect-coffee-shop/coffee-core/domain/pending-order-confirmation";
 
 const SqlNullableStringOptionSchema = Schema.OptionFromNullishOr(Schema.String, {
   onNoneEncoding: null,
@@ -102,15 +108,56 @@ export const SqlCartItemModel = Schema.Struct({
   }),
 );
 
+export const SqlPendingOrderConfirmationModel = Schema.Struct({
+  ownerUserId: Schema.String,
+  source: PendingOrderConfirmationSourceSchema,
+  totalPrice: MoneyFromCentsSchema,
+  updatedAt: Schema.DateTimeUtcFromString,
+}).pipe(
+  Schema.encodeKeys({
+    ownerUserId: "owner_user_id",
+    totalPrice: "total_price_cents",
+    updatedAt: "updated_at",
+  }),
+);
+
+export const SqlPendingOrderConfirmationItemModel = Schema.Struct({
+  ownerUserId: Schema.String,
+  position: Schema.Int,
+  drinkId: DrinkIdSchema,
+  drinkName: Schema.String,
+  size: DrinkSizeSchema,
+  milk: MilkSchema,
+  temperature: TemperatureSchema,
+  shots: Schema.Int,
+  notes: SqlNullableStringOptionSchema,
+  quantity: Schema.Int,
+  unitPrice: MoneyFromCentsSchema,
+  lineTotal: MoneyFromCentsSchema,
+}).pipe(
+  Schema.encodeKeys({
+    ownerUserId: "owner_user_id",
+    drinkId: "drink_id",
+    drinkName: "drink_name",
+    unitPrice: "unit_price_cents",
+    lineTotal: "line_total_cents",
+  }),
+);
+
 type SqlOrder = typeof SqlOrderModel.Type;
 type SqlOrderItem = typeof SqlOrderItemModel.Type;
 type SqlCartItem = typeof SqlCartItemModel.Type;
 type SqlMenuItem = typeof SqlMenuItemModel.Type;
+type SqlPendingOrderConfirmation = typeof SqlPendingOrderConfirmationModel.Type;
+type SqlPendingOrderConfirmationItem = typeof SqlPendingOrderConfirmationItemModel.Type;
 
 const decodeCartItem = Schema.decodeUnknownSync(CartItemSchema);
 const decodeCoffeeOrderType = Schema.decodeUnknownSync(Schema.toType(CoffeeOrderSchema));
 const decodeCoffeeOrderItem = Schema.decodeUnknownSync(CoffeeOrderItemSchema);
 const decodeMenuItem = Schema.decodeUnknownSync(MenuItemSchema);
+const decodePendingOrderConfirmation = Schema.decodeUnknownSync(
+  Schema.toType(PendingOrderConfirmationSchema),
+);
 
 export interface SqlOrderSave {
   readonly id: string;
@@ -147,6 +194,28 @@ export interface SqlCartItemSave {
   readonly shots: number;
   readonly notes: string | null;
   readonly quantity: number;
+}
+
+export interface SqlPendingOrderConfirmationSave {
+  readonly ownerUserId: string;
+  readonly source: string;
+  readonly totalPriceCents: number;
+  readonly updatedAt: string;
+}
+
+export interface SqlPendingOrderConfirmationItemSave {
+  readonly ownerUserId: string;
+  readonly position: number;
+  readonly drinkId: string;
+  readonly drinkName: string;
+  readonly size: string;
+  readonly milk: string;
+  readonly temperature: string;
+  readonly shots: number;
+  readonly notes: string | null;
+  readonly quantity: number;
+  readonly unitPriceCents: number;
+  readonly lineTotalCents: number;
 }
 
 export interface SqlMenuItemSeed {
@@ -205,6 +274,34 @@ export const toSqlCartItemSave = (
   quantity: item.quantity,
 });
 
+export const toSqlPendingOrderConfirmationSave = (
+  confirmation: PendingOrderConfirmation,
+): SqlPendingOrderConfirmationSave => ({
+  ownerUserId: confirmation.ownerUserId,
+  source: confirmation.source,
+  totalPriceCents: moneyToCents(confirmation.totalPrice),
+  updatedAt: Schema.encodeSync(Schema.DateTimeUtcFromString)(confirmation.updatedAt),
+});
+
+export const toSqlPendingOrderConfirmationItemSave = (
+  ownerUserId: string,
+  item: CoffeeOrderItem,
+  position: number,
+): SqlPendingOrderConfirmationItemSave => ({
+  ownerUserId,
+  position,
+  drinkId: item.drinkId,
+  drinkName: item.drinkName,
+  size: item.size,
+  milk: item.milk,
+  temperature: item.temperature,
+  shots: item.shots,
+  notes: Option.getOrNull(item.notes),
+  quantity: item.quantity,
+  unitPriceCents: moneyToCents(item.unitPrice),
+  lineTotalCents: moneyToCents(item.lineTotal),
+});
+
 export const toCartItem = (item: SqlCartItem): CartItem =>
   decodeCartItem({
     id: item.id,
@@ -237,6 +334,23 @@ const toCoffeeOrderItem = (item: SqlOrderItem): CoffeeOrderItem =>
     }),
   });
 
+const toPendingOrderConfirmationItem = (item: SqlPendingOrderConfirmationItem): CoffeeOrderItem =>
+  decodeCoffeeOrderItem({
+    drinkId: item.drinkId,
+    drinkName: item.drinkName,
+    size: item.size,
+    milk: item.milk,
+    temperature: item.temperature,
+    shots: item.shots,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    lineTotal: item.lineTotal,
+    ...Option.match(item.notes, {
+      onNone: () => ({}),
+      onSome: (notes) => ({ notes }),
+    }),
+  });
+
 export const toCoffeeOrder = (order: SqlOrder, items: readonly SqlOrderItem[]): CoffeeOrder =>
   decodeCoffeeOrderType({
     id: order.id,
@@ -246,6 +360,19 @@ export const toCoffeeOrder = (order: SqlOrder, items: readonly SqlOrderItem[]): 
     status: order.status,
     totalPrice: order.totalPrice,
     createdAt: order.createdAt,
+  });
+
+export const toPendingOrderConfirmation = (
+  confirmation: SqlPendingOrderConfirmation,
+  items: readonly SqlPendingOrderConfirmationItem[],
+): PendingOrderConfirmation =>
+  decodePendingOrderConfirmation({
+    ownerUserId: confirmation.ownerUserId,
+    source: confirmation.source,
+    status: pendingOrderConfirmationStatus,
+    items: items.map(toPendingOrderConfirmationItem),
+    totalPrice: confirmation.totalPrice,
+    updatedAt: confirmation.updatedAt,
   });
 
 export const toMenuItem = (item: SqlMenuItem): MenuItem =>

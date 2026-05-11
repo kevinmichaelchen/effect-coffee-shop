@@ -7,12 +7,14 @@ import { DrizzleCartRepositoryLive } from "./repositories/DrizzleCartRepository.
 import { DrizzleMenuRepositoryLive } from "./repositories/DrizzleMenuRepository.ts";
 import { DrizzleOrderIdGeneratorLive } from "./repositories/DrizzleOrderIdGenerator.ts";
 import { DrizzleOrderRepositoryLive } from "./repositories/DrizzleOrderRepository.ts";
+import { DrizzlePendingOrderConfirmationRepositoryLive } from "./repositories/DrizzlePendingOrderConfirmationRepository.ts";
 
 export const DrizzlePostgresCoffeeRepositoriesLive = Layer.mergeAll(
   DrizzlePostgresPersistenceLive,
   DrizzleCartRepositoryLive,
   DrizzleMenuRepositoryLive,
   DrizzleOrderRepositoryLive,
+  DrizzlePendingOrderConfirmationRepositoryLive,
 );
 
 export const DrizzlePostgresCoffeeAppLive = Layer.mergeAll(

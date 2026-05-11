@@ -1,5 +1,6 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import {
@@ -15,7 +16,10 @@ import {
   clearCart,
   getCart,
   getItemOptions,
+  getPendingOrderConfirmation,
   listOrders,
+  prepareCartConfirmation,
+  prepareOrderConfirmation,
   quoteOrder,
   removeCartItem,
   updateCartItem,
@@ -71,6 +75,23 @@ describe("cart and order planning", () => {
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 
+  it.effect("stores a direct proposed order as pending confirmation state", () =>
+    Effect.gen(function* () {
+      const confirmation = yield* prepareOrderConfirmation({
+        items: [{ drinkId: "latte", size: "medium", quantity: 2 }],
+      });
+      const loaded = yield* getPendingOrderConfirmation();
+      const orders = yield* listOrders({});
+
+      assert.strictEqual(confirmation.status, "pending_confirmation");
+      assert.strictEqual(confirmation.source, "direct-order");
+      assert.strictEqual(confirmation.items.length, 1);
+      assert.strictEqual(moneyToCents(confirmation.totalPrice), 1036);
+      assert.deepStrictEqual(loaded, Option.some(confirmation));
+      assert.strictEqual(orders.length, 0);
+    }).pipe(provideActor(averyActor), Effect.provide(InMemoryCoffeeAppLive)),
+  );
+
   it.effect("returns menu item options and defaults", () =>
     Effect.gen(function* () {
       const options = yield* getItemOptions({ drinkId: "cold-brew" });
@@ -109,6 +130,25 @@ describe("cart and order planning", () => {
       assert.strictEqual(order.items[0]?.quantity, 2);
       assert.strictEqual(afterCheckout.items.length, 0);
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
+  );
+
+  it.effect("stores the actor cart as pending confirmation state", () =>
+    Effect.gen(function* () {
+      yield* addCartItem({
+        drinkId: "tea",
+        size: "small",
+        quantity: 2,
+      });
+
+      const confirmation = yield* prepareCartConfirmation();
+      const loaded = yield* getPendingOrderConfirmation();
+
+      assert.strictEqual(confirmation.status, "pending_confirmation");
+      assert.strictEqual(confirmation.source, "cart");
+      assert.strictEqual(confirmation.ownerUserId, "user-avery");
+      assert.strictEqual(confirmation.items.length, 1);
+      assert.deepStrictEqual(loaded, Option.some(confirmation));
+    }).pipe(provideActor(averyActor), Effect.provide(InMemoryCoffeeAppLive)),
   );
 
   it.effect("removes and clears cart items", () =>

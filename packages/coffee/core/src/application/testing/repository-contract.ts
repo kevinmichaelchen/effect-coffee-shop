@@ -7,12 +7,18 @@ import { menuItems } from "../../domain/menu.ts";
 import { moneyFromCents } from "../../domain/money.ts";
 import { CartSchema } from "../../domain/cart.ts";
 import { CoffeeOrderSchema, type CoffeeOrder } from "../../domain/order.ts";
+import { PendingOrderConfirmationSchema } from "../../domain/pending-order-confirmation.ts";
 import type { PersistenceError } from "../errors.ts";
 import { CartRepository } from "../ports/CartRepository.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
+import { PendingOrderConfirmationRepository } from "../ports/PendingOrderConfirmationRepository.ts";
 
-type RepositoryServices = CartRepository | MenuRepository | OrderRepository;
+type RepositoryServices =
+  | CartRepository
+  | MenuRepository
+  | OrderRepository
+  | PendingOrderConfirmationRepository;
 type RunTest = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) => Promise<A>;
 type CoffeeOrderOverrides = {
   readonly id: string;
@@ -30,6 +36,7 @@ const laterTime = utc("2026-01-01T10:05:00.000Z");
 const latestTime = utc("2026-01-01T10:10:00.000Z");
 const decodeCart = Schema.decodeUnknownSync(CartSchema);
 const decodeCoffeeOrder = Schema.decodeUnknownSync(CoffeeOrderSchema);
+const decodePendingOrderConfirmation = Schema.decodeUnknownSync(PendingOrderConfirmationSchema);
 
 const makeOrder = ({ id, ...overrides }: CoffeeOrderOverrides): CoffeeOrder =>
   decodeCoffeeOrder({
@@ -148,6 +155,47 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
         assert.deepStrictEqual(saved, cart);
         assert.deepStrictEqual(loaded, Option.some(cart));
         assert.deepStrictEqual(cleared, { ownerUserId: cart.ownerUserId, items: [] });
+        assert.deepStrictEqual(afterClear, Option.none());
+      }),
+    );
+
+    itContract(
+      "round-trips and clears pending order confirmations",
+      Effect.gen(function* () {
+        const pendingOrderConfirmationRepository = yield* PendingOrderConfirmationRepository;
+        const confirmation = decodePendingOrderConfirmation({
+          ownerUserId: "user-avery",
+          source: "direct-order",
+          status: "pending_confirmation",
+          items: [
+            {
+              drinkId: "latte",
+              drinkName: "Latte",
+              size: "medium",
+              milk: "oat",
+              temperature: "hot",
+              shots: 2,
+              notes: "extra foam",
+              quantity: 2,
+              unitPrice: moneyFromCents(575),
+              lineTotal: moneyFromCents(1150),
+            },
+          ],
+          totalPrice: moneyFromCents(1150),
+          updatedAt: initialTime,
+        });
+
+        const saved = yield* pendingOrderConfirmationRepository.save(confirmation);
+        const loaded = yield* pendingOrderConfirmationRepository.getByOwnerUserId(
+          confirmation.ownerUserId,
+        );
+        yield* pendingOrderConfirmationRepository.clear(confirmation.ownerUserId);
+        const afterClear = yield* pendingOrderConfirmationRepository.getByOwnerUserId(
+          confirmation.ownerUserId,
+        );
+
+        assert.deepStrictEqual(saved, confirmation);
+        assert.deepStrictEqual(loaded, Option.some(confirmation));
         assert.deepStrictEqual(afterClear, Option.none());
       }),
     );

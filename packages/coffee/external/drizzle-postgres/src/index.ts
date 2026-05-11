@@ -9,3 +9,4 @@ export { DrizzleCartRepositoryLive } from "./repositories/DrizzleCartRepository.
 export { DrizzleMenuRepositoryLive } from "./repositories/DrizzleMenuRepository.ts";
 export { DrizzleOrderIdGeneratorLive } from "./repositories/DrizzleOrderIdGenerator.ts";
 export { DrizzleOrderRepositoryLive } from "./repositories/DrizzleOrderRepository.ts";
+export { DrizzlePendingOrderConfirmationRepositoryLive } from "./repositories/DrizzlePendingOrderConfirmationRepository.ts";

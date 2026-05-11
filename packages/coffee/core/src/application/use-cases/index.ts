@@ -11,5 +11,10 @@ export { getItemOptions } from "./getItemOptions.ts";
 export { getOrder } from "./getOrder.ts";
 export { listMenu } from "./listMenu.ts";
 export { listOrders } from "./listOrders.ts";
+export {
+  getPendingOrderConfirmation,
+  prepareCartConfirmation,
+  prepareOrderConfirmation,
+} from "./pendingOrderConfirmation.ts";
 export { placeOrder } from "./placeOrder.ts";
 export { quoteOrder, validateOrder } from "./quoteOrder.ts";
