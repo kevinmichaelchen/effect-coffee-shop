@@ -10,6 +10,7 @@ import {
   ListOrdersRequestSchema,
   MenuViewSchema,
   OrderItemInputSchema,
+  PendingOrderConfirmationLookupViewSchema,
   OrderQuoteViewSchema,
   OrderValidationViewSchema,
   PendingOrderConfirmationViewSchema,
@@ -77,6 +78,12 @@ export const coffeeActionSpecs = {
       "Validate, price, and store the signed-in actor's cart as awaiting explicit customer confirmation",
     parameters: EmptyActionInputSchema,
     success: PendingOrderConfirmationViewSchema,
+  }),
+  get_pending_confirmation: actionSpec({
+    description:
+      "Fetch the signed-in actor's latest pending order confirmation before final purchase",
+    parameters: EmptyActionInputSchema,
+    success: PendingOrderConfirmationLookupViewSchema,
   }),
   place_order: actionSpec({
     description: "Create the multi-item coffee order matching a prepared confirmation id",

@@ -154,6 +154,9 @@ const agentActionInputFor = (capability: string): Option.Option<AgentActionInput
     Match.when("prepare_cart_confirmation", () =>
       Option.some(agentActionInput("prepare_cart_confirmation", decodeEmptyActionInput)),
     ),
+    Match.when("get_pending_confirmation", () =>
+      Option.some(agentActionInput("get_pending_confirmation", decodeEmptyActionInput)),
+    ),
     Match.when("place_order", () =>
       Option.some(agentActionInput("place_order", decodePlaceOrderInput)),
     ),

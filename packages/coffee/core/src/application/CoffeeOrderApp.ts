@@ -1,6 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";
+import * as Option from "effect/Option";
 import {
   DrinkNotFoundError,
   InvalidOrderInputError,
@@ -48,6 +49,7 @@ import {
   getCart,
   getItemOptions,
   getOrder,
+  getPendingOrderConfirmation,
   listMenu,
   listOrders,
   markReady,
@@ -86,6 +88,10 @@ export class CoffeeOrderApp extends Context.Service<
     readonly prepareCartConfirmation: () => Effect.Effect<
       PendingOrderConfirmation,
       AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
+    readonly getPendingOrderConfirmation: () => Effect.Effect<
+      Option.Option<PendingOrderConfirmation>,
+      AuthenticationRequiredError | InternalAppError
     >;
     readonly placeOrder: (
       input: PlaceOrderRequest,
@@ -221,6 +227,13 @@ export class CoffeeOrderApp extends Context.Service<
           prepareCartConfirmation().pipe(
             Effect.provideService(CartRepository, cartRepository),
             Effect.provideService(MenuRepository, menuRepository),
+            Effect.provideService(
+              PendingOrderConfirmationRepository,
+              pendingOrderConfirmationRepository,
+            ),
+          ),
+        getPendingOrderConfirmation: () =>
+          getPendingOrderConfirmation().pipe(
             Effect.provideService(
               PendingOrderConfirmationRepository,
               pendingOrderConfirmationRepository,

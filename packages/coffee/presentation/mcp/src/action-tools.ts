@@ -1,5 +1,6 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as McpServer from "effect/unstable/ai/McpServer";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import {
@@ -10,9 +11,14 @@ import {
   toMenuView,
   toOrderQuoteView,
   toOrderValidationView,
+  type NoPendingOrderConfirmationView,
   toPendingOrderConfirmationView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
 import { CoffeeActionToolkit } from "@effect-coffee-shop/coffee-actions/toolkit";
+
+const noPendingOrderConfirmationView: NoPendingOrderConfirmationView = {
+  status: "no_pending_confirmation",
+};
 
 export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe(
   Layer.provideMerge(
@@ -29,6 +35,15 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
             app.prepareOrderConfirmation(input).pipe(Effect.map(toPendingOrderConfirmationView)),
           prepare_cart_confirmation: () =>
             app.prepareCartConfirmation().pipe(Effect.map(toPendingOrderConfirmationView)),
+          get_pending_confirmation: () =>
+            app.getPendingOrderConfirmation().pipe(
+              Effect.map((pending) =>
+                Option.match(pending, {
+                  onNone: () => noPendingOrderConfirmationView,
+                  onSome: toPendingOrderConfirmationView,
+                }),
+              ),
+            ),
           place_order: (input) =>
             app.placeConfirmedOrder(input).pipe(Effect.map(toCoffeeOrderView)),
           get_order: ({ orderId }) => app.getOrder(orderId).pipe(Effect.map(toCoffeeOrderView)),

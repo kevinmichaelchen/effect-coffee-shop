@@ -10,6 +10,7 @@ import {
   ClearCartTool,
   GetOrderTool,
   GetCartTool,
+  GetPendingConfirmationTool,
   GetItemOptionsTool,
   ListMenuTool,
   ListOrdersTool,
@@ -36,6 +37,7 @@ import {
   cartItemIdToolParameters,
   checkoutCartToolParameters,
   emptyToolParameters,
+  getPendingConfirmationToolParameters,
   itemOptionsToolParameters,
   listOrdersToolParameters,
   orderItemToolParameters,
@@ -54,6 +56,11 @@ export function getAssistantToolActivityEvent(): string {
 type AssistantToolEmitter = (activity: AssistantToolActivity) => void;
 
 const assistantToolInputs = [
+  {
+    action: "get_pending_confirmation",
+    parameters: getPendingConfirmationToolParameters,
+    tool: GetPendingConfirmationTool,
+  },
   { action: "place_order", parameters: placeOrderToolParameters, tool: PlaceOrderTool },
   { action: "add_cart_item", parameters: orderItemToolParameters, tool: AddCartItemTool },
   { action: "checkout_cart", parameters: checkoutCartToolParameters, tool: CheckoutCartTool },

@@ -1,8 +1,10 @@
 import type * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import type { CoffeeOrder, OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
 import {
+  type NoPendingOrderConfirmationView,
   toCartView,
   toCoffeeOrderView,
   toCoffeeOrdersView,
@@ -36,6 +38,10 @@ interface ActionContext {
 }
 
 type ActionHandler = (input: ActionContext) => Promise<unknown>;
+
+const noPendingOrderConfirmationView: NoPendingOrderConfirmationView = {
+  status: "no_pending_confirmation",
+};
 
 const payloadOrEmpty = (payload: unknown): unknown => payload ?? {};
 
@@ -81,6 +87,16 @@ const actionHandlers = {
   ),
   prepare_cart_confirmation: runEmptyAction((app) =>
     app.prepareCartConfirmation().pipe(Effect.map(toPendingOrderConfirmationView)),
+  ),
+  get_pending_confirmation: runEmptyAction((app) =>
+    app.getPendingOrderConfirmation().pipe(
+      Effect.map((pending) =>
+        Option.match(pending, {
+          onNone: () => noPendingOrderConfirmationView,
+          onSome: toPendingOrderConfirmationView,
+        }),
+      ),
+    ),
   ),
   place_order: runDecodedAction(decodePlaceOrderInput, (app, payload) =>
     app.placeConfirmedOrder(payload).pipe(Effect.map(toCoffeeOrderView)),

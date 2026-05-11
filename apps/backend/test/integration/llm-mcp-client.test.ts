@@ -45,11 +45,15 @@ const llmMcpWorkflow = () =>
       name: "prepare_order_confirmation",
       arguments: { items: orderInput.items },
     });
+    const pending = yield* request(ToolCallConfirmationResultSchema, "tools/call", {
+      name: "get_pending_confirmation",
+      arguments: {},
+    });
 
     // Place order after matching confirmation state exists
     const placeOrderResult = yield* request(ToolCallOrderResultSchema, "tools/call", {
       name: "place_order",
-      arguments: { ...orderInput, confirmationId: confirmation.structuredContent.confirmationId },
+      arguments: { ...orderInput, confirmationId: pending.structuredContent.confirmationId },
     });
 
     const orderId = placeOrderResult.structuredContent.id;
@@ -63,6 +67,8 @@ const llmMcpWorkflow = () =>
     return {
       success: true,
       orderId,
+      pending,
+      preparedConfirmation: confirmation,
       placeOrderResult,
       getOrderResult,
     };

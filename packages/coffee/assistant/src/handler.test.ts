@@ -174,6 +174,9 @@ const verifyUiMessages = async () => {
 
   expect(response.status).toBe(200);
   expect(aiRun).toHaveBeenCalledTimes(1);
+  expect(firstModelInputText.indexOf('"name":"get_pending_confirmation"')).toBeLessThan(
+    firstModelInputText.indexOf('"name":"place_order"'),
+  );
   expect(firstModelInputText.indexOf('"name":"place_order"')).toBeLessThan(
     firstModelInputText.indexOf('"name":"list_menu"'),
   );
@@ -196,6 +199,10 @@ const verifyUiMessages = async () => {
         expect.objectContaining({
           role: "system",
           content: expect.stringContaining("do not call place_order or checkout_cart yet"),
+        }),
+        expect.objectContaining({
+          role: "system",
+          content: expect.stringContaining("call get_pending_confirmation first"),
         }),
         expect.objectContaining({
           role: "system",

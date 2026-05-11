@@ -39,9 +39,17 @@ const placeLatteOrder = (request: McpRequest) =>
       name: "prepare_order_confirmation",
       arguments: { items: orderInput.items },
     });
+    const pending = yield* request(ToolCallConfirmationResponseSchema, "tools/call", {
+      name: "get_pending_confirmation",
+      arguments: {},
+    });
+    assert.strictEqual(
+      pending.structuredContent.confirmationId,
+      confirmation.structuredContent.confirmationId,
+    );
     return yield* request(ToolCallOrderResponseSchema, "tools/call", {
       name: "place_order",
-      arguments: { ...orderInput, confirmationId: confirmation.structuredContent.confirmationId },
+      arguments: { ...orderInput, confirmationId: pending.structuredContent.confirmationId },
     });
   });
 
@@ -66,6 +74,7 @@ const verifyCatalogSurface = (request: McpRequest) =>
       "get_cart",
       "get_item_options",
       "get_order",
+      "get_pending_confirmation",
       "list_menu",
       "list_orders",
       "mark_ready",

@@ -99,6 +99,8 @@ export const prepareOrderConfirmationActionJsonSchema = quoteOrderActionJsonSche
 
 export const prepareCartConfirmationActionJsonSchema = emptyActionJsonSchema;
 
+export const getPendingConfirmationActionJsonSchema = emptyActionJsonSchema;
+
 export const orderItemActionJsonSchema = actionJsonSchema(orderItemProperties, ["drinkId", "size"]);
 
 export const updateCartItemActionJsonSchema = actionJsonSchema(

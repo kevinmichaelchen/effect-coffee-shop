@@ -3,6 +3,7 @@ import {
   cartItemIdActionJsonSchema,
   checkoutCartActionJsonSchema,
   emptyActionJsonSchema,
+  getPendingConfirmationActionJsonSchema,
   itemOptionsActionJsonSchema,
   listOrdersActionJsonSchema,
   orderItemActionJsonSchema,
@@ -44,6 +45,10 @@ export const prepareOrderConfirmationToolParameters = toAssistantToolParameters(
 
 export const prepareCartConfirmationToolParameters = toAssistantToolParameters(
   prepareCartConfirmationActionJsonSchema,
+);
+
+export const getPendingConfirmationToolParameters = toAssistantToolParameters(
+  getPendingConfirmationActionJsonSchema,
 );
 
 export const quoteOrderToolParameters = toAssistantToolParameters(quoteOrderActionJsonSchema);

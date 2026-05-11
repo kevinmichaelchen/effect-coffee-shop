@@ -131,6 +131,7 @@ describe("coffee agent auth", () => {
         "quote_order",
         "prepare_order_confirmation",
         "prepare_cart_confirmation",
+        "get_pending_confirmation",
         "place_order",
         "get_order",
         "list_orders",

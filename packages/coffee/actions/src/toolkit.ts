@@ -14,6 +14,10 @@ export const PrepareCartConfirmationTool = Tool.make(
   "prepare_cart_confirmation",
   coffeeActionSpecs.prepare_cart_confirmation,
 );
+export const GetPendingConfirmationTool = Tool.make(
+  "get_pending_confirmation",
+  coffeeActionSpecs.get_pending_confirmation,
+);
 export const PlaceOrderTool = Tool.make("place_order", coffeeActionSpecs.place_order);
 export const GetOrderTool = Tool.make("get_order", coffeeActionSpecs.get_order);
 export const ListOrdersTool = Tool.make("list_orders", coffeeActionSpecs.list_orders);
@@ -35,6 +39,7 @@ export const CoffeeActionToolkit = Toolkit.make(
   QuoteOrderTool,
   PrepareOrderConfirmationTool,
   PrepareCartConfirmationTool,
+  GetPendingConfirmationTool,
   PlaceOrderTool,
   GetOrderTool,
   ListOrdersTool,

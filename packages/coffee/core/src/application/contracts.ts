@@ -171,6 +171,18 @@ export const PendingOrderConfirmationViewSchema = Schema.Struct({
 }).annotate({ identifier: "PendingOrderConfirmationView" });
 export type PendingOrderConfirmationView = typeof PendingOrderConfirmationViewSchema.Type;
 
+export const NoPendingOrderConfirmationViewSchema = Schema.Struct({
+  status: Schema.Literal("no_pending_confirmation"),
+}).annotate({ identifier: "NoPendingOrderConfirmationView" });
+export type NoPendingOrderConfirmationView = typeof NoPendingOrderConfirmationViewSchema.Type;
+
+export const PendingOrderConfirmationLookupViewSchema = Schema.Union([
+  PendingOrderConfirmationViewSchema,
+  NoPendingOrderConfirmationViewSchema,
+]).annotate({ identifier: "PendingOrderConfirmationLookupView" });
+export type PendingOrderConfirmationLookupView =
+  typeof PendingOrderConfirmationLookupViewSchema.Type;
+
 export const CoffeeOrderViewSchema = Schema.Struct({
   id: Schema.toEncoded(OrderIdSchema),
   customerName: Schema.String,
