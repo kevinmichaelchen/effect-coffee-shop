@@ -17,6 +17,8 @@ import type {
   CartItemIdRequest,
   CartSnapshot,
   CheckoutCartRequest,
+  ConfirmedCheckoutCartRequest,
+  ConfirmedPlaceOrderRequest,
   ItemOptions,
   ItemOptionsRequest,
   ListOrdersRequest,
@@ -92,7 +94,7 @@ export class CoffeeOrderApp extends Context.Service<
       AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
     >;
     readonly placeConfirmedOrder: (
-      input: PlaceOrderRequest,
+      input: ConfirmedPlaceOrderRequest,
     ) => Effect.Effect<
       CoffeeOrder,
       AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
@@ -182,7 +184,7 @@ export class CoffeeOrderApp extends Context.Service<
       AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
     >;
     readonly checkoutConfirmedCart: (
-      input: CheckoutCartRequest,
+      input: ConfirmedCheckoutCartRequest,
     ) => Effect.Effect<
       CoffeeOrder,
       AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError

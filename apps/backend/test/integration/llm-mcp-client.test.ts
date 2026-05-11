@@ -17,7 +17,11 @@ const ToolCallOrderResultSchema = Schema.Struct({
   }),
 });
 
-const ToolCallResultSchema = Schema.Struct({});
+const ToolCallConfirmationResultSchema = Schema.Struct({
+  structuredContent: Schema.Struct({
+    confirmationId: Schema.String,
+  }),
+});
 
 const llmMcpWorkflow = () =>
   Effect.gen(function* () {
@@ -37,7 +41,7 @@ const llmMcpWorkflow = () =>
       customerName: "Avery",
       items: [{ drinkId: "latte", size: "medium" }],
     };
-    yield* request(ToolCallResultSchema, "tools/call", {
+    const confirmation = yield* request(ToolCallConfirmationResultSchema, "tools/call", {
       name: "prepare_order_confirmation",
       arguments: { items: orderInput.items },
     });
@@ -45,7 +49,7 @@ const llmMcpWorkflow = () =>
     // Place order after matching confirmation state exists
     const placeOrderResult = yield* request(ToolCallOrderResultSchema, "tools/call", {
       name: "place_order",
-      arguments: orderInput,
+      arguments: { ...orderInput, confirmationId: confirmation.structuredContent.confirmationId },
     });
 
     const orderId = placeOrderResult.structuredContent.id;

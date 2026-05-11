@@ -7,74 +7,17 @@ import {
   type McpMiniflareClient,
   type McpRequest,
 } from "../../test/support/McpMiniflare.ts";
-
-const StringIdResponseSchema = Schema.Struct({
-  id: Schema.String,
-});
-
-const InitializeResponseSchema = Schema.Struct({
-  protocolVersion: Schema.String,
-  serverInfo: Schema.Struct({
-    name: Schema.String,
-    version: Schema.String,
-  }),
-});
-
-const ToolListResponseSchema = Schema.Struct({
-  tools: Schema.Array(
-    Schema.Struct({
-      name: Schema.String,
-    }),
-  ),
-});
-
-const ResourceListResponseSchema = Schema.Struct({
-  resources: Schema.Array(
-    Schema.Struct({
-      uri: Schema.String,
-    }),
-  ),
-});
-
-const PromptListResponseSchema = Schema.Struct({
-  prompts: Schema.Array(
-    Schema.Struct({
-      name: Schema.String,
-    }),
-  ),
-});
-
-const ToolCallOrderResponseSchema = Schema.Struct({
-  isError: Schema.optionalKey(Schema.Boolean),
-  structuredContent: Schema.Struct({
-    id: Schema.String,
-  }),
-});
-
-const ToolCallResponseSchema = Schema.Struct({
-  isError: Schema.optionalKey(Schema.Boolean),
-});
-
-const ResourceReadResponseSchema = Schema.Struct({
-  contents: Schema.Array(
-    Schema.Struct({
-      mimeType: Schema.optionalKey(Schema.String),
-      text: Schema.optionalKey(Schema.String),
-      uri: Schema.optionalKey(Schema.String),
-    }),
-  ),
-});
-
-const PromptGetResponseSchema = Schema.Struct({
-  messages: Schema.Array(
-    Schema.Struct({
-      content: Schema.Struct({
-        text: Schema.optionalKey(Schema.String),
-        type: Schema.optionalKey(Schema.String),
-      }),
-    }),
-  ),
-});
+import {
+  InitializeResponseSchema,
+  PromptGetResponseSchema,
+  PromptListResponseSchema,
+  ResourceListResponseSchema,
+  ResourceReadResponseSchema,
+  StringIdResponseSchema,
+  ToolCallConfirmationResponseSchema,
+  ToolCallOrderResponseSchema,
+  ToolListResponseSchema,
+} from "../../test/support/McpResponseSchemas.ts";
 
 const initializeClient = (request: McpRequest) =>
   request(InitializeResponseSchema, "initialize", {
@@ -92,13 +35,13 @@ const placeLatteOrder = (request: McpRequest) =>
       customerName: "Avery",
       items: [{ drinkId: "latte", size: "medium" }],
     };
-    yield* request(ToolCallResponseSchema, "tools/call", {
+    const confirmation = yield* request(ToolCallConfirmationResponseSchema, "tools/call", {
       name: "prepare_order_confirmation",
       arguments: { items: orderInput.items },
     });
     return yield* request(ToolCallOrderResponseSchema, "tools/call", {
       name: "place_order",
-      arguments: orderInput,
+      arguments: { ...orderInput, confirmationId: confirmation.structuredContent.confirmationId },
     });
   });
 

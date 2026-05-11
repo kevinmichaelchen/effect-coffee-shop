@@ -13,10 +13,10 @@ import {
   requireSignedInActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import {
+  type ConfirmedCheckoutCartRequest,
+  type ConfirmedPlaceOrderRequest,
   OrderItemsInputSchema,
   toOrderQuoteView,
-  type CheckoutCartRequest,
-  type PlaceOrderRequest,
 } from "../contracts.ts";
 import {
   InternalAppError,
@@ -66,6 +66,19 @@ const assertPendingSource = Effect.fnUntraced(function* (
   );
 });
 
+const assertPendingConfirmationId = Effect.fnUntraced(function* (
+  confirmation: PendingOrderConfirmation,
+  confirmationId: PendingOrderConfirmation["confirmationId"],
+): Effect.fn.Return<void, InvalidOrderInputError> {
+  yield* Effect.succeed(confirmation.confirmationId === confirmationId).pipe(
+    Effect.filterOrFail(
+      (matches) => matches,
+      () => invalidOrderInput("confirm the updated order before placing it"),
+    ),
+    Effect.asVoid,
+  );
+});
+
 const assertPendingQuote = Effect.fnUntraced(function* (input: {
   readonly actual: Parameters<typeof toOrderQuoteView>[0];
   readonly pending: PendingOrderConfirmation;
@@ -86,13 +99,14 @@ const assertPendingQuote = Effect.fnUntraced(function* (input: {
 });
 
 export const placeConfirmedOrder = Effect.fn("CoffeeOrders.placeConfirmedOrder")(function* (
-  request: PlaceOrderRequest,
+  request: ConfirmedPlaceOrderRequest,
 ): Effect.fn.Return<
   CoffeeOrder,
   AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
   MenuRepository | OrderIdGenerator | OrderRepository | PendingOrderConfirmationRepository
 > {
   const confirmation = yield* loadPendingConfirmation();
+  yield* assertPendingConfirmationId(confirmation, request.confirmationId);
   yield* assertPendingSource(confirmation, "direct-order");
   const quote = yield* resolveOrderQuote(request.items);
   yield* assertPendingQuote({ actual: quote, pending: confirmation });
@@ -109,7 +123,7 @@ export const placeConfirmedOrder = Effect.fn("CoffeeOrders.placeConfirmedOrder")
 });
 
 export const checkoutConfirmedCart = Effect.fn("CoffeeOrders.checkoutConfirmedCart")(function* (
-  request: CheckoutCartRequest,
+  request: ConfirmedCheckoutCartRequest,
 ): Effect.fn.Return<
   CoffeeOrder,
   AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
@@ -120,6 +134,7 @@ export const checkoutConfirmedCart = Effect.fn("CoffeeOrders.checkoutConfirmedCa
   | PendingOrderConfirmationRepository
 > {
   const confirmation = yield* loadPendingConfirmation();
+  yield* assertPendingConfirmationId(confirmation, request.confirmationId);
   yield* assertPendingSource(confirmation, "cart");
   const cartRepository = yield* CartRepository;
   const cart = yield* cartRepository.getByOwnerUserId(confirmation.ownerUserId).pipe(

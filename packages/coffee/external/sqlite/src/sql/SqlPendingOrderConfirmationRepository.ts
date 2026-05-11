@@ -36,9 +36,10 @@ const makeSqlPendingOrderConfirmationQueries = Effect.gen(function* () {
     const header = toSqlPendingOrderConfirmationSave(confirmation);
     yield* savePendingOrderConfirmation({
       param1: header.ownerUserId,
-      param2: header.source,
-      param3: header.totalPriceCents,
-      param4: header.updatedAt,
+      param2: header.confirmationId,
+      param3: header.source,
+      param4: header.totalPriceCents,
+      param5: header.updatedAt,
     }).pipe(Effect.provideService(SqlClient.SqlClient, sqlClient));
     yield* deletePendingOrderConfirmationItemsByOwner({ param1: confirmation.ownerUserId }).pipe(
       Effect.provideService(SqlClient.SqlClient, sqlClient),

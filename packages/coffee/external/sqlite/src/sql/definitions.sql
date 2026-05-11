@@ -63,6 +63,7 @@ create index cart_items_owner_user_id_position_idx on cart_items (owner_user_id,
 
 create table pending_order_confirmations (
   owner_user_id text primary key,
+  confirmation_id text not null,
   source text not null,
   total_price_cents integer not null,
   updated_at text not null

@@ -173,6 +173,7 @@ export const toPendingOrderConfirmation = (
   items: readonly DrizzlePendingOrderConfirmationItemRow[],
 ): PendingOrderConfirmation =>
   decodePendingOrderConfirmation({
+    confirmationId: confirmation.confirmationId,
     ownerUserId: confirmation.ownerUserId,
     source: confirmation.source,
     status: pendingOrderConfirmationStatus,
@@ -245,6 +246,7 @@ export const toPendingOrderConfirmationInsert = (
   confirmation: PendingOrderConfirmation,
 ): typeof pendingOrderConfirmationsTable.$inferInsert => ({
   ownerUserId: confirmation.ownerUserId,
+  confirmationId: confirmation.confirmationId,
   source: confirmation.source,
   totalPriceCents: moneyToCents(confirmation.totalPrice),
   updatedAt: Schema.encodeSync(Schema.DateTimeUtcFromString)(confirmation.updatedAt),

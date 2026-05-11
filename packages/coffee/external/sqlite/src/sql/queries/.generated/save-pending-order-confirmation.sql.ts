@@ -3,10 +3,17 @@ import { SqlClient } from "effect/unstable/sql";
 
 const sql = `
 insert into
-  pending_order_confirmations (owner_user_id, source, total_price_cents, updated_at)
+  pending_order_confirmations (
+    owner_user_id,
+    confirmation_id,
+    source,
+    total_price_cents,
+    updated_at
+  )
 values
-  (?, ?, ?, ?)
+  (?, ?, ?, ?, ?)
 on conflict (owner_user_id) do update set
+  confirmation_id = excluded.confirmation_id,
   source = excluded.source,
   total_price_cents = excluded.total_price_cents,
   updated_at = excluded.updated_at;
@@ -14,7 +21,7 @@ on conflict (owner_user_id) do update set
 const query = (params: savePendingOrderConfirmation.Params) => ({
   name: "savePendingOrderConfirmation",
   sql,
-  args: [params.param1, params.param2, params.param3, params.param4],
+  args: [params.param1, params.param2, params.param3, params.param4, params.param5],
 });
 
 export const savePendingOrderConfirmation = Object.assign(
@@ -32,7 +39,8 @@ export namespace savePendingOrderConfirmation {
   export type Params = {
     param1: string;
     param2: string;
-    param3: number;
-    param4: string;
+    param3: string;
+    param4: number;
+    param5: string;
   };
 }

@@ -171,6 +171,7 @@ export type PendingOrderConfirmationItemsRow = {
 
 export type PendingOrderConfirmationsRow = {
   owner_user_id: string;
+  confirmation_id: string;
   source: string;
   total_price_cents: number;
   updated_at: string;

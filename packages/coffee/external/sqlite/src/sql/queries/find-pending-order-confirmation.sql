@@ -1,5 +1,6 @@
 select
   owner_user_id,
+  confirmation_id,
   source,
   total_price_cents,
   updated_at

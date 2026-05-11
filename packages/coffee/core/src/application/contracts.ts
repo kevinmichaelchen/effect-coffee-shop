@@ -13,6 +13,7 @@ import {
 } from "../domain/menu.ts";
 import { MoneyFromCentsSchema, MoneySchema } from "../domain/money.ts";
 import {
+  PendingOrderConfirmationIdSchema,
   PendingOrderConfirmationSourceSchema,
   type PendingOrderConfirmation,
 } from "../domain/pending-order-confirmation.ts";
@@ -49,6 +50,13 @@ export const PlaceOrderRequestSchema = Schema.Struct({
 }).annotate({ identifier: "PlaceOrderRequest" });
 export type PlaceOrderRequest = typeof PlaceOrderRequestSchema.Type;
 
+export const ConfirmedPlaceOrderRequestSchema = Schema.Struct({
+  confirmationId: PendingOrderConfirmationIdSchema,
+  customerName: Schema.optionalKey(BoundaryStringSchema),
+  items: OrderItemsInputSchema,
+}).annotate({ identifier: "ConfirmedPlaceOrderRequest" });
+export type ConfirmedPlaceOrderRequest = typeof ConfirmedPlaceOrderRequestSchema.Type;
+
 export const QuoteOrderRequestSchema = Schema.Struct({
   items: OrderItemsInputSchema,
 }).annotate({ identifier: "QuoteOrderRequest" });
@@ -80,6 +88,12 @@ export const CheckoutCartRequestSchema = Schema.Struct({
   customerName: Schema.optionalKey(BoundaryStringSchema),
 }).annotate({ identifier: "CheckoutCartRequest" });
 export type CheckoutCartRequest = typeof CheckoutCartRequestSchema.Type;
+
+export const ConfirmedCheckoutCartRequestSchema = Schema.Struct({
+  confirmationId: PendingOrderConfirmationIdSchema,
+  customerName: Schema.optionalKey(BoundaryStringSchema),
+}).annotate({ identifier: "ConfirmedCheckoutCartRequest" });
+export type ConfirmedCheckoutCartRequest = typeof ConfirmedCheckoutCartRequestSchema.Type;
 
 export const ListOrdersRequestSchema = Schema.Struct({
   status: Schema.optionalKey(BoundaryStringSchema),
@@ -147,6 +161,7 @@ export const CoffeeOrderItemViewSchema = Schema.Struct({
 export type CoffeeOrderItemView = typeof CoffeeOrderItemViewSchema.Type;
 
 export const PendingOrderConfirmationViewSchema = Schema.Struct({
+  confirmationId: Schema.toEncoded(PendingOrderConfirmationIdSchema),
   ownerUserId: Schema.String,
   source: PendingOrderConfirmationSourceSchema,
   status: Schema.Literal("pending_confirmation"),
@@ -294,6 +309,7 @@ const CartViewModelSchema = Schema.Struct({
 );
 
 const PendingOrderConfirmationViewModelSchema = Schema.Struct({
+  confirmationId: PendingOrderConfirmationIdSchema,
   ownerUserId: Schema.String,
   source: PendingOrderConfirmationSourceSchema,
   status: Schema.Literal("pending_confirmation"),
@@ -395,6 +411,7 @@ export const toPendingOrderConfirmationView = (
   confirmation: PendingOrderConfirmation,
 ): PendingOrderConfirmationView =>
   encodePendingOrderConfirmationView({
+    confirmationId: confirmation.confirmationId,
     ownerUserId: confirmation.ownerUserId,
     source: confirmation.source,
     status: confirmation.status,

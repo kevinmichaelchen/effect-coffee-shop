@@ -1,9 +1,10 @@
 import {
   CartItemIdRequestSchema,
   CartViewSchema,
-  CheckoutCartRequestSchema,
   CoffeeOrderViewSchema,
   CoffeeOrdersViewSchema,
+  ConfirmedCheckoutCartRequestSchema,
+  ConfirmedPlaceOrderRequestSchema,
   ItemOptionsRequestSchema,
   ItemOptionsViewSchema,
   ListOrdersRequestSchema,
@@ -12,7 +13,6 @@ import {
   OrderQuoteViewSchema,
   OrderValidationViewSchema,
   PendingOrderConfirmationViewSchema,
-  PlaceOrderRequestSchema,
   QuoteOrderRequestSchema,
   UpdateCartItemRequestSchema,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
@@ -79,8 +79,8 @@ export const coffeeActionSpecs = {
     success: PendingOrderConfirmationViewSchema,
   }),
   place_order: actionSpec({
-    description: "Create a new multi-item coffee order",
-    parameters: PlaceOrderRequestSchema,
+    description: "Create the multi-item coffee order matching a prepared confirmation id",
+    parameters: ConfirmedPlaceOrderRequestSchema,
     success: CoffeeOrderViewSchema,
   }),
   get_order: actionSpec({
@@ -112,8 +112,8 @@ export const coffeeActionSpecs = {
   ),
   clear_cart: cartViewActionSpec("Clear the signed-in actor's cart", EmptyActionInputSchema),
   checkout_cart: actionSpec({
-    description: "Place the signed-in actor's cart as one multi-item order",
-    parameters: CheckoutCartRequestSchema,
+    description: "Place the signed-in actor's cart matching a prepared confirmation id",
+    parameters: ConfirmedCheckoutCartRequestSchema,
     success: CoffeeOrderViewSchema,
   }),
 } as const;

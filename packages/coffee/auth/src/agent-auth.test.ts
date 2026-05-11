@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import {
   CoffeeOrderViewSchema,
   CoffeeOrdersViewSchema,
+  PendingOrderConfirmationViewSchema,
   type CoffeeOrderView,
   type CoffeeOrdersView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
@@ -67,13 +68,16 @@ async function placeLatteOrder(db: D1Database, session: AgentSession) {
   const orderInput = {
     items: [{ drinkId: "latte", size: "medium" }],
   };
-  await executeCoffeeAgentCapability({
+  const confirmationResult = await executeCoffeeAgentCapability({
     arguments: orderInput,
     capability: "prepare_order_confirmation",
     runApp,
   });
+  const confirmation = await Schema.decodeUnknownPromise(PendingOrderConfirmationViewSchema)(
+    confirmationResult,
+  );
   const result = await executeCoffeeAgentCapability({
-    arguments: orderInput,
+    arguments: { ...orderInput, confirmationId: confirmation.confirmationId },
     capability: "place_order",
     runApp,
   });

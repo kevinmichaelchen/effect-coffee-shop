@@ -24,6 +24,7 @@ import {
   type CoffeeOrderItem,
 } from "@effect-coffee-shop/coffee-core/domain/order";
 import {
+  PendingOrderConfirmationIdSchema,
   pendingOrderConfirmationStatus,
   PendingOrderConfirmationSchema,
   PendingOrderConfirmationSourceSchema,
@@ -110,12 +111,14 @@ export const SqlCartItemModel = Schema.Struct({
 
 export const SqlPendingOrderConfirmationModel = Schema.Struct({
   ownerUserId: Schema.String,
+  confirmationId: PendingOrderConfirmationIdSchema,
   source: PendingOrderConfirmationSourceSchema,
   totalPrice: MoneyFromCentsSchema,
   updatedAt: Schema.DateTimeUtcFromString,
 }).pipe(
   Schema.encodeKeys({
     ownerUserId: "owner_user_id",
+    confirmationId: "confirmation_id",
     totalPrice: "total_price_cents",
     updatedAt: "updated_at",
   }),
@@ -198,6 +201,7 @@ export interface SqlCartItemSave {
 
 export interface SqlPendingOrderConfirmationSave {
   readonly ownerUserId: string;
+  readonly confirmationId: string;
   readonly source: string;
   readonly totalPriceCents: number;
   readonly updatedAt: string;
@@ -278,6 +282,7 @@ export const toSqlPendingOrderConfirmationSave = (
   confirmation: PendingOrderConfirmation,
 ): SqlPendingOrderConfirmationSave => ({
   ownerUserId: confirmation.ownerUserId,
+  confirmationId: confirmation.confirmationId,
   source: confirmation.source,
   totalPriceCents: moneyToCents(confirmation.totalPrice),
   updatedAt: Schema.encodeSync(Schema.DateTimeUtcFromString)(confirmation.updatedAt),
@@ -367,6 +372,7 @@ export const toPendingOrderConfirmation = (
   items: readonly SqlPendingOrderConfirmationItem[],
 ): PendingOrderConfirmation =>
   decodePendingOrderConfirmation({
+    confirmationId: confirmation.confirmationId,
     ownerUserId: confirmation.ownerUserId,
     source: confirmation.source,
     status: pendingOrderConfirmationStatus,

@@ -4,6 +4,7 @@ import { decodePlaceOrderInput, decodeQuoteOrderInput } from "./schemas.ts";
 describe("coffee action schemas", () => {
   it("trims order boundary strings before application use cases run", async () => {
     const input = await decodePlaceOrderInput({
+      confirmationId: "00000000-0000-4000-8000-000000000000",
       customerName: "  Avery  ",
       items: [
         {

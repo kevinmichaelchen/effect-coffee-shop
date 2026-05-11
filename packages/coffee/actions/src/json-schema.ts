@@ -32,6 +32,10 @@ const actionJsonSchema = (
 });
 
 const cartItemIdProperty = property("Cart line id, such as cart-item-0001.", "string");
+const confirmationIdProperty = property(
+  "Prepared confirmation id returned by prepare_order_confirmation or prepare_cart_confirmation.",
+  "string",
+);
 const drinkIdProperty = property("Menu drink id such as latte.", "string");
 const milkProperty = property("Milk choice such as whole, oat, almond, or none.", "string");
 const notesProperty = property("Optional item note.", "string");
@@ -72,6 +76,17 @@ export const listOrdersActionJsonSchema = actionJsonSchema({
 
 export const placeOrderActionJsonSchema = actionJsonSchema(
   {
+    confirmationId: confirmationIdProperty,
+    items: property(
+      "Order line items. Each item should include drinkId, size, and optional milk, temperature, shots, notes, and quantity.",
+      "array",
+    ),
+  },
+  ["confirmationId", "items"],
+);
+
+export const quoteOrderActionJsonSchema = actionJsonSchema(
+  {
     items: property(
       "Order line items. Each item should include drinkId, size, and optional milk, temperature, shots, notes, and quantity.",
       "array",
@@ -79,8 +94,6 @@ export const placeOrderActionJsonSchema = actionJsonSchema(
   },
   ["items"],
 );
-
-export const quoteOrderActionJsonSchema = placeOrderActionJsonSchema;
 
 export const prepareOrderConfirmationActionJsonSchema = quoteOrderActionJsonSchema;
 
@@ -109,6 +122,10 @@ export const cartItemIdActionJsonSchema = actionJsonSchema(
   ["cartItemId"],
 );
 
-export const checkoutCartActionJsonSchema = actionJsonSchema({
-  customerName: property("Optional customer display name for system/staff checkout.", "string"),
-});
+export const checkoutCartActionJsonSchema = actionJsonSchema(
+  {
+    confirmationId: confirmationIdProperty,
+    customerName: property("Optional customer display name for system/staff checkout.", "string"),
+  },
+  ["confirmationId"],
+);

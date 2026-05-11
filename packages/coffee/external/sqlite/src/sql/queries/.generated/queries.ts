@@ -66,7 +66,7 @@ export const sqlfuQuerySources = [
     sqlFile: "find-pending-order-confirmation.sql",
     generatedFile: "find-pending-order-confirmation.sql.ts",
     sourceSql:
-      "select\n  owner_user_id,\n  source,\n  total_price_cents,\n  updated_at\nfrom pending_order_confirmations\nwhere owner_user_id = ?;\n",
+      "select\n  owner_user_id,\n  confirmation_id,\n  source,\n  total_price_cents,\n  updated_at\nfrom pending_order_confirmations\nwhere owner_user_id = ?;\n",
   },
   {
     sqlFile: "insert-cart.sql",
@@ -144,7 +144,7 @@ export const sqlfuQuerySources = [
     sqlFile: "save-pending-order-confirmation.sql",
     generatedFile: "save-pending-order-confirmation.sql.ts",
     sourceSql:
-      "insert into\n  pending_order_confirmations (owner_user_id, source, total_price_cents, updated_at)\nvalues\n  (?, ?, ?, ?)\non conflict (owner_user_id) do update set\n  source = excluded.source,\n  total_price_cents = excluded.total_price_cents,\n  updated_at = excluded.updated_at;\n",
+      "insert into\n  pending_order_confirmations (\n    owner_user_id,\n    confirmation_id,\n    source,\n    total_price_cents,\n    updated_at\n  )\nvalues\n  (?, ?, ?, ?, ?)\non conflict (owner_user_id) do update set\n  confirmation_id = excluded.confirmation_id,\n  source = excluded.source,\n  total_price_cents = excluded.total_price_cents,\n  updated_at = excluded.updated_at;\n",
   },
   {
     sqlFile: "save-pending-order-confirmation-item.sql",

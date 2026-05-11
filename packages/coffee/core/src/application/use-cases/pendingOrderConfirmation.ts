@@ -1,6 +1,7 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Random from "effect/Random";
 import * as Schema from "effect/Schema";
 import type {
   DrinkNotFoundError,
@@ -8,6 +9,7 @@ import type {
 } from "@effect-coffee-shop/coffee-core/domain/errors";
 import {
   pendingOrderConfirmationStatus,
+  pendingOrderConfirmationIdFromString,
   type PendingOrderConfirmation,
 } from "@effect-coffee-shop/coffee-core/domain/pending-order-confirmation";
 import {
@@ -78,9 +80,13 @@ export const prepareOrderConfirmation = Effect.fn("CoffeeOrders.prepareOrderConf
     const actor = yield* requireSignedInActor();
     const quote = yield* resolveOrderQuote(request.items);
     const updatedAt = yield* DateTime.now;
+    const confirmationId = yield* Random.nextUUIDv4.pipe(
+      Effect.map(pendingOrderConfirmationIdFromString),
+    );
 
     return yield* savePendingConfirmation({
       confirmation: {
+        confirmationId,
         ownerUserId: actor.userId,
         source: "direct-order",
         status: pendingOrderConfirmationStatus,
@@ -106,9 +112,13 @@ export const prepareCartConfirmation = Effect.fn("CoffeeOrders.prepareCartConfir
     );
     const quote = yield* resolveOrderQuote(items);
     const updatedAt = yield* DateTime.now;
+    const confirmationId = yield* Random.nextUUIDv4.pipe(
+      Effect.map(pendingOrderConfirmationIdFromString),
+    );
 
     return yield* savePendingConfirmation({
       confirmation: {
+        confirmationId,
         ownerUserId: cart.ownerUserId,
         source: "cart",
         status: pendingOrderConfirmationStatus,

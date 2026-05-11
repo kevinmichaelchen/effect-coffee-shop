@@ -96,11 +96,12 @@ describe("cart and order planning", () => {
 
   it.effect("places only the direct order that is pending confirmation", () =>
     Effect.gen(function* () {
-      yield* prepareOrderConfirmation({
+      const confirmation = yield* prepareOrderConfirmation({
         items: [{ drinkId: "latte", size: "medium", quantity: 2 }],
       });
 
       const order = yield* placeConfirmedOrder({
+        confirmationId: confirmation.confirmationId,
         items: [{ drinkId: "latte", size: "medium", quantity: 2 }],
       });
       const afterPurchase = yield* getPendingOrderConfirmation();
@@ -113,15 +114,40 @@ describe("cart and order planning", () => {
 
   it.effect("rejects a changed direct order after confirmation", () =>
     Effect.gen(function* () {
-      yield* prepareOrderConfirmation({
+      const confirmation = yield* prepareOrderConfirmation({
         items: [{ drinkId: "latte", size: "medium", quantity: 1 }],
       });
 
       const exit = yield* placeConfirmedOrder({
+        confirmationId: confirmation.confirmationId,
         items: [{ drinkId: "latte", size: "medium", quantity: 2 }],
       }).pipe(Effect.exit);
 
       assert.strictEqual(exit._tag, "Failure");
+    }).pipe(provideActor(averyActor), Effect.provide(InMemoryCoffeeAppLive)),
+  );
+
+  it.effect("rejects an older confirmation id after a newer direct confirmation", () =>
+    Effect.gen(function* () {
+      const first = yield* prepareOrderConfirmation({
+        items: [{ drinkId: "latte", size: "medium", quantity: 1 }],
+      });
+      const latest = yield* prepareOrderConfirmation({
+        items: [{ drinkId: "latte", size: "medium", quantity: 1 }],
+      });
+
+      const staleExit = yield* placeConfirmedOrder({
+        confirmationId: first.confirmationId,
+        items: [{ drinkId: "latte", size: "medium", quantity: 1 }],
+      }).pipe(Effect.exit);
+      const order = yield* placeConfirmedOrder({
+        confirmationId: latest.confirmationId,
+        items: [{ drinkId: "latte", size: "medium", quantity: 1 }],
+      });
+
+      assert.notStrictEqual(first.confirmationId, latest.confirmationId);
+      assert.strictEqual(staleExit._tag, "Failure");
+      assert.strictEqual(order.items.length, 1);
     }).pipe(provideActor(averyActor), Effect.provide(InMemoryCoffeeAppLive)),
   );
 
@@ -191,9 +217,9 @@ describe("cart and order planning", () => {
         size: "small",
         quantity: 2,
       });
-      yield* prepareCartConfirmation();
+      const confirmation = yield* prepareCartConfirmation();
 
-      const order = yield* checkoutConfirmedCart({});
+      const order = yield* checkoutConfirmedCart({ confirmationId: confirmation.confirmationId });
       const afterPurchase = yield* getPendingOrderConfirmation();
 
       assert.strictEqual(order.items.length, 1);

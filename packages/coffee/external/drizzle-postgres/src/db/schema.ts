@@ -98,6 +98,7 @@ export const cartItemsTable = pgTable(
 
 export const pendingOrderConfirmationsTable = pgTable("pending_order_confirmations", {
   ownerUserId: text("owner_user_id").primaryKey(),
+  confirmationId: text("confirmation_id").notNull(),
   source: text("source").notNull(),
   totalPriceCents: integer("total_price_cents").notNull(),
   updatedAt: text("updated_at").notNull(),

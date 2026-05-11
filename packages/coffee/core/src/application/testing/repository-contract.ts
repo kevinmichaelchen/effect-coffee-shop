@@ -164,6 +164,7 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
       Effect.gen(function* () {
         const pendingOrderConfirmationRepository = yield* PendingOrderConfirmationRepository;
         const confirmation = decodePendingOrderConfirmation({
+          confirmationId: "00000000-0000-4000-8000-000000000000",
           ownerUserId: "user-avery",
           source: "direct-order",
           status: "pending_confirmation",
