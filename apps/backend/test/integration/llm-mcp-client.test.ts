@@ -17,6 +17,8 @@ const ToolCallOrderResultSchema = Schema.Struct({
   }),
 });
 
+const ToolCallResultSchema = Schema.Struct({});
+
 const llmMcpWorkflow = () =>
   Effect.gen(function* () {
     const request = getClient().request;
@@ -31,13 +33,19 @@ const llmMcpWorkflow = () =>
       },
     });
 
-    // Place order directly with correct parameters
+    const orderInput = {
+      customerName: "Avery",
+      items: [{ drinkId: "latte", size: "medium" }],
+    };
+    yield* request(ToolCallResultSchema, "tools/call", {
+      name: "prepare_order_confirmation",
+      arguments: { items: orderInput.items },
+    });
+
+    // Place order after matching confirmation state exists
     const placeOrderResult = yield* request(ToolCallOrderResultSchema, "tools/call", {
       name: "place_order",
-      arguments: {
-        customerName: "Avery",
-        items: [{ drinkId: "latte", size: "medium" }],
-      },
+      arguments: orderInput,
     });
 
     const orderId = placeOrderResult.structuredContent.id;

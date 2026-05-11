@@ -29,7 +29,8 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
             app.prepareOrderConfirmation(input).pipe(Effect.map(toPendingOrderConfirmationView)),
           prepare_cart_confirmation: () =>
             app.prepareCartConfirmation().pipe(Effect.map(toPendingOrderConfirmationView)),
-          place_order: (input) => app.placeOrder(input).pipe(Effect.map(toCoffeeOrderView)),
+          place_order: (input) =>
+            app.placeConfirmedOrder(input).pipe(Effect.map(toCoffeeOrderView)),
           get_order: ({ orderId }) => app.getOrder(orderId).pipe(Effect.map(toCoffeeOrderView)),
           list_orders: (input) => app.listOrders(input).pipe(Effect.map(toCoffeeOrdersView)),
           start_brewing: ({ orderId }) =>
@@ -44,7 +45,8 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
           update_cart_item: (input) => app.updateCartItem(input).pipe(Effect.map(toCartView)),
           remove_cart_item: (input) => app.removeCartItem(input).pipe(Effect.map(toCartView)),
           clear_cart: () => app.clearCart().pipe(Effect.map(toCartView)),
-          checkout_cart: (input) => app.checkoutCart(input).pipe(Effect.map(toCoffeeOrderView)),
+          checkout_cart: (input) =>
+            app.checkoutConfirmedCart(input).pipe(Effect.map(toCoffeeOrderView)),
         }),
       ),
     ),

@@ -40,6 +40,7 @@ import { PendingOrderConfirmationRepository } from "./ports/PendingOrderConfirma
 import {
   cancelOrder,
   addCartItem,
+  checkoutConfirmedCart,
   checkoutCart,
   clearCart,
   getCart,
@@ -49,6 +50,7 @@ import {
   listOrders,
   markReady,
   placeOrder,
+  placeConfirmedOrder,
   pickUpOrder,
   quoteOrder,
   prepareCartConfirmation,
@@ -84,6 +86,12 @@ export class CoffeeOrderApp extends Context.Service<
       AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
     >;
     readonly placeOrder: (
+      input: PlaceOrderRequest,
+    ) => Effect.Effect<
+      CoffeeOrder,
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
+    readonly placeConfirmedOrder: (
       input: PlaceOrderRequest,
     ) => Effect.Effect<
       CoffeeOrder,
@@ -173,6 +181,12 @@ export class CoffeeOrderApp extends Context.Service<
       CoffeeOrder,
       AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
     >;
+    readonly checkoutConfirmedCart: (
+      input: CheckoutCartRequest,
+    ) => Effect.Effect<
+      CoffeeOrder,
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
   }
 >()("effect-coffee-shop/application/CoffeeOrderApp") {
   static readonly layer = Layer.effect(
@@ -215,6 +229,16 @@ export class CoffeeOrderApp extends Context.Service<
             Effect.provideService(MenuRepository, menuRepository),
             Effect.provideService(OrderIdGenerator, orderIdGenerator),
             Effect.provideService(OrderRepository, orderRepository),
+          ),
+        placeConfirmedOrder: (input) =>
+          placeConfirmedOrder(input).pipe(
+            Effect.provideService(MenuRepository, menuRepository),
+            Effect.provideService(OrderIdGenerator, orderIdGenerator),
+            Effect.provideService(OrderRepository, orderRepository),
+            Effect.provideService(
+              PendingOrderConfirmationRepository,
+              pendingOrderConfirmationRepository,
+            ),
           ),
         getOrder: (orderId) =>
           getOrder(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
@@ -260,6 +284,17 @@ export class CoffeeOrderApp extends Context.Service<
             Effect.provideService(MenuRepository, menuRepository),
             Effect.provideService(OrderIdGenerator, orderIdGenerator),
             Effect.provideService(OrderRepository, orderRepository),
+          ),
+        checkoutConfirmedCart: (input) =>
+          checkoutConfirmedCart(input).pipe(
+            Effect.provideService(CartRepository, cartRepository),
+            Effect.provideService(MenuRepository, menuRepository),
+            Effect.provideService(OrderIdGenerator, orderIdGenerator),
+            Effect.provideService(OrderRepository, orderRepository),
+            Effect.provideService(
+              PendingOrderConfirmationRepository,
+              pendingOrderConfirmationRepository,
+            ),
           ),
       });
     }),

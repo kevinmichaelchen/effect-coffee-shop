@@ -51,6 +51,10 @@ const ToolCallOrderResponseSchema = Schema.Struct({
   }),
 });
 
+const ToolCallResponseSchema = Schema.Struct({
+  isError: Schema.optionalKey(Schema.Boolean),
+});
+
 const ResourceReadResponseSchema = Schema.Struct({
   contents: Schema.Array(
     Schema.Struct({
@@ -83,12 +87,19 @@ const initializeClient = (request: McpRequest) =>
   });
 
 const placeLatteOrder = (request: McpRequest) =>
-  request(ToolCallOrderResponseSchema, "tools/call", {
-    name: "place_order",
-    arguments: {
+  Effect.gen(function* () {
+    const orderInput = {
       customerName: "Avery",
       items: [{ drinkId: "latte", size: "medium" }],
-    },
+    };
+    yield* request(ToolCallResponseSchema, "tools/call", {
+      name: "prepare_order_confirmation",
+      arguments: { items: orderInput.items },
+    });
+    return yield* request(ToolCallOrderResponseSchema, "tools/call", {
+      name: "place_order",
+      arguments: orderInput,
+    });
   });
 
 const verifyCatalogSurface = (request: McpRequest) =>

@@ -83,7 +83,7 @@ const actionHandlers = {
     app.prepareCartConfirmation().pipe(Effect.map(toPendingOrderConfirmationView)),
   ),
   place_order: runDecodedAction(decodePlaceOrderInput, (app, payload) =>
-    app.placeOrder(payload).pipe(Effect.map(toCoffeeOrderView)),
+    app.placeConfirmedOrder(payload).pipe(Effect.map(toCoffeeOrderView)),
   ),
   get_order: runOrderIdAction((app, orderId) => app.getOrder(orderId)),
   list_orders: runDecodedAction(decodeListOrdersInput, (app, payload) =>
@@ -105,7 +105,7 @@ const actionHandlers = {
   ),
   clear_cart: runEmptyAction((app) => app.clearCart().pipe(Effect.map(toCartView))),
   checkout_cart: runDecodedAction(decodeCheckoutCartInput, (app, payload) =>
-    app.checkoutCart(payload).pipe(Effect.map(toCoffeeOrderView)),
+    app.checkoutConfirmedCart(payload).pipe(Effect.map(toCoffeeOrderView)),
   ),
 } satisfies Record<CoffeeActionName, ActionHandler>;
 

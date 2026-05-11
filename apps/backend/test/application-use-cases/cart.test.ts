@@ -12,6 +12,7 @@ import { moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
 import { QuoteOrderRequestSchema } from "@effect-coffee-shop/coffee-core/application/contracts";
 import {
   addCartItem,
+  checkoutConfirmedCart,
   checkoutCart,
   clearCart,
   getCart,
@@ -20,6 +21,7 @@ import {
   listOrders,
   prepareCartConfirmation,
   prepareOrderConfirmation,
+  placeConfirmedOrder,
   quoteOrder,
   removeCartItem,
   updateCartItem,
@@ -92,6 +94,37 @@ describe("cart and order planning", () => {
     }).pipe(provideActor(averyActor), Effect.provide(InMemoryCoffeeAppLive)),
   );
 
+  it.effect("places only the direct order that is pending confirmation", () =>
+    Effect.gen(function* () {
+      yield* prepareOrderConfirmation({
+        items: [{ drinkId: "latte", size: "medium", quantity: 2 }],
+      });
+
+      const order = yield* placeConfirmedOrder({
+        items: [{ drinkId: "latte", size: "medium", quantity: 2 }],
+      });
+      const afterPurchase = yield* getPendingOrderConfirmation();
+
+      assert.strictEqual(order.items.length, 1);
+      assert.strictEqual(order.items[0]?.quantity, 2);
+      assert.deepStrictEqual(afterPurchase, Option.none());
+    }).pipe(provideActor(averyActor), Effect.provide(InMemoryCoffeeAppLive)),
+  );
+
+  it.effect("rejects a changed direct order after confirmation", () =>
+    Effect.gen(function* () {
+      yield* prepareOrderConfirmation({
+        items: [{ drinkId: "latte", size: "medium", quantity: 1 }],
+      });
+
+      const exit = yield* placeConfirmedOrder({
+        items: [{ drinkId: "latte", size: "medium", quantity: 2 }],
+      }).pipe(Effect.exit);
+
+      assert.strictEqual(exit._tag, "Failure");
+    }).pipe(provideActor(averyActor), Effect.provide(InMemoryCoffeeAppLive)),
+  );
+
   it.effect("returns menu item options and defaults", () =>
     Effect.gen(function* () {
       const options = yield* getItemOptions({ drinkId: "cold-brew" });
@@ -148,6 +181,24 @@ describe("cart and order planning", () => {
       assert.strictEqual(confirmation.ownerUserId, "user-avery");
       assert.strictEqual(confirmation.items.length, 1);
       assert.deepStrictEqual(loaded, Option.some(confirmation));
+    }).pipe(provideActor(averyActor), Effect.provide(InMemoryCoffeeAppLive)),
+  );
+
+  it.effect("checks out only the cart that is pending confirmation", () =>
+    Effect.gen(function* () {
+      yield* addCartItem({
+        drinkId: "tea",
+        size: "small",
+        quantity: 2,
+      });
+      yield* prepareCartConfirmation();
+
+      const order = yield* checkoutConfirmedCart({});
+      const afterPurchase = yield* getPendingOrderConfirmation();
+
+      assert.strictEqual(order.items.length, 1);
+      assert.strictEqual(order.items[0]?.quantity, 2);
+      assert.deepStrictEqual(afterPurchase, Option.none());
     }).pipe(provideActor(averyActor), Effect.provide(InMemoryCoffeeAppLive)),
   );
 

@@ -64,10 +64,16 @@ async function placeLatteOrder(db: D1Database, session: AgentSession) {
     appLayer: makeCloudflareCoffeeAppLive(db),
     session,
   });
+  const orderInput = {
+    items: [{ drinkId: "latte", size: "medium" }],
+  };
+  await executeCoffeeAgentCapability({
+    arguments: orderInput,
+    capability: "prepare_order_confirmation",
+    runApp,
+  });
   const result = await executeCoffeeAgentCapability({
-    arguments: {
-      items: [{ drinkId: "latte", size: "medium" }],
-    },
+    arguments: orderInput,
     capability: "place_order",
     runApp,
   });

@@ -7,6 +7,7 @@ export {
   updateCartItem,
 } from "./cart.ts";
 export { markReady, cancelOrder, pickUpOrder, startBrewing } from "./changeOrderStatus.ts";
+export { checkoutConfirmedCart, placeConfirmedOrder } from "./confirmedPurchase.ts";
 export { getItemOptions } from "./getItemOptions.ts";
 export { getOrder } from "./getOrder.ts";
 export { listMenu } from "./listMenu.ts";
