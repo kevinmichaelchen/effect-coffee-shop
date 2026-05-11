@@ -852,9 +852,12 @@ Added a prepared low-cost warmup config:
 
 - `experiments/prime-intellect/effect-coffee-ordering/configs/rl/effect-coffee-ordering-qwen-0.8b-receipt-drill-warmup.toml`
 
-The config starts from the current champion adapter
-`rqvfrcdy4xt95oka37b0xjyu`, uses the unpublished `0.1.6` environment snapshot,
-trains on `split=receipt_drill`, and evaluates against `split=hard_eval`.
+The config now starts from the available Iteration 2 checkpoint
+`oo8lrytspz37lfsdlloubig7`. The final champion adapter
+`rqvfrcdy4xt95oka37b0xjyu` is deployable for inference/eval, but the current
+Prime Hosted Training CLI rejects it as a `checkpoint_id` for new training
+runs. The config uses the `0.1.6` environment snapshot, trains on
+`split=receipt_drill`, and evaluates against `split=hard_eval`.
 
 ### Decision
 
@@ -863,3 +866,162 @@ No paid training was started. The checked-in environment was published as
 at an available environment version. Treat the warmup as a candidate only if it
 improves `price_format` above `0.625` without reducing tool correctness or
 increasing verbosity.
+
+## Iteration 7: Product-Readiness Expansion
+
+### Goal
+
+Teach Beanline to behave like a careful coffee-shop cashier, not only a receipt
+formatter: take one valid drink order, ask when the request is unclear, suggest
+valid alternatives when something is unavailable, preserve notes, and stay
+concise.
+
+### Artifacts Created
+
+Added a broader product-readiness path:
+
+- New environment split: `product_readiness`
+- Environment version: `kevinmichaelchen/effect-coffee-ordering@0.1.7`
+- Prime integration test action: passed in logs, 4 selected tests passing
+- Product-readiness examples: `16`
+- New SFT corpora:
+  - `data/effect_coffee_sft/product_behavior_final_response_sft.jsonl`
+  - `data/effect_coffee_sft/product_behavior_tool_trajectory_sft.jsonl`
+- New warmup config:
+  - `configs/rl/effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml`
+
+Coverage added:
+
+- multi-item/cart requests, which are refused as unsupported one-drink
+  workflows until cart tools exist,
+- substitutions and unavailable ingredients,
+- ambiguous orders that need clarification,
+- modifier edge cases,
+- pickup time and preparation notes through the existing `notes` field,
+- concise refusals.
+
+### Hosted RL Attempt
+
+The first launch attempts exposed useful Prime config constraints:
+
+- Pre-run validation failed because `checkpoint_id` used the deployable adapter
+  id `rqvfrcdy4xt95oka37b0xjyu`, but Hosted Training requires a READY
+  checkpoint id.
+- Pre-run validation then failed because warm-start `max_steps` must be greater
+  than the checkpoint step `25`.
+- Run `hnvs3sm4218bvorgc6gnki6i` failed config validation because two eval
+  entries used the same environment id without unique `name` fields.
+
+Those failures had `$0.00` usage.
+
+The corrected run:
+
+- Run: `e2s3bs35k9qwzlfbrfw0ol51`
+- Start point: checkpoint `oo8lrytspz37lfsdlloubig7`
+- Environment version: `0.1.7`
+- Train split: `product_readiness`
+- Eval splits: `hard_eval`, `product_readiness`
+- Stopped early after first interval eval
+- Final cost: `$0.1226`
+
+First interval eval:
+
+| Step | Hard eval Avg@2 | Hard mean completion length | Product-readiness Avg@2 | Product mean completion length |
+| ---: | ---: | ---: | ---: | ---: |
+| `32` | `0.7545` | `620.5625` | `0.7545` | `629.25` |
+
+### Decision
+
+Do not promote any product-readiness adapter from Iteration 7. The candidate
+missed the hard-eval reward gate (`0.7545` vs champion `0.830`) and moved badly
+in the wrong direction on verbosity.
+
+The champion remains:
+
+- Adapter: `rqvfrcdy4xt95oka37b0xjyu`
+- Champion `0.1.5 hard_eval` reward: `0.830`
+- Main weakness: `price_format = 0.625`
+
+The product-readiness definition is still useful, but do not rerun the current
+RL config unchanged. The safer next use is SFT or prompt optimization on
+`product_behavior_final_response_sft.jsonl`, then re-evaluate before more RL.
+
+## Iteration 8: Expanded Tool Surface Baselines
+
+### Goal
+
+Incorporate the app's newer order tools into the Prime environment so "good"
+means more than one-shot `place_order`: Beanline should use direct order tools
+for complete orders, cart tools for multi-item workflows, option/menu tools only
+when needed, and concise receipts after success.
+
+### Environment Changes
+
+Published environment versions:
+
+- `0.1.8`: added Prime analogs for `get_item_options`, `validate_order`,
+  `quote_order`, cart tools, and `checkout_cart`; updated product-readiness cart
+  examples to expect real cart workflows.
+- `0.1.9`: fixed `load_environment` so hosted evals and trainer eval envs use
+  the requested split as `eval_dataset`; before this, hosted split evals were
+  unintentionally scoring the generic 8-example eval set.
+- `0.1.10`: made the tool boundary tolerate single-item `items_json` objects
+  and merge legacy top-level tool args into parsed items.
+- `0.1.11`: tightened the system prompt to prefer the smallest useful tool path
+  and avoid menu/options probes before complete one-shot orders.
+
+The live app assistant prompt and SFT corpora were kept aligned with the Prime
+prompt.
+
+### Baselines
+
+| Model | Env | Split | Reward | Tool correctness | Price format | Notes |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.9` | `hard_eval` | `0.359` | `0.375` | `0.375` | First true split-specific baseline after eval routing fix. |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.10` | `hard_eval` | `0.462` | `0.500` | `0.375` | Single-object `items_json` tolerance recovered some tool calls. |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.11` | `hard_eval` | `0.520` | `0.625` | `0.375` | Direct-order prompt helped but still below the old champion gate. |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.10` | `product_readiness` | `0.610` | `0.622` | `0.688` | All 16 product-readiness examples now run. |
+| Raw `Qwen/Qwen3.5-2B` | `0.1.11` | `hard_eval` | `0.783` | `0.812` | `0.812` | Better receipt priors, still below `0.830` and weaker tool discipline. |
+
+Important caveat: `0.1.8` hosted evals are not comparable because the eval split
+bug meant both "hard" and "product" jobs used the generic eval set.
+
+### Decision
+
+Do not promote any expanded-tool candidate yet. The old champion remains best
+for the old `0.1.5` hard gate, but the expanded tool surface defines a better
+product target and exposes weaknesses in both the 0.8B champion and raw 2B.
+
+Next Prime spend: run the small 0.8B receipt-drill warmup against `0.1.11`.
+Promote only if it beats `0.830` hard reward, improves price formatting, keeps
+tool correctness near the old champion, and does not increase verbosity or tool
+overuse.
+
+### Receipt-Drill Warmup Attempt
+
+Run `w402wq3sb943xintnex94sga` tested the updated
+`effect-coffee-ordering-qwen-0.8b-receipt-drill-warmup.toml` against
+environment `0.1.11`.
+
+- Start point: checkpoint `oo8lrytspz37lfsdlloubig7`
+- Stopped at latest step `36`
+- Cost: `$0.36`
+- READY adapter: `h3g7ts9xw0antutgxb5c8sue` at step `30`
+- READY checkpoint: `lkltzsp29ckjbs9fl83x9gb5` at step `30`
+
+Key training metrics:
+
+| Step | Reward | Tool correctness | Price format | Receipt style | Max-turns reached |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| `30` | `0.590` | `0.859` | `0.182` | `0.558` | `0.750` |
+| `34` | `0.715` | `1.000` | `0.400` | `0.729` | `0.859` |
+| `35` | `0.683` | `0.996` | `0.273` | `0.649` | `0.766` |
+
+Decision: stop and do not promote. The run learned order fields and tool
+correctness faster than receipt formatting. Rollouts still produced wrong final
+currency/amount style such as `₹520` for a `$5.20` order and continued to call
+menu/option tools before complete orders.
+
+Next direction: do not rerun unchanged. Prefer prompt optimization or SFT on
+the final-response and tool-trajectory corpora, or simplify the tool schema
+further before spending more RL.

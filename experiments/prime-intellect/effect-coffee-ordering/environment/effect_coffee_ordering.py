@@ -1,78 +1,20 @@
+import asyncio
 import json
 from typing import Any
 
+from coffee_domain import (
+    MENU,
+    SIZE_MULTIPLIERS,
+    SYSTEM_PROMPT,
+    calculate_price_cents,
+    cents_to_dollars,
+    default_milk,
+    default_shots,
+    default_temperature,
+    find_menu_item,
+)
 from datasets import Dataset
 import verifiers as vf
-
-
-MENU = [
-    {
-        "id": "espresso",
-        "name": "Espresso",
-        "kind": "espresso",
-        "base_price_cents": 300,
-        "available_milks": ["none"],
-        "available_temperatures": ["hot"],
-        "max_shots": 4,
-    },
-    {
-        "id": "americano",
-        "name": "Americano",
-        "kind": "espresso",
-        "base_price_cents": 350,
-        "available_milks": ["none"],
-        "available_temperatures": ["hot", "iced"],
-        "max_shots": 4,
-    },
-    {
-        "id": "latte",
-        "name": "Latte",
-        "kind": "espresso",
-        "base_price_cents": 450,
-        "available_milks": ["whole", "oat", "almond", "none"],
-        "available_temperatures": ["hot", "iced", "extra-hot"],
-        "max_shots": 4,
-    },
-    {
-        "id": "cappuccino",
-        "name": "Cappuccino",
-        "kind": "espresso",
-        "base_price_cents": 425,
-        "available_milks": ["whole", "oat", "almond", "none"],
-        "available_temperatures": ["hot", "extra-hot"],
-        "max_shots": 4,
-    },
-    {
-        "id": "cold-brew",
-        "name": "Cold Brew",
-        "kind": "espresso",
-        "base_price_cents": 400,
-        "available_milks": ["whole", "oat", "almond", "none"],
-        "available_temperatures": ["iced"],
-        "max_shots": 2,
-    },
-    {
-        "id": "tea",
-        "name": "Tea",
-        "kind": "tea",
-        "base_price_cents": 325,
-        "available_milks": ["none"],
-        "available_temperatures": ["hot", "iced"],
-        "max_shots": 0,
-    },
-]
-
-SIZE_MULTIPLIERS = {
-    "small": 1.0,
-    "medium": 1.15,
-    "large": 1.3,
-}
-
-SYSTEM_PROMPT = """You are Beanline, the Effect Coffee Shop ordering assistant.
-Use list_menu when you need to validate menu availability or order options.
-For valid orders, call place_order once with canonical menu ids and option values.
-After place_order succeeds, stop using tools and give one concise confirmation with the drink, order id, and price.
-If the request is invalid or ambiguous, do not place an order. Give one concise correction or valid alternative."""
 
 
 TRAIN_TASKS = [
@@ -759,6 +701,182 @@ RECEIPT_DRILL_TASKS = [
     },
 ]
 
+PRODUCT_READINESS_TASKS = [
+    {
+        "question": "Can you start a cart with a medium oat latte for Ava and a small espresso for Ben?",
+        "info": {
+            "expected_action": "place_order",
+            "expected_tool_names": ["add_cart_item", "checkout_cart"],
+            "expected_tool_sequence": ["add_cart_item", "add_cart_item", "checkout_cart"],
+            "expected_tool_counts": {"add_cart_item": 2, "checkout_cart": 1},
+            "expected_order": {
+                "customer_name": "Ava",
+            },
+            "expected_items": [
+                {
+                    "drink_id": "latte",
+                    "size": "medium",
+                    "milk": "oat",
+                    "temperature": "hot",
+                    "shots": 1,
+                    "quantity": 1,
+                },
+                {
+                    "drink_id": "espresso",
+                    "size": "small",
+                    "milk": "none",
+                    "temperature": "hot",
+                    "shots": 1,
+                    "quantity": 1,
+                },
+            ],
+        },
+    },
+    {
+        "question": "Start a cart by adding a cappuccino by mistake. Remove it and make the cart a large iced americano for Jo.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_tool_names": ["add_cart_item", "remove_cart_item", "checkout_cart"],
+            "expected_tool_sequence": ["add_cart_item", "remove_cart_item", "add_cart_item", "checkout_cart"],
+            "expected_tool_counts": {"add_cart_item": 2, "remove_cart_item": 1, "checkout_cart": 1},
+            "expected_order": {
+                "customer_name": "Jo",
+            },
+            "expected_items": [
+                {
+                    "drink_id": "americano",
+                    "size": "large",
+                    "milk": "none",
+                    "temperature": "iced",
+                    "shots": 1,
+                    "quantity": 1,
+                },
+            ],
+        },
+    },
+    {
+        "question": "Oat milk is out today. What can I get that does not need oat milk?",
+        "info": {
+            "expected_action": "list_menu",
+            "required_terms": ["Espresso", "Americano", "Tea", "almond", "whole"],
+        },
+    },
+    {
+        "question": "No oat milk today; please order a medium hot oat latte for Ina.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["oat", "whole", "almond"],
+        },
+    },
+    {
+        "question": "I'll have my usual.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["which drink", "size", "name"],
+        },
+    },
+    {
+        "question": "Make it iced for Jordan.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["which drink", "size"],
+        },
+    },
+    {
+        "question": "Can I get a decaf medium hot latte for Ren?",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["decaf", "not available"],
+        },
+    },
+    {
+        "question": "Make Morgan a cold brew with three shots.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["cold brew", "2", "shots"],
+        },
+    },
+    {
+        "question": "What non-dairy milks can I get for a latte?",
+        "info": {
+            "expected_action": "list_menu",
+            "required_terms": ["Latte", "oat", "almond"],
+        },
+    },
+    {
+        "question": "Order a medium extra-hot oat latte for Sol, no foam, pickup at 8:15.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "latte",
+                "size": "medium",
+                "milk": "oat",
+                "temperature": "extra-hot",
+                "shots": 1,
+                "customer_name": "Sol",
+                "notes": "no foam; pickup 8:15",
+            },
+        },
+    },
+    {
+        "question": "Order a small hot cappuccino for Luca and keep the receipt short.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "cappuccino",
+                "size": "small",
+                "milk": "whole",
+                "temperature": "hot",
+                "shots": 1,
+                "customer_name": "Luca",
+            },
+        },
+    },
+    {
+        "question": "Can I get an iced cappuccino for Imani?",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["cappuccino", "hot", "extra-hot"],
+        },
+    },
+    {
+        "question": "What's the cheapest hot drink?",
+        "info": {
+            "expected_action": "list_menu",
+            "required_terms": ["Espresso", "$3.00"],
+        },
+    },
+    {
+        "question": "I need something vegan and iced. What are my options?",
+        "info": {
+            "expected_action": "list_menu",
+            "required_terms": ["Americano", "Tea", "Cold Brew"],
+        },
+    },
+    {
+        "question": "Order a large iced tea with two shots for Remy.",
+        "info": {
+            "expected_action": "refuse",
+            "required_terms": ["tea", "shots", "0"],
+        },
+    },
+    {
+        "question": "Order a medium iced americano for Jamie and note light ice.",
+        "info": {
+            "expected_action": "place_order",
+            "expected_order": {
+                "drink_id": "americano",
+                "size": "medium",
+                "milk": "none",
+                "temperature": "iced",
+                "shots": 1,
+                "customer_name": "Jamie",
+                "notes": "light ice",
+            },
+        },
+    },
+]
+
 
 async def list_menu() -> str:
     """List the current coffee menu.
@@ -769,79 +887,257 @@ async def list_menu() -> str:
     return json.dumps({"menu": MENU}, sort_keys=True)
 
 
-async def place_order(
-    drink_id: str,
-    size: str,
-    milk: str = "",
-    temperature: str = "",
-    shots: int = 1,
-    customer_name: str = "",
-    notes: str = "",
-) -> str:
-    """Create a simulated coffee order if the requested options are valid.
+async def get_item_options(drink_id: str) -> str:
+    """Get valid options and defaults for one menu item.
 
     Args:
         drink_id: Menu drink id, such as latte, espresso, cold-brew, or tea.
-        size: Drink size: small, medium, or large.
-        milk: Milk choice. Use none when milk is unavailable or not requested.
-        temperature: Drink temperature: hot, iced, or extra-hot.
-        shots: Espresso shot count.
+
+    Returns:
+        A JSON payload with valid sizes, valid options, and defaults.
+    """
+    item = find_menu_item(drink_id)
+    if item is None:
+        return json.dumps({"ok": False, "error": f"Unknown drink id: {drink_id}."}, sort_keys=True)
+    return json.dumps(
+        {
+            "ok": True,
+            "options": {
+                "item": item,
+                "available_sizes": list(SIZE_MULTIPLIERS.keys()),
+                "default_size": "medium",
+                "default_milk": default_milk(item),
+                "default_temperature": default_temperature(item),
+                "default_shots": default_shots(item),
+                "default_quantity": 1,
+            },
+        },
+        sort_keys=True,
+    )
+
+
+async def validate_order(
+    items_json: str = "",
+    drink_id: str = "",
+    size: str = "",
+    milk: str = "",
+    temperature: str = "",
+    shots: int | None = None,
+    notes: str = "",
+    quantity: int | None = None,
+) -> str:
+    """Validate a proposed multi-item coffee order.
+
+    Args:
+        items_json: JSON array or single JSON object of proposed order items.
+            Legacy single-drink arguments are also accepted for compatibility.
+
+    Returns:
+        A JSON payload with either validated normalized items or a validation error.
+    """
+    items = parse_items_json(items_json)
+    if isinstance(items, dict):
+        return json.dumps(items, sort_keys=True)
+    quote = quote_payload(items, drink_id, size, milk, temperature, shots, notes, quantity)
+    if quote.get("ok") is not True:
+        return json.dumps(quote, sort_keys=True)
+    return json.dumps({"ok": True, "valid": True, "items": quote["items"], "total_price_cents": quote["total_price_cents"]}, sort_keys=True)
+
+
+async def quote_order(
+    items_json: str = "",
+    drink_id: str = "",
+    size: str = "",
+    milk: str = "",
+    temperature: str = "",
+    shots: int | None = None,
+    notes: str = "",
+    quantity: int | None = None,
+) -> str:
+    """Quote a proposed multi-item coffee order.
+
+    Args:
+        items_json: JSON array or single JSON object of proposed order items.
+            Legacy single-drink arguments are also accepted.
+
+    Returns:
+        A JSON payload with normalized items and total price.
+    """
+    items = parse_items_json(items_json)
+    if isinstance(items, dict):
+        return json.dumps(items, sort_keys=True)
+    return json.dumps(quote_payload(items, drink_id, size, milk, temperature, shots, notes, quantity), sort_keys=True)
+
+
+async def place_order(
+    items_json: str = "",
+    drink_id: str = "",
+    size: str = "",
+    milk: str = "",
+    temperature: str = "",
+    shots: int | None = None,
+    customer_name: str = "",
+    notes: str = "",
+    quantity: int | None = None,
+) -> str:
+    """Create a simulated coffee order if the requested items are valid.
+
+    Args:
+        items_json: JSON array or single JSON object of one or more order items.
+            Legacy single-drink arguments are also accepted.
         customer_name: Customer name for the order.
-        notes: Optional preparation notes.
 
     Returns:
         A JSON payload with either the accepted order or a validation error.
     """
-    item = find_menu_item(drink_id)
-    if item is None:
-        return json.dumps(
-            {"ok": False, "error": f"Unknown drink id: {drink_id}. Use list_menu first."},
-            sort_keys=True,
-        )
-
-    normalized_milk = milk or default_milk(item)
-    normalized_temperature = temperature or default_temperature(item)
-
-    validation_error = validate_order(item, size, normalized_milk, normalized_temperature, shots)
-    if validation_error is not None:
-        return json.dumps({"ok": False, "error": validation_error}, sort_keys=True)
-
-    order = {
-        "id": "order-simulated-0001",
-        "customer_name": customer_name,
-        "drink_id": item["id"],
-        "drink_name": item["name"],
-        "size": size,
-        "milk": normalized_milk,
-        "temperature": normalized_temperature,
-        "shots": shots,
-        "notes": notes,
-        "price_cents": calculate_price_cents(item, size, shots),
-        "status": "pending",
-    }
+    items = parse_items_json(items_json)
+    if isinstance(items, dict):
+        return json.dumps(items, sort_keys=True)
+    quote = quote_payload(items, drink_id, size, milk, temperature, shots, notes, quantity)
+    if quote.get("ok") is not True:
+        return json.dumps(quote, sort_keys=True)
+    order = order_payload(quote["items"], customer_name)
     return json.dumps({"ok": True, "order": order}, sort_keys=True)
 
 
-def find_menu_item(drink_id: str) -> dict[str, Any] | None:
-    matches = [item for item in MENU if item["id"] == drink_id]
-    return matches[0] if matches else None
+async def get_cart() -> str:
+    """Fetch the current simulated cart."""
+    return json.dumps({"ok": True, "cart": cart_payload()}, sort_keys=True)
 
 
-def default_milk(item: dict[str, Any]) -> str:
-    milks = item["available_milks"]
-    return "whole" if "whole" in milks else milks[0]
+async def add_cart_item(
+    drink_id: str,
+    size: str = "",
+    milk: str = "",
+    temperature: str = "",
+    shots: int | None = None,
+    notes: str = "",
+    quantity: int | None = None,
+) -> str:
+    """Add a validated item to the current simulated cart."""
+    quote = quote_payload(None, drink_id, size, milk, temperature, shots, notes, quantity)
+    if quote.get("ok") is not True:
+        return json.dumps(quote, sort_keys=True)
+    cart = rollout_cart()
+    for item in quote["items"]:
+        cart.append({"cart_item_id": next_cart_item_id(), "item": item})
+    return json.dumps({"ok": True, "cart": cart_payload()}, sort_keys=True)
 
 
-def default_temperature(item: dict[str, Any]) -> str:
-    return item["available_temperatures"][0]
+async def update_cart_item(
+    cart_item_id: str,
+    drink_id: str = "",
+    size: str = "",
+    milk: str = "",
+    temperature: str = "",
+    shots: int | None = None,
+    notes: str = "",
+    quantity: int | None = None,
+) -> str:
+    """Update one item in the current simulated cart."""
+    cart = rollout_cart()
+    matches = [entry for entry in cart if entry["cart_item_id"] == cart_item_id]
+    if not matches:
+        return json.dumps({"ok": False, "error": f"cart item {cart_item_id} was not found"}, sort_keys=True)
+    current = matches[0]["item"]
+    quote = quote_payload(
+        None,
+        drink_id or current["drink_id"],
+        size or current["size"],
+        milk or current["milk"],
+        temperature or current["temperature"],
+        shots if shots is not None else current["shots"],
+        notes if notes else current.get("notes", ""),
+        quantity if quantity is not None else current["quantity"],
+    )
+    if quote.get("ok") is not True:
+        return json.dumps(quote, sort_keys=True)
+    matches[0]["item"] = quote["items"][0]
+    return json.dumps({"ok": True, "cart": cart_payload()}, sort_keys=True)
 
 
-def validate_order(
+async def remove_cart_item(cart_item_id: str) -> str:
+    """Remove one item from the current simulated cart."""
+    cart = rollout_cart()
+    if not any(entry["cart_item_id"] == cart_item_id for entry in cart):
+        return json.dumps({"ok": False, "error": f"cart item {cart_item_id} was not found"}, sort_keys=True)
+    rollout_cart_state()["items"] = [entry for entry in cart if entry["cart_item_id"] != cart_item_id]
+    return json.dumps({"ok": True, "cart": cart_payload()}, sort_keys=True)
+
+
+async def clear_cart() -> str:
+    """Clear the current simulated cart."""
+    reset_cart()
+    return json.dumps({"ok": True, "cart": cart_payload()}, sort_keys=True)
+
+
+async def checkout_cart(customer_name: str = "") -> str:
+    """Place the current simulated cart as one multi-item order."""
+    cart = rollout_cart()
+    if not cart:
+        return json.dumps({"ok": False, "error": "cart must include at least one item"}, sort_keys=True)
+    order = order_payload([entry["item"] for entry in cart], customer_name)
+    reset_cart()
+    return json.dumps({"ok": True, "order": order}, sort_keys=True)
+
+
+_CARTS: dict[int, dict[str, Any]] = {}
+
+
+def cart_key() -> int:
+    task = asyncio.current_task()
+    return id(task) if task is not None else 0
+
+
+def rollout_cart() -> list[dict[str, Any]]:
+    return rollout_cart_state()["items"]
+
+
+def rollout_cart_state() -> dict[str, Any]:
+    key = cart_key()
+    if key not in _CARTS:
+        _CARTS[key] = {"items": [], "next_id": 1}
+    return _CARTS[key]
+
+
+def next_cart_item_id() -> str:
+    state = rollout_cart_state()
+    item_id = f"cart-item-{state['next_id']:04d}"
+    state["next_id"] += 1
+    return item_id
+
+
+def reset_cart() -> None:
+    _CARTS[cart_key()] = {"items": [], "next_id": 1}
+
+
+def cart_payload() -> dict[str, Any]:
+    cart = rollout_cart()
+    total = sum(entry["item"]["line_total_cents"] for entry in cart)
+    return {"items": cart, "total_price_cents": total, "totalPriceCents": total}
+
+
+def parse_items_json(items_json: str) -> list[dict[str, Any]] | dict[str, Any] | None:
+    if items_json.strip() == "":
+        return None
+    try:
+        parsed = json.loads(items_json)
+    except json.JSONDecodeError:
+        return {"ok": False, "error": "items_json must be a JSON array of order items."}
+    if isinstance(parsed, dict):
+        return [parsed]
+    if isinstance(parsed, list) and all(isinstance(item, dict) for item in parsed):
+        return parsed
+    return {"ok": False, "error": "items_json must be a JSON object or array of order items."}
+
+
+def validate_order_item(
     item: dict[str, Any],
     size: str,
     milk: str,
     temperature: str,
     shots: int,
+    quantity: int,
 ) -> str | None:
     if size not in SIZE_MULTIPLIERS:
         return f"Unsupported size: {size}."
@@ -849,16 +1145,123 @@ def validate_order(
         return f"{item['name']} does not support milk option {milk}."
     if temperature not in item["available_temperatures"]:
         return f"{item['name']} does not support temperature {temperature}."
+    if item["kind"] == "tea" and shots != 0:
+        return "Tea drinks do not support extra shots."
     if shots < 0 or shots > item["max_shots"]:
         return f"{item['name']} supports at most {item['max_shots']} shots."
+    if quantity < 1:
+        return "Quantity must be a positive integer."
     return None
 
 
-def calculate_price_cents(item: dict[str, Any], size: str, shots: int) -> int:
-    scaled_base = round(item["base_price_cents"] * SIZE_MULTIPLIERS[size])
-    included_shots = 0 if item["kind"] == "tea" else 1
-    extra_shots = max(shots - included_shots, 0)
-    return scaled_base + extra_shots * 75
+def quote_payload(
+    items: list[dict[str, Any]] | None,
+    drink_id: str,
+    size: str,
+    milk: str,
+    temperature: str,
+    shots: int | None,
+    notes: str,
+    quantity: int | None,
+) -> dict[str, Any]:
+    raw_items = items if items else [
+        {
+            "drink_id": drink_id,
+            "drinkId": drink_id,
+            "size": size,
+            "milk": milk,
+            "temperature": temperature,
+            "shots": shots,
+            "notes": notes,
+            "quantity": quantity,
+        }
+    ]
+    hydrated_items = [
+        {
+            "drink_id": raw_item.get("drink_id") or raw_item.get("drinkId") or drink_id,
+            "drinkId": raw_item.get("drinkId") or raw_item.get("drink_id") or drink_id,
+            "size": raw_item.get("size") or size,
+            "milk": raw_item.get("milk") or milk,
+            "temperature": raw_item.get("temperature") or temperature,
+            "shots": raw_item.get("shots") if raw_item.get("shots") is not None else shots,
+            "notes": raw_item.get("notes") or notes,
+            "quantity": raw_item.get("quantity") if raw_item.get("quantity") is not None else quantity,
+        }
+        for raw_item in raw_items
+    ]
+    normalized_items = []
+    for raw_item in hydrated_items:
+        normalized_item = normalize_order_item(raw_item)
+        if normalized_item.get("ok") is not True:
+            return normalized_item
+        normalized_items.append(normalized_item["item"])
+    total = sum(item["line_total_cents"] for item in normalized_items)
+    return {"ok": True, "items": normalized_items, "total_price_cents": total, "totalPriceCents": total}
+
+
+def normalize_order_item(raw_item: dict[str, Any]) -> dict[str, Any]:
+    drink_id = str(raw_item.get("drink_id") or raw_item.get("drinkId") or "")
+    item = find_menu_item(drink_id)
+    if item is None:
+        return {"ok": False, "error": f"Unknown drink id: {drink_id}. Use list_menu first."}
+    size = str(raw_item.get("size") or "medium")
+    milk = str(raw_item.get("milk") or default_milk(item))
+    temperature = str(raw_item.get("temperature") or default_temperature(item))
+    shots = raw_item.get("shots")
+    normalized_shots = default_shots(item) if shots is None else int(shots)
+    quantity = raw_item.get("quantity")
+    normalized_quantity = 1 if quantity is None else int(quantity)
+    validation_error = validate_order_item(item, size, milk, temperature, normalized_shots, normalized_quantity)
+    if validation_error is not None:
+        return {"ok": False, "error": validation_error}
+    unit_price = calculate_price_cents(item, size, normalized_shots)
+    line_total = unit_price * normalized_quantity
+    notes = str(raw_item.get("notes") or "")
+    return {
+        "ok": True,
+        "item": {
+            "drink_id": item["id"],
+            "drinkId": item["id"],
+            "drink_name": item["name"],
+            "drinkName": item["name"],
+            "size": size,
+            "milk": milk,
+            "temperature": temperature,
+            "shots": normalized_shots,
+            "notes": notes,
+            "quantity": normalized_quantity,
+            "unit_price_cents": unit_price,
+            "unitPriceCents": unit_price,
+            "line_total_cents": line_total,
+            "lineTotalCents": line_total,
+        },
+    }
+
+
+def order_payload(items: list[dict[str, Any]], customer_name: str) -> dict[str, Any]:
+    total = sum(item["line_total_cents"] for item in items)
+    first = items[0]
+    order = {
+        "id": "order-simulated-0001",
+        "customer_name": customer_name,
+        "customerName": customer_name,
+        "ownerUserId": "simulated-user",
+        "items": items,
+        "status": "pending",
+        "total_price_cents": total,
+        "totalPriceCents": total,
+        "createdAt": "2026-05-10T00:00:00Z",
+        "drink_id": first["drink_id"],
+        "drink_name": first["drink_name"],
+        "size": first["size"],
+        "milk": first["milk"],
+        "temperature": first["temperature"],
+        "shots": first["shots"],
+        "notes": first.get("notes", ""),
+        "quantity": first["quantity"],
+        "price_cents": total,
+    }
+    return order
 
 
 async def tool_correctness(completion, info) -> float:
@@ -867,17 +1270,16 @@ async def tool_correctness(completion, info) -> float:
 
     if expected_action == "place_order":
         order = accepted_order(completion)
-        expected_order = info["expected_order"]
         if order is None:
             return 0.0
-        checks = [
-            order.get("drink_id") == expected_order["drink_id"],
-            order.get("size") == expected_order["size"],
-            order.get("milk") == expected_order["milk"],
-            order.get("temperature") == expected_order["temperature"],
-            order.get("shots") == expected_order["shots"],
-            order.get("customer_name") == expected_order["customer_name"],
-        ]
+        expected_order = info.get("expected_order", {})
+        checks = [order.get(key) == value for key, value in expected_order.items()]
+        expected_items = info.get("expected_items", [])
+        checks.extend(compare_expected_items(order.get("items", []), expected_items))
+        expected_tool_names = info.get("expected_tool_names", [])
+        used_tool_names = tool_names(completion)
+        checks.extend(any(name == expected_name for name in used_tool_names) for expected_name in expected_tool_names)
+        checks.extend(expected_tool_path_checks(info, used_tool_names))
         return sum(1.0 for check in checks if check) / len(checks)
 
     if expected_action == "list_menu":
@@ -963,10 +1365,13 @@ async def product_efficiency(completion, info) -> float:
     payloads = tool_payloads(completion)
     menu_calls = count_menu_results(payloads)
     order_calls = count_order_results(payloads)
+    cart_calls = count_cart_results(payloads)
     final_text = final_assistant_text(completion)
 
     if expected_action == "place_order":
         order = accepted_order(completion)
+        expected_tool_names = info.get("expected_tool_names", [])
+        used_tool_names = tool_names(completion)
         checks = [
             menu_calls <= 1,
             order_calls == 1,
@@ -976,6 +1381,10 @@ async def product_efficiency(completion, info) -> float:
             concise_text_score(final_text, max_words=32) >= 0.75,
             price_text_is_exact_dollars(final_text, order),
         ]
+        if expected_tool_names:
+            checks.extend(any(name == expected_name for name in used_tool_names) for expected_name in expected_tool_names)
+            checks.append(cart_calls >= max(len(expected_tool_names) - 1, 0))
+        checks.extend(expected_tool_path_checks(info, used_tool_names))
         return sum(1.0 for check in checks if check) / len(checks)
 
     if expected_action == "list_menu":
@@ -1023,12 +1432,52 @@ def tool_payloads(completion) -> list[Any]:
     return [json_payload(content) for content in tool_contents(completion)]
 
 
+def tool_names(completion) -> list[str]:
+    return [message_tool_name(message) for message in completion if message_role(message) == "tool"]
+
+
+def compare_expected_items(actual_items: Any, expected_items: list[dict[str, Any]]) -> list[bool]:
+    if not expected_items:
+        return []
+    if not isinstance(actual_items, list):
+        return [False for expected_item in expected_items for _ in expected_item]
+    checks = []
+    for index, expected_item in enumerate(expected_items):
+        actual_item = actual_items[index] if index < len(actual_items) and isinstance(actual_items[index], dict) else {}
+        checks.extend(actual_item.get(key) == value for key, value in expected_item.items())
+    checks.append(len(actual_items) == len(expected_items))
+    return checks
+
+
+def expected_tool_path_checks(info: dict[str, Any], used_tool_names: list[str]) -> list[bool]:
+    expected_sequence = info.get("expected_tool_sequence", [])
+    expected_counts = info.get("expected_tool_counts", {})
+    checks = []
+    if expected_sequence:
+        checks.append(tool_sequence_contains(used_tool_names, expected_sequence))
+    if isinstance(expected_counts, dict):
+        checks.extend(used_tool_names.count(name) >= count for name, count in expected_counts.items())
+    return checks
+
+
+def tool_sequence_contains(used_tool_names: list[str], expected_sequence: list[str]) -> bool:
+    remaining = list(expected_sequence)
+    for name in used_tool_names:
+        if remaining and name == remaining[0]:
+            remaining.pop(0)
+    return not remaining
+
+
 def count_menu_results(payloads: list[Any]) -> int:
     return sum(1 for payload in payloads if isinstance(payload, dict) and isinstance(payload.get("menu"), list))
 
 
 def count_order_results(payloads: list[Any]) -> int:
-    return sum(1 for payload in payloads if isinstance(payload, dict) and "ok" in payload)
+    return sum(1 for payload in payloads if isinstance(payload, dict) and payload.get("ok") is True and "order" in payload)
+
+
+def count_cart_results(payloads: list[Any]) -> int:
+    return sum(1 for payload in payloads if isinstance(payload, dict) and payload.get("ok") is True and "cart" in payload)
 
 
 def no_tools_after_success(completion) -> bool:
@@ -1039,7 +1488,7 @@ def no_tools_after_success(completion) -> bool:
         payload = json_payload(message_content(message))
         if saw_success:
             return False
-        if isinstance(payload, dict) and payload.get("ok") is True:
+        if isinstance(payload, dict) and payload.get("ok") is True and "order" in payload:
             saw_success = True
     return saw_success
 
@@ -1081,15 +1530,16 @@ def message_tool_calls(message) -> Any:
     return getattr(message, "tool_calls", message.get("tool_calls") if isinstance(message, dict) else None)
 
 
+def message_tool_name(message) -> str:
+    name = getattr(message, "name", message.get("name", "") if isinstance(message, dict) else "")
+    return name if isinstance(name, str) else ""
+
+
 def json_payload(content: str) -> Any:
     try:
         return json.loads(content)
     except json.JSONDecodeError:
         return None
-
-
-def cents_to_dollars(cents: int) -> str:
-    return f"${cents / 100:.2f}"
 
 
 def to_dataset(rows: list[dict[str, Any]]) -> Dataset:
@@ -1110,16 +1560,19 @@ def load_environment(split: str = "train", num_examples: int = -1, **kwargs) -> 
     eval_dataset = to_dataset(EVAL_TASKS)
     hard_eval_dataset = to_dataset(HARD_EVAL_TASKS)
     receipt_drill_dataset = to_dataset(RECEIPT_DRILL_TASKS)
+    product_readiness_dataset = to_dataset(PRODUCT_READINESS_TASKS)
 
     datasets = {
         "train": train_dataset,
         "eval": eval_dataset,
         "hard_eval": hard_eval_dataset,
         "receipt_drill": receipt_drill_dataset,
+        "product_readiness": product_readiness_dataset,
     }
     selected_dataset = datasets.get(split, train_dataset)
     if num_examples > 0:
         selected_dataset = selected_dataset.select(range(min(num_examples, len(selected_dataset))))
+    selected_eval_dataset = eval_dataset if split == "train" else selected_dataset
 
     rubric = vf.Rubric(
         funcs=[tool_correctness, final_response_quality, product_efficiency, price_format, receipt_style],
@@ -1128,8 +1581,20 @@ def load_environment(split: str = "train", num_examples: int = -1, **kwargs) -> 
 
     return vf.ToolEnv(
         dataset=selected_dataset,
-        eval_dataset=eval_dataset,
-        tools=[list_menu, place_order],
+        eval_dataset=selected_eval_dataset,
+        tools=[
+            list_menu,
+            get_item_options,
+            validate_order,
+            quote_order,
+            place_order,
+            get_cart,
+            add_cart_item,
+            update_cart_item,
+            remove_cart_item,
+            clear_cart,
+            checkout_cart,
+        ],
         rubric=rubric,
         system_prompt=SYSTEM_PROMPT,
         max_turns=4,
