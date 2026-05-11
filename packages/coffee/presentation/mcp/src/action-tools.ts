@@ -1,9 +1,12 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as McpServer from "effect/unstable/ai/McpServer";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import {
+  type NoCheckoutSessionView,
   toCartView,
+  toCheckoutSessionView,
   toCoffeeOrderView,
   toCoffeeOrdersView,
   toItemOptionsView,
@@ -12,6 +15,10 @@ import {
   toOrderValidationView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
 import { CoffeeActionToolkit } from "@effect-coffee-shop/coffee-actions/toolkit";
+
+const noCheckoutSessionView: NoCheckoutSessionView = {
+  status: "no_checkout_session",
+};
 
 export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe(
   Layer.provideMerge(
@@ -39,6 +46,17 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
           update_cart_item: (input) => app.updateCartItem(input).pipe(Effect.map(toCartView)),
           remove_cart_item: (input) => app.removeCartItem(input).pipe(Effect.map(toCartView)),
           clear_cart: () => app.clearCart().pipe(Effect.map(toCartView)),
+          prepare_cart_checkout: () =>
+            app.prepareCartCheckout().pipe(Effect.map(toCheckoutSessionView)),
+          get_checkout_session: () =>
+            app.getCurrentCheckoutSession().pipe(
+              Effect.map((session) =>
+                Option.match(session, {
+                  onNone: () => noCheckoutSessionView,
+                  onSome: toCheckoutSessionView,
+                }),
+              ),
+            ),
           checkout_cart: (input) => app.checkoutCart(input).pipe(Effect.map(toCoffeeOrderView)),
         }),
       ),

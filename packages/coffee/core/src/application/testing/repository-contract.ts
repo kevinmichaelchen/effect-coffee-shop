@@ -6,13 +6,19 @@ import { assert, describe, it } from "@effect/vitest";
 import { menuItems } from "../../domain/menu.ts";
 import { moneyFromCents } from "../../domain/money.ts";
 import { CartSchema } from "../../domain/cart.ts";
+import { CheckoutSessionSchema, type CheckoutSession } from "../../domain/checkout-session.ts";
 import { CoffeeOrderSchema, type CoffeeOrder } from "../../domain/order.ts";
 import type { PersistenceError } from "../errors.ts";
 import { CartRepository } from "../ports/CartRepository.ts";
+import { CheckoutSessionRepository } from "../ports/CheckoutSessionRepository.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
-type RepositoryServices = CartRepository | MenuRepository | OrderRepository;
+type RepositoryServices =
+  | CartRepository
+  | CheckoutSessionRepository
+  | MenuRepository
+  | OrderRepository;
 type RunTest = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) => Promise<A>;
 type CoffeeOrderOverrides = {
   readonly id: string;
@@ -23,12 +29,22 @@ type CoffeeOrderOverrides = {
   readonly status?: CoffeeOrder["status"];
   readonly totalPrice?: CoffeeOrder["totalPrice"];
 };
+type CheckoutSessionOverrides = {
+  readonly id: string;
+  readonly createdAt?: CheckoutSession["createdAt"];
+  readonly expiresAt?: CheckoutSession["expiresAt"];
+  readonly items?: unknown;
+  readonly ownerUserId?: string;
+  readonly totalPrice?: CheckoutSession["totalPrice"];
+  readonly updatedAt?: CheckoutSession["updatedAt"];
+};
 
 const utc = (iso: string) => Option.getOrThrow(DateTime.make(iso));
 const initialTime = utc("2026-01-01T10:00:00.000Z");
 const laterTime = utc("2026-01-01T10:05:00.000Z");
 const latestTime = utc("2026-01-01T10:10:00.000Z");
 const decodeCart = Schema.decodeUnknownSync(CartSchema);
+const decodeCheckoutSession = Schema.decodeUnknownSync(CheckoutSessionSchema);
 const decodeCoffeeOrder = Schema.decodeUnknownSync(CoffeeOrderSchema);
 
 const makeOrder = ({ id, ...overrides }: CoffeeOrderOverrides): CoffeeOrder =>
@@ -61,6 +77,39 @@ const makeReadyOrder = ({
   ownerUserId = "user-avery",
 }: { readonly id: string } & Partial<Pick<CoffeeOrder, "createdAt" | "ownerUserId">>) =>
   makeOrder({ id, createdAt, ownerUserId, status: "ready" });
+
+const makeCheckoutSession = ({
+  id,
+  createdAt = initialTime,
+  expiresAt = latestTime,
+  ownerUserId = "user-avery",
+  totalPrice = moneyFromCents(500),
+  updatedAt = initialTime,
+  ...overrides
+}: CheckoutSessionOverrides): CheckoutSession =>
+  decodeCheckoutSession({
+    id,
+    ownerUserId,
+    status: "awaiting_confirmation",
+    items: [
+      {
+        drinkId: "latte",
+        drinkName: "Latte",
+        size: "medium",
+        milk: "whole",
+        temperature: "hot",
+        shots: 1,
+        quantity: 1,
+        unitPrice: moneyFromCents(500),
+        lineTotal: moneyFromCents(500),
+      },
+    ],
+    totalPrice,
+    createdAt,
+    updatedAt,
+    expiresAt,
+    ...overrides,
+  });
 
 export const defineRepositoryContract = (name: string, run: RunTest) => {
   describe(name, () => {
@@ -149,6 +198,57 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
         assert.deepStrictEqual(loaded, Option.some(cart));
         assert.deepStrictEqual(cleared, { ownerUserId: cart.ownerUserId, items: [] });
         assert.deepStrictEqual(afterClear, Option.none());
+      }),
+    );
+
+    itContract(
+      "round-trips checkout sessions and tracks the current actor session",
+      Effect.gen(function* () {
+        const checkoutSessionRepository = yield* CheckoutSessionRepository;
+        const earlierAverySession = makeCheckoutSession({
+          id: "checkout-session-0001",
+          updatedAt: initialTime,
+        });
+        const laterAverySession = makeCheckoutSession({
+          id: "checkout-session-0002",
+          updatedAt: laterTime,
+          totalPrice: moneyFromCents(575),
+          items: [
+            {
+              drinkId: "latte",
+              drinkName: "Latte",
+              size: "medium",
+              milk: "whole",
+              temperature: "hot",
+              shots: 2,
+              quantity: 1,
+              unitPrice: moneyFromCents(575),
+              lineTotal: moneyFromCents(575),
+            },
+          ],
+        });
+        const blakeSession = makeCheckoutSession({
+          id: "checkout-session-0003",
+          ownerUserId: "user-blake",
+          updatedAt: latestTime,
+        });
+
+        yield* checkoutSessionRepository.save(earlierAverySession);
+        yield* checkoutSessionRepository.save(blakeSession);
+        const saved = yield* checkoutSessionRepository.save(laterAverySession);
+        const loaded = yield* checkoutSessionRepository.getById(laterAverySession.id);
+        const currentAvery = yield* checkoutSessionRepository.getCurrentByOwnerUserId("user-avery");
+        const currentBlake = yield* checkoutSessionRepository.getCurrentByOwnerUserId("user-blake");
+
+        yield* checkoutSessionRepository.clearCurrentByOwnerUserId("user-avery");
+        const averyAfterClear =
+          yield* checkoutSessionRepository.getCurrentByOwnerUserId("user-avery");
+
+        assert.deepStrictEqual(saved, laterAverySession);
+        assert.deepStrictEqual(loaded, Option.some(laterAverySession));
+        assert.deepStrictEqual(currentAvery, Option.some(laterAverySession));
+        assert.deepStrictEqual(currentBlake, Option.some(blakeSession));
+        assert.deepStrictEqual(averyAfterClear, Option.some(earlierAverySession));
       }),
     );
 

@@ -1,9 +1,12 @@
 import type * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import type { CoffeeOrder, OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
 import {
+  type NoCheckoutSessionView,
   toCartView,
+  toCheckoutSessionView,
   toCoffeeOrderView,
   toCoffeeOrdersView,
   toItemOptionsView,
@@ -34,6 +37,10 @@ interface ActionContext {
 }
 
 type ActionHandler = (input: ActionContext) => Promise<unknown>;
+
+const noCheckoutSessionView: NoCheckoutSessionView = {
+  status: "no_checkout_session",
+};
 
 const payloadOrEmpty = (payload: unknown): unknown => payload ?? {};
 
@@ -94,6 +101,19 @@ const actionHandlers = {
     app.removeCartItem(payload).pipe(Effect.map(toCartView)),
   ),
   clear_cart: runEmptyAction((app) => app.clearCart().pipe(Effect.map(toCartView))),
+  prepare_cart_checkout: runEmptyAction((app) =>
+    app.prepareCartCheckout().pipe(Effect.map(toCheckoutSessionView)),
+  ),
+  get_checkout_session: runEmptyAction((app) =>
+    app.getCurrentCheckoutSession().pipe(
+      Effect.map((session) =>
+        Option.match(session, {
+          onNone: () => noCheckoutSessionView,
+          onSome: toCheckoutSessionView,
+        }),
+      ),
+    ),
+  ),
   checkout_cart: runDecodedAction(decodeCheckoutCartInput, (app, payload) =>
     app.checkoutCart(payload).pipe(Effect.map(toCoffeeOrderView)),
   ),

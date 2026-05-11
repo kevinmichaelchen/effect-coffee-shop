@@ -6,6 +6,8 @@ export { coffeeSchema, schema } from "./db/schema.ts";
 export { DrizzlePostgresCoffeeAppLive, DrizzlePostgresCoffeeRepositoriesLive } from "./live.ts";
 export { DrizzleCartItemIdGeneratorLive } from "./repositories/DrizzleCartItemIdGenerator.ts";
 export { DrizzleCartRepositoryLive } from "./repositories/DrizzleCartRepository.ts";
+export { DrizzleCheckoutSessionIdGeneratorLive } from "./repositories/DrizzleCheckoutSessionIdGenerator.ts";
+export { DrizzleCheckoutSessionRepositoryLive } from "./repositories/DrizzleCheckoutSessionRepository.ts";
 export { DrizzleMenuRepositoryLive } from "./repositories/DrizzleMenuRepository.ts";
 export { DrizzleOrderIdGeneratorLive } from "./repositories/DrizzleOrderIdGenerator.ts";
 export { DrizzleOrderRepositoryLive } from "./repositories/DrizzleOrderRepository.ts";

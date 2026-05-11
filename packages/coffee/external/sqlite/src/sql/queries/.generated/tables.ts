@@ -105,6 +105,31 @@ export type CartsRow = {
   owner_user_id: string;
 };
 
+export type CheckoutSessionItemsRow = {
+  session_id: string;
+  position: number;
+  drink_id: string;
+  drink_name: string;
+  size: string;
+  milk: string;
+  temperature: string;
+  shots: number;
+  notes: string | null;
+  quantity: number;
+  unit_price_cents: number;
+  line_total_cents: number;
+};
+
+export type CheckoutSessionsRow = {
+  id: string;
+  owner_user_id: string;
+  status: string;
+  total_price_cents: number;
+  created_at: string;
+  updated_at: string;
+  expires_at: string;
+};
+
 export type MenuItemsRow = {
   id: string;
   name: string;

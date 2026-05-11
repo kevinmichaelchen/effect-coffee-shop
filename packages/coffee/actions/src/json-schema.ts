@@ -51,6 +51,8 @@ const orderItemProperties = {
 };
 
 export const emptyActionJsonSchema = actionJsonSchema({});
+export const prepareCartCheckoutActionJsonSchema = emptyActionJsonSchema;
+export const getCheckoutSessionActionJsonSchema = emptyActionJsonSchema;
 
 export const orderIdActionJsonSchema = actionJsonSchema(
   {

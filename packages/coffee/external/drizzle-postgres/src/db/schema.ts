@@ -7,6 +7,11 @@ export const orderIdSequence = pgSequence("coffee_order_id_seq", {
   increment: 1,
 });
 
+export const checkoutSessionIdSequence = pgSequence("coffee_checkout_session_id_seq", {
+  startWith: 1,
+  increment: 1,
+});
+
 export const menuItemsTable = pgTable(
   "menu_items",
   {
@@ -96,7 +101,57 @@ export const cartItemsTable = pgTable(
   (table) => [index("cart_items_owner_user_id_position_idx").on(table.ownerUserId, table.position)],
 );
 
+export const checkoutSessionsTable = pgTable(
+  "checkout_sessions",
+  {
+    id: text("id").primaryKey(),
+    ownerUserId: text("owner_user_id").notNull(),
+    status: text("status").notNull(),
+    totalPriceCents: integer("total_price_cents").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+    expiresAt: text("expires_at").notNull(),
+  },
+  (table) => [
+    index("checkout_sessions_owner_status_updated_idx").on(
+      table.ownerUserId,
+      table.status,
+      table.updatedAt,
+      table.id,
+    ),
+  ],
+);
+
+export const checkoutSessionItemsTable = pgTable(
+  "checkout_session_items",
+  {
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => checkoutSessionsTable.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    drinkId: text("drink_id").notNull(),
+    drinkName: text("drink_name").notNull(),
+    size: text("size").notNull(),
+    milk: text("milk").notNull(),
+    temperature: text("temperature").notNull(),
+    shots: integer("shots").notNull(),
+    notes: text("notes"),
+    quantity: integer("quantity").notNull(),
+    unitPriceCents: integer("unit_price_cents").notNull(),
+    lineTotalCents: integer("line_total_cents").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "checkout_session_items_session_id_position_pk",
+      columns: [table.sessionId, table.position],
+    }),
+  ],
+);
+
 export const coffeeSchema = {
+  checkoutSessionIdSequence,
+  checkoutSessionItemsTable,
+  checkoutSessionsTable,
   cartItemsTable,
   cartsTable,
   menuItemsTable,

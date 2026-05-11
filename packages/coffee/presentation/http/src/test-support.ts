@@ -4,6 +4,8 @@ import * as Layer from "effect/Layer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import {
   CoffeeAppLive as InMemoryCoffeeAppLive,
+  InMemoryCheckoutSessionIdGeneratorLive,
+  InMemoryCheckoutSessionRepositoryLive,
   InMemoryMenuRepositoryLive,
 } from "@effect-coffee-shop/coffee-external-in-memory";
 import { InMemoryCartItemIdGeneratorLive } from "@effect-coffee-shop/coffee-external-in-memory/in-memory/InMemoryCartItemIdGenerator";
@@ -45,6 +47,8 @@ export const HttpApiPersistenceFailureTestLive = HttpRouter.serve(CoffeeHttpApiL
       FailingOrderRepositoryLive,
       InMemoryCartItemIdGeneratorLive,
       InMemoryCartRepositoryLive,
+      InMemoryCheckoutSessionIdGeneratorLive,
+      InMemoryCheckoutSessionRepositoryLive,
       InMemoryMenuRepositoryLive,
       InMemoryOrderIdGeneratorLive,
     ),

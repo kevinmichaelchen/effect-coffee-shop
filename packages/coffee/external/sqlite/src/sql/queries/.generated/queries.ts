@@ -2,11 +2,16 @@
 
 export * from "./delete-cart-by-owner.sql.ts";
 export * from "./delete-cart-items-by-owner.sql.ts";
+export * from "./delete-checkout-session-items-by-session-id.sql.ts";
+export * from "./delete-current-checkout-session-by-owner.sql.ts";
 export * from "./delete-order-items-by-order-id.sql.ts";
+export * from "./find-checkout-session-by-id.sql.ts";
+export * from "./find-current-checkout-session-by-owner.sql.ts";
 export * from "./find-menu-item-by-id.sql.ts";
 export * from "./find-order-by-id.sql.ts";
 export * from "./insert-cart.sql.ts";
 export * from "./list-cart-items.sql.ts";
+export * from "./list-checkout-session-items.sql.ts";
 export * from "./list-menu-items.sql.ts";
 export * from "./list-order-items.sql.ts";
 export * from "./list-orders.sql.ts";
@@ -14,6 +19,8 @@ export * from "./list-orders-by-owner.sql.ts";
 export * from "./list-orders-by-owner-and-status.sql.ts";
 export * from "./list-orders-by-status.sql.ts";
 export * from "./save-cart-item.sql.ts";
+export * from "./save-checkout-session.sql.ts";
+export * from "./save-checkout-session-item.sql.ts";
 export * from "./save-order.sql.ts";
 export * from "./save-order-item.sql.ts";
 export * from "./seed-menu-item.sql.ts";
@@ -30,9 +37,32 @@ export const sqlfuQuerySources = [
     sourceSql: "delete from cart_items\nwhere owner_user_id = :ownerUserId;\n",
   },
   {
+    sqlFile: "delete-checkout-session-items-by-session-id.sql",
+    generatedFile: "delete-checkout-session-items-by-session-id.sql.ts",
+    sourceSql: "delete from checkout_session_items\nwhere session_id = :sessionId;\n",
+  },
+  {
+    sqlFile: "delete-current-checkout-session-by-owner.sql",
+    generatedFile: "delete-current-checkout-session-by-owner.sql.ts",
+    sourceSql:
+      "delete from checkout_sessions\nwhere id = (\n  select id\n  from checkout_sessions\n  where owner_user_id = :ownerUserId\n    and status = 'awaiting_confirmation'\n  order by updated_at desc, id desc\n  limit 1\n);\n",
+  },
+  {
     sqlFile: "delete-order-items-by-order-id.sql",
     generatedFile: "delete-order-items-by-order-id.sql.ts",
     sourceSql: "delete from order_items\nwhere order_id = :orderId;\n",
+  },
+  {
+    sqlFile: "find-checkout-session-by-id.sql",
+    generatedFile: "find-checkout-session-by-id.sql.ts",
+    sourceSql:
+      "select\n  id,\n  owner_user_id,\n  status,\n  total_price_cents,\n  created_at,\n  updated_at,\n  expires_at\nfrom checkout_sessions\nwhere id = :id;\n",
+  },
+  {
+    sqlFile: "find-current-checkout-session-by-owner.sql",
+    generatedFile: "find-current-checkout-session-by-owner.sql.ts",
+    sourceSql:
+      "select\n  id,\n  owner_user_id,\n  status,\n  total_price_cents,\n  created_at,\n  updated_at,\n  expires_at\nfrom checkout_sessions\nwhere owner_user_id = :ownerUserId\n  and status = 'awaiting_confirmation'\norder by updated_at desc, id desc\nlimit 1;\n",
   },
   {
     sqlFile: "find-menu-item-by-id.sql",
@@ -57,6 +87,12 @@ export const sqlfuQuerySources = [
     generatedFile: "list-cart-items.sql.ts",
     sourceSql:
       "select\n  owner_user_id,\n  id,\n  position,\n  drink_id,\n  size,\n  milk,\n  temperature,\n  shots,\n  notes,\n  quantity\nfrom cart_items\nwhere owner_user_id = :ownerUserId\norder by position;\n",
+  },
+  {
+    sqlFile: "list-checkout-session-items.sql",
+    generatedFile: "list-checkout-session-items.sql.ts",
+    sourceSql:
+      "select\n  session_id,\n  position,\n  drink_id,\n  drink_name,\n  size,\n  milk,\n  temperature,\n  shots,\n  notes,\n  quantity,\n  unit_price_cents,\n  line_total_cents\nfrom checkout_session_items\nwhere session_id = :sessionId\norder by position;\n",
   },
   {
     sqlFile: "list-menu-items.sql",
@@ -99,6 +135,18 @@ export const sqlfuQuerySources = [
     generatedFile: "save-cart-item.sql.ts",
     sourceSql:
       "insert into\n  cart_items (\n    owner_user_id,\n    id,\n    position,\n    drink_id,\n    size,\n    milk,\n    temperature,\n    shots,\n    notes,\n    quantity\n  )\nvalues\n  (\n    :item.ownerUserId,\n    :item.id,\n    :item.position,\n    :item.drinkId,\n    :item.size,\n    :item.milk,\n    :item.temperature,\n    :item.shots,\n    :item.notes,\n    :item.quantity\n  );\n",
+  },
+  {
+    sqlFile: "save-checkout-session.sql",
+    generatedFile: "save-checkout-session.sql.ts",
+    sourceSql:
+      "insert into\n  checkout_sessions (\n    id,\n    owner_user_id,\n    status,\n    total_price_cents,\n    created_at,\n    updated_at,\n    expires_at\n  )\nvalues\n  (\n    :session.id,\n    :session.ownerUserId,\n    :session.status,\n    :session.totalPriceCents,\n    :session.createdAt,\n    :session.updatedAt,\n    :session.expiresAt\n  )\non conflict (id) do update\nset\n  owner_user_id = excluded.owner_user_id,\n  status = excluded.status,\n  total_price_cents = excluded.total_price_cents,\n  created_at = excluded.created_at,\n  updated_at = excluded.updated_at,\n  expires_at = excluded.expires_at;\n",
+  },
+  {
+    sqlFile: "save-checkout-session-item.sql",
+    generatedFile: "save-checkout-session-item.sql.ts",
+    sourceSql:
+      "insert into\n  checkout_session_items (\n    session_id,\n    position,\n    drink_id,\n    drink_name,\n    size,\n    milk,\n    temperature,\n    shots,\n    notes,\n    quantity,\n    unit_price_cents,\n    line_total_cents\n  )\nvalues\n  (\n    :item.sessionId,\n    :item.position,\n    :item.drinkId,\n    :item.drinkName,\n    :item.size,\n    :item.milk,\n    :item.temperature,\n    :item.shots,\n    :item.notes,\n    :item.quantity,\n    :item.unitPriceCents,\n    :item.lineTotalCents\n  );\n",
   },
   {
     sqlFile: "save-order.sql",
