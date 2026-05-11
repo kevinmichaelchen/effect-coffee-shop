@@ -61,9 +61,13 @@ SIZE_MULTIPLIERS = {
 }
 
 SYSTEM_PROMPT = """You are Beanline, the Effect Coffee Shop ordering assistant.
-Use list_menu when you need to validate menu availability or order options.
-For valid orders, call place_order once with canonical menu ids and option values.
-After place_order succeeds, stop using tools and give one concise confirmation with the drink, order id, and price.
+Use the coffee tools instead of inventing menu, price, cart, or order state.
+Use get_item_options for a specific drink's defaults and valid options.
+Use validate_order or quote_order before placing an order when options, price, or defaults are uncertain.
+Use place_order for a complete one-shot order. Use cart tools for multi-item cart workflows, then checkout_cart.
+Safe defaults are allowed: medium size when size is missing, whole milk for milk-capable drinks, none for no-milk drinks, the drink's default temperature, one espresso shot, zero tea shots, and quantity one.
+Ask one short clarifying question when the drink, customer name, or another order-critical field is missing.
+After place_order or checkout_cart succeeds, stop using tools and give one concise confirmation with drink summary, order id, and exact $x.xx total.
 If the request is invalid or ambiguous, do not place an order. Give one concise correction or valid alternative."""
 
 SUCCESS_EXAMPLES = [
@@ -158,15 +162,27 @@ PRODUCT_MENU_EXAMPLES = [
     ),
 ]
 
-PRODUCT_REFUSAL_EXAMPLES = [
+PRODUCT_CART_EXAMPLES = [
     (
         "Can you start a cart with a medium oat latte for Ava and a small espresso for Ben?",
-        "I can place one drink at a time. Which drink should I start with?",
+        [
+            ("latte", "medium", "oat", "hot", 1, 1, ""),
+            ("espresso", "small", "none", "hot", 1, 1, ""),
+        ],
+        "Ava",
+        None,
     ),
     (
-        "I added a cappuccino by mistake. Remove it and make the cart a large iced americano for Jo.",
-        "I cannot manage a cart yet; I can place one drink at a time.",
+        "Start a cart by adding a cappuccino by mistake. Remove it and make the cart a large iced americano for Jo.",
+        [
+            ("americano", "large", "none", "iced", 1, 1, ""),
+        ],
+        "Jo",
+        ("cappuccino", "medium", "whole", "hot", 1, 1, ""),
     ),
+]
+
+PRODUCT_REFUSAL_EXAMPLES = [
     (
         "No oat milk today; please order a medium hot oat latte for Ina.",
         "Oat milk is unavailable. A latte can use whole or almond milk instead.",
@@ -235,6 +251,48 @@ def order_payload(
     }
 
 
+def multi_order_payload(
+    item_specs: list[tuple[str, str, str, str, int, int, str]],
+    customer_name: str,
+) -> dict[str, Any]:
+    items = []
+    for drink_id, size, milk, temperature, shots, quantity, notes in item_specs:
+        item = MENU[drink_id]
+        unit_price_cents = calculate_price_cents(drink_id, size, shots)
+        items.append(
+            {
+                "drink_id": drink_id,
+                "drink_name": item["name"],
+                "line_total_cents": unit_price_cents * quantity,
+                "milk": milk,
+                "notes": notes,
+                "quantity": quantity,
+                "shots": shots,
+                "size": size,
+                "temperature": temperature,
+                "unit_price_cents": unit_price_cents,
+            }
+        )
+    first = items[0]
+    total = sum(item["line_total_cents"] for item in items)
+    return {
+        "customer_name": customer_name,
+        "drink_id": first["drink_id"],
+        "drink_name": first["drink_name"],
+        "id": "order-simulated-0001",
+        "items": items,
+        "milk": first["milk"],
+        "notes": first["notes"],
+        "price_cents": total,
+        "quantity": first["quantity"],
+        "shots": first["shots"],
+        "size": first["size"],
+        "status": "pending",
+        "temperature": first["temperature"],
+        "total_price_cents": total,
+    }
+
+
 def menu_tool_result() -> str:
     rows = [{"id": drink_id, **item} for drink_id, item in MENU.items()]
     return json.dumps({"menu": rows}, sort_keys=True)
@@ -291,6 +349,18 @@ def product_behavior_final_response_rows() -> list[dict[str, str]]:
                 "",
                 f"User request: {question}",
                 f"place_order result: {tool_result(order)}",
+                "Write only the final customer-facing confirmation.",
+            ]
+        )
+        rows.append({"prompt": prompt, "completion": final_receipt(order)})
+    for question, item_specs, customer_name, _mistaken_item in PRODUCT_CART_EXAMPLES:
+        order = multi_order_payload(item_specs, customer_name)
+        prompt = "\n".join(
+            [
+                SYSTEM_PROMPT,
+                "",
+                f"User request: {question}",
+                f"checkout_cart result: {tool_result(order)}",
                 "Write only the final customer-facing confirmation.",
             ]
         )
@@ -379,6 +449,156 @@ def product_behavior_tool_trajectory_rows() -> list[dict[str, Any]]:
                 ]
             }
         )
+    for index, (question, item_specs, customer_name, mistaken_item) in enumerate(PRODUCT_CART_EXAMPLES, 1):
+        order = multi_order_payload(item_specs, customer_name)
+        cart_items: list[dict[str, Any]] = []
+        messages: list[dict[str, Any]] = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": question},
+        ]
+        if mistaken_item is not None:
+            drink_id, size, milk, temperature, shots, quantity, notes = mistaken_item
+            mistaken_order = multi_order_payload([mistaken_item], customer_name)
+            mistaken_payload = mistaken_order["items"][0]
+            mistaken_cart_item = {"cart_item_id": "cart-item-0001", "item": mistaken_payload}
+            add_call_id = f"call_product_cart_mistake_add_{index:04d}"
+            remove_call_id = f"call_product_cart_mistake_remove_{index:04d}"
+            messages.extend(
+                [
+                    {
+                        "role": "assistant",
+                        "content": "",
+                        "tool_calls": [
+                            {
+                                "id": add_call_id,
+                                "type": "function",
+                                "function": {
+                                    "name": "add_cart_item",
+                                    "arguments": json.dumps(
+                                        {
+                                            "drink_id": drink_id,
+                                            "milk": milk,
+                                            "notes": notes,
+                                            "quantity": quantity,
+                                            "shots": shots,
+                                            "size": size,
+                                            "temperature": temperature,
+                                        },
+                                        sort_keys=True,
+                                    ),
+                                },
+                            }
+                        ],
+                    },
+                    {
+                        "role": "tool",
+                        "tool_call_id": add_call_id,
+                        "name": "add_cart_item",
+                        "content": json.dumps(
+                            {
+                                "ok": True,
+                                "cart": {
+                                    "items": [mistaken_cart_item],
+                                    "total_price_cents": mistaken_payload["line_total_cents"],
+                                },
+                            },
+                            sort_keys=True,
+                        ),
+                    },
+                    {
+                        "role": "assistant",
+                        "content": "",
+                        "tool_calls": [
+                            {
+                                "id": remove_call_id,
+                                "type": "function",
+                                "function": {
+                                    "name": "remove_cart_item",
+                                    "arguments": json.dumps({"cart_item_id": "cart-item-0001"}, sort_keys=True),
+                                },
+                            }
+                        ],
+                    },
+                    {
+                        "role": "tool",
+                        "tool_call_id": remove_call_id,
+                        "name": "remove_cart_item",
+                        "content": json.dumps({"ok": True, "cart": {"items": [], "total_price_cents": 0}}, sort_keys=True),
+                    },
+                ]
+            )
+        for item_index, (drink_id, size, milk, temperature, shots, quantity, notes) in enumerate(item_specs, 1):
+            call_id = f"call_product_cart_add_{index:04d}_{item_index:04d}"
+            item_payload = order["items"][item_index - 1]
+            cart_items.append({"cart_item_id": f"cart-item-{item_index:04d}", "item": item_payload})
+            messages.extend(
+                [
+                    {
+                        "role": "assistant",
+                        "content": "",
+                        "tool_calls": [
+                            {
+                                "id": call_id,
+                                "type": "function",
+                                "function": {
+                                    "name": "add_cart_item",
+                                    "arguments": json.dumps(
+                                        {
+                                            "drink_id": drink_id,
+                                            "milk": milk,
+                                            "notes": notes,
+                                            "quantity": quantity,
+                                            "shots": shots,
+                                            "size": size,
+                                            "temperature": temperature,
+                                        },
+                                        sort_keys=True,
+                                    ),
+                                },
+                            }
+                        ],
+                    },
+                    {
+                        "role": "tool",
+                        "tool_call_id": call_id,
+                        "name": "add_cart_item",
+                        "content": json.dumps(
+                            {
+                                "ok": True,
+                                "cart": {
+                                    "items": cart_items,
+                                    "total_price_cents": sum(
+                                        cart_item["item"]["line_total_cents"] for cart_item in cart_items
+                                    ),
+                                },
+                            },
+                            sort_keys=True,
+                        ),
+                    },
+                ]
+            )
+        call_id = f"call_product_cart_checkout_{index:04d}"
+        messages.extend(
+            [
+                {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": [
+                        {
+                            "id": call_id,
+                            "type": "function",
+                            "function": {
+                                "name": "checkout_cart",
+                                "arguments": json.dumps({"customer_name": customer_name}, sort_keys=True),
+                            },
+                        }
+                    ],
+                },
+                {"role": "tool", "tool_call_id": call_id, "name": "checkout_cart", "content": tool_result(order)},
+                {"role": "assistant", "content": final_receipt(order)},
+            ]
+        )
+        rows.append({"messages": messages})
     for index, (question, answer) in enumerate(PRODUCT_MENU_EXAMPLES, 1):
         call_id = f"call_product_menu_{index:04d}"
         rows.append(

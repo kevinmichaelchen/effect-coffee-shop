@@ -12,7 +12,7 @@
 
 ### Task
 - **Type**: tool use
-- **Output format expectations**: Use `list_menu` for availability questions and `place_order` for valid orders. Refuse invalid or ambiguous orders without placing an order.
+- **Output format expectations**: Use menu, option, quote, validation, order, and cart tools for live state. Use `place_order` for complete one-shot orders, cart tools plus `checkout_cart` for multi-item cart workflows, and concise refusals or clarification questions for invalid or ambiguous requests.
 - **Rubric overview**: Rewards correct tool behavior, exact order fields, useful menu answers, refusal of invalid requests, and concise final customer-facing confirmations.
 
 ### Quickstart
@@ -56,8 +56,8 @@ Summarize key metrics your rubric emits and how they’re interpreted.
 The `product_readiness` split expands the definition of a good model beyond
 receipt formatting. It covers:
 
-- multi-item and cart requests, which should be handled as unsupported one-drink
-  workflows until cart tools exist,
+- multi-item and cart requests through `add_cart_item`, `remove_cart_item`, and
+  `checkout_cart`,
 - substitutions and unavailable ingredients,
 - ambiguous orders that need clarification,
 - modifier edge cases such as decaf, shot limits, temperature, and milk rules,
