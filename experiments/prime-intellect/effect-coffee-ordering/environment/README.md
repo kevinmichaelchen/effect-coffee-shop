@@ -12,8 +12,8 @@
 
 ### Task
 - **Type**: tool use
-- **Output format expectations**: Use menu, option, quote, validation, order, and cart tools for live state. Use `place_order` for complete one-shot orders, cart tools plus `checkout_cart` for multi-item cart workflows, and concise refusals or clarification questions for invalid or ambiguous requests.
-- **Rubric overview**: Rewards correct tool behavior, exact order fields, useful menu answers, refusal of invalid requests, and concise final customer-facing confirmations.
+- **Output format expectations**: Use menu, option, quote, validation, order, and cart tools for live state. For real-money purchase flows, read back the interpreted order and ask for confirmation before calling `place_order` or `checkout_cart`. Use concise refusals or clarification questions for invalid or ambiguous requests.
+- **Rubric overview**: Rewards correct tool behavior, exact order fields, useful menu answers, refusal of invalid requests, concise pre-purchase confirmations, and concise post-purchase receipts.
 
 ### Quickstart
 Run an evaluation with default settings:

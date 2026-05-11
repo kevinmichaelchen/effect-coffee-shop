@@ -130,11 +130,13 @@ class EnvironmentLogicTests(unittest.TestCase):
         self.assertEqual(asyncio.run(env.price_format(bad_currency_completion, info)), 0.0)
         self.assertEqual(asyncio.run(env.price_format(cent_total_completion, info)), 0.0)
 
-    def test_system_prompt_prefers_direct_orders_and_exact_dollar_receipts(self):
+    def test_system_prompt_requires_confirmation_before_purchase(self):
         prompt = env.SYSTEM_PROMPT
 
-        self.assertIn("For a complete one-item order, call place_order directly.", prompt)
-        self.assertIn("Do not call list_menu, get_item_options, validate_order, or quote_order first", prompt)
+        self.assertIn("read back the interpreted order and ask for confirmation before purchase", prompt)
+        self.assertIn("do not call place_order or checkout_cart yet", prompt)
+        self.assertIn("Call place_order or checkout_cart only after the user explicitly confirms", prompt)
+        self.assertIn("Should I place it?", prompt)
         self.assertIn("520 cents becomes $5.20", prompt)
         self.assertIn('Receipt template: "<drink summary>. Order <id>. Total $x.xx."', prompt)
 

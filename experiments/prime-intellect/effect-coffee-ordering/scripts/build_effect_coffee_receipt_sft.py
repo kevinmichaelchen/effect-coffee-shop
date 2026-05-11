@@ -227,21 +227,74 @@ def final_receipt(order: dict[str, Any]) -> str:
     return f"{order['drink_name']} {order['id']} {cents_to_dollars(order['price_cents'])}."
 
 
-def tool_arguments(order: dict[str, Any]) -> str:
+def confirmation_request(order: dict[str, Any]) -> str:
+    items = order.get("items")
+    summary = " and ".join(item_summary(item) for item in items) if isinstance(items, list) else item_summary(order)
+    notes = f", notes: {order['notes']}" if order.get("notes") else ""
+    return f"I have {summary} for {order['customer_name']}{notes}, total {cents_to_dollars(order['price_cents'])}. Should I place it?"
+
+
+def item_summary(item: dict[str, Any]) -> str:
+    milk = f" {item['milk']} milk" if item["milk"] != "none" else ""
+    quantity = item.get("quantity", 1)
+    quantity_prefix = f"{quantity} " if quantity != 1 else "a "
+    shot_phrase = "" if item["shots"] == 0 else f" with {item['shots']} shot{'s' if item['shots'] != 1 else ''}"
+    return f"{quantity_prefix}{item['size']} {item['temperature']}{milk} {item['drink_name']}{shot_phrase}"
+
+
+def quote_arguments(order: dict[str, Any]) -> str:
     args = {
         "drink_id": order["drink_id"],
         "size": order["size"],
         "milk": order["milk"],
         "temperature": order["temperature"],
         "shots": order["shots"],
-        "customer_name": order["customer_name"],
         "notes": order["notes"],
     }
     return json.dumps(args, sort_keys=True)
 
 
-def tool_result(order: dict[str, Any]) -> str:
-    return json.dumps({"ok": True, "order": order}, sort_keys=True)
+def quote_result(order: dict[str, Any]) -> str:
+    return json.dumps(
+        {
+            "ok": True,
+            "items": [
+                {
+                    "drink_id": order["drink_id"],
+                    "drink_name": order["drink_name"],
+                    "line_total_cents": order["price_cents"],
+                    "milk": order["milk"],
+                    "notes": order["notes"],
+                    "quantity": order.get("quantity", 1),
+                    "shots": order["shots"],
+                    "size": order["size"],
+                    "temperature": order["temperature"],
+                    "unit_price_cents": order["price_cents"],
+                }
+            ],
+            "total_price_cents": order["price_cents"],
+            "totalPriceCents": order["price_cents"],
+        },
+        sort_keys=True,
+    )
+
+
+def cart_result(order: dict[str, Any]) -> str:
+    cart_items = [
+        {"cart_item_id": f"cart-item-{index:04d}", "item": item}
+        for index, item in enumerate(order.get("items", []), 1)
+    ]
+    return json.dumps(
+        {
+            "ok": True,
+            "cart": {
+                "items": cart_items,
+                "total_price_cents": order["price_cents"],
+                "totalPriceCents": order["price_cents"],
+            },
+        },
+        sort_keys=True,
+    )
 
 
 def final_response_rows() -> list[dict[str, str]]:
@@ -253,11 +306,11 @@ def final_response_rows() -> list[dict[str, str]]:
                 SYSTEM_PROMPT,
                 "",
                 f"User request: {question}",
-                f"place_order result: {tool_result(order)}",
-                "Write only the final customer-facing confirmation.",
+                f"quote_order result: {quote_result(order)}",
+                "Write only the pre-purchase confirmation question.",
             ]
         )
-        rows.append({"prompt": prompt, "completion": final_receipt(order)})
+        rows.append({"prompt": prompt, "completion": confirmation_request(order)})
     for question, answer in REFUSAL_EXAMPLES:
         prompt = "\n".join([SYSTEM_PROMPT, "", f"User request: {question}", "Write only the final customer-facing response."])
         rows.append({"prompt": prompt, "completion": answer})
@@ -273,11 +326,11 @@ def product_behavior_final_response_rows() -> list[dict[str, str]]:
                 SYSTEM_PROMPT,
                 "",
                 f"User request: {question}",
-                f"place_order result: {tool_result(order)}",
-                "Write only the final customer-facing confirmation.",
+                f"quote_order result: {quote_result(order)}",
+                "Write only the pre-purchase confirmation question.",
             ]
         )
-        rows.append({"prompt": prompt, "completion": final_receipt(order)})
+        rows.append({"prompt": prompt, "completion": confirmation_request(order)})
     for question, item_specs, customer_name, _mistaken_item in PRODUCT_CART_EXAMPLES:
         order = multi_order_payload(item_specs, customer_name)
         prompt = "\n".join(
@@ -285,11 +338,11 @@ def product_behavior_final_response_rows() -> list[dict[str, str]]:
                 SYSTEM_PROMPT,
                 "",
                 f"User request: {question}",
-                f"checkout_cart result: {tool_result(order)}",
-                "Write only the final customer-facing confirmation.",
+                f"get_cart result: {cart_result(order)}",
+                "Write only the pre-purchase confirmation question.",
             ]
         )
-        rows.append({"prompt": prompt, "completion": final_receipt(order)})
+        rows.append({"prompt": prompt, "completion": confirmation_request(order)})
     for question, answer in PRODUCT_MENU_EXAMPLES:
         prompt = "\n".join(
             [
@@ -324,12 +377,12 @@ def tool_trajectory_rows() -> list[dict[str, Any]]:
                             {
                                 "id": call_id,
                                 "type": "function",
-                                "function": {"name": "place_order", "arguments": tool_arguments(order)},
+                                "function": {"name": "quote_order", "arguments": quote_arguments(order)},
                             }
                         ],
                     },
-                    {"role": "tool", "tool_call_id": call_id, "name": "place_order", "content": tool_result(order)},
-                    {"role": "assistant", "content": final_receipt(order)},
+                    {"role": "tool", "tool_call_id": call_id, "name": "quote_order", "content": quote_result(order)},
+                    {"role": "assistant", "content": confirmation_request(order)},
                 ]
             }
         )
@@ -365,12 +418,12 @@ def product_behavior_tool_trajectory_rows() -> list[dict[str, Any]]:
                             {
                                 "id": call_id,
                                 "type": "function",
-                                "function": {"name": "place_order", "arguments": tool_arguments(order)},
+                                "function": {"name": "quote_order", "arguments": quote_arguments(order)},
                             }
                         ],
                     },
-                    {"role": "tool", "tool_call_id": call_id, "name": "place_order", "content": tool_result(order)},
-                    {"role": "assistant", "content": final_receipt(order)},
+                    {"role": "tool", "tool_call_id": call_id, "name": "quote_order", "content": quote_result(order)},
+                    {"role": "assistant", "content": confirmation_request(order)},
                 ]
             }
         )
@@ -505,27 +558,7 @@ def product_behavior_tool_trajectory_rows() -> list[dict[str, Any]]:
                     },
                 ]
             )
-        call_id = f"call_product_cart_checkout_{index:04d}"
-        messages.extend(
-            [
-                {
-                    "role": "assistant",
-                    "content": "",
-                    "tool_calls": [
-                        {
-                            "id": call_id,
-                            "type": "function",
-                            "function": {
-                                "name": "checkout_cart",
-                                "arguments": json.dumps({"customer_name": customer_name}, sort_keys=True),
-                            },
-                        }
-                    ],
-                },
-                {"role": "tool", "tool_call_id": call_id, "name": "checkout_cart", "content": tool_result(order)},
-                {"role": "assistant", "content": final_receipt(order)},
-            ]
-        )
+        messages.append({"role": "assistant", "content": confirmation_request(order)})
         rows.append({"messages": messages})
     for index, (question, answer) in enumerate(PRODUCT_MENU_EXAMPLES, 1):
         call_id = f"call_product_menu_{index:04d}"
@@ -598,10 +631,10 @@ def main() -> None:
             [
                 "# Effect Coffee Receipt SFT Data",
                 "",
-                "Generated deterministic receipt-format and product-behavior corpora.",
+                "Generated deterministic pre-purchase confirmation and product-behavior corpora.",
                 "",
-                "- `receipt_final_response_sft.jsonl`: prompt/completion rows focused on final receipt wording.",
-                "- `receipt_tool_trajectory_sft.jsonl`: raw messages rows with tool calls, tool results, and final receipts.",
+                "- `receipt_final_response_sft.jsonl`: prompt/completion rows focused on pre-purchase confirmation wording.",
+                "- `receipt_tool_trajectory_sft.jsonl`: raw messages rows with quote/cart tool calls and confirmation questions.",
                 "- `product_behavior_final_response_sft.jsonl`: prompt/completion rows for broader cashier behavior.",
                 "- `product_behavior_tool_trajectory_sft.jsonl`: raw messages rows for broader cashier behavior.",
                 "",
@@ -610,7 +643,7 @@ def main() -> None:
                 f"Product-behavior final-response rows: {len(product_final_rows)}",
                 f"Product-behavior tool-trajectory rows: {len(product_trajectory_rows)}",
                 "",
-                "Validation rules: successful receipts use exact `$x.xx` totals, avoid cents/wrong-currency wording, and stay short.",
+                "Validation rules: successful confirmations use exact `$x.xx` totals, avoid cents/wrong-currency wording, and stay short.",
                 "",
             ]
         )

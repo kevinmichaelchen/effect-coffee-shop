@@ -1117,8 +1117,38 @@ Published `kevinmichaelchen/effect-coffee-ordering@0.1.14` on
 - Product-readiness evals `be7u0yebdexq8uzzkvfb42oy` and
   `oil1ffvcxzdf4lo0czefghk5` both installed `0.1.14` but failed before scoring
   with Prime inference 503 auth-service errors.
-- Operational caveat: unloading `rqvfrcdy4xt95oka37b0xjyu` after the evals
-  repeatedly returned Prime HTTP 500 and the deployment last reported
-  `UNLOAD_FAILED`; retry unload before leaving the adapter deployed.
+- Operational note: unloading `rqvfrcdy4xt95oka37b0xjyu` initially returned
+  Prime HTTP 500, but a later retry succeeded and the adapter reported
+  `deployment_status: "NOT_DEPLOYED"`.
 - Decision: add `0.1.14` to the PR stack as a hard-eval improvement candidate,
   but do not merge/promote until product-readiness is scored.
+
+### Confirmation-Before-Purchase Product Correction
+
+Product decision on 2026-05-11: for real-money coffee purchases, Beanline
+should not usually submit an order from the user's first request. The safer
+default is to read back the interpreted order, include the exact total, and ask
+for confirmation before calling `place_order` or `checkout_cart`.
+
+Published `kevinmichaelchen/effect-coffee-ordering@0.1.16` on
+2026-05-11 03:09:30 UTC.
+
+- Version id: `chsbnr2xqdmwn610cchux7b4`
+- Content hash:
+  `9af2792a86071c29b74db3e897f3e3bdb781747ca999addadfbdb08db008be01`
+- Wheel SHA256:
+  `b7d16ee9239bc06b4e2a2b6427d8e184dea2fa8ed7b8f45027517e1a41760c64`
+- Integration action: `b1epurf1wnk7iwlozsblt4ij`; logs showed package pull,
+  install/import, and Prime integration tests passing (`4 passed`).
+
+- Prime and live assistant prompts now say to confirm before purchase and only
+  submit after explicit user confirmation such as "yes, place it".
+- SFT generator now emits quote/readback/confirmation trajectories for initial
+  order requests instead of immediate `place_order`/`checkout_cart` calls.
+- Generated SFT corpora no longer contain direct purchase tool calls for initial
+  order examples.
+
+ELI5 decision: this is a meaningful product improvement even before a hosted
+model score, because the previous training target could spend the user's money
+without a final readback. The old hard eval rewards one-shot ordering, so it is
+no longer sufficient as the promotion gate for this behavior.
