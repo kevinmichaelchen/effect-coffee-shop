@@ -1,6 +1,7 @@
 import type { ModelMessage } from "@tanstack/ai";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import {
   type AssistantConversationMessage,
@@ -24,6 +25,24 @@ const defaultOllamaEndpoint = "http://localhost:11434";
 const assistantToolLoopExhaustedMessage =
   "I couldn't finish the request because the tool loop did not converge.";
 const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
+const ReceiptOrderItemSchema = Schema.Struct({
+  drinkName: Schema.String,
+  milk: Schema.String,
+  notes: Schema.optionalKey(Schema.String),
+  quantity: Schema.Int,
+  shots: Schema.Int,
+  size: Schema.String,
+  temperature: Schema.String,
+});
+type ReceiptOrderItem = typeof ReceiptOrderItemSchema.Type;
+const ReceiptOrderSchema = Schema.Struct({
+  id: Schema.String,
+  items: Schema.NonEmptyArray(ReceiptOrderItemSchema),
+  totalPriceCents: Schema.Int,
+});
+type ReceiptOrder = typeof ReceiptOrderSchema.Type;
+const decodeJsonString = Schema.decodeUnknownOption(Schema.UnknownFromJsonString);
+const decodeReceiptOrder = Schema.decodeUnknownOption(ReceiptOrderSchema);
 
 export type AssistantAiConfig = OllamaConfig | WorkersAiConfig;
 
@@ -34,6 +53,11 @@ interface AssistantConversationRoundInput {
   readonly requestMetadata: AssistantRequestMetadata | undefined;
   readonly round: number;
   readonly tools: readonly AssistantToolDefinition[];
+}
+
+interface ExecutedToolMessages {
+  readonly messages: readonly AssistantConversationMessage[];
+  readonly receipt: Option.Option<string>;
 }
 
 export function getBunAssistantAiConfig(
@@ -155,14 +179,18 @@ function runAssistantConversationRound(
           }
 
           return appendToolCallMessages(input.conversation, response.toolCalls, input.tools).pipe(
-            Effect.flatMap((conversation) =>
-              runAssistantConversationRound({
-                conversation,
-                eventId: input.eventId,
-                model: input.model,
-                requestMetadata: input.requestMetadata,
-                round: input.round + 1,
-                tools: input.tools,
+            Effect.flatMap((appendResult) =>
+              Option.match(appendResult.receipt, {
+                onNone: () =>
+                  runAssistantConversationRound({
+                    conversation: appendResult.conversation,
+                    eventId: input.eventId,
+                    model: input.model,
+                    requestMetadata: input.requestMetadata,
+                    round: input.round + 1,
+                    tools: input.tools,
+                  }),
+                onSome: (receipt) => Effect.succeed(receipt),
               }),
             ),
           );
@@ -175,29 +203,36 @@ function appendToolCallMessages(
   conversation: readonly AssistantConversationMessage[],
   toolCalls: readonly AssistantToolCall[],
   tools: readonly AssistantToolDefinition[],
-): Effect.Effect<readonly AssistantConversationMessage[]> {
+) {
   return Effect.forEach(toolCalls, (toolCall) =>
     executeToolCall(toolCall, tools).pipe(
-      Effect.map((content): readonly AssistantConversationMessage[] => [
-        {
-          role: "assistant",
-          content: JSON.stringify(toolCall),
-          toolCalls: [toolCall],
-        },
-        {
-          content,
-          name: toolCall.name,
-          role: "tool",
-        },
-      ]),
+      Effect.map(
+        (content): ExecutedToolMessages => ({
+          messages: [
+            {
+              role: "assistant",
+              content: JSON.stringify(toolCall),
+              toolCalls: [toolCall],
+            },
+            {
+              content,
+              name: toolCall.name,
+              role: "tool",
+            },
+          ],
+          receipt: receiptFromPurchaseToolResult(toolCall.name, content),
+        }),
+      ),
     ),
-  ).pipe(Effect.map((messages) => conversation.concat(messages.flat())));
+  ).pipe(
+    Effect.map((executedMessages) => ({
+      conversation: conversation.concat(executedMessages.flatMap((result) => result.messages)),
+      receipt: lastReceipt(executedMessages),
+    })),
+  );
 }
 
-function executeToolCall(
-  toolCall: AssistantToolCall,
-  tools: readonly AssistantToolDefinition[],
-): Effect.Effect<string> {
+function executeToolCall(toolCall: AssistantToolCall, tools: readonly AssistantToolDefinition[]) {
   const selectedTool = tools.find((tool) => getAssistantToolName(tool) === toolCall.name);
 
   if (!selectedTool) {
@@ -205,4 +240,62 @@ function executeToolCall(
   }
 
   return selectedTool.execute(toolCall.arguments);
+}
+
+function receiptFromPurchaseToolResult(toolName: string, content: string): Option.Option<string> {
+  return Option.flatMap(Option.liftPredicate(toolName, purchaseToolName), () =>
+    receiptFromToolResultContent(content),
+  );
+}
+
+function purchaseToolName(toolName: string): boolean {
+  return toolName === "place_order" || toolName === "checkout_cart";
+}
+
+function receiptFromToolResultContent(content: string): Option.Option<string> {
+  return Option.map(
+    Option.flatMap(decodeJsonString(content), decodeReceiptOrder),
+    receiptFromOrder,
+  );
+}
+
+function lastReceipt(results: readonly ExecutedToolMessages[]): Option.Option<string> {
+  const receipts = results.flatMap((result) =>
+    Option.match(result.receipt, {
+      onNone: () => [],
+      onSome: (receipt) => [receipt],
+    }),
+  );
+
+  return Option.fromNullishOr(receipts.at(-1));
+}
+
+function receiptFromOrder(order: ReceiptOrder): string {
+  const drinkSummary = order.items.map(receiptItemSummary).join(", ");
+
+  return `${drinkSummary}. Order ${order.id}. Total ${formatCents(order.totalPriceCents)}.`;
+}
+
+function receiptItemSummary(item: ReceiptOrderItem): string {
+  const quantity = textWhen(`${item.quantity} x `, item.quantity !== 1);
+  const milk = textWhen(`${item.milk} milk `, item.milk !== "none");
+  const shots = textWhen(` ${item.shots} shots`, item.shots !== 1);
+  const noteText = item.notes ?? "";
+  const notes = textWhen(` (${noteText})`, noteText !== "");
+
+  return `${quantity}${item.size} ${item.temperature} ${milk}${item.drinkName}${shots}${notes}`;
+}
+
+function textWhen(text: string, include: boolean): string {
+  return Option.getOrElse(
+    Option.liftPredicate(text, () => include),
+    () => "",
+  );
+}
+
+function formatCents(cents: number): string {
+  const dollars = Math.floor(cents / 100);
+  const minorUnits = String(cents % 100).padStart(2, "0");
+
+  return `$${dollars}.${minorUnits}`;
 }
