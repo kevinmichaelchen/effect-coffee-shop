@@ -1579,22 +1579,26 @@ def load_environment(split: str = "train", num_examples: int = -1, **kwargs) -> 
         weights=[0.4, 0.2, 0.15, 0.15, 0.1],
     )
 
+    ordering_tools = [
+        place_order,
+        add_cart_item,
+        checkout_cart,
+        get_cart,
+        update_cart_item,
+        remove_cart_item,
+        clear_cart,
+    ]
+    menu_tools = [
+        list_menu,
+        get_item_options,
+        validate_order,
+        quote_order,
+    ]
+
     return vf.ToolEnv(
         dataset=selected_dataset,
         eval_dataset=selected_eval_dataset,
-        tools=[
-            list_menu,
-            get_item_options,
-            validate_order,
-            quote_order,
-            place_order,
-            get_cart,
-            add_cart_item,
-            update_cart_item,
-            remove_cart_item,
-            clear_cart,
-            checkout_cart,
-        ],
+        tools=ordering_tools + menu_tools,
         rubric=rubric,
         system_prompt=SYSTEM_PROMPT,
         max_turns=4,

@@ -971,6 +971,11 @@ Published environment versions:
   and avoid menu/options probes before complete one-shot orders.
 - `0.1.12`: published the PR 47 hardening: shared coffee-domain logic, cart id
   fixes, local tests, and stricter cart tool sequence/count grading.
+- `0.1.13`: prompt-only receipt tightening: direct complete orders should avoid
+  menu/option probes, final receipts should use exact `$x.xx`, and SFT corpora
+  were regenerated with the updated prompt.
+- `0.1.14`: order-first tool presentation: `place_order`, cart add, and
+  checkout are listed before menu/probe tools to reduce first-tool menu bias.
 
 The live app assistant prompt and SFT corpora were kept aligned with the Prime
 prompt.
@@ -982,6 +987,8 @@ prompt.
 | Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.9` | `hard_eval` | `0.359` | `0.375` | `0.375` | First true split-specific baseline after eval routing fix. |
 | Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.10` | `hard_eval` | `0.462` | `0.500` | `0.375` | Single-object `items_json` tolerance recovered some tool calls. |
 | Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.11` | `hard_eval` | `0.520` | `0.625` | `0.375` | Direct-order prompt helped but still below the old champion gate. |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.13` | `hard_eval` | `0.507` API / `0.508` logs | `0.531` | `0.438` | Prompt-only receipt tightening improved price format but reduced overall hard reward. Do not use as next base. |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.14` | `hard_eval` | `0.592` API / `0.564` logs | `0.625` | `0.500` | Order-first tool presentation improved direct-order behavior versus `0.1.11`; still below promotion gate. |
 | Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.10` | `product_readiness` | `0.610` | `0.622` | `0.688` | All 16 product-readiness examples now run. |
 | Raw `Qwen/Qwen3.5-2B` | `0.1.11` | `hard_eval` | `0.783` | `0.812` | `0.812` | Better receipt priors, still below `0.830` and weaker tool discipline. |
 
@@ -994,9 +1001,9 @@ Do not promote any expanded-tool candidate yet. The old champion remains best
 for the old `0.1.5` hard gate, but the expanded tool surface defines a better
 product target and exposes weaknesses in both the 0.8B champion and raw 2B.
 
-Next Prime spend: run fresh hard and product-readiness baselines against
-`0.1.12` before any new training. Only run the small 0.8B receipt-drill warmup
-against `0.1.12` if those baselines support it.
+Next Prime spend: retry the `0.1.14` product-readiness baseline once Prime
+inference is stable. Only run the small 0.8B receipt-drill warmup against
+`0.1.14` if product-readiness does not regress.
 Promote only if it beats `0.830` hard reward, improves price formatting, keeps
 tool correctness near the old champion, and does not increase verbosity or tool
 overuse.
@@ -1072,3 +1079,46 @@ Deployment and inference notes:
 Decision: no promotion and no model-quality conclusion. This is a Prime hosted
 inference/deployment blocker, not evidence that Beanline improved or regressed.
 Retry the same baselines after Prime inference and adapter deployment recover.
+
+### Prompt And Tool-Order Experiments
+
+Published `kevinmichaelchen/effect-coffee-ordering@0.1.13` on
+2026-05-11 02:31:09 UTC.
+
+- Version id: `hbt7sngzx8hep60gotfk6jgh`
+- Content hash:
+  `1f73b28c30109420b7a9816ab77d2e150c93558ee37f3266bcb065e1c2c319eb`
+- Wheel SHA256:
+  `0a7b295e58d56743e945d106fe38f663c1551f8557c2c22d08bc82a6d74162a7`
+- Change: tightened the prompt and regenerated SFT corpora around exact dollar
+  receipts and direct complete-order tool paths.
+- Hard eval `um18sa6e27qx47fujujfowct`: API reward `0.5066`; log reward
+  `0.508`; tool correctness `0.531`; price format `0.438`.
+- Decision: do not promote. The prompt helped price format versus `0.1.11`
+  (`0.438` vs `0.375`) but hurt overall hard reward (`0.507` vs `0.520`).
+
+Published `kevinmichaelchen/effect-coffee-ordering@0.1.14` on
+2026-05-11 02:37:56 UTC.
+
+- Version id: `utjwrrl33rsp811aq4qtfqzg`
+- Content hash:
+  `ccce5307924143f1d0817a92ebd584a30b5413640ba94bb4e4bee2c9230a6b24`
+- Wheel SHA256:
+  `7dab1646a7aa3157e3d7439f84fd6a8ed66af97e3f8466d14bfb43c9ae76ebd6`
+- Change: kept the `0.1.13` prompt, then presented order/cart tools before
+  menu/probe tools in Prime and the live assistant.
+- Hard eval `k9c337fhy7d40gb1uq7t1adn`: API reward `0.5921`; log reward
+  `0.564`; tool correctness `0.625`; price format `0.500`; pass@2 `0.750`;
+  `place_order_calls` `0.625`; `list_menu_calls` `0.875`.
+- ELI5 decision: meaningful improvement, not promotion. Putting the order
+  button before the menu button made Beanline place orders more often and raised
+  hard-eval reward from `0.520` to at least `0.564`, while price formatting also
+  improved from `0.375` to `0.500`.
+- Product-readiness evals `be7u0yebdexq8uzzkvfb42oy` and
+  `oil1ffvcxzdf4lo0czefghk5` both installed `0.1.14` but failed before scoring
+  with Prime inference 503 auth-service errors.
+- Operational caveat: unloading `rqvfrcdy4xt95oka37b0xjyu` after the evals
+  repeatedly returned Prime HTTP 500 and the deployment last reported
+  `UNLOAD_FAILED`; retry unload before leaving the adapter deployed.
+- Decision: add `0.1.14` to the PR stack as a hard-eval improvement candidate,
+  but do not merge/promote until product-readiness is scored.

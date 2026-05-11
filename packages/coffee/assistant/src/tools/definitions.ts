@@ -50,19 +50,10 @@ export function getAssistantToolActivityEvent(): string {
 type AssistantToolEmitter = (activity: AssistantToolActivity) => void;
 
 const assistantToolInputs = [
-  { action: "list_menu", parameters: emptyToolParameters, tool: ListMenuTool },
-  { action: "get_item_options", parameters: itemOptionsToolParameters, tool: GetItemOptionsTool },
-  { action: "validate_order", parameters: quoteOrderToolParameters, tool: ValidateOrderTool },
-  { action: "quote_order", parameters: quoteOrderToolParameters, tool: QuoteOrderTool },
   { action: "place_order", parameters: placeOrderToolParameters, tool: PlaceOrderTool },
-  { action: "get_order", parameters: orderIdToolParameters, tool: GetOrderTool },
-  { action: "list_orders", parameters: listOrdersToolParameters, tool: ListOrdersTool },
-  { action: "start_brewing", parameters: orderIdToolParameters, tool: StartBrewingTool },
-  { action: "mark_ready", parameters: orderIdToolParameters, tool: MarkReadyTool },
-  { action: "pick_up_order", parameters: orderIdToolParameters, tool: PickUpOrderTool },
-  { action: "cancel_order", parameters: orderIdToolParameters, tool: CancelOrderTool },
-  { action: "get_cart", parameters: emptyToolParameters, tool: GetCartTool },
   { action: "add_cart_item", parameters: orderItemToolParameters, tool: AddCartItemTool },
+  { action: "checkout_cart", parameters: checkoutCartToolParameters, tool: CheckoutCartTool },
+  { action: "get_cart", parameters: emptyToolParameters, tool: GetCartTool },
   {
     action: "update_cart_item",
     parameters: updateCartItemToolParameters,
@@ -70,7 +61,16 @@ const assistantToolInputs = [
   },
   { action: "remove_cart_item", parameters: cartItemIdToolParameters, tool: RemoveCartItemTool },
   { action: "clear_cart", parameters: emptyToolParameters, tool: ClearCartTool },
-  { action: "checkout_cart", parameters: checkoutCartToolParameters, tool: CheckoutCartTool },
+  { action: "list_menu", parameters: emptyToolParameters, tool: ListMenuTool },
+  { action: "get_item_options", parameters: itemOptionsToolParameters, tool: GetItemOptionsTool },
+  { action: "validate_order", parameters: quoteOrderToolParameters, tool: ValidateOrderTool },
+  { action: "quote_order", parameters: quoteOrderToolParameters, tool: QuoteOrderTool },
+  { action: "get_order", parameters: orderIdToolParameters, tool: GetOrderTool },
+  { action: "list_orders", parameters: listOrdersToolParameters, tool: ListOrdersTool },
+  { action: "start_brewing", parameters: orderIdToolParameters, tool: StartBrewingTool },
+  { action: "mark_ready", parameters: orderIdToolParameters, tool: MarkReadyTool },
+  { action: "pick_up_order", parameters: orderIdToolParameters, tool: PickUpOrderTool },
+  { action: "cancel_order", parameters: orderIdToolParameters, tool: CancelOrderTool },
 ] as const satisfies readonly {
   readonly action: CoffeeActionName;
   readonly parameters: AssistantToolDefinition["parameters"];

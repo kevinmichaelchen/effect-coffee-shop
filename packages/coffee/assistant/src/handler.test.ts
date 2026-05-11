@@ -170,13 +170,33 @@ const verifyUiMessages = async () => {
     createAssistantHandlerOptions(aiRun),
   );
   const body = await response.text();
+  const firstModelInputText = JSON.stringify(aiRun.mock.calls[0]?.[1] ?? {});
 
   expect(response.status).toBe(200);
   expect(aiRun).toHaveBeenCalledTimes(1);
+  expect(firstModelInputText.indexOf('"name":"place_order"')).toBeLessThan(
+    firstModelInputText.indexOf('"name":"list_menu"'),
+  );
+  expect(firstModelInputText.indexOf('"name":"add_cart_item"')).toBeLessThan(
+    firstModelInputText.indexOf('"name":"list_menu"'),
+  );
+  expect(firstModelInputText.indexOf('"name":"checkout_cart"')).toBeLessThan(
+    firstModelInputText.indexOf('"name":"list_menu"'),
+  );
   expect(aiRun).toHaveBeenCalledWith(
     assistantModel,
     expect.objectContaining({
       messages: expect.arrayContaining([
+        expect.objectContaining({
+          role: "system",
+          content: expect.stringContaining(
+            "For a complete one-item order, call place_order directly.",
+          ),
+        }),
+        expect.objectContaining({
+          role: "system",
+          content: expect.stringContaining("520 cents becomes $5.20"),
+        }),
         expect.objectContaining({
           role: "user",
           content: "List the menu briefly.",
