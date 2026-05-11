@@ -32,11 +32,9 @@ Prime CLI rejects it as a `checkpoint_id` for new training runs.
 ## Receipt Run
 
 Use the small budget-capped receipt-drill warmup only after fresh baselines on
-`kevinmichaelchen/effect-coffee-ordering@0.1.12`. Version `0.1.12` is published
-and contains the PR 47 hardening: shared coffee-domain logic, cart id fixes,
-local tests, stricter cart tool sequence/count grading, the expanded tool
-surface, split-specific eval routing, single-item `items_json` tolerance, and a
-direct-order-first prompt.
+`kevinmichaelchen/effect-coffee-ordering@0.1.14`. Version `0.1.14` should be
+used for the next baseline because it contains the PR 47 hardening, prompt-only
+receipt/direct-tool-path tightening, and order-first tool presentation.
 
 ```sh
 cd experiments/prime-intellect/effect-coffee-ordering
@@ -55,10 +53,10 @@ for:
 - pickup timing, customer name, and order notes,
 - concise refusal behavior.
 
-Environment `kevinmichaelchen/effect-coffee-ordering@0.1.12` is published and
-should be selected for new hosted baselines, evals, or training. Prime hosted
-evals on earlier versions confirmed `product_readiness` now runs all 16
-examples after the `eval_dataset` routing fix.
+Environment `kevinmichaelchen/effect-coffee-ordering@0.1.14` is published and
+should be selected for new hosted baselines, evals, or training. It improved
+hard eval versus `0.1.11`, but product-readiness is still blocked by Prime
+inference 503 errors.
 
 Do not rerun `effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml`
 until the receipt drill or a prompt/SFT pass improves direct order behavior.
@@ -76,10 +74,12 @@ Recent baseline evals on the expanded tool surface:
 | Model | Env | Split | Reward | Tool correctness | Price format | Note |
 | --- | --- | --- | ---: | ---: | ---: | --- |
 | Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.11` | `hard_eval` | `0.520` | `0.625` | `0.375` | Too much menu/options probing; bad final prices on successful orders. |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.13` | `hard_eval` | `0.507` API / `0.508` logs | `0.531` | `0.438` | Prompt-only receipt tightening improved price format but hurt overall reward. |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.14` | `hard_eval` | `0.592` API / `0.564` logs | `0.625` | `0.500` | Order-first tool presentation helped hard eval; product-readiness still needs a scored run. |
 | Raw `Qwen/Qwen3.5-2B` | `0.1.11` | `hard_eval` | `0.783` | `0.812` | `0.812` | Better receipt priors, still below champion gate and weaker tool discipline. |
 
-These results mean the expanded tool surface is useful but not yet promotion
-ready.
+These results mean `0.1.14` is a meaningful hard-eval improvement over the
+expanded-tool baseline, but it is not promotion ready.
 
 Receipt-drill warmup on `0.1.11` was attempted and stopped early:
 
@@ -96,12 +96,13 @@ The failure is still final receipt formatting and tool overuse. Rollouts showed
 correct order fields but wrong final currency/amount style such as `₹520`
 instead of `$5.20`, plus repeated menu/option probes.
 
-Next best action is not another unchanged RL run. Use prompt optimization or SFT
-on the final-response and tool-trajectory corpora, or simplify the tool schema
-further so 0.8B has fewer equivalent ways to express one order.
+Next best action is not another unchanged RL run. Retry product-readiness on
+`0.1.14` once Prime inference is stable, then use SFT on the final-response and
+tool-trajectory corpora or simplify the tool schema further so 0.8B has fewer
+equivalent ways to express one order.
 
 Before any new hosted training spend, run fresh hosted baselines on
-`kevinmichaelchen/effect-coffee-ordering@0.1.12`; the warmup configs now pin
+`kevinmichaelchen/effect-coffee-ordering@0.1.14`; the warmup configs now pin
 that version.
 
 Inspect the stopped run:
@@ -154,11 +155,11 @@ resolve the latest published environment even when the command includes
 `@0.1.12`, so verify `version_id` in `prime --plain eval get <eval_id>
 --output json`.
 
-Current hosted blocker: fresh champion eval attempts on `0.1.12` reached and
-installed the `0.1.12` package, but failed before scoring. Initial attempts saw
-the undeployed adapter as unavailable; after deployment recovered, follow-up
-evals still failed during Prime inference preflight with 503/502 errors. Retry
-after Prime inference is stable, and unload the adapter after the evals finish.
+Current hosted blocker: product-readiness attempts on `0.1.14` reached and
+installed the `0.1.14` package, but failed before scoring with Prime inference
+503 auth-service errors. Also retry unloading `rqvfrcdy4xt95oka37b0xjyu`; the
+last unload attempts returned HTTP 500 and deployment status reported
+`UNLOAD_FAILED`.
 
 ## Promote Only If
 

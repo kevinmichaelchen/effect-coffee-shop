@@ -130,6 +130,22 @@ class EnvironmentLogicTests(unittest.TestCase):
         self.assertEqual(asyncio.run(env.price_format(bad_currency_completion, info)), 0.0)
         self.assertEqual(asyncio.run(env.price_format(cent_total_completion, info)), 0.0)
 
+    def test_system_prompt_prefers_direct_orders_and_exact_dollar_receipts(self):
+        prompt = env.SYSTEM_PROMPT
+
+        self.assertIn("For a complete one-item order, call place_order directly.", prompt)
+        self.assertIn("Do not call list_menu, get_item_options, validate_order, or quote_order first", prompt)
+        self.assertIn("520 cents becomes $5.20", prompt)
+        self.assertIn('Receipt template: "<drink summary>. Order <id>. Total $x.xx."', prompt)
+
+    def test_ordering_tools_are_presented_before_menu_probe_tools(self):
+        environment = env.load_environment(split="hard_eval")
+        tool_names = [tool.__name__ for tool in environment.tools]
+
+        self.assertEqual(tool_names[:3], ["place_order", "add_cart_item", "checkout_cart"])
+        self.assertLess(tool_names.index("place_order"), tool_names.index("list_menu"))
+        self.assertLess(tool_names.index("place_order"), tool_names.index("get_item_options"))
+
 
 if __name__ == "__main__":
     unittest.main()
