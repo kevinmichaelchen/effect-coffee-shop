@@ -989,8 +989,10 @@ CONFIRMATION_FIRST_TASKS = [
         "question": "Yes, place it.",
         "info": {
             "expected_action": "refuse",
+            "expected_tool_names": ["get_pending_confirmation"],
+            "expected_tool_sequence": ["get_pending_confirmation"],
             "required_terms": ["which order", "confirm", "before"],
-            "expected_tool_counts": {"place_order": 0, "checkout_cart": 0},
+            "expected_tool_counts": {"get_pending_confirmation": 1, "place_order": 0, "checkout_cart": 0},
         },
     },
     {
@@ -1153,6 +1155,14 @@ async def prepare_cart_confirmation() -> str:
     confirmation = pending_confirmation_payload("cart", items, cart["total_price_cents"])
     save_pending_confirmation(confirmation)
     return json.dumps({"ok": True, **confirmation}, sort_keys=True)
+
+
+async def get_pending_confirmation() -> str:
+    """Fetch the current simulated pending confirmation."""
+    pending = _PENDING_CONFIRMATIONS.get(cart_key())
+    if pending is None:
+        return json.dumps({"status": "no_pending_confirmation"}, sort_keys=True)
+    return json.dumps({"ok": True, **pending}, sort_keys=True)
 
 
 async def place_order(
@@ -1569,7 +1579,10 @@ async def tool_correctness(completion, info) -> float:
     term_score = sum(1.0 for term in required_terms if term.lower() in text.lower()) / len(
         required_terms
     )
-    return 0.5 * float(placed_order is None) + 0.5 * term_score
+    checks = [placed_order is None]
+    checks.extend(expected_tool_path_checks(info, tool_names(completion)))
+    path_score = sum(1.0 for check in checks if check) / len(checks)
+    return 0.5 * path_score + 0.5 * term_score
 
 
 async def final_response_quality(completion, info) -> float:
@@ -1718,6 +1731,7 @@ async def product_efficiency(completion, info) -> float:
         final_text != "",
         concise_text_score(final_text, max_words=36) >= 0.75,
     ]
+    checks.extend(expected_tool_path_checks(info, tool_names(completion)))
     return sum(1.0 for check in checks if check) / len(checks)
 
 
@@ -1950,6 +1964,7 @@ def load_environment(split: str = "train", num_examples: int = -1, **kwargs) -> 
     ordering_tools = [
         prepare_order_confirmation,
         prepare_cart_confirmation,
+        get_pending_confirmation,
         place_order,
         add_cart_item,
         checkout_cart,

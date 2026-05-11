@@ -85,6 +85,39 @@ class EnvironmentLogicTests(unittest.TestCase):
         self.assertEqual(payload["items"][0]["drink_id"], "latte")
         self.assertIn("confirmation_id", payload)
 
+    def test_get_pending_confirmation_returns_pending_ticket(self):
+        async def run():
+            confirmation = json.loads(
+                await env.prepare_order_confirmation(
+                    items_json=json.dumps(
+                        {
+                            "drink_id": "latte",
+                            "milk": "oat",
+                            "size": "medium",
+                        }
+                    )
+                )
+            )
+            pending = json.loads(await env.get_pending_confirmation())
+            return confirmation, pending
+
+        confirmation, pending = asyncio.run(run())
+
+        self.assertEqual(pending["ok"], True)
+        self.assertEqual(pending["status"], "pending_confirmation")
+        self.assertEqual(pending["confirmation_id"], confirmation["confirmation_id"])
+        self.assertEqual(pending["items"][0]["drink_id"], "latte")
+
+    def test_get_pending_confirmation_returns_no_pending_marker(self):
+        async def run():
+            await env.clear_cart()
+            env.clear_pending_confirmation()
+            return await env.get_pending_confirmation()
+
+        payload = json.loads(asyncio.run(run()))
+
+        self.assertEqual(payload, {"status": "no_pending_confirmation"})
+
     def test_place_order_requires_pending_confirmation(self):
         async def run():
             return await env.place_order(
@@ -240,6 +273,35 @@ class EnvironmentLogicTests(unittest.TestCase):
         self.assertEqual(good_score, 1.0)
         self.assertLess(premature_order_score, good_score)
 
+    def test_confirmation_first_rewards_lookup_before_bare_confirmation_refusal(self):
+        info = env.CONFIRMATION_FIRST_TASKS[3]["info"]
+        good_completion = [
+            {
+                "role": "tool",
+                "name": "get_pending_confirmation",
+                "content": json.dumps({"status": "no_pending_confirmation"}),
+            },
+            {
+                "role": "assistant",
+                "content": "Which order should I confirm before placing it?",
+            },
+        ]
+        no_lookup_completion = [
+            {
+                "role": "assistant",
+                "content": "Which order should I confirm before placing it?",
+            },
+        ]
+
+        good_correctness = asyncio.run(env.tool_correctness(good_completion, info))
+        no_lookup_correctness = asyncio.run(env.tool_correctness(no_lookup_completion, info))
+        good_efficiency = asyncio.run(env.product_efficiency(good_completion, info))
+        no_lookup_efficiency = asyncio.run(env.product_efficiency(no_lookup_completion, info))
+
+        self.assertEqual(good_correctness, 1.0)
+        self.assertGreater(good_efficiency, no_lookup_efficiency)
+        self.assertGreater(good_correctness, no_lookup_correctness)
+
     def test_price_format_rejects_wrong_currency_and_cent_totals(self):
         item = env.quote_payload(None, "latte", "medium", "whole", "hot", 1, "", 1)["items"][0]
         order = env.order_payload([item], "Blair")
@@ -262,6 +324,7 @@ class EnvironmentLogicTests(unittest.TestCase):
         self.assertIn("read back the interpreted order and ask for confirmation before purchase", prompt)
         self.assertIn("do not call place_order or checkout_cart yet", prompt)
         self.assertIn("prepare_order_confirmation", prompt)
+        self.assertIn("get_pending_confirmation", prompt)
         self.assertIn("confirmation_id", prompt)
         self.assertIn("Call place_order or checkout_cart only after the user explicitly confirms", prompt)
         self.assertIn("Should I place it?", prompt)
@@ -272,8 +335,17 @@ class EnvironmentLogicTests(unittest.TestCase):
         environment = env.load_environment(split="hard_eval")
         tool_names = [tool.__name__ for tool in environment.tools]
 
-        self.assertEqual(tool_names[:3], ["prepare_order_confirmation", "prepare_cart_confirmation", "place_order"])
+        self.assertEqual(
+            tool_names[:4],
+            [
+                "prepare_order_confirmation",
+                "prepare_cart_confirmation",
+                "get_pending_confirmation",
+                "place_order",
+            ],
+        )
         self.assertLess(tool_names.index("prepare_order_confirmation"), tool_names.index("place_order"))
+        self.assertLess(tool_names.index("get_pending_confirmation"), tool_names.index("place_order"))
         self.assertLess(tool_names.index("place_order"), tool_names.index("list_menu"))
         self.assertLess(tool_names.index("place_order"), tool_names.index("get_item_options"))
 
