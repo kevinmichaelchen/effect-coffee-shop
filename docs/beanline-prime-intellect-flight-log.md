@@ -1046,3 +1046,29 @@ Published `kevinmichaelchen/effect-coffee-ordering@0.1.12` on
 - Caveat: the existing Prime environment still reports `PRIVATE` visibility even
   though the push used `--visibility PUBLIC`; the current CLI exposes no
   separate visibility update command.
+
+### Blocked `0.1.12` Champion Baselines
+
+Attempted fresh hosted baselines for champion adapter
+`rqvfrcdy4xt95oka37b0xjyu` on `0.1.12`.
+
+| Eval id | Split | Status | Result |
+| --- | --- | --- | --- |
+| `jxlbpddxbkkigg0zyjl99ffe` | `hard_eval` | failed before scoring | Hosted eval pulled and installed `effect-coffee-ordering==0.1.12`, then inference returned `404` for `Qwen/Qwen3.5-0.8B:rqvfrcdy4xt95oka37b0xjyu`. |
+| `yf28igow4r0mwwi2ey6bscfe` | `product_readiness` | failed before scoring | Same failure: `0.1.12` installed, but the champion adapter model string was unavailable to hosted inference. |
+| `s4ewj8fmw7muxoqwqb9f8wum` | `hard_eval` | failed before scoring | After the adapter deployed successfully, hosted eval installed `0.1.12` but inference preflight returned a 503 auth-service/model lookup error. |
+| `gvedyecbd8xomrrirltdr6w4` | `product_readiness` | failed before scoring | After the adapter deployed successfully, hosted eval installed `0.1.12` but chat-completions preflight returned a 502 connection error. |
+
+Deployment and inference notes:
+
+- `prime --plain deployments create rqvfrcdy4xt95oka37b0xjyu --yes` failed
+  twice with Prime HTTP 502/proxy registration errors, then later succeeded once
+  `prime --plain inference models` recovered from a 503 auth-service error.
+- `prime --plain deployments delete rqvfrcdy4xt95oka37b0xjyu` failed once with
+  HTTP 500, then succeeded on retry. `prime --plain deployments list --output
+  json` confirmed `deployment_status: "NOT_DEPLOYED"`.
+- Wallet balance remained `$42.26` after the failed hosted evals and unload.
+
+Decision: no promotion and no model-quality conclusion. This is a Prime hosted
+inference/deployment blocker, not evidence that Beanline improved or regressed.
+Retry the same baselines after Prime inference and adapter deployment recover.

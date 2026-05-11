@@ -132,8 +132,7 @@ prime --plain eval run kevinmichaelchen/effect-coffee-ordering \
   --num-examples 8 \
   --rollouts-per-example 2 \
   --max-tokens 256 \
-  --temperature 0.4 \
-  --abbreviated-summary
+  --temperature 0.4
 
 prime --plain eval run kevinmichaelchen/effect-coffee-ordering \
   --hosted \
@@ -142,15 +141,24 @@ prime --plain eval run kevinmichaelchen/effect-coffee-ordering \
   --num-examples 16 \
   --rollouts-per-example 2 \
   --max-tokens 256 \
-  --temperature 0.4 \
-  --abbreviated-summary
+  --temperature 0.4
 
 prime --plain eval get <eval_id> --output json
 prime --plain deployments delete <candidate_adapter_id>
 ```
 
+The current Prime CLI rejects `--abbreviated-summary`, so do not include it.
 The explicit `--env-args '{"split":"hard_eval"}'` matters. Without it, ad hoc
-evals can fall back to the environment default split.
+evals can fall back to the environment default split. Hosted evals currently
+resolve the latest published environment even when the command includes
+`@0.1.12`, so verify `version_id` in `prime --plain eval get <eval_id>
+--output json`.
+
+Current hosted blocker: fresh champion eval attempts on `0.1.12` reached and
+installed the `0.1.12` package, but failed before scoring. Initial attempts saw
+the undeployed adapter as unavailable; after deployment recovered, follow-up
+evals still failed during Prime inference preflight with 503/502 errors. Retry
+after Prime inference is stable, and unload the adapter after the evals finish.
 
 ## Promote Only If
 
