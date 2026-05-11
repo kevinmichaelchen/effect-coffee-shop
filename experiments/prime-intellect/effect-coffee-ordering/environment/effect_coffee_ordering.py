@@ -1183,7 +1183,7 @@ async def place_order(
     quote = quote_payload(items, drink_id, size, milk, temperature, shots, notes, quantity)
     if quote.get("ok") is not True:
         return json.dumps(quote, sort_keys=True)
-    if confirmation_id and not pending_confirmation_matches(
+    if not pending_confirmation_matches(
         confirmation_id,
         "direct-order",
         quote["items"],
@@ -1273,7 +1273,7 @@ async def checkout_cart(customer_name: str = "", confirmation_id: str = "") -> s
         return json.dumps({"ok": False, "error": "cart must include at least one item"}, sort_keys=True)
     items = [entry["item"] for entry in cart]
     total = sum(item["line_total_cents"] for item in items)
-    if confirmation_id and not pending_confirmation_matches(
+    if not pending_confirmation_matches(
         confirmation_id,
         "cart",
         items,

@@ -85,7 +85,7 @@ class EnvironmentLogicTests(unittest.TestCase):
         self.assertEqual(payload["items"][0]["drink_id"], "latte")
         self.assertIn("confirmation_id", payload)
 
-    def test_place_order_accepts_single_item_json_payload(self):
+    def test_place_order_requires_pending_confirmation(self):
         async def run():
             return await env.place_order(
                 items_json=json.dumps(
@@ -100,10 +100,67 @@ class EnvironmentLogicTests(unittest.TestCase):
 
         payload = json.loads(asyncio.run(run()))
 
+        self.assertFalse(payload["ok"])
+        self.assertEqual(payload["error"], "confirm the updated order before placing it")
+
+    def test_place_order_accepts_matching_confirmation(self):
+        async def run():
+            confirmation = json.loads(
+                await env.prepare_order_confirmation(
+                    items_json=json.dumps(
+                        {
+                            "drink_id": "latte",
+                            "milk": "oat",
+                            "temperature": "iced",
+                        }
+                    )
+                )
+            )
+            return await env.place_order(
+                items_json=json.dumps(
+                    {
+                        "drink_id": "latte",
+                        "milk": "oat",
+                        "temperature": "iced",
+                    }
+                ),
+                customer_name="Ivy",
+                confirmation_id=confirmation["confirmation_id"],
+            )
+
+        payload = json.loads(asyncio.run(run()))
+
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["order"]["customer_name"], "Ivy")
         self.assertEqual(payload["order"]["items"][0]["size"], "medium")
         self.assertEqual(payload["order"]["items"][0]["shots"], 1)
+
+    def test_checkout_cart_requires_pending_confirmation(self):
+        async def run():
+            await env.clear_cart()
+            await env.add_cart_item("latte", milk="oat")
+            return await env.checkout_cart(customer_name="Ivy")
+
+        payload = json.loads(asyncio.run(run()))
+
+        self.assertFalse(payload["ok"])
+        self.assertEqual(payload["error"], "confirm the updated order before placing it")
+
+    def test_checkout_cart_accepts_matching_confirmation(self):
+        async def run():
+            await env.clear_cart()
+            await env.add_cart_item("latte", milk="oat")
+            confirmation = json.loads(await env.prepare_cart_confirmation())
+            return await env.checkout_cart(
+                customer_name="Ivy",
+                confirmation_id=confirmation["confirmation_id"],
+            )
+
+        payload = json.loads(asyncio.run(run()))
+
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["order"]["customer_name"], "Ivy")
+        self.assertEqual(payload["order"]["items"][0]["drink_id"], "latte")
 
     def test_cart_item_ids_do_not_reuse_removed_ids(self):
         async def run():
