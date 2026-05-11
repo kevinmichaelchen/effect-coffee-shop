@@ -1,4 +1,5 @@
 import * as Arr from "effect/Array";
+import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Match from "effect/Match";
 import * as Option from "effect/Option";
@@ -6,7 +7,7 @@ import * as Schema from "effect/Schema";
 import type { DrinkNotFoundError, InvalidOrderInputError } from "../../domain/errors.ts";
 import type { Cart, CartItem } from "../../domain/cart.ts";
 import { sumMoney } from "../../domain/money.ts";
-import type { CoffeeOrder } from "../../domain/order.ts";
+import type { CoffeeOrder, CoffeeOrderItem } from "../../domain/order.ts";
 import { AuthenticationRequiredError, requireSignedInActor } from "../CurrentActor.ts";
 import type {
   CartItemIdRequest,
@@ -19,6 +20,7 @@ import { OrderItemsInputSchema } from "../contracts.ts";
 import { InternalAppError, internalAppErrorFromPersistence } from "../errors.ts";
 import { CartItemIdGenerator } from "../ports/CartItemIdGenerator.ts";
 import { CartRepository } from "../ports/CartRepository.ts";
+import { CheckoutSessionRepository } from "../ports/CheckoutSessionRepository.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderIdGenerator } from "../ports/OrderIdGenerator.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
@@ -217,25 +219,62 @@ export const clearCart = Effect.fn("CoffeeOrders.clearCart")(function* (): Effec
   return yield* toSnapshot(cleared);
 });
 
+const toOrderItemInputFromResolvedItem = (item: CoffeeOrderItem): OrderItemInput => ({
+  drinkId: item.drinkId,
+  size: item.size,
+  milk: item.milk,
+  temperature: item.temperature,
+  shots: item.shots,
+  quantity: item.quantity,
+  ...Option.match(item.notes, {
+    onNone: () => ({}),
+    onSome: (notes) => ({ notes }),
+  }),
+});
+
 export const checkoutCart = Effect.fn("CoffeeOrders.checkoutCart")(function* (
   input: CheckoutCartRequest,
 ): Effect.fn.Return<
   CoffeeOrder,
   AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
-  CartRepository | MenuRepository | OrderIdGenerator | OrderRepository
+  CartRepository | CheckoutSessionRepository | MenuRepository | OrderIdGenerator | OrderRepository
 > {
-  const cart = yield* readActorCart();
+  const actor = yield* requireSignedInActor();
+  const checkoutSessionRepository = yield* CheckoutSessionRepository;
+  const sessionOption = yield* checkoutSessionRepository
+    .getById(input.checkoutSessionId)
+    .pipe(
+      Effect.mapError(internalAppErrorFromPersistence("Unable to load checkout session right now")),
+    );
+  const session = yield* sessionOption.pipe(
+    Option.match({
+      onNone: () =>
+        Effect.fail(invalidOrderInput(`checkout session ${input.checkoutSessionId} was not found`)),
+      onSome: Effect.succeed,
+    }),
+  );
 
-  yield* Effect.succeed(cart.items).pipe(
+  yield* Effect.succeed(session).pipe(
     Effect.filterOrFail(
-      (items) => items.length > 0,
-      () => invalidOrderInput("cart must include at least one item"),
+      (checkoutSession) => checkoutSession.ownerUserId === actor.userId,
+      () => invalidOrderInput(`checkout session ${input.checkoutSessionId} was not found`),
     ),
   );
 
-  const items = yield* decodeOrderItemsInput(cart.items.map(toOrderItemInput)).pipe(
+  const now = yield* DateTime.now;
+  yield* Effect.succeed(session).pipe(
+    Effect.filterOrFail(
+      (checkoutSession) =>
+        DateTime.toEpochMillis(checkoutSession.expiresAt) >= DateTime.toEpochMillis(now),
+      () => invalidOrderInput(`checkout session ${input.checkoutSessionId} has expired`),
+    ),
+  );
+
+  const items = yield* decodeOrderItemsInput(
+    session.items.map(toOrderItemInputFromResolvedItem),
+  ).pipe(
     Effect.catchTag("SchemaError", () =>
-      Effect.fail(invalidOrderInput("cart must include at least one item")),
+      Effect.fail(invalidOrderInput("checkout session must include at least one item")),
     ),
   );
   const order = yield* placeOrder({
@@ -247,8 +286,15 @@ export const checkoutCart = Effect.fn("CoffeeOrders.checkoutCart")(function* (
   });
   const cartRepository = yield* CartRepository;
   yield* cartRepository
-    .clear(cart.ownerUserId)
+    .clear(actor.userId)
     .pipe(Effect.mapError(internalAppErrorFromPersistence("Unable to clear cart right now")));
+  yield* checkoutSessionRepository
+    .clearCurrentByOwnerUserId(actor.userId)
+    .pipe(
+      Effect.mapError(
+        internalAppErrorFromPersistence("Unable to clear checkout session right now"),
+      ),
+    );
 
   return order;
 });

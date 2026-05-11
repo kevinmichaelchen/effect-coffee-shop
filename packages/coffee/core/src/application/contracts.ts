@@ -78,6 +78,7 @@ export const CartItemIdRequestSchema = Schema.Struct({
 export type CartItemIdRequest = typeof CartItemIdRequestSchema.Type;
 
 export const CheckoutCartRequestSchema = Schema.Struct({
+  checkoutSessionId: CheckoutSessionIdSchema,
   customerName: Schema.optionalKey(BoundaryStringSchema),
 }).annotate({ identifier: "CheckoutCartRequest" });
 export type CheckoutCartRequest = typeof CheckoutCartRequestSchema.Type;

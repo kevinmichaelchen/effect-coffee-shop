@@ -241,6 +241,7 @@ export class CoffeeOrderApp extends Context.Service<
         checkoutCart: (input) =>
           checkoutCart(input).pipe(
             Effect.provideService(CartRepository, cartRepository),
+            Effect.provideService(CheckoutSessionRepository, checkoutSessionRepository),
             Effect.provideService(MenuRepository, menuRepository),
             Effect.provideService(OrderIdGenerator, orderIdGenerator),
             Effect.provideService(OrderRepository, orderRepository),
