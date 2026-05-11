@@ -8,6 +8,7 @@ import {
   type AppActor,
   systemActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { checkoutSessionIdFromString } from "@effect-coffee-shop/coffee-core/domain/checkout-session";
 import { moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
 import { QuoteOrderRequestSchema } from "@effect-coffee-shop/coffee-core/application/contracts";
 import {
@@ -105,12 +106,15 @@ describe("cart and order planning", () => {
       });
       assert.strictEqual(updated.items[0]?.item.shots, 2);
 
-      const order = yield* checkoutCart({});
+      const session = yield* prepareCartCheckout();
+      const order = yield* checkoutCart({ checkoutSessionId: session.id });
       const afterCheckout = yield* getCart();
+      const afterCheckoutSession = yield* getCurrentCheckoutSession();
 
       assert.strictEqual(order.items.length, 1);
       assert.strictEqual(order.items[0]?.quantity, 2);
       assert.strictEqual(afterCheckout.items.length, 0);
+      assert.deepStrictEqual(afterCheckoutSession, Option.none());
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 
@@ -142,6 +146,18 @@ describe("cart and order planning", () => {
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 
+  it.effect("requires the checkout session id when checking out the cart", () =>
+    Effect.gen(function* () {
+      yield* addCartItem({ drinkId: "latte", size: "medium" });
+
+      const exit = yield* checkoutCart({
+        checkoutSessionId: checkoutSessionIdFromString("checkout-session-9999"),
+      }).pipe(Effect.exit);
+
+      assert.isTrue(exit._tag === "Failure");
+    }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
+  );
+
   it.effect("removes and clears cart items", () =>
     Effect.gen(function* () {
       const added = yield* addCartItem({ drinkId: "tea", size: "small" });
@@ -166,7 +182,10 @@ describe("cart and order planning", () => {
       const blakeCart = yield* addCartItem({ drinkId: "tea", size: "small" }).pipe(
         provideActor(blakeActor),
       );
-      const averyOrder = yield* checkoutCart({}).pipe(provideActor(averyActor));
+      const averySession = yield* prepareCartCheckout().pipe(provideActor(averyActor));
+      const averyOrder = yield* checkoutCart({ checkoutSessionId: averySession.id }).pipe(
+        provideActor(averyActor),
+      );
       const averyAfterCheckout = yield* getCart().pipe(provideActor(averyActor));
       const blakeAfterAveryCheckout = yield* getCart().pipe(provideActor(blakeActor));
 

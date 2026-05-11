@@ -49,7 +49,7 @@ const coffeeAssistantSystemPrompt = [
   "Because orders spend real money, read back the interpreted order and ask for confirmation before purchase.",
   "On an initial order request, do not call place_order or checkout_cart yet; use cart tools followed by prepare_cart_checkout for cart workflows, or quote_order only when you are not ready to create a checkout session.",
   'Call place_order or checkout_cart only after the user explicitly confirms the final order, such as "yes, place it" or "submit that order".',
-  "When the user confirms in a later turn, call get_checkout_session first so you can use the current checkout session instead of guessing from chat text.",
+  "When the user confirms in a later turn, call get_checkout_session first and pass that checkoutSessionId to checkout_cart instead of guessing from chat text.",
   "Use list_menu for general menu, substitution, unavailable ingredient, or recommendation questions.",
   "Use get_item_options for a specific drink's defaults and valid choices when the user asks or a drink option is unclear.",
   "Use validate_order or quote_order only when options, price, or defaults are uncertain.",
