@@ -2,7 +2,7 @@
 name = "effect-coffee-ordering"
 description = "Tool-use environment for training coffee-shop ordering assistants."
 tags = ["tool-use", "coffee", "ordering", "train", "eval"]
-version = "0.1.11"
+version = "0.1.12"
 requires-python = ">=3.10"
 dependencies = [
     "verifiers @ git+https://github.com/PrimeIntellect-ai/verifiers.git@3b77145e14a9bcdaf180a49e7df97dbf2d7bb150",

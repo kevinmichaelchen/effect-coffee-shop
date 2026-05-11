@@ -31,10 +31,12 @@ Prime CLI rejects it as a `checkpoint_id` for new training runs.
 
 ## Receipt Run
 
-Use the small budget-capped receipt-drill warmup. Environment
-`kevinmichaelchen/effect-coffee-ordering@0.1.11` is published with the expanded
-tool surface, split-specific eval routing, single-item `items_json` tolerance,
-and a direct-order-first prompt.
+Use the small budget-capped receipt-drill warmup only after fresh baselines on
+`kevinmichaelchen/effect-coffee-ordering@0.1.12`. Version `0.1.12` is published
+and contains the PR 47 hardening: shared coffee-domain logic, cart id fixes,
+local tests, stricter cart tool sequence/count grading, the expanded tool
+surface, split-specific eval routing, single-item `items_json` tolerance, and a
+direct-order-first prompt.
 
 ```sh
 cd experiments/prime-intellect/effect-coffee-ordering
@@ -53,9 +55,10 @@ for:
 - pickup timing, customer name, and order notes,
 - concise refusal behavior.
 
-Environment `kevinmichaelchen/effect-coffee-ordering@0.1.11` is published.
-Prime hosted evals confirmed `product_readiness` now runs all 16 examples after
-the `eval_dataset` routing fix.
+Environment `kevinmichaelchen/effect-coffee-ordering@0.1.12` is published and
+should be selected for new hosted baselines, evals, or training. Prime hosted
+evals on earlier versions confirmed `product_readiness` now runs all 16
+examples after the `eval_dataset` routing fix.
 
 Do not rerun `effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml`
 until the receipt drill or a prompt/SFT pass improves direct order behavior.
@@ -96,6 +99,10 @@ instead of `$5.20`, plus repeated menu/option probes.
 Next best action is not another unchanged RL run. Use prompt optimization or SFT
 on the final-response and tool-trajectory corpora, or simplify the tool schema
 further so 0.8B has fewer equivalent ways to express one order.
+
+Before any new hosted training spend, run fresh hosted baselines on
+`kevinmichaelchen/effect-coffee-ordering@0.1.12`; the warmup configs now pin
+that version.
 
 Inspect the stopped run:
 

@@ -7,7 +7,7 @@ checkpoint_id = "oo8lrytspz37lfsdlloubig7"
 # Hosted Training checkpoint_id by the current Prime CLI.
 # max_steps is absolute from the source checkpoint's step 25, so 50 means 25
 # additional warmup steps.
-# Publish the checked-in environment as version 0.1.11 before launching this.
+# Publish the checked-in environment as version 0.1.12 before launching this.
 # This is the deterministic fallback if hosted SFT is still unavailable.
 max_steps = 50
 batch_size = 64
@@ -23,7 +23,7 @@ temperature = 0.4
 
 [[env]]
 id = "kevinmichaelchen/effect-coffee-ordering"
-version = "0.1.11"
+version = "0.1.12"
 args = { split = "receipt_drill" }
 
 [val]
@@ -39,7 +39,7 @@ eval_base_model = false
 
 [[eval.env]]
 id = "kevinmichaelchen/effect-coffee-ordering"
-version = "0.1.11"
+version = "0.1.12"
 args = { split = "hard_eval" }
 num_examples = 8
 rollouts_per_example = 2
