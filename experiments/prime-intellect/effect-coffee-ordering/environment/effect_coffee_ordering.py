@@ -1609,6 +1609,7 @@ def load_environment(split: str = "train", num_examples: int = -1, **kwargs) -> 
     selected_dataset = datasets.get(split, train_dataset)
     if num_examples > 0:
         selected_dataset = selected_dataset.select(range(min(num_examples, len(selected_dataset))))
+    selected_eval_dataset = eval_dataset if split == "train" else selected_dataset
 
     rubric = vf.Rubric(
         funcs=[tool_correctness, final_response_quality, product_efficiency, price_format, receipt_style],
@@ -1617,7 +1618,7 @@ def load_environment(split: str = "train", num_examples: int = -1, **kwargs) -> 
 
     return vf.ToolEnv(
         dataset=selected_dataset,
-        eval_dataset=eval_dataset,
+        eval_dataset=selected_eval_dataset,
         tools=[
             list_menu,
             get_item_options,
