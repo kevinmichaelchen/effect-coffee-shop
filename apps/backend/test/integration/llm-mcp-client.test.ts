@@ -36,8 +36,7 @@ const llmMcpWorkflow = () =>
       name: "place_order",
       arguments: {
         customerName: "Avery",
-        drinkId: "latte",
-        size: "medium",
+        items: [{ drinkId: "latte", size: "medium" }],
       },
     });
 

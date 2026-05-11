@@ -11,7 +11,7 @@ import { AssistantModelRequestError, AssistantModelResponseDecodeError } from ".
 import {
   createProviderStatusMessage,
   decodeJsonTextEffect,
-  postJson,
+  postJsonResponse,
   readResponseText,
 } from "./provider-http.ts";
 
@@ -54,21 +54,15 @@ export function runWorkersAiOverRest(input: {
   AiTextGenerationOutput,
   AssistantModelRequestError | AssistantModelResponseDecodeError
 > {
-  return Effect.gen(function* () {
-    const response = yield* postJson({
-      body: input.request,
-      headers: {
-        authorization: `Bearer ${input.apiKey}`,
-      },
-      provider: "Workers AI",
-      url: `https://api.cloudflare.com/client/v4/accounts/${input.accountId}/ai/run/${encodeURIComponent(input.model)}`,
-    });
-
-    if (!response.ok) {
-      return yield* rejectWorkersAiRequest(response);
-    }
-
-    return yield* readWorkersAiOutput(response);
+  return postJsonResponse({
+    body: input.request,
+    headers: {
+      authorization: `Bearer ${input.apiKey}`,
+    },
+    onResponse: readWorkersAiOutput,
+    onStatusError: rejectWorkersAiRequest,
+    provider: "Workers AI",
+    url: `https://api.cloudflare.com/client/v4/accounts/${input.accountId}/ai/run/${encodeURIComponent(input.model)}`,
   });
 }
 

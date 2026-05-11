@@ -10,64 +10,85 @@ import type {
 } from "@effect-coffee-shop/coffee-core/domain/order";
 import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
 import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
+import {
+  SqlOrderItemModel,
+  SqlOrderModel,
+  toCoffeeOrder,
+  toSqlOrderItemSave,
+  toSqlOrderSave,
+} from "./models.ts";
+import { deleteOrderItemsByOrderId } from "./queries/.generated/delete-order-items-by-order-id.sql.ts";
 import { findOrderById } from "./queries/.generated/find-order-by-id.sql.ts";
+import { listOrderItems } from "./queries/.generated/list-order-items.sql.ts";
 import { listOrders } from "./queries/.generated/list-orders.sql.ts";
-import { listOrdersByOwnerAndStatus } from "./queries/.generated/list-orders-by-owner-and-status.sql.ts";
 import { listOrdersByOwner } from "./queries/.generated/list-orders-by-owner.sql.ts";
+import { listOrdersByOwnerAndStatus } from "./queries/.generated/list-orders-by-owner-and-status.sql.ts";
 import { listOrdersByStatus } from "./queries/.generated/list-orders-by-status.sql.ts";
 import { saveOrder } from "./queries/.generated/save-order.sql.ts";
-import { SqlOrderModel, toCoffeeOrder, toSqlOrderSave } from "./models.ts";
+import { saveOrderItem } from "./queries/.generated/save-order-item.sql.ts";
 
-const decodeSqlOrder = Schema.decodeUnknownEffect(SqlOrderModel);
 const decodeSqlOrders = Schema.decodeUnknownEffect(Schema.Array(SqlOrderModel));
+const decodeSqlOrderItems = Schema.decodeUnknownEffect(Schema.Array(SqlOrderItemModel));
 
-const decodeOptionalSqlOrder = (row: unknown) =>
-  Option.match(Option.fromNullishOr(row), {
-    onNone: () => Effect.succeed(Option.none<CoffeeOrder>()),
-    onSome: (row) => decodeSqlOrder(row).pipe(Effect.map(toCoffeeOrder), Effect.map(Option.some)),
-  });
-
-const listRecords = (filters: ListOrdersFilters) =>
-  Option.match(Option.fromUndefinedOr(filters.ownerUserId), {
-    onNone: () =>
-      Option.match(Option.fromUndefinedOr(filters.status), {
-        onNone: () => listOrders(),
-        onSome: (status) => listOrdersByStatus({ status }),
-      }),
-    onSome: (ownerUserId) =>
-      Option.match(Option.fromUndefinedOr(filters.status), {
-        onNone: () => listOrdersByOwner({ owner_user_id: ownerUserId }),
-        onSome: (status) => listOrdersByOwnerAndStatus({ owner_user_id: ownerUserId, status }),
-      }),
-  });
+const hydrateOrder = Effect.fnUntraced(function* (
+  sqlClient: SqlClient.SqlClient,
+  order: typeof SqlOrderModel.Type,
+) {
+  const items = yield* listOrderItems({ orderId: order.id }).pipe(
+    Effect.provideService(SqlClient.SqlClient, sqlClient),
+    Effect.flatMap(decodeSqlOrderItems),
+  );
+  return toCoffeeOrder(order, items);
+});
 
 const makeSqlOrderQueries = Effect.gen(function* () {
   const sqlClient = yield* SqlClient.SqlClient;
 
   const save = Effect.fn("SqlOrderRepository.save")(function* (order: CoffeeOrder) {
-    const saved = yield* Effect.provideService(
-      saveOrder({ order: toSqlOrderSave(order) }).pipe(Effect.flatMap(decodeSqlOrder)),
-      SqlClient.SqlClient,
-      sqlClient,
+    const record = toSqlOrderSave(order);
+
+    yield* saveOrder({ order: record }).pipe(Effect.provideService(SqlClient.SqlClient, sqlClient));
+    yield* deleteOrderItemsByOrderId({ orderId: order.id }).pipe(
+      Effect.provideService(SqlClient.SqlClient, sqlClient),
     );
-    return toCoffeeOrder(saved);
+    yield* Effect.forEach(
+      order.items.map((item, position) => toSqlOrderItemSave(order.id, item, position)),
+      (item) => saveOrderItem({ item }).pipe(Effect.provideService(SqlClient.SqlClient, sqlClient)),
+      { discard: true },
+    );
+
+    return order;
   });
 
   const getById = Effect.fn("SqlOrderRepository.getById")(function* (orderId: OrderId) {
-    return yield* Effect.provideService(
-      findOrderById({ id: orderId }).pipe(Effect.flatMap(decodeOptionalSqlOrder)),
-      SqlClient.SqlClient,
-      sqlClient,
+    const rows = yield* findOrderById({ id: orderId }).pipe(
+      Effect.provideService(SqlClient.SqlClient, sqlClient),
+      Effect.flatMap(decodeSqlOrders),
     );
+    return yield* Option.match(Option.fromUndefinedOr(rows[0]), {
+      onNone: () => Effect.succeed(Option.none<CoffeeOrder>()),
+      onSome: (order) => hydrateOrder(sqlClient, order).pipe(Effect.map(Option.some)),
+    });
   });
 
   const list = Effect.fn("SqlOrderRepository.list")(function* (filters: ListOrdersFilters = {}) {
-    const orders = yield* Effect.provideService(
-      listRecords(filters).pipe(Effect.flatMap(decodeSqlOrders)),
-      SqlClient.SqlClient,
-      sqlClient,
-    );
-    return orders.map(toCoffeeOrder);
+    const rows = yield* Option.match(Option.fromUndefinedOr(filters.ownerUserId), {
+      onNone: () =>
+        Option.match(Option.fromUndefinedOr(filters.status), {
+          onNone: () => listOrders(),
+          onSome: (status) => listOrdersByStatus({ status }),
+        }),
+      onSome: (ownerUserId) =>
+        Option.match(Option.fromUndefinedOr(filters.status), {
+          onNone: () => listOrdersByOwner({ ownerUserId }),
+          onSome: (status) =>
+            listOrdersByOwnerAndStatus({
+              ownerUserId,
+              status,
+            }),
+        }),
+    }).pipe(Effect.provideService(SqlClient.SqlClient, sqlClient), Effect.flatMap(decodeSqlOrders));
+    return yield* Effect.forEach(rows, (row) => hydrateOrder(sqlClient, row));
   });
 
   return { getById, list, save } as const;

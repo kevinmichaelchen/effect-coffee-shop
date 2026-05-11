@@ -1,6 +1,6 @@
 import * as Option from "effect/Option";
 import { actorLogFields } from "@effect-coffee-shop/backend-host/logging";
-import { readCloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
+import type { CloudflareWorkerEnv } from "../env.ts";
 import { rejectDirectHttpBearerRequest } from "../direct-http-auth.ts";
 import {
   cloudflarePathname,
@@ -12,11 +12,7 @@ import {
   createCloudflareRequestServices,
   getCloudflareBackendHandler,
 } from "../../composition/coffee-backend.ts";
-import {
-  ensureCloudflareAuthPersistence,
-  resolveCloudflareActor,
-} from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
-import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
+import { resolveCloudflareRequestActor } from "./request-actor.ts";
 
 const isApiRequest = (request: Request): boolean => {
   const pathname = cloudflarePathname(request);
@@ -35,20 +31,7 @@ export const cloudflareHttpApiMount: CloudflareMount<CloudflareWorkerEnv> = {
   handle: async ({ env, request }) =>
     Option.match(Option.fromNullishOr(rejectDirectHttpBearerRequest(request)), {
       onNone: async () => {
-        const runtime = readCloudflareRuntime(env);
-
-        await ensureCloudflareAuthPersistence({
-          db: runtime.bindings.db,
-          secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
-        });
-
-        const actor = await resolveCloudflareActor({
-          appLayer: makeCloudflareCoffeeAppLive(runtime.bindings.db),
-          db: runtime.bindings.db,
-          request,
-          secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
-          staffUserIds: runtime.config.staffUserIds,
-        });
+        const { actor, runtime } = await resolveCloudflareRequestActor({ env, request });
 
         return cloudflareResponse(
           await getCloudflareBackendHandler(runtime.bindings.db)(

@@ -11,6 +11,7 @@ import {
   useOrdersQuery,
 } from "#features/coffee-shop/hooks/useCoffeeQueries.ts";
 import { getQueueLoad, isActiveOrder } from "#features/coffee-shop/lib/coffee.ts";
+import { getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import { useThemePreference } from "#shared/hooks/useThemePreference.ts";
 import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
@@ -45,7 +46,7 @@ function useOrderActionHandler(
     try {
       const order = await orderActionMutation.mutateAsync({ orderId, action });
       setSelectedOrderId(order.id);
-      toast.success(`${order.drinkName} moved to ${order.status}.`);
+      toast.success(`${getOrderTitle(order)} moved to ${order.status}.`);
     } catch (error) {
       toast.error(readMutationError(error));
     }

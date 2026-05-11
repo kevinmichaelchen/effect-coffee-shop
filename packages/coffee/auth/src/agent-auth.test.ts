@@ -4,11 +4,11 @@ import * as Schema from "effect/Schema";
 import { Miniflare } from "miniflare";
 import { describe, expect, it } from "vitest";
 import {
-  CoffeeOrderSchema,
-  CoffeeOrdersSchema,
-  type CoffeeOrder,
-  type CoffeeOrders,
-} from "@effect-coffee-shop/coffee-core/domain/order";
+  CoffeeOrderViewSchema,
+  CoffeeOrdersViewSchema,
+  type CoffeeOrderView,
+  type CoffeeOrdersView,
+} from "@effect-coffee-shop/coffee-core/application/contracts";
 import {
   createCoffeeAgentAppRunner,
   createCoffeeAgentAuthOptions,
@@ -66,17 +66,16 @@ async function placeLatteOrder(db: D1Database, session: AgentSession) {
   });
   const result = await executeCoffeeAgentCapability({
     arguments: {
-      drinkId: "latte",
-      size: "medium",
+      items: [{ drinkId: "latte", size: "medium" }],
     },
     capability: "place_order",
     runApp,
   });
 
-  return Schema.decodeUnknownPromise(CoffeeOrderSchema)(result);
+  return Schema.decodeUnknownPromise(CoffeeOrderViewSchema)(result);
 }
 
-async function listOrders(db: D1Database, session: AgentSession): Promise<CoffeeOrders> {
+async function listOrders(db: D1Database, session: AgentSession): Promise<CoffeeOrdersView> {
   const runApp = createCoffeeAgentAppRunner({
     appLayer: makeCloudflareCoffeeAppLive(db),
     session,
@@ -87,14 +86,14 @@ async function listOrders(db: D1Database, session: AgentSession): Promise<Coffee
     runApp,
   });
 
-  return Schema.decodeUnknownPromise(CoffeeOrdersSchema)(result);
+  return Schema.decodeUnknownPromise(CoffeeOrdersViewSchema)(result);
 }
 
 async function getOrder(
   db: D1Database,
   orderId: string,
   session: AgentSession,
-): Promise<CoffeeOrder> {
+): Promise<CoffeeOrderView> {
   const runApp = createCoffeeAgentAppRunner({
     appLayer: makeCloudflareCoffeeAppLive(db),
     session,
@@ -105,7 +104,7 @@ async function getOrder(
     runApp,
   });
 
-  return Schema.decodeUnknownPromise(CoffeeOrderSchema)(result);
+  return Schema.decodeUnknownPromise(CoffeeOrderViewSchema)(result);
 }
 
 describe("coffee agent auth", () => {
@@ -117,9 +116,18 @@ describe("coffee agent auth", () => {
 
       expect(options.capabilities?.map((capability) => capability.name)).toEqual([
         "list_menu",
+        "get_item_options",
+        "validate_order",
+        "quote_order",
         "place_order",
         "get_order",
         "list_orders",
+        "get_cart",
+        "add_cart_item",
+        "update_cart_item",
+        "remove_cart_item",
+        "clear_cart",
+        "checkout_cart",
       ]);
     });
   });

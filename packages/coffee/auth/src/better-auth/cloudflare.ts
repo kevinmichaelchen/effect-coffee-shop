@@ -2,7 +2,7 @@ import type { D1Database } from "@cloudflare/workers-types";
 import { agentAuth } from "@better-auth/agent-auth";
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
-import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { createCoffeeAgentAuthOptions } from "../agent/options.ts";
 import { logStructuredEvent } from "@effect-coffee-shop/backend-host/logging";
@@ -18,27 +18,35 @@ import {
   provisionalUserPrefix,
 } from "./users.ts";
 
-const longEnoughDevelopmentSecret = "dev-better-auth-secret-please-change-me-0001";
-
+const BetterAuthSecretSchema = Schema.Trim.pipe(Schema.check(Schema.isNonEmpty()));
 const decodeResolvedActor = Schema.decodeUnknownSync(AppActorSchema);
+const decodeBetterAuthSecret = Schema.decodeUnknownSync(BetterAuthSecretSchema);
+const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
+type CoffeeAuthAppLayer = Parameters<typeof createCoffeeAgentAuthOptions>[0]["appLayer"];
 
-function getRequestOrigin(request: Request | undefined): string | undefined {
-  return request === undefined ? undefined : new URL(request.url).origin;
-}
+const optionalRequestUrl = (request: Request | undefined): Option.Option<URL> =>
+  Option.map(Option.fromUndefinedOr(request), (request) => new URL(request.url));
 
-function getRequestHost(request: Request | undefined): string | undefined {
-  return request === undefined ? undefined : new URL(request.url).hostname;
-}
+const getRequestOrigin = (request: Request | undefined): Option.Option<string> =>
+  Option.map(optionalRequestUrl(request), (url) => url.origin);
 
-function getBetterAuthSecret(secret: string | undefined): string {
-  return secret?.trim() || longEnoughDevelopmentSecret;
-}
+const getRequestHost = (request: Request | undefined): Option.Option<string> =>
+  Option.map(optionalRequestUrl(request), (url) => url.hostname);
+
+const whenSome = <A, B extends object>(
+  option: Option.Option<A>,
+  onSome: (value: A) => B,
+): B | object =>
+  Option.match(option, {
+    onNone: () => ({}),
+    onSome,
+  });
 
 function buildAuthOptions(input: {
-  readonly appLayer: Layer.Layer<never, any, any>;
+  readonly appLayer: CoffeeAuthAppLayer;
   readonly db: D1Database;
   readonly request: Request | undefined;
-  readonly secret: string | undefined;
+  readonly secret: string;
 }) {
   const origin = getRequestOrigin(input.request);
   const host = getRequestHost(input.request);
@@ -47,7 +55,7 @@ function buildAuthOptions(input: {
     appName: "Effect Coffee Shop",
     basePath: "/api/auth",
     database: input.db,
-    ...(origin === undefined ? {} : { baseURL: origin }),
+    ...whenSome(origin, (baseURL) => ({ baseURL })),
     logger: {
       level: "warn",
       log: (
@@ -67,24 +75,30 @@ function buildAuthOptions(input: {
       passkey({
         registration: {
           afterVerification: async ({ ctx, context, user }) => {
-            if (!user.id.startsWith(provisionalUserPrefix)) {
-              return;
-            }
-
-            await ctx.context.internalAdapter.createUser(
-              createRegisteredUser({ context, userId: user.id }),
+            return Option.match(
+              Option.some(user.id).pipe(
+                Option.filter((userId) => userId.startsWith(provisionalUserPrefix)),
+              ),
+              {
+                onNone: () => undefined,
+                onSome: async (userId) => {
+                  await ctx.context.internalAdapter.createUser(
+                    createRegisteredUser({ context, userId }),
+                  );
+                  return { userId };
+                },
+              },
             );
-            return { userId: user.id };
           },
           requireSession: false,
           resolveUser: async ({ context }) => createProvisionalUser(getDisplayName(context)),
         },
         rpName: "Effect Coffee Shop",
-        ...(origin === undefined ? {} : { origin }),
-        ...(host === undefined ? {} : { rpID: host }),
+        ...whenSome(origin, (origin) => ({ origin })),
+        ...whenSome(host, (rpID) => ({ rpID })),
       }),
     ],
-    secret: getBetterAuthSecret(input.secret),
+    secret: input.secret,
     telemetry: {
       enabled: false,
     },
@@ -93,20 +107,20 @@ function buildAuthOptions(input: {
 
 export async function ensureCloudflareAuthPersistence(_input: {
   readonly db: D1Database;
-  readonly secret: string | undefined;
 }): Promise<void> {}
 
 export function createCloudflareAuth(input: {
-  readonly appLayer: Layer.Layer<never, any, any>;
+  readonly appLayer: CoffeeAuthAppLayer;
   readonly db: D1Database;
   readonly request: Request;
-  readonly secret: string | undefined;
+  readonly secret: string;
 }) {
+  const secret = decodeBetterAuthSecret(input.secret);
   const authOptions = buildAuthOptions({
     appLayer: input.appLayer,
     db: input.db,
     request: input.request,
-    secret: input.secret,
+    secret,
   });
 
   // @ts-expect-error third-party Better Auth typing bug
@@ -114,28 +128,47 @@ export function createCloudflareAuth(input: {
 }
 
 export async function resolveCloudflareActor(input: {
-  readonly appLayer: Layer.Layer<never, any, any>;
+  readonly appLayer: CoffeeAuthAppLayer;
   readonly db: D1Database;
   readonly request: Request;
   readonly secret: string | undefined;
   readonly staffUserIds: ReadonlySet<string>;
 }): Promise<AppActor> {
-  if ((input.secret?.trim() ?? "") === "") {
-    return anonymousActor;
-  }
+  return Option.match(
+    Option.some(decodeTrimmedString(input.secret ?? "")).pipe(
+      Option.filter((secret) => secret !== ""),
+    ),
+    {
+      onNone: async () => anonymousActor,
+      onSome: async (secret) => {
+        const auth = createCloudflareAuth({
+          appLayer: input.appLayer,
+          db: input.db,
+          request: input.request,
+          secret,
+        });
+        const session = await auth.api.getSession({
+          headers: input.request.headers,
+        });
 
-  const auth = createCloudflareAuth(input);
-  const session = await auth.api.getSession({
-    headers: input.request.headers,
-  });
-
-  if (session?.user === undefined) {
-    return anonymousActor;
-  }
-
-  return decodeResolvedActor({
-    displayName: session.user.name.trim() || session.user.email,
-    kind: input.staffUserIds.has(session.user.id) ? "staff" : "customer",
-    userId: session.user.id,
-  });
+        return Option.match(Option.fromNullishOr(session?.user), {
+          onNone: () => anonymousActor,
+          onSome: (user) =>
+            decodeResolvedActor({
+              displayName: decodeTrimmedString(user.name) || user.email,
+              kind: Option.match(
+                Option.some(user.id).pipe(
+                  Option.filter((userId) => input.staffUserIds.has(userId)),
+                ),
+                {
+                  onNone: () => "customer",
+                  onSome: () => "staff",
+                },
+              ),
+              userId: user.id,
+            }),
+        });
+      },
+    },
+  );
 }

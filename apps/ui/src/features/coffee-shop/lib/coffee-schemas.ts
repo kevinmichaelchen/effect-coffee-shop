@@ -16,10 +16,7 @@ const MenuItemSchema = Schema.Struct({
   maxShots: Schema.Int,
 });
 
-export const CoffeeOrderSchema = Schema.Struct({
-  id: Schema.String,
-  customerName: Schema.String,
-  ownerUserId: Schema.String,
+const CoffeeOrderItemSchema = Schema.Struct({
   drinkId: Schema.String,
   drinkName: Schema.String,
   size: DrinkSizeSchema,
@@ -27,8 +24,18 @@ export const CoffeeOrderSchema = Schema.Struct({
   temperature: TemperatureSchema,
   shots: Schema.Int,
   notes: Schema.optional(Schema.String),
+  quantity: Schema.Int,
+  unitPriceCents: Schema.Int,
+  lineTotalCents: Schema.Int,
+});
+
+export const CoffeeOrderSchema = Schema.Struct({
+  id: Schema.String,
+  customerName: Schema.String,
+  ownerUserId: Schema.String,
+  items: Schema.Array(CoffeeOrderItemSchema),
   status: OrderStatusSchema,
-  priceCents: Schema.Int,
+  totalPriceCents: Schema.Int,
   createdAt: Schema.String,
 });
 

@@ -18,7 +18,7 @@ import {
 import {
   createProviderStatusMessage,
   decodeJsonTextEffect,
-  postJson,
+  postJsonResponse,
   readResponseText,
 } from "./provider-http.ts";
 
@@ -94,18 +94,12 @@ function runOllamaChat(
   AssistantModelResponse,
   AssistantModelRequestError | AssistantModelResponseDecodeError
 > {
-  return Effect.gen(function* () {
-    const response = yield* postJson({
-      body: toOllamaChatRequest(request),
-      provider: "Ollama",
-      url: `${endpoint}/api/chat`,
-    });
-
-    if (!response.ok) {
-      return yield* rejectOllamaRequest(response);
-    }
-
-    return yield* readOllamaResponse(response);
+  return postJsonResponse({
+    body: toOllamaChatRequest(request),
+    onResponse: readOllamaResponse,
+    onStatusError: rejectOllamaRequest,
+    provider: "Ollama",
+    url: `${endpoint}/api/chat`,
   });
 }
 

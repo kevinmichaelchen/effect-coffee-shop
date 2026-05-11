@@ -4,6 +4,8 @@ export { DrizzlePostgresSchemaReady } from "./db/schema-ready.ts";
 export { authSchema } from "./db/auth-schema.ts";
 export { coffeeSchema, schema } from "./db/schema.ts";
 export { DrizzlePostgresCoffeeAppLive, DrizzlePostgresCoffeeRepositoriesLive } from "./live.ts";
+export { DrizzleCartItemIdGeneratorLive } from "./repositories/DrizzleCartItemIdGenerator.ts";
+export { DrizzleCartRepositoryLive } from "./repositories/DrizzleCartRepository.ts";
 export { DrizzleMenuRepositoryLive } from "./repositories/DrizzleMenuRepository.ts";
 export { DrizzleOrderIdGeneratorLive } from "./repositories/DrizzleOrderIdGenerator.ts";
 export { DrizzleOrderRepositoryLive } from "./repositories/DrizzleOrderRepository.ts";

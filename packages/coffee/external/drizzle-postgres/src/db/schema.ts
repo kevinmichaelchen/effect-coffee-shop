@@ -1,4 +1,4 @@
-import { index, integer, jsonb, pgSequence, pgTable, text } from "drizzle-orm/pg-core";
+import { index, integer, jsonb, pgSequence, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
 import type { Milk, Temperature } from "@effect-coffee-shop/coffee-core/domain/menu";
 import { authSchema } from "./auth-schema.ts";
 
@@ -30,15 +30,8 @@ export const ordersTable = pgTable(
     id: text("id").primaryKey(),
     customerName: text("customer_name").notNull(),
     ownerUserId: text("owner_user_id").notNull(),
-    drinkId: text("drink_id").notNull(),
-    drinkName: text("drink_name").notNull(),
-    size: text("size").notNull(),
-    milk: text("milk").notNull(),
-    temperature: text("temperature").notNull(),
-    shots: integer("shots").notNull(),
-    notes: text("notes"),
     status: text("status").notNull(),
-    priceCents: integer("price_cents").notNull(),
+    totalPriceCents: integer("total_price_cents").notNull(),
     createdAt: text("created_at").notNull(),
   },
   (table) => [
@@ -54,9 +47,61 @@ export const ordersTable = pgTable(
   ],
 );
 
+export const orderItemsTable = pgTable(
+  "order_items",
+  {
+    orderId: text("order_id")
+      .notNull()
+      .references(() => ordersTable.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    drinkId: text("drink_id").notNull(),
+    drinkName: text("drink_name").notNull(),
+    size: text("size").notNull(),
+    milk: text("milk").notNull(),
+    temperature: text("temperature").notNull(),
+    shots: integer("shots").notNull(),
+    notes: text("notes"),
+    quantity: integer("quantity").notNull(),
+    unitPriceCents: integer("unit_price_cents").notNull(),
+    lineTotalCents: integer("line_total_cents").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      name: "order_items_order_id_position_pk",
+      columns: [table.orderId, table.position],
+    }),
+  ],
+);
+
+export const cartsTable = pgTable("carts", {
+  ownerUserId: text("owner_user_id").primaryKey(),
+});
+
+export const cartItemsTable = pgTable(
+  "cart_items",
+  {
+    ownerUserId: text("owner_user_id")
+      .notNull()
+      .references(() => cartsTable.ownerUserId, { onDelete: "cascade" }),
+    id: text("id").primaryKey(),
+    position: integer("position").notNull(),
+    drinkId: text("drink_id").notNull(),
+    size: text("size").notNull(),
+    milk: text("milk").notNull(),
+    temperature: text("temperature").notNull(),
+    shots: integer("shots").notNull(),
+    notes: text("notes"),
+    quantity: integer("quantity").notNull(),
+  },
+  (table) => [index("cart_items_owner_user_id_position_idx").on(table.ownerUserId, table.position)],
+);
+
 export const coffeeSchema = {
+  cartItemsTable,
+  cartsTable,
   menuItemsTable,
   orderIdSequence,
+  orderItemsTable,
   ordersTable,
 };
 

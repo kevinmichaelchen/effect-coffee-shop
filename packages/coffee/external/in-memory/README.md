@@ -9,13 +9,15 @@ or a durable external layer.
 
 ## Exports
 
-| Name | Description |
-| --- | --- |
-| `CoffeeAppLive` | Complete in-memory Coffee application layer. |
-| `InMemoryCoffeeRepositoriesLive` | Combined in-memory menu and order repositories. |
-| `InMemoryMenuRepositoryLive` | In-memory menu repository implementation. |
-| `InMemoryOrderRepositoryLive` | In-memory order repository implementation. |
-| `InMemoryOrderIdGeneratorLive` | In-memory order ID generator implementation. |
+| Name                              | Description                                      |
+| --------------------------------- | ------------------------------------------------ |
+| `CoffeeAppLive`                   | Complete in-memory Coffee application layer.     |
+| `InMemoryCoffeeRepositoriesLive`  | Combined in-memory Coffee repositories.          |
+| `InMemoryCartRepositoryLive`      | In-memory cart repository implementation.        |
+| `InMemoryCartItemIdGeneratorLive` | In-memory cart item ID generator implementation. |
+| `InMemoryMenuRepositoryLive`      | In-memory menu repository implementation.        |
+| `InMemoryOrderRepositoryLive`     | In-memory order repository implementation.       |
+| `InMemoryOrderIdGeneratorLive`    | In-memory order ID generator implementation.     |
 
 ## Commands
 

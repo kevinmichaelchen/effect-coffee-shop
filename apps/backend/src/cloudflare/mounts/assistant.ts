@@ -5,7 +5,7 @@ import {
   handleAssistantRequest,
 } from "@effect-coffee-shop/coffee-assistant/handler";
 import type { AssistantAiConfig } from "@effect-coffee-shop/coffee-assistant/runtime";
-import { readCloudflareRuntime, type CloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
+import { type CloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
 import { rejectDirectHttpBearerRequest } from "../direct-http-auth.ts";
 import {
   cloudflarePathname,
@@ -14,11 +14,7 @@ import {
   type CloudflareMount,
 } from "@effect-coffee-shop/backend-host/mount";
 import { actorLogFields } from "@effect-coffee-shop/backend-host/logging";
-import {
-  ensureCloudflareAuthPersistence,
-  resolveCloudflareActor,
-} from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
-import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
+import { resolveCloudflareRequestActor } from "./request-actor.ts";
 
 const isAssistantRequest = (request: Request): boolean => {
   const pathname = cloudflarePathname(request);
@@ -47,21 +43,7 @@ export const cloudflareAssistantMount: CloudflareMount<CloudflareWorkerEnv> = {
   handle: async ({ env, request }) =>
     Option.match(Option.fromNullishOr(rejectDirectHttpBearerRequest(request)), {
       onNone: async () => {
-        const runtime = readCloudflareRuntime(env);
-
-        await ensureCloudflareAuthPersistence({
-          db: runtime.bindings.db,
-          secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
-        });
-
-        const appLayer = makeCloudflareCoffeeAppLive(runtime.bindings.db);
-        const actor = await resolveCloudflareActor({
-          appLayer,
-          db: runtime.bindings.db,
-          request,
-          secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
-          staffUserIds: runtime.config.staffUserIds,
-        });
+        const { actor, appLayer, runtime } = await resolveCloudflareRequestActor({ env, request });
 
         const ai = getAssistantAiConfig(runtime);
         const modelLayer = Option.match(Option.fromNullishOr(ai), {

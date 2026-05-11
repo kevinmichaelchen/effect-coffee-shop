@@ -4,17 +4,25 @@ import {
   type CoffeeAppRunner,
 } from "@effect-coffee-shop/coffee-actions/execute";
 import {
+  AddCartItemTool,
   CancelOrderTool,
+  CheckoutCartTool,
+  ClearCartTool,
   GetOrderTool,
+  GetCartTool,
+  GetItemOptionsTool,
   ListMenuTool,
   ListOrdersTool,
   MarkReadyTool,
   PickUpOrderTool,
   PlaceOrderTool,
+  QuoteOrderTool,
+  RemoveCartItemTool,
   StartBrewingTool,
+  UpdateCartItemTool,
+  ValidateOrderTool,
 } from "@effect-coffee-shop/coffee-actions/toolkit";
 import * as Effect from "effect/Effect";
-import * as Match from "effect/Match";
 import * as Tool from "effect/unstable/ai/Tool";
 import type { AssistantToolActivity, AssistantToolDefinition } from "../model.ts";
 import {
@@ -23,10 +31,16 @@ import {
   serializeToolResult,
 } from "@effect-coffee-shop/coffee-actions/format";
 import {
+  cartItemIdToolParameters,
+  checkoutCartToolParameters,
   emptyToolParameters,
+  itemOptionsToolParameters,
   listOrdersToolParameters,
+  orderItemToolParameters,
   orderIdToolParameters,
   placeOrderToolParameters,
+  quoteOrderToolParameters,
+  updateCartItemToolParameters,
 } from "./parameters.ts";
 
 export function getAssistantToolActivityEvent(): string {
@@ -34,78 +48,46 @@ export function getAssistantToolActivityEvent(): string {
 }
 
 type AssistantToolEmitter = (activity: AssistantToolActivity) => void;
-type OrderStateActionName = "cancel_order" | "mark_ready" | "pick_up_order" | "start_brewing";
+
+const assistantToolInputs = [
+  { action: "list_menu", parameters: emptyToolParameters, tool: ListMenuTool },
+  { action: "get_item_options", parameters: itemOptionsToolParameters, tool: GetItemOptionsTool },
+  { action: "validate_order", parameters: quoteOrderToolParameters, tool: ValidateOrderTool },
+  { action: "quote_order", parameters: quoteOrderToolParameters, tool: QuoteOrderTool },
+  { action: "place_order", parameters: placeOrderToolParameters, tool: PlaceOrderTool },
+  { action: "get_order", parameters: orderIdToolParameters, tool: GetOrderTool },
+  { action: "list_orders", parameters: listOrdersToolParameters, tool: ListOrdersTool },
+  { action: "start_brewing", parameters: orderIdToolParameters, tool: StartBrewingTool },
+  { action: "mark_ready", parameters: orderIdToolParameters, tool: MarkReadyTool },
+  { action: "pick_up_order", parameters: orderIdToolParameters, tool: PickUpOrderTool },
+  { action: "cancel_order", parameters: orderIdToolParameters, tool: CancelOrderTool },
+  { action: "get_cart", parameters: emptyToolParameters, tool: GetCartTool },
+  { action: "add_cart_item", parameters: orderItemToolParameters, tool: AddCartItemTool },
+  {
+    action: "update_cart_item",
+    parameters: updateCartItemToolParameters,
+    tool: UpdateCartItemTool,
+  },
+  { action: "remove_cart_item", parameters: cartItemIdToolParameters, tool: RemoveCartItemTool },
+  { action: "clear_cart", parameters: emptyToolParameters, tool: ClearCartTool },
+  { action: "checkout_cart", parameters: checkoutCartToolParameters, tool: CheckoutCartTool },
+] as const satisfies readonly {
+  readonly action: CoffeeActionName;
+  readonly parameters: AssistantToolDefinition["parameters"];
+  readonly tool: Tool.Any;
+}[];
 
 export function createCoffeeAssistantTools(
   runApp: CoffeeAppRunner,
   emitActivity: AssistantToolEmitter,
 ) {
-  return [
-    createListMenuTool(runApp, emitActivity),
-    createPlaceOrderTool(runApp, emitActivity),
-    createGetOrderTool(runApp, emitActivity),
-    createListOrdersTool(runApp, emitActivity),
-    createOrderIdTool("start_brewing", emitActivity, runApp),
-    createOrderIdTool("mark_ready", emitActivity, runApp),
-    createOrderIdTool("pick_up_order", emitActivity, runApp),
-    createOrderIdTool("cancel_order", emitActivity, runApp),
-  ] as const satisfies readonly AssistantToolDefinition[];
-}
-
-function createListMenuTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
-  return createAppTool({
-    action: "list_menu",
-    emitActivity,
-    parameters: emptyToolParameters,
-    runApp,
-    tool: ListMenuTool,
-  });
-}
-
-function createPlaceOrderTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
-  return createAppTool({
-    action: "place_order",
-    emitActivity,
-    parameters: placeOrderToolParameters,
-    runApp,
-    tool: PlaceOrderTool,
-  });
-}
-
-function createGetOrderTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
-  return createAppTool({
-    action: "get_order",
-    emitActivity,
-    parameters: orderIdToolParameters,
-    runApp,
-    tool: GetOrderTool,
-  });
-}
-
-function createListOrdersTool(runApp: CoffeeAppRunner, emitActivity: AssistantToolEmitter) {
-  return createAppTool({
-    action: "list_orders",
-    emitActivity,
-    parameters: listOrdersToolParameters,
-    runApp,
-    tool: ListOrdersTool,
-  });
-}
-
-function createOrderIdTool(
-  name: OrderStateActionName,
-  emitActivity: AssistantToolEmitter,
-  runApp: CoffeeAppRunner,
-) {
-  const tool = getOrderStateTool(name);
-
-  return createAppTool({
-    action: name,
-    emitActivity,
-    parameters: orderIdToolParameters,
-    runApp,
-    tool,
-  });
+  return assistantToolInputs.map((input) =>
+    createAppTool({
+      ...input,
+      emitActivity,
+      runApp,
+    }),
+  );
 }
 
 function createAppTool(input: {
@@ -165,14 +147,4 @@ function createAppTool(input: {
     parameters,
     tool,
   };
-}
-
-function getOrderStateTool(name: OrderStateActionName): Tool.Any {
-  return Match.value(name).pipe(
-    Match.when("start_brewing", () => StartBrewingTool),
-    Match.when("mark_ready", () => MarkReadyTool),
-    Match.when("pick_up_order", () => PickUpOrderTool),
-    Match.when("cancel_order", () => CancelOrderTool),
-    Match.exhaustive,
-  );
 }

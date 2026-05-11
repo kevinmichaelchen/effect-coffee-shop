@@ -35,7 +35,7 @@ export function useOrderDraft(menu: readonly MenuItem[]) {
       return 0;
     }
 
-    return calculatePriceCents(selectedItem, draft.size, draft.shots);
+    return calculatePriceCents(selectedItem, draft.size, draft.shots) * draft.quantity;
   }, [draft, selectedItem]);
 
   function selectDrink(drinkId: string): void {

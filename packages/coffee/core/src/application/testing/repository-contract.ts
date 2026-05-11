@@ -1,45 +1,65 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import { assert, describe, it } from "@effect/vitest";
 import { menuItems } from "../../domain/menu.ts";
-import type { CoffeeOrder } from "../../domain/order.ts";
+import { moneyFromCents } from "../../domain/money.ts";
+import { CartSchema } from "../../domain/cart.ts";
+import { CoffeeOrderSchema, type CoffeeOrder } from "../../domain/order.ts";
 import type { PersistenceError } from "../errors.ts";
+import { CartRepository } from "../ports/CartRepository.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
-type RepositoryServices = MenuRepository | OrderRepository;
+type RepositoryServices = CartRepository | MenuRepository | OrderRepository;
 type RunTest = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) => Promise<A>;
+type CoffeeOrderOverrides = {
+  readonly id: string;
+  readonly createdAt?: CoffeeOrder["createdAt"];
+  readonly customerName?: string;
+  readonly items?: unknown;
+  readonly ownerUserId?: string;
+  readonly status?: CoffeeOrder["status"];
+  readonly totalPrice?: CoffeeOrder["totalPrice"];
+};
 
 const utc = (iso: string) => Option.getOrThrow(DateTime.make(iso));
 const initialTime = utc("2026-01-01T10:00:00.000Z");
 const laterTime = utc("2026-01-01T10:05:00.000Z");
 const latestTime = utc("2026-01-01T10:10:00.000Z");
+const decodeCart = Schema.decodeUnknownSync(CartSchema);
+const decodeCoffeeOrder = Schema.decodeUnknownSync(CoffeeOrderSchema);
 
-const makeOrder = ({
-  id,
-  ...overrides
-}: Partial<CoffeeOrder> & Pick<CoffeeOrder, "id">): CoffeeOrder => ({
-  id,
-  customerName: "Avery",
-  ownerUserId: "user-avery",
-  drinkId: "latte",
-  drinkName: "Latte",
-  size: "medium",
-  milk: "whole",
-  temperature: "hot",
-  shots: 1,
-  status: "pending",
-  priceCents: 500,
-  createdAt: initialTime,
-  ...overrides,
-});
+const makeOrder = ({ id, ...overrides }: CoffeeOrderOverrides): CoffeeOrder =>
+  decodeCoffeeOrder({
+    id,
+    customerName: "Avery",
+    ownerUserId: "user-avery",
+    items: [
+      {
+        drinkId: "latte",
+        drinkName: "Latte",
+        size: "medium",
+        milk: "whole",
+        temperature: "hot",
+        shots: 1,
+        quantity: 1,
+        unitPrice: moneyFromCents(500),
+        lineTotal: moneyFromCents(500),
+      },
+    ],
+    status: "pending",
+    totalPrice: moneyFromCents(500),
+    createdAt: initialTime,
+    ...overrides,
+  });
 
 const makeReadyOrder = ({
   id,
   createdAt = laterTime,
   ownerUserId = "user-avery",
-}: Pick<CoffeeOrder, "id"> & Partial<Pick<CoffeeOrder, "createdAt" | "ownerUserId">>) =>
+}: { readonly id: string } & Partial<Pick<CoffeeOrder, "createdAt" | "ownerUserId">>) =>
   makeOrder({ id, createdAt, ownerUserId, status: "ready" });
 
 export const defineRepositoryContract = (name: string, run: RunTest) => {
@@ -76,7 +96,20 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
         const orderRepository = yield* OrderRepository;
         const order = makeOrder({
           id: "order-0001",
-          notes: "no foam",
+          items: [
+            {
+              drinkId: "latte",
+              drinkName: "Latte",
+              size: "medium",
+              milk: "whole",
+              temperature: "hot",
+              shots: 1,
+              notes: "no foam",
+              quantity: 1,
+              unitPrice: moneyFromCents(500),
+              lineTotal: moneyFromCents(500),
+            },
+          ],
         });
 
         const saved = yield* orderRepository.save(order);
@@ -88,6 +121,38 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
     );
 
     itContract(
+      "round-trips and clears actor carts",
+      Effect.gen(function* () {
+        const cartRepository = yield* CartRepository;
+        const cart = decodeCart({
+          ownerUserId: "user-avery",
+          items: [
+            {
+              id: "cart-item-0001",
+              drinkId: "latte",
+              size: "medium",
+              milk: "oat",
+              temperature: "hot",
+              shots: 2,
+              quantity: 2,
+              notes: "extra foam",
+            },
+          ],
+        });
+
+        const saved = yield* cartRepository.save(cart);
+        const loaded = yield* cartRepository.getByOwnerUserId(cart.ownerUserId);
+        const cleared = yield* cartRepository.clear(cart.ownerUserId);
+        const afterClear = yield* cartRepository.getByOwnerUserId(cart.ownerUserId);
+
+        assert.deepStrictEqual(saved, cart);
+        assert.deepStrictEqual(loaded, Option.some(cart));
+        assert.deepStrictEqual(cleared, { ownerUserId: cart.ownerUserId, items: [] });
+        assert.deepStrictEqual(afterClear, Option.none());
+      }),
+    );
+
+    itContract(
       "replaces existing orders when saving the same id again",
       Effect.gen(function* () {
         const orderRepository = yield* OrderRepository;
@@ -95,8 +160,21 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
         const updated = makeOrder({
           id: "order-0001",
           status: "ready",
-          notes: "call customer",
-          shots: 2,
+          items: [
+            {
+              drinkId: "latte",
+              drinkName: "Latte",
+              size: "medium",
+              milk: "whole",
+              temperature: "hot",
+              shots: 2,
+              notes: "call customer",
+              quantity: 1,
+              unitPrice: moneyFromCents(575),
+              lineTotal: moneyFromCents(575),
+            },
+          ],
+          totalPrice: moneyFromCents(575),
         });
 
         yield* orderRepository.save(original);

@@ -2,6 +2,7 @@ import { Card } from "#shared/ui/retroui/Card.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 import { StatusBadge } from "#shared/ui/StatusBadge.tsx";
 import { formatOrderTime, formatPrice } from "#features/coffee-shop/lib/coffee.ts";
+import { formatOrderItems } from "#features/coffee-shop/lib/order-display.ts";
 import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";
 
 interface RecentActivityCardProps {
@@ -32,7 +33,7 @@ export function RecentActivityCard({ orders, onInspect }: RecentActivityCardProp
               <StatusBadge status={order.status} />
             </div>
             <Text as="p" className="text-sm text-muted-foreground">
-              {order.drinkName} · {formatPrice(order.priceCents)} ·{" "}
+              {formatOrderItems(order)} · {formatPrice(order.totalPriceCents)} ·{" "}
               {formatOrderTime(order.createdAt)}
             </Text>
           </button>

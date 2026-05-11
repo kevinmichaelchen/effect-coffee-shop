@@ -26,7 +26,8 @@ export function OrderPreview(inputProps: OrderPreviewProps) {
             {item.name}
           </Text>
           <Text as="p" className="text-sm text-muted-foreground">
-            {draft.size}, {draft.temperature}, {draft.milk} milk, {draft.shots} shot(s)
+            {draft.quantity}x, {draft.size}, {draft.temperature}, {draft.milk} milk, {draft.shots}{" "}
+            shot(s)
           </Text>
         </div>
         <Text as="h2" className="text-3xl font-semibold">

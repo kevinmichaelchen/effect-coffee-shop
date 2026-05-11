@@ -1,5 +1,5 @@
 import * as Option from "effect/Option";
-import { readCloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
+import { readCloudflareRuntime, revealSecret, type CloudflareWorkerEnv } from "../env.ts";
 import {
   cloudflarePathname,
   cloudflareResponse,
@@ -23,30 +23,24 @@ const isAuthRequest = (request: Request): boolean => {
   return pathname === "/api/auth" || pathname.startsWith("/api/auth/");
 };
 
-const ensureAuthPersistence = async (env: CloudflareWorkerEnv): Promise<void> => {
-  const runtime = readCloudflareRuntime(env);
-
-  return ensureCloudflareAuthPersistence({
-    db: runtime.bindings.db,
-    secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
-  });
-};
-
 const handleAuthRequest = async (request: Request, env: CloudflareWorkerEnv): Promise<Response> => {
   const runtime = readCloudflareRuntime(env);
 
-  if (Option.isNone(runtime.config.betterAuthSecret)) {
-    return betterAuthUnavailableResponse();
-  }
+  return Option.match(runtime.config.betterAuthSecret, {
+    onNone: async () => betterAuthUnavailableResponse(),
+    onSome: async (secret) => {
+      await ensureCloudflareAuthPersistence({
+        db: runtime.bindings.db,
+      });
 
-  await ensureAuthPersistence(env);
-
-  return createCloudflareAuth({
-    appLayer: makeCloudflareCoffeeAppLive(runtime.bindings.db),
-    db: runtime.bindings.db,
-    request,
-    secret: runtime.config.betterAuthSecret.value,
-  }).handler(request);
+      return createCloudflareAuth({
+        appLayer: makeCloudflareCoffeeAppLive(runtime.bindings.db),
+        db: runtime.bindings.db,
+        request,
+        secret: revealSecret(secret),
+      }).handler(request);
+    },
+  });
 };
 
 export const cloudflareAgentDiscoveryMount: CloudflareMount<CloudflareWorkerEnv> = {

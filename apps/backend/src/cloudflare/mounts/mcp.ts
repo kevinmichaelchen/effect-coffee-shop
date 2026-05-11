@@ -1,4 +1,3 @@
-import * as Option from "effect/Option";
 import { readCloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
 import {
   cloudflarePathname,
@@ -25,7 +24,6 @@ export const cloudflareMcpMount: CloudflareMount<CloudflareWorkerEnv> = {
 
     await ensureCloudflareAuthPersistence({
       db: runtime.bindings.db,
-      secret: Option.getOrUndefined(runtime.config.betterAuthSecret),
     });
 
     return cloudflareResponse(

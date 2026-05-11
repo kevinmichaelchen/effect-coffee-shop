@@ -2,6 +2,10 @@ import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import * as McpServer from "effect/unstable/ai/McpServer";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
+import {
+  toCoffeeOrdersView,
+  toMenuView,
+} from "@effect-coffee-shop/coffee-core/application/contracts";
 import { prettyJson } from "@effect-coffee-shop/backend-host/json";
 
 export const RecommendDrinkPrompt = McpServer.prompt({
@@ -16,7 +20,7 @@ export const RecommendDrinkPrompt = McpServer.prompt({
   content: Effect.fn("CoffeeMcp.recommendDrinkPrompt")(function* ({ occasion }) {
     const app = yield* CoffeeOrderApp;
     const menu = yield* app.listMenu();
-    return `Recommend one drink for "${occasion}" from this menu:\n${prettyJson(menu)}`;
+    return `Recommend one drink for "${occasion}" from this menu:\n${prettyJson(toMenuView(menu))}`;
   }),
 });
 
@@ -31,13 +35,12 @@ export const SummarizeOpenOrdersPrompt = McpServer.prompt({
   },
   content: Effect.fn("CoffeeMcp.summarizeOpenOrdersPrompt")(function* ({ focus }) {
     const app = yield* CoffeeOrderApp;
-    const openOrders = yield* app
-      .listOrders({})
-      .pipe(
-        Effect.map((orders) =>
-          orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
-        ),
-      );
+    const openOrders = yield* app.listOrders({}).pipe(
+      Effect.map((orders) =>
+        orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
+      ),
+      Effect.map(toCoffeeOrdersView),
+    );
     return `Summarize the open order queue for ${focus}:\n${prettyJson(openOrders)}`;
   }),
 });

@@ -3,6 +3,7 @@ import { Table } from "#shared/ui/retroui/Table.tsx";
 import { StatusBadge } from "#shared/ui/StatusBadge.tsx";
 import { QueueRowActions } from "#features/coffee-shop/components/barista/QueueRowActions.tsx";
 import { formatOrderTime } from "#features/coffee-shop/lib/coffee.ts";
+import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
 interface QueueTableProps {
@@ -31,7 +32,7 @@ export function QueueTable(inputProps: QueueTableProps) {
         {orders.map((order) => (
           <Table.Row key={order.id}>
             <Table.Cell className="font-medium">{order.id}</Table.Cell>
-            <Table.Cell>{order.drinkName}</Table.Cell>
+            <Table.Cell title={formatOrderItems(order)}>{getOrderTitle(order)}</Table.Cell>
             <Table.Cell>{order.customerName}</Table.Cell>
             <Table.Cell>
               <StatusBadge status={order.status} />

@@ -3,6 +3,7 @@ import { Dialog } from "#shared/ui/retroui/Dialog.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 import { StatusBadge } from "#shared/ui/StatusBadge.tsx";
 import { formatOrderTime, formatPrice } from "#features/coffee-shop/lib/coffee.ts";
+import { formatOrderItems } from "#features/coffee-shop/lib/order-display.ts";
 import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";
 
 interface ReceiptDialogProps {
@@ -60,16 +61,10 @@ function ReceiptDetails({ order }: { order: CoffeeOrder }) {
       </div>
       <Text as="h3">{order.customerName}</Text>
       <Text as="p" className="text-lg">
-        {order.drinkName}, {order.size}, {order.temperature}, {order.milk} milk, {order.shots}{" "}
-        shot(s)
+        {formatOrderItems(order)}
       </Text>
-      {order.notes !== undefined ? (
-        <Text as="p" className="text-base text-muted-foreground">
-          Notes: {order.notes}
-        </Text>
-      ) : null}
       <Text as="h4" className="text-2xl">
-        {formatPrice(order.priceCents)}
+        {formatPrice(order.totalPriceCents)}
       </Text>
     </div>
   );

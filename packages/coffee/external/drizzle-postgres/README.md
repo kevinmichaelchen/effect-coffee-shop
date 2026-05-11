@@ -5,14 +5,14 @@ Postgres-backed implementation of the Coffee application ports.
 
 ## Exports
 
-| Name | Description |
-| --- | --- |
-| `DrizzlePostgresCoffeeAppLive` | Complete Postgres Coffee application layer. |
-| `DrizzlePostgresCoffeeRepositoriesLive` | Combined Drizzle-backed Coffee repositories. |
-| `DrizzlePostgresSchemaLive` | Postgres migration and schema setup layer. |
-| `DrizzlePostgresSchemaReady` | Schema readiness service tag for Postgres startup. |
-| `CoffeeDb` | Effect service tag for the Drizzle database client. |
-| `PgCoffeeClientLive` | Postgres SQL client layer for Coffee storage. |
+| Name                                    | Description                                         |
+| --------------------------------------- | --------------------------------------------------- |
+| `DrizzlePostgresCoffeeAppLive`          | Complete Postgres Coffee application layer.         |
+| `DrizzlePostgresCoffeeRepositoriesLive` | Combined Drizzle-backed Coffee repositories/cart.   |
+| `DrizzlePostgresSchemaLive`             | Postgres migration and schema setup layer.          |
+| `DrizzlePostgresSchemaReady`            | Schema readiness service tag for Postgres startup.  |
+| `CoffeeDb`                              | Effect service tag for the Drizzle database client. |
+| `PgCoffeeClientLive`                    | Postgres SQL client layer for Coffee storage.       |
 
 ## Commands
 

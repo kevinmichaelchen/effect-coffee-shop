@@ -14,11 +14,11 @@ values
     :item.id,
     :item.name,
     :item.kind,
-    :item.sort_order,
-    :item.base_price_cents,
-    :item.available_milks,
-    :item.available_temperatures,
-    :item.max_shots
+    :item.sortOrder,
+    :item.basePriceCents,
+    :item.availableMilks,
+    :item.availableTemperatures,
+    :item.maxShots
   )
 on conflict (id) do update
 set

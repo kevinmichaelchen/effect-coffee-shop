@@ -1,12 +1,16 @@
 import { assert, describe, it } from "@effect/vitest";
+import * as Schema from "effect/Schema";
 import {
-  calculatePriceCents,
+  calculatePrice,
   defaultMilkFor,
   defaultShotsFor,
   defaultTemperatureFor,
   menuItems,
 } from "./menu.ts";
+import { moneyToCents } from "./money.ts";
+import { ShotCountSchema } from "./order-primitives.ts";
 
+const shotCount = Schema.decodeUnknownSync(ShotCountSchema);
 const getMenuItem = (id: string) => {
   const item = menuItems.find((candidate) => candidate.id === id);
   if (item === undefined) {
@@ -30,8 +34,8 @@ describe("menu domain", () => {
   });
 
   it("calculates prices from size multipliers and extra shots", () => {
-    assert.strictEqual(calculatePriceCents(latte, "medium", 1), 518);
-    assert.strictEqual(calculatePriceCents(latte, "medium", 3), 668);
-    assert.strictEqual(calculatePriceCents(coldBrew, "large", 2), 595);
+    assert.strictEqual(moneyToCents(calculatePrice(latte, "medium", shotCount(1))), 518);
+    assert.strictEqual(moneyToCents(calculatePrice(latte, "medium", shotCount(3))), 668);
+    assert.strictEqual(moneyToCents(calculatePrice(coldBrew, "large", shotCount(2))), 595);
   });
 });

@@ -9,12 +9,12 @@ D1 into the shared SQL repository layer.
 
 ## Exports
 
-| Name | Description |
-| --- | --- |
-| `SqlCoffeeAppLive` | Bun SQLite Coffee application layer. |
-| `SqlCoffeeRepositoriesLive` | Shared SQL-backed Coffee repositories. |
-| `makeCloudflareCoffeeAppLive` | Builds the Cloudflare D1 Coffee application layer. |
-| `makeCloudflareSqlCoffeeSchemaLive` | Builds the Cloudflare D1 schema readiness layer. |
+| Name                                | Description                                        |
+| ----------------------------------- | -------------------------------------------------- |
+| `SqlCoffeeAppLive`                  | Bun SQLite Coffee application layer.               |
+| `SqlCoffeeRepositoriesLive`         | Shared SQL-backed Coffee repositories and cart.    |
+| `makeCloudflareCoffeeAppLive`       | Builds the Cloudflare D1 Coffee application layer. |
+| `makeCloudflareSqlCoffeeSchemaLive` | Builds the Cloudflare D1 schema readiness layer.   |
 
 ## Commands
 

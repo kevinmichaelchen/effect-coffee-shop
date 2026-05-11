@@ -1,5 +1,7 @@
 import * as Schema from "effect/Schema";
 import { DrinkIdSchema, DrinkSizeSchema, MilkSchema, TemperatureSchema } from "./menu.ts";
+import { MoneySchema } from "./money.ts";
+import { CustomerNameSchema, QuantitySchema, ShotCountSchema } from "./order-primitives.ts";
 
 export const orderStatuses = ["pending", "brewing", "ready", "picked-up", "cancelled"] as const;
 export type OrderStatus = (typeof orderStatuses)[number];
@@ -7,24 +9,37 @@ export const OrderStatusSchema = Schema.Literals(orderStatuses);
 
 const orderIdPattern = /^order-\d+$/;
 
-export const OrderIdSchema = Schema.String.check(Schema.isPattern(orderIdPattern)).annotate({
-  identifier: "OrderId",
-});
+export const OrderIdSchema = Schema.String.check(Schema.isPattern(orderIdPattern))
+  .pipe(Schema.brand("OrderId"))
+  .annotate({
+    identifier: "OrderId",
+  });
 export type OrderId = typeof OrderIdSchema.Type;
+export const orderIdFromString = Schema.decodeUnknownSync(OrderIdSchema);
 
-export const CoffeeOrderSchema = Schema.Struct({
-  id: OrderIdSchema,
-  customerName: Schema.String,
-  ownerUserId: Schema.String,
+const OptionalStringSchema = Schema.OptionFromOptionalKey(Schema.String);
+
+export const CoffeeOrderItemSchema = Schema.Struct({
   drinkId: DrinkIdSchema,
   drinkName: Schema.String,
   size: DrinkSizeSchema,
   milk: MilkSchema,
   temperature: TemperatureSchema,
-  shots: Schema.Int,
-  notes: Schema.optionalKey(Schema.String),
+  shots: ShotCountSchema,
+  notes: OptionalStringSchema,
+  quantity: QuantitySchema,
+  unitPrice: MoneySchema,
+  lineTotal: MoneySchema,
+}).annotate({ identifier: "CoffeeOrderItem" });
+export type CoffeeOrderItem = typeof CoffeeOrderItemSchema.Type;
+
+export const CoffeeOrderSchema = Schema.Struct({
+  id: OrderIdSchema,
+  customerName: CustomerNameSchema,
+  ownerUserId: Schema.String,
+  items: Schema.NonEmptyArray(CoffeeOrderItemSchema),
   status: OrderStatusSchema,
-  priceCents: Schema.Int,
+  totalPrice: MoneySchema,
   createdAt: Schema.DateTimeUtc,
 }).annotate({ identifier: "CoffeeOrder" });
 export type CoffeeOrder = typeof CoffeeOrderSchema.Type;
@@ -39,10 +54,7 @@ export interface ListOrdersFilters {
   readonly status?: OrderStatus;
 }
 
-const matches = <T extends string>(choices: readonly T[], value: string): value is T =>
-  choices.some((choice) => choice === value);
-
-export const isOrderStatus = (value: string): value is OrderStatus => matches(orderStatuses, value);
+export const isOrderStatus = Schema.is(OrderStatusSchema);
 
 const validTransitions: Record<OrderStatus, ReadonlyArray<OrderStatus>> = {
   pending: ["brewing", "cancelled"],

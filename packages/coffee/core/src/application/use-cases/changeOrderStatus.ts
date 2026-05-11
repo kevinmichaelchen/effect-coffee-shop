@@ -26,18 +26,17 @@ import {
 } from "@effect-coffee-shop/coffee-core/application/observability";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
-const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* (
-  orderId: OrderId,
-  to: OrderStatus,
-): Effect.fn.Return<
-  CoffeeOrder,
+type UpdateOrderStatusError =
   | AuthenticationRequiredError
   | InvalidOrderStatusTransitionError
   | OrderNotFoundError
   | StaffRoleRequiredError
-  | InternalAppError,
-  OrderRepository
-> {
+  | InternalAppError;
+
+const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* (
+  orderId: OrderId,
+  to: OrderStatus,
+): Effect.fn.Return<CoffeeOrder, UpdateOrderStatusError, OrderRepository> {
   const actor = yield* requireStaffActor();
   const orderRepository = yield* OrderRepository;
   const observabilityAttributes = {
@@ -85,58 +84,14 @@ const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* 
   return updatedOrder;
 });
 
-export const startBrewing = Effect.fn("CoffeeOrders.startBrewing")(function* (
-  orderId: OrderId,
-): Effect.fn.Return<
-  CoffeeOrder,
-  | AuthenticationRequiredError
-  | InvalidOrderStatusTransitionError
-  | OrderNotFoundError
-  | StaffRoleRequiredError
-  | InternalAppError,
-  OrderRepository
-> {
-  return yield* updateOrderStatus(orderId, "brewing");
-});
+const makeOrderStatusUpdater = (name: string, status: OrderStatus) =>
+  Effect.fn(name)(function* (
+    orderId: OrderId,
+  ): Effect.fn.Return<CoffeeOrder, UpdateOrderStatusError, OrderRepository> {
+    return yield* updateOrderStatus(orderId, status);
+  });
 
-export const markReady = Effect.fn("CoffeeOrders.markReady")(function* (
-  orderId: OrderId,
-): Effect.fn.Return<
-  CoffeeOrder,
-  | AuthenticationRequiredError
-  | InvalidOrderStatusTransitionError
-  | OrderNotFoundError
-  | StaffRoleRequiredError
-  | InternalAppError,
-  OrderRepository
-> {
-  return yield* updateOrderStatus(orderId, "ready");
-});
-
-export const pickUpOrder = Effect.fn("CoffeeOrders.pickUpOrder")(function* (
-  orderId: OrderId,
-): Effect.fn.Return<
-  CoffeeOrder,
-  | AuthenticationRequiredError
-  | InvalidOrderStatusTransitionError
-  | OrderNotFoundError
-  | StaffRoleRequiredError
-  | InternalAppError,
-  OrderRepository
-> {
-  return yield* updateOrderStatus(orderId, "picked-up");
-});
-
-export const cancelOrder = Effect.fn("CoffeeOrders.cancelOrder")(function* (
-  orderId: OrderId,
-): Effect.fn.Return<
-  CoffeeOrder,
-  | AuthenticationRequiredError
-  | InvalidOrderStatusTransitionError
-  | OrderNotFoundError
-  | StaffRoleRequiredError
-  | InternalAppError,
-  OrderRepository
-> {
-  return yield* updateOrderStatus(orderId, "cancelled");
-});
+export const startBrewing = makeOrderStatusUpdater("CoffeeOrders.startBrewing", "brewing");
+export const markReady = makeOrderStatusUpdater("CoffeeOrders.markReady", "ready");
+export const pickUpOrder = makeOrderStatusUpdater("CoffeeOrders.pickUpOrder", "picked-up");
+export const cancelOrder = makeOrderStatusUpdater("CoffeeOrders.cancelOrder", "cancelled");

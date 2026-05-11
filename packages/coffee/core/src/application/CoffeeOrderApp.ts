@@ -14,32 +14,61 @@ import type {
   OrderId,
 } from "@effect-coffee-shop/coffee-core/domain/order";
 import type {
+  CartItemIdRequest,
+  CartSnapshot,
+  CheckoutCartRequest,
+  ItemOptions,
+  ItemOptionsRequest,
   ListOrdersRequest,
+  OrderItemInput,
+  OrderQuote,
   PlaceOrderRequest,
+  QuoteOrderRequest,
+  UpdateCartItemRequest,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
 import {
   AuthenticationRequiredError,
   StaffRoleRequiredError,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { InternalAppError } from "./errors.ts";
+import { CartItemIdGenerator } from "./ports/CartItemIdGenerator.ts";
+import { CartRepository } from "./ports/CartRepository.ts";
 import { MenuRepository } from "./ports/MenuRepository.ts";
 import { OrderIdGenerator } from "./ports/OrderIdGenerator.ts";
 import { OrderRepository } from "./ports/OrderRepository.ts";
 import {
   cancelOrder,
+  addCartItem,
+  checkoutCart,
+  clearCart,
+  getCart,
+  getItemOptions,
   getOrder,
   listMenu,
   listOrders,
   markReady,
   placeOrder,
   pickUpOrder,
+  quoteOrder,
+  removeCartItem,
   startBrewing,
+  updateCartItem,
+  validateOrder,
 } from "./use-cases/index.ts";
 
 export class CoffeeOrderApp extends Context.Service<
   CoffeeOrderApp,
   {
     readonly listMenu: () => Effect.Effect<Menu, InternalAppError>;
+    readonly getItemOptions: (
+      input: ItemOptionsRequest,
+    ) => Effect.Effect<ItemOptions, DrinkNotFoundError | InternalAppError>;
+    readonly validateOrder: (
+      input: QuoteOrderRequest,
+    ) => Effect.Effect<OrderQuote, DrinkNotFoundError | InvalidOrderInputError | InternalAppError>;
+    readonly quoteOrder: (
+      input: QuoteOrderRequest,
+    ) => Effect.Effect<OrderQuote, DrinkNotFoundError | InvalidOrderInputError | InternalAppError>;
     readonly placeOrder: (
       input: PlaceOrderRequest,
     ) => Effect.Effect<
@@ -98,17 +127,57 @@ export class CoffeeOrderApp extends Context.Service<
       | StaffRoleRequiredError
       | InternalAppError
     >;
+    readonly getCart: () => Effect.Effect<
+      CartSnapshot,
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
+    readonly addCartItem: (
+      input: OrderItemInput,
+    ) => Effect.Effect<
+      CartSnapshot,
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
+    readonly updateCartItem: (
+      input: UpdateCartItemRequest,
+    ) => Effect.Effect<
+      CartSnapshot,
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
+    readonly removeCartItem: (
+      input: CartItemIdRequest,
+    ) => Effect.Effect<
+      CartSnapshot,
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
+    readonly clearCart: () => Effect.Effect<
+      CartSnapshot,
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
+    readonly checkoutCart: (
+      input: CheckoutCartRequest,
+    ) => Effect.Effect<
+      CoffeeOrder,
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
   }
 >()("effect-coffee-shop/application/CoffeeOrderApp") {
   static readonly layer = Layer.effect(
     this,
     Effect.gen(function* () {
       const menuRepository = yield* MenuRepository;
+      const cartItemIdGenerator = yield* CartItemIdGenerator;
+      const cartRepository = yield* CartRepository;
       const orderIdGenerator = yield* OrderIdGenerator;
       const orderRepository = yield* OrderRepository;
 
       return CoffeeOrderApp.of({
         listMenu: () => listMenu().pipe(Effect.provideService(MenuRepository, menuRepository)),
+        getItemOptions: (input) =>
+          getItemOptions(input).pipe(Effect.provideService(MenuRepository, menuRepository)),
+        validateOrder: (input) =>
+          validateOrder(input).pipe(Effect.provideService(MenuRepository, menuRepository)),
+        quoteOrder: (input) =>
+          quoteOrder(input).pipe(Effect.provideService(MenuRepository, menuRepository)),
         placeOrder: (input) =>
           placeOrder(input).pipe(
             Effect.provideService(MenuRepository, menuRepository),
@@ -127,6 +196,39 @@ export class CoffeeOrderApp extends Context.Service<
           pickUpOrder(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
         cancelOrder: (orderId) =>
           cancelOrder(orderId).pipe(Effect.provideService(OrderRepository, orderRepository)),
+        getCart: () =>
+          getCart().pipe(
+            Effect.provideService(CartRepository, cartRepository),
+            Effect.provideService(MenuRepository, menuRepository),
+          ),
+        addCartItem: (input) =>
+          addCartItem(input).pipe(
+            Effect.provideService(CartItemIdGenerator, cartItemIdGenerator),
+            Effect.provideService(CartRepository, cartRepository),
+            Effect.provideService(MenuRepository, menuRepository),
+          ),
+        updateCartItem: (input) =>
+          updateCartItem(input).pipe(
+            Effect.provideService(CartRepository, cartRepository),
+            Effect.provideService(MenuRepository, menuRepository),
+          ),
+        removeCartItem: (input) =>
+          removeCartItem(input).pipe(
+            Effect.provideService(CartRepository, cartRepository),
+            Effect.provideService(MenuRepository, menuRepository),
+          ),
+        clearCart: () =>
+          clearCart().pipe(
+            Effect.provideService(CartRepository, cartRepository),
+            Effect.provideService(MenuRepository, menuRepository),
+          ),
+        checkoutCart: (input) =>
+          checkoutCart(input).pipe(
+            Effect.provideService(CartRepository, cartRepository),
+            Effect.provideService(MenuRepository, menuRepository),
+            Effect.provideService(OrderIdGenerator, orderIdGenerator),
+            Effect.provideService(OrderRepository, orderRepository),
+          ),
       });
     }),
   );

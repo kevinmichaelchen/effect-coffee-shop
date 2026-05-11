@@ -1,5 +1,6 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import {
   CurrentActor,
@@ -10,8 +11,12 @@ import { placeOrder } from "@effect-coffee-shop/coffee-core/application/use-case
 
 const baseOrderRequest = {
   customerName: "Avery",
-  drinkId: "latte",
-  size: "medium",
+  items: [
+    {
+      drinkId: "latte",
+      size: "medium",
+    },
+  ],
 } as const;
 
 type OrderError = {
@@ -35,8 +40,12 @@ const defaultCases = [
   {
     request: {
       customerName: "Morgan",
-      drinkId: "cold-brew",
-      size: "large",
+      items: [
+        {
+          drinkId: "cold-brew",
+          size: "large",
+        },
+      ],
     },
     expected: {
       customerName: "Morgan",
@@ -48,8 +57,12 @@ const defaultCases = [
   {
     request: {
       customerName: "Jordan",
-      drinkId: "tea",
-      size: "small",
+      items: [
+        {
+          drinkId: "tea",
+          size: "small",
+        },
+      ],
     },
     expected: {
       customerName: "Jordan",
@@ -77,7 +90,7 @@ const invalidInputCases: ReadonlyArray<{
   {
     request: {
       ...baseOrderRequest,
-      drinkId: "mocha",
+      items: [{ drinkId: "mocha", size: "medium" }],
     },
     verify: (error) => {
       assert.strictEqual(error._tag, "DrinkNotFoundError");
@@ -87,7 +100,7 @@ const invalidInputCases: ReadonlyArray<{
   {
     request: {
       ...baseOrderRequest,
-      size: "bucket",
+      items: [{ drinkId: "latte", size: "bucket" }],
     },
     verify: (error) => {
       assert.strictEqual(error._tag, "InvalidOrderInputError");
@@ -97,7 +110,7 @@ const invalidInputCases: ReadonlyArray<{
   {
     request: {
       ...baseOrderRequest,
-      milk: "soy",
+      items: [{ drinkId: "latte", size: "medium", milk: "soy" }],
     },
     verify: (error) => {
       assert.strictEqual(error._tag, "InvalidOrderInputError");
@@ -107,8 +120,7 @@ const invalidInputCases: ReadonlyArray<{
   {
     request: {
       ...baseOrderRequest,
-      drinkId: "americano",
-      milk: "oat",
+      items: [{ drinkId: "americano", size: "medium", milk: "oat" }],
     },
     verify: (error) => {
       assert.strictEqual(error._tag, "InvalidOrderInputError");
@@ -118,7 +130,7 @@ const invalidInputCases: ReadonlyArray<{
   {
     request: {
       ...baseOrderRequest,
-      temperature: "warm",
+      items: [{ drinkId: "latte", size: "medium", temperature: "warm" }],
     },
     verify: (error) => {
       assert.strictEqual(error._tag, "InvalidOrderInputError");
@@ -128,8 +140,7 @@ const invalidInputCases: ReadonlyArray<{
   {
     request: {
       ...baseOrderRequest,
-      drinkId: "cold-brew",
-      temperature: "extra-hot",
+      items: [{ drinkId: "cold-brew", size: "medium", temperature: "extra-hot" }],
     },
     verify: (error) => {
       assert.strictEqual(error._tag, "InvalidOrderInputError");
@@ -139,7 +150,7 @@ const invalidInputCases: ReadonlyArray<{
   {
     request: {
       ...baseOrderRequest,
-      shots: -1,
+      items: [{ drinkId: "latte", size: "medium", shots: -1 }],
     },
     verify: (error) => {
       assert.strictEqual(error._tag, "InvalidOrderInputError");
@@ -149,7 +160,7 @@ const invalidInputCases: ReadonlyArray<{
   {
     request: {
       ...baseOrderRequest,
-      shots: 1.5,
+      items: [{ drinkId: "latte", size: "medium", shots: 1.5 }],
     },
     verify: (error) => {
       assert.strictEqual(error._tag, "InvalidOrderInputError");
@@ -159,7 +170,7 @@ const invalidInputCases: ReadonlyArray<{
   {
     request: {
       ...baseOrderRequest,
-      shots: 5,
+      items: [{ drinkId: "latte", size: "medium", shots: 5 }],
     },
     verify: (error) => {
       assert.strictEqual(error._tag, "InvalidOrderInputError");
@@ -169,9 +180,7 @@ const invalidInputCases: ReadonlyArray<{
   {
     request: {
       customerName: "Morgan",
-      drinkId: "tea",
-      size: "small",
-      shots: 1,
+      items: [{ drinkId: "tea", size: "small", shots: 1 }],
     },
     verify: (error) => {
       assert.strictEqual(error._tag, "InvalidOrderInputError");
@@ -186,11 +195,13 @@ describe("place order", () => {
   it.effect.each(defaultCases)("applies menu-driven defaults %#", ({ request, expected }) =>
     Effect.gen(function* () {
       const order = yield* placeOrder(request);
+      const item = order.items[0];
 
-      assert.strictEqual(order.customerName, expected.customerName);
-      assert.strictEqual(order.milk, expected.milk);
-      assert.strictEqual(order.temperature, expected.temperature);
-      assert.strictEqual(order.shots, expected.shots);
+      assert.strictEqual(String(order.customerName), expected.customerName);
+      assert.ok(item !== undefined);
+      assert.strictEqual(item.milk, expected.milk);
+      assert.strictEqual(item.temperature, expected.temperature);
+      assert.strictEqual(Number(item.shots), expected.shots);
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 
@@ -198,13 +209,13 @@ describe("place order", () => {
     Effect.gen(function* () {
       const order = yield* placeOrder({
         customerName: "  Avery  ",
-        drinkId: "latte",
-        size: "medium",
-        notes: "   ",
+        items: [{ drinkId: "latte", size: "medium", notes: "   " }],
       });
+      const item = order.items[0];
 
       assert.strictEqual(order.customerName, "Avery");
-      assert.strictEqual(order.notes, undefined);
+      assert.ok(item !== undefined);
+      assert.isTrue(Option.isNone(item.notes));
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 
