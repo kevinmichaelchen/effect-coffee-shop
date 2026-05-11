@@ -24,17 +24,21 @@ import {
   type CoffeeOrderItem,
 } from "@effect-coffee-shop/coffee-core/domain/order";
 
+const SqlNullableStringOptionSchema = Schema.OptionFromNullishOr(Schema.String, {
+  onNoneEncoding: null,
+});
+
 export const SqlMenuItemModel = Schema.Struct({
   id: DrinkIdSchema,
   name: Schema.String,
   kind: DrinkKindSchema,
-  basePriceCents: Schema.Int,
+  basePrice: MoneyFromCentsSchema,
   availableMilks: Schema.fromJsonString(Schema.Array(MilkSchema)),
   availableTemperatures: Schema.fromJsonString(Schema.Array(TemperatureSchema)),
   maxShots: Schema.Int,
 }).pipe(
   Schema.encodeKeys({
-    basePriceCents: "base_price_cents",
+    basePrice: "base_price_cents",
     availableMilks: "available_milks",
     availableTemperatures: "available_temperatures",
     maxShots: "max_shots",
@@ -46,13 +50,13 @@ export const SqlOrderModel = Schema.Struct({
   customerName: Schema.String,
   ownerUserId: Schema.String,
   status: OrderStatusSchema,
-  totalPriceCents: Schema.Int,
+  totalPrice: MoneyFromCentsSchema,
   createdAt: Schema.DateTimeUtcFromString,
 }).pipe(
   Schema.encodeKeys({
     customerName: "customer_name",
     ownerUserId: "owner_user_id",
-    totalPriceCents: "total_price_cents",
+    totalPrice: "total_price_cents",
     createdAt: "created_at",
   }),
 );
@@ -66,17 +70,17 @@ export const SqlOrderItemModel = Schema.Struct({
   milk: MilkSchema,
   temperature: TemperatureSchema,
   shots: Schema.Int,
-  notes: Schema.optionalKey(Schema.NullOr(Schema.String)),
+  notes: SqlNullableStringOptionSchema,
   quantity: Schema.Int,
-  unitPriceCents: Schema.Int,
-  lineTotalCents: Schema.Int,
+  unitPrice: MoneyFromCentsSchema,
+  lineTotal: MoneyFromCentsSchema,
 }).pipe(
   Schema.encodeKeys({
     orderId: "order_id",
     drinkId: "drink_id",
     drinkName: "drink_name",
-    unitPriceCents: "unit_price_cents",
-    lineTotalCents: "line_total_cents",
+    unitPrice: "unit_price_cents",
+    lineTotal: "line_total_cents",
   }),
 );
 
@@ -89,7 +93,7 @@ export const SqlCartItemModel = Schema.Struct({
   milk: MilkSchema,
   temperature: TemperatureSchema,
   shots: Schema.Int,
-  notes: Schema.optionalKey(Schema.NullOr(Schema.String)),
+  notes: SqlNullableStringOptionSchema,
   quantity: Schema.Int,
 }).pipe(
   Schema.encodeKeys({
@@ -104,10 +108,9 @@ type SqlCartItem = typeof SqlCartItemModel.Type;
 type SqlMenuItem = typeof SqlMenuItemModel.Type;
 
 const decodeCartItem = Schema.decodeUnknownSync(CartItemSchema);
-const decodeCoffeeOrder = Schema.decodeUnknownSync(CoffeeOrderSchema);
+const decodeCoffeeOrderType = Schema.decodeUnknownSync(Schema.toType(CoffeeOrderSchema));
 const decodeCoffeeOrderItem = Schema.decodeUnknownSync(CoffeeOrderItemSchema);
 const decodeMenuItem = Schema.decodeUnknownSync(MenuItemSchema);
-const decodeMoneyFromCents = Schema.decodeUnknownSync(MoneyFromCentsSchema);
 
 export interface SqlOrderSave {
   readonly id: string;
@@ -179,7 +182,7 @@ export const toSqlOrderItemSave = (
   milk: item.milk,
   temperature: item.temperature,
   shots: item.shots,
-  notes: item.notes ?? null,
+  notes: Option.getOrNull(item.notes),
   quantity: item.quantity,
   unitPriceCents: moneyToCents(item.unitPrice),
   lineTotalCents: moneyToCents(item.lineTotal),
@@ -195,10 +198,10 @@ export const toSqlCartItemSave = (
   position,
   drinkId: item.drinkId,
   size: item.size,
-  milk: item.milk ?? "none",
-  temperature: item.temperature ?? "hot",
-  shots: item.shots ?? 0,
-  notes: item.notes ?? null,
+  milk: Option.getOrElse(item.milk, () => "none"),
+  temperature: Option.getOrElse(item.temperature, () => "hot"),
+  shots: Option.getOrElse(item.shots, () => 0),
+  notes: Option.getOrNull(item.notes),
   quantity: item.quantity,
 });
 
@@ -211,7 +214,7 @@ export const toCartItem = (item: SqlCartItem): CartItem =>
     temperature: item.temperature,
     shots: item.shots,
     quantity: item.quantity,
-    ...Option.match(Option.fromNullishOr(item.notes), {
+    ...Option.match(item.notes, {
       onNone: () => ({}),
       onSome: (notes) => ({ notes }),
     }),
@@ -226,22 +229,22 @@ const toCoffeeOrderItem = (item: SqlOrderItem): CoffeeOrderItem =>
     temperature: item.temperature,
     shots: item.shots,
     quantity: item.quantity,
-    unitPrice: decodeMoneyFromCents(item.unitPriceCents),
-    lineTotal: decodeMoneyFromCents(item.lineTotalCents),
-    ...Option.match(Option.fromNullishOr(item.notes), {
+    unitPrice: item.unitPrice,
+    lineTotal: item.lineTotal,
+    ...Option.match(item.notes, {
       onNone: () => ({}),
       onSome: (notes) => ({ notes }),
     }),
   });
 
 export const toCoffeeOrder = (order: SqlOrder, items: readonly SqlOrderItem[]): CoffeeOrder =>
-  decodeCoffeeOrder({
+  decodeCoffeeOrderType({
     id: order.id,
     customerName: order.customerName,
     ownerUserId: order.ownerUserId,
     items: items.map(toCoffeeOrderItem),
     status: order.status,
-    totalPrice: decodeMoneyFromCents(order.totalPriceCents),
+    totalPrice: order.totalPrice,
     createdAt: order.createdAt,
   });
 
@@ -250,7 +253,7 @@ export const toMenuItem = (item: SqlMenuItem): MenuItem =>
     id: item.id,
     name: item.name,
     kind: item.kind,
-    basePrice: decodeMoneyFromCents(item.basePriceCents),
+    basePrice: item.basePrice,
     availableMilks: item.availableMilks,
     availableTemperatures: item.availableTemperatures,
     maxShots: item.maxShots,

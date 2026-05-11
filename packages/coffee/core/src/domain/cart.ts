@@ -4,19 +4,22 @@ import { QuantitySchema, ShotCountSchema } from "./order-primitives.ts";
 
 const cartItemIdPattern = /^cart-item-\d+$/;
 
-export const CartItemIdSchema = Schema.String.check(Schema.isPattern(cartItemIdPattern)).annotate({
-  identifier: "CartItemId",
-});
+export const CartItemIdSchema = Schema.String.check(Schema.isPattern(cartItemIdPattern))
+  .pipe(Schema.brand("CartItemId"))
+  .annotate({
+    identifier: "CartItemId",
+  });
 export type CartItemId = typeof CartItemIdSchema.Type;
+export const cartItemIdFromString = Schema.decodeUnknownSync(CartItemIdSchema);
 
 export const CartItemSchema = Schema.Struct({
   id: CartItemIdSchema,
   drinkId: DrinkIdSchema,
   size: DrinkSizeSchema,
-  milk: Schema.optionalKey(MilkSchema),
-  temperature: Schema.optionalKey(TemperatureSchema),
-  shots: Schema.optionalKey(ShotCountSchema),
-  notes: Schema.optionalKey(Schema.String),
+  milk: Schema.OptionFromOptionalKey(MilkSchema),
+  temperature: Schema.OptionFromOptionalKey(TemperatureSchema),
+  shots: Schema.OptionFromOptionalKey(ShotCountSchema),
+  notes: Schema.OptionFromOptionalKey(Schema.String),
   quantity: QuantitySchema,
 }).annotate({ identifier: "CartItem" });
 export type CartItem = typeof CartItemSchema.Type;

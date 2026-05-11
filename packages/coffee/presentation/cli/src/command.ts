@@ -9,7 +9,7 @@ import {
   milks,
   temperatures,
 } from "@effect-coffee-shop/coffee-core/domain/menu";
-import { orderStatuses } from "@effect-coffee-shop/coffee-core/domain/order";
+import { orderIdFromString, orderStatuses } from "@effect-coffee-shop/coffee-core/domain/order";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import {
   toCoffeeOrderView,
@@ -72,7 +72,7 @@ const getOrderCommand = Command.make("get", {
   Command.withHandler(
     Effect.fn("CoffeeCli.getOrder")(function* ({ orderId }) {
       const app = yield* CoffeeOrderApp;
-      const order = yield* app.getOrder(orderId);
+      const order = yield* app.getOrder(orderIdFromString(orderId));
       yield* Console.log(prettyJson(toCoffeeOrderView(order)));
     }),
   ),
@@ -100,7 +100,7 @@ const cancelOrderCommand = Command.make("cancel", {
   Command.withHandler(
     Effect.fn("CoffeeCli.cancelOrder")(function* ({ orderId }) {
       const app = yield* CoffeeOrderApp;
-      const order = yield* app.cancelOrder(orderId);
+      const order = yield* app.cancelOrder(orderIdFromString(orderId));
       yield* Console.log(prettyJson(toCoffeeOrderView(order)));
     }),
   ),
@@ -134,7 +134,7 @@ const startCommand = Command.make("start", {
   Command.withHandler(
     Effect.fn("CoffeeCli.startBrewing")(function* ({ orderId }) {
       const app = yield* CoffeeOrderApp;
-      const order = yield* app.startBrewing(orderId);
+      const order = yield* app.startBrewing(orderIdFromString(orderId));
       yield* Console.log(prettyJson(toCoffeeOrderView(order)));
     }),
   ),
@@ -147,7 +147,7 @@ const readyCommand = Command.make("ready", {
   Command.withHandler(
     Effect.fn("CoffeeCli.markReady")(function* ({ orderId }) {
       const app = yield* CoffeeOrderApp;
-      const order = yield* app.markReady(orderId);
+      const order = yield* app.markReady(orderIdFromString(orderId));
       yield* Console.log(prettyJson(toCoffeeOrderView(order)));
     }),
   ),
@@ -160,7 +160,7 @@ const pickupCommand = Command.make("pickup", {
   Command.withHandler(
     Effect.fn("CoffeeCli.pickUpOrder")(function* ({ orderId }) {
       const app = yield* CoffeeOrderApp;
-      const order = yield* app.pickUpOrder(orderId);
+      const order = yield* app.pickUpOrder(orderIdFromString(orderId));
       yield* Console.log(prettyJson(toCoffeeOrderView(order)));
     }),
   ),

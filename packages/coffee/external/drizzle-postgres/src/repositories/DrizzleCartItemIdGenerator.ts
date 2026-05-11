@@ -1,10 +1,10 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import type { CartItemId } from "@effect-coffee-shop/coffee-core/domain/cart";
+import { cartItemIdFromString, type CartItemId } from "@effect-coffee-shop/coffee-core/domain/cart";
 import { CartItemIdGenerator } from "@effect-coffee-shop/coffee-core/application/ports/CartItemIdGenerator";
 
 const formatCartItemId = (currentId: number): CartItemId =>
-  `cart-item-${String(currentId).padStart(4, "0")}`;
+  cartItemIdFromString(`cart-item-${String(currentId).padStart(4, "0")}`);
 
 export const DrizzleCartItemIdGeneratorLive = Layer.effect(
   CartItemIdGenerator,

@@ -1,3 +1,4 @@
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { describe, expect, it } from "vitest";
 import { moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
@@ -33,7 +34,7 @@ describe("sqlite row models", () => {
     });
     const menuItem = toMenuItem(decoded);
 
-    expect(decoded.basePriceCents).toBe(450);
+    expect(moneyToCents(decoded.basePrice)).toBe(450);
     expect(decoded.availableMilks).toEqual(["whole", "oat"]);
     expect(decoded.availableTemperatures).toEqual(["hot", "iced"]);
     expect(decoded.maxShots).toBe(4);
@@ -76,12 +77,12 @@ describe("sqlite row models", () => {
 
     expect(order.customerName).toBe("Avery");
     expect(order.ownerUserId).toBe("user-avery");
-    expect(order.totalPriceCents).toBe(1050);
+    expect(moneyToCents(order.totalPrice)).toBe(1050);
     expect(item.orderId).toBe("order-0001");
     expect(item.drinkId).toBe("latte");
     expect(item.drinkName).toBe("Latte");
-    expect(item.unitPriceCents).toBe(525);
-    expect(item.lineTotalCents).toBe(1050);
+    expect(moneyToCents(item.unitPrice)).toBe(525);
+    expect(moneyToCents(item.lineTotal)).toBe(1050);
     expect(coffeeOrder.customerName).toBe("Avery");
     expect(coffeeOrder.items[0]?.drinkId).toBe("latte");
     expect(moneyToCents(coffeeOrder.totalPrice)).toBe(1050);
@@ -127,7 +128,7 @@ describe("sqlite row models", () => {
     expect(decoded.ownerUserId).toBe("user-avery");
     expect(decoded.drinkId).toBe("latte");
     expect(cartItem.drinkId).toBe("latte");
-    expect(cartItem.milk).toBe("oat");
+    expect(Option.getOrThrow(cartItem.milk)).toBe("oat");
     expect(encodeSqlCartItem(decoded)).toEqual({
       owner_user_id: "user-avery",
       id: "cart-item-0001",

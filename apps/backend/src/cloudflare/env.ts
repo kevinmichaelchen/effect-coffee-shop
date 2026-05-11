@@ -43,8 +43,8 @@ export interface CloudflareRuntime {
 }
 
 const cloudflareConfig = Config.all({
-  aiGatewayId: Config.string("aiGatewayId").pipe(Config.withDefault("")),
-  betterAuthSecret: Config.string("betterAuthSecret").pipe(Config.withDefault("")),
+  aiGatewayId: Config.option(Config.string("aiGatewayId")),
+  betterAuthSecret: Config.option(Config.redacted("betterAuthSecret")),
   coffeeStaffUserIds: Config.string("coffeeStaffUserIds").pipe(Config.withDefault("")),
 });
 
@@ -52,14 +52,18 @@ const decodeTrimmedString = (value: string): string => Schema.decodeUnknownSync(
 
 const optionalTrimmedString = (value: string): Option.Option<string> => {
   const trimmed = decodeTrimmedString(value);
-  return trimmed === "" ? Option.none() : Option.some(trimmed);
+  return Option.liftPredicate(trimmed, (input) => input !== "");
 };
 
-const optionalRedactedString = (
-  value: string,
+const optionalTrimmedRedactedString = (
+  value: Option.Option<Redacted.Redacted<string>>,
   label: string,
 ): Option.Option<Redacted.Redacted<string>> =>
-  Option.map(optionalTrimmedString(value), (secret) => Redacted.make(secret, { label }));
+  Option.flatMap(value, (secret) =>
+    Option.map(optionalTrimmedString(Redacted.value(secret)), (trimmedSecret) =>
+      Redacted.make(trimmedSecret, { label }),
+    ),
+  );
 
 const parseStaffUserIds = (value: string): ReadonlySet<string> =>
   new Set(
@@ -81,8 +85,8 @@ export const readCloudflareRuntime = (env: CloudflareWorkerEnv): CloudflareRunti
       db: env.DB,
     },
     config: {
-      aiGatewayId: optionalTrimmedString(decodedConfig.aiGatewayId),
-      betterAuthSecret: optionalRedactedString(
+      aiGatewayId: Option.flatMap(decodedConfig.aiGatewayId, optionalTrimmedString),
+      betterAuthSecret: optionalTrimmedRedactedString(
         decodedConfig.betterAuthSecret,
         "BETTER_AUTH_SECRET",
       ),

@@ -44,14 +44,14 @@ const decodeMilk = Schema.decodeUnknownEffect(MilkSchema);
 const decodeQuantity = Schema.decodeUnknownEffect(QuantitySchema);
 const decodeShotCount = Schema.decodeUnknownEffect(ShotCountSchema);
 const decodeTemperature = Schema.decodeUnknownEffect(TemperatureSchema);
-const decodeResolvedItems = Schema.decodeUnknownEffect(Schema.NonEmptyArray(CoffeeOrderItemSchema));
+const decodeResolvedItems = Schema.decodeUnknownEffect(
+  Schema.NonEmptyArray(Schema.toType(CoffeeOrderItemSchema)),
+);
 
-const trimmedOrUndefined = (value: string | undefined): string | undefined =>
-  Option.getOrUndefined(
-    Option.fromUndefinedOr(value).pipe(
-      Option.map(decodeTrimmedString),
-      Option.filter((input) => input.length > 0),
-    ),
+const trimmedOption = (value: string | undefined): Option.Option<string> =>
+  Option.fromUndefinedOr(value).pipe(
+    Option.map(decodeTrimmedString),
+    Option.filter((input) => input.length > 0),
   );
 
 export const invalidOrderInput = (message: string) => new InvalidOrderInputError({ message });
@@ -60,7 +60,9 @@ const validateSize = Effect.fnUntraced(function* (
   size: string,
 ): Effect.fn.Return<DrinkSize, InvalidOrderInputError> {
   return yield* decodeDrinkSize(size).pipe(
-    Effect.mapError(() => invalidOrderInput(`size must be one of: ${availableValues(drinkSizes)}`)),
+    Effect.catchTag("SchemaError", () =>
+      Effect.fail(invalidOrderInput(`size must be one of: ${availableValues(drinkSizes)}`)),
+    ),
   );
 });
 
@@ -73,8 +75,8 @@ const resolveMilk = Effect.fnUntraced(function* (
       onNone: () => Effect.succeed(defaultMilkFor(menuItem)),
       onSome: (m) =>
         decodeMilk(m).pipe(
-          Effect.mapError(() =>
-            invalidOrderInput(`milk must be one of: ${availableValues(milks)}`),
+          Effect.catchTag("SchemaError", () =>
+            Effect.fail(invalidOrderInput(`milk must be one of: ${availableValues(milks)}`)),
           ),
         ),
     }),
@@ -97,8 +99,10 @@ const resolveTemperature = Effect.fnUntraced(function* (
       onNone: () => Effect.succeed(defaultTemperatureFor(menuItem)),
       onSome: (t) =>
         decodeTemperature(t).pipe(
-          Effect.mapError(() =>
-            invalidOrderInput(`temperature must be one of: ${availableValues(temperatures)}`),
+          Effect.catchTag("SchemaError", () =>
+            Effect.fail(
+              invalidOrderInput(`temperature must be one of: ${availableValues(temperatures)}`),
+            ),
           ),
         ),
     }),
@@ -123,7 +127,9 @@ const resolveShots = Effect.fnUntraced(function* (
   const selectedShots = shots ?? defaultShotsFor(menuItem);
 
   const shotCount = yield* decodeShotCount(selectedShots).pipe(
-    Effect.mapError(() => invalidOrderInput("shots must be a non-negative integer")),
+    Effect.catchTag("SchemaError", () =>
+      Effect.fail(invalidOrderInput("shots must be a non-negative integer")),
+    ),
   );
 
   return yield* Effect.succeed(shotCount).pipe(
@@ -144,7 +150,9 @@ const resolveQuantity = Effect.fnUntraced(function* (
   const selectedQuantity = quantity ?? defaultQuantity;
 
   return yield* decodeQuantity(selectedQuantity).pipe(
-    Effect.mapError(() => invalidOrderInput("quantity must be a positive integer")),
+    Effect.catchTag("SchemaError", () =>
+      Effect.fail(invalidOrderInput("quantity must be a positive integer")),
+    ),
   );
 });
 
@@ -179,7 +187,7 @@ export const resolveOrderItem = Effect.fnUntraced(function* (
   const quantity = yield* resolveQuantity(request.quantity);
   const unitPrice = calculatePrice(menuItem, size, shots);
   const lineTotal = multiplyMoney(unitPrice, quantity);
-  const notes = trimmedOrUndefined(request.notes);
+  const notes = trimmedOption(request.notes);
 
   return {
     drinkId: menuItem.id,
@@ -191,10 +199,7 @@ export const resolveOrderItem = Effect.fnUntraced(function* (
     quantity,
     unitPrice,
     lineTotal,
-    ...Option.match(Option.fromUndefinedOr(notes), {
-      onNone: () => ({}),
-      onSome: (notes) => ({ notes }),
-    }),
+    notes,
   };
 });
 
@@ -214,7 +219,9 @@ export const resolveOrderQuote = Effect.fnUntraced(function* (
 
   const resolvedItemArray = yield* Effect.forEach(items, resolveOrderItem);
   const resolvedItems = yield* decodeResolvedItems(resolvedItemArray).pipe(
-    Effect.mapError(() => invalidOrderInput("items must include at least one drink")),
+    Effect.catchTag("SchemaError", () =>
+      Effect.fail(invalidOrderInput("items must include at least one drink")),
+    ),
   );
 
   return {
@@ -225,29 +232,29 @@ export const resolveOrderQuote = Effect.fnUntraced(function* (
 
 export const toOrderItemInput = (item: {
   readonly drinkId: string;
-  readonly milk?: string;
-  readonly notes?: string;
+  readonly milk: Option.Option<string>;
+  readonly notes: Option.Option<string>;
   readonly quantity: number;
-  readonly shots?: number;
+  readonly shots: Option.Option<number>;
   readonly size: string;
-  readonly temperature?: string;
+  readonly temperature: Option.Option<string>;
 }): OrderItemInput => ({
   drinkId: item.drinkId,
   size: item.size,
   quantity: item.quantity,
-  ...Option.match(Option.fromUndefinedOr(item.milk), {
+  ...Option.match(item.milk, {
     onNone: () => ({}),
     onSome: (milk) => ({ milk }),
   }),
-  ...Option.match(Option.fromUndefinedOr(item.temperature), {
+  ...Option.match(item.temperature, {
     onNone: () => ({}),
     onSome: (temperature) => ({ temperature }),
   }),
-  ...Option.match(Option.fromUndefinedOr(item.shots), {
+  ...Option.match(item.shots, {
     onNone: () => ({}),
     onSome: (shots) => ({ shots }),
   }),
-  ...Option.match(Option.fromUndefinedOr(item.notes), {
+  ...Option.match(item.notes, {
     onNone: () => ({}),
     onSome: (notes) => ({ notes }),
   }),

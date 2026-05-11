@@ -1,5 +1,6 @@
-import * as Option from "effect/Option";
+import * as Arr from "effect/Array";
 import * as Schema from "effect/Schema";
+import * as SchemaTransformation from "effect/SchemaTransformation";
 import { CartItemIdSchema } from "../domain/cart.ts";
 import {
   DrinkIdSchema,
@@ -10,7 +11,7 @@ import {
   TemperatureSchema,
   type MenuItem,
 } from "../domain/menu.ts";
-import { MoneySchema, moneyToCents } from "../domain/money.ts";
+import { MoneyFromCentsSchema, MoneySchema } from "../domain/money.ts";
 import { QuantityInputSchema, ShotCountInputSchema } from "../domain/order-primitives.ts";
 import {
   CoffeeOrderItemSchema,
@@ -142,7 +143,7 @@ export const CoffeeOrderItemViewSchema = Schema.Struct({
 export type CoffeeOrderItemView = typeof CoffeeOrderItemViewSchema.Type;
 
 export const CoffeeOrderViewSchema = Schema.Struct({
-  id: OrderIdSchema,
+  id: Schema.toEncoded(OrderIdSchema),
   customerName: Schema.String,
   ownerUserId: Schema.String,
   items: Schema.NonEmptyArray(CoffeeOrderItemViewSchema),
@@ -171,7 +172,7 @@ export const OrderValidationViewSchema = Schema.Struct({
 export type OrderValidationView = typeof OrderValidationViewSchema.Type;
 
 export const CartItemViewSchema = Schema.Struct({
-  cartItemId: CartItemIdSchema,
+  cartItemId: Schema.toEncoded(CartItemIdSchema),
   item: CoffeeOrderItemViewSchema,
 }).annotate({ identifier: "CartItemView" });
 export type CartItemView = typeof CartItemViewSchema.Type;
@@ -194,80 +195,179 @@ export const ItemOptionsViewSchema = Schema.Struct({
 }).annotate({ identifier: "ItemOptionsView" });
 export type ItemOptionsView = typeof ItemOptionsViewSchema.Type;
 
-const mapNonEmpty = <A, B>(
-  items: readonly [A, ...Array<A>],
-  f: (item: A) => B,
-): readonly [B, ...Array<B>] => {
-  const [head, ...tail] = items;
-  return [f(head), ...tail.map(f)];
-};
+const OptionalViewStringSchema = Schema.optionalKey(Schema.String).pipe(
+  Schema.decodeTo(Schema.Option(Schema.String), SchemaTransformation.optionFromOptionalKey()),
+);
 
-export const toMenuItemView = (item: MenuItem): MenuItemView => ({
-  id: item.id,
-  name: item.name,
-  kind: item.kind,
-  basePriceCents: moneyToCents(item.basePrice),
-  availableMilks: item.availableMilks,
-  availableTemperatures: item.availableTemperatures,
-  maxShots: item.maxShots,
-});
-
-export const toMenuView = (menu: readonly MenuItem[]): MenuView => menu.map(toMenuItemView);
-
-export const toCoffeeOrderItemView = (item: CoffeeOrderItem): CoffeeOrderItemView => ({
-  drinkId: item.drinkId,
-  drinkName: item.drinkName,
-  size: item.size,
-  milk: item.milk,
-  temperature: item.temperature,
-  shots: item.shots,
-  quantity: item.quantity,
-  unitPriceCents: moneyToCents(item.unitPrice),
-  lineTotalCents: moneyToCents(item.lineTotal),
-  ...Option.match(Option.fromUndefinedOr(item.notes), {
-    onNone: () => ({}),
-    onSome: (notes) => ({ notes }),
+const MenuItemViewModelSchema = Schema.Struct({
+  id: DrinkIdSchema,
+  name: Schema.String,
+  kind: DrinkKindSchema,
+  basePrice: MoneyFromCentsSchema,
+  availableMilks: Schema.Array(MilkSchema),
+  availableTemperatures: Schema.Array(TemperatureSchema),
+  maxShots: ShotCountInputSchema,
+}).pipe(
+  Schema.encodeKeys({
+    basePrice: "basePriceCents",
   }),
+);
+
+const CoffeeOrderItemViewModelSchema = Schema.Struct({
+  drinkId: DrinkIdSchema,
+  drinkName: Schema.String,
+  size: DrinkSizeSchema,
+  milk: MilkSchema,
+  temperature: TemperatureSchema,
+  shots: ShotCountInputSchema,
+  notes: OptionalViewStringSchema,
+  quantity: QuantityInputSchema,
+  unitPrice: MoneyFromCentsSchema,
+  lineTotal: MoneyFromCentsSchema,
+}).pipe(
+  Schema.encodeKeys({
+    unitPrice: "unitPriceCents",
+    lineTotal: "lineTotalCents",
+  }),
+);
+
+const CoffeeOrderViewModelSchema = Schema.Struct({
+  id: OrderIdSchema,
+  customerName: Schema.String,
+  ownerUserId: Schema.String,
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewModelSchema),
+  status: OrderStatusSchema,
+  totalPrice: MoneyFromCentsSchema,
+  createdAt: Schema.DateTimeUtc,
+}).pipe(
+  Schema.encodeKeys({
+    totalPrice: "totalPriceCents",
+  }),
+);
+
+const OrderQuoteViewModelSchema = Schema.Struct({
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewModelSchema),
+  totalPrice: MoneyFromCentsSchema,
+}).pipe(
+  Schema.encodeKeys({
+    totalPrice: "totalPriceCents",
+  }),
+);
+
+const OrderValidationViewModelSchema = Schema.Struct({
+  valid: Schema.Literal(true),
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewModelSchema),
+  totalPrice: MoneyFromCentsSchema,
+}).pipe(
+  Schema.encodeKeys({
+    totalPrice: "totalPriceCents",
+  }),
+);
+
+const CartItemViewModelSchema = Schema.Struct({
+  cartItemId: CartItemIdSchema,
+  item: CoffeeOrderItemViewModelSchema,
 });
 
-export const toCoffeeOrderView = (order: CoffeeOrder): CoffeeOrderView => ({
-  id: order.id,
-  customerName: order.customerName,
-  ownerUserId: order.ownerUserId,
-  items: mapNonEmpty(order.items, toCoffeeOrderItemView),
-  status: order.status,
-  totalPriceCents: moneyToCents(order.totalPrice),
-  createdAt: order.createdAt,
+const CartViewModelSchema = Schema.Struct({
+  ownerUserId: Schema.String,
+  items: Schema.Array(CartItemViewModelSchema),
+  totalPrice: MoneyFromCentsSchema,
+}).pipe(
+  Schema.encodeKeys({
+    totalPrice: "totalPriceCents",
+  }),
+);
+
+const ItemOptionsViewModelSchema = Schema.Struct({
+  item: MenuItemViewModelSchema,
+  availableSizes: Schema.Array(DrinkSizeSchema),
+  defaultSize: DrinkSizeSchema,
+  defaultMilk: MilkSchema,
+  defaultTemperature: TemperatureSchema,
+  defaultShots: ShotCountInputSchema,
+  defaultQuantity: QuantityInputSchema,
 });
+
+const encodeMenuItemView = Schema.encodeSync(MenuItemViewModelSchema);
+const encodeCoffeeOrderItemView = Schema.encodeSync(CoffeeOrderItemViewModelSchema);
+const encodeCoffeeOrderView = Schema.encodeSync(CoffeeOrderViewModelSchema);
+const encodeOrderQuoteView = Schema.encodeSync(OrderQuoteViewModelSchema);
+const encodeOrderValidationView = Schema.encodeSync(OrderValidationViewModelSchema);
+const encodeCartView = Schema.encodeSync(CartViewModelSchema);
+const encodeItemOptionsView = Schema.encodeSync(ItemOptionsViewModelSchema);
+
+export const toMenuItemView = (item: MenuItem): MenuItemView =>
+  encodeMenuItemView({
+    id: item.id,
+    name: item.name,
+    kind: item.kind,
+    basePrice: item.basePrice,
+    availableMilks: item.availableMilks,
+    availableTemperatures: item.availableTemperatures,
+    maxShots: item.maxShots,
+  });
+
+export const toMenuView = (menu: readonly MenuItem[]): MenuView => Arr.map(menu, toMenuItemView);
+
+export const toCoffeeOrderItemView = (item: CoffeeOrderItem): CoffeeOrderItemView =>
+  encodeCoffeeOrderItemView({
+    drinkId: item.drinkId,
+    drinkName: item.drinkName,
+    size: item.size,
+    milk: item.milk,
+    temperature: item.temperature,
+    shots: item.shots,
+    notes: item.notes,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    lineTotal: item.lineTotal,
+  });
+
+export const toCoffeeOrderView = (order: CoffeeOrder): CoffeeOrderView =>
+  encodeCoffeeOrderView({
+    id: order.id,
+    customerName: order.customerName,
+    ownerUserId: order.ownerUserId,
+    items: order.items,
+    status: order.status,
+    totalPrice: order.totalPrice,
+    createdAt: order.createdAt,
+  });
 
 export const toCoffeeOrdersView = (orders: readonly CoffeeOrder[]): CoffeeOrdersView =>
-  orders.map(toCoffeeOrderView);
+  Arr.map(orders, toCoffeeOrderView);
 
-export const toOrderQuoteView = (quote: OrderQuote): OrderQuoteView => ({
-  items: mapNonEmpty(quote.items, toCoffeeOrderItemView),
-  totalPriceCents: moneyToCents(quote.totalPrice),
-});
+export const toOrderQuoteView = (quote: OrderQuote): OrderQuoteView =>
+  encodeOrderQuoteView({
+    items: quote.items,
+    totalPrice: quote.totalPrice,
+  });
 
-export const toOrderValidationView = (quote: OrderQuote): OrderValidationView => ({
-  valid: true,
-  ...toOrderQuoteView(quote),
-});
+export const toOrderValidationView = (quote: OrderQuote): OrderValidationView =>
+  encodeOrderValidationView({
+    valid: true,
+    items: quote.items,
+    totalPrice: quote.totalPrice,
+  });
 
-export const toCartView = (cart: CartSnapshot): CartView => ({
-  ownerUserId: cart.ownerUserId,
-  items: cart.items.map((cartItem) => ({
-    cartItemId: cartItem.cartItemId,
-    item: toCoffeeOrderItemView(cartItem.item),
-  })),
-  totalPriceCents: moneyToCents(cart.totalPrice),
-});
+export const toCartView = (cart: CartSnapshot): CartView =>
+  encodeCartView({
+    ownerUserId: cart.ownerUserId,
+    items: Arr.map(cart.items, (cartItem) => ({
+      cartItemId: cartItem.cartItemId,
+      item: cartItem.item,
+    })),
+    totalPrice: cart.totalPrice,
+  });
 
-export const toItemOptionsView = (options: ItemOptions): ItemOptionsView => ({
-  item: toMenuItemView(options.item),
-  availableSizes: options.availableSizes,
-  defaultSize: options.defaultSize,
-  defaultMilk: options.defaultMilk,
-  defaultTemperature: options.defaultTemperature,
-  defaultShots: options.defaultShots,
-  defaultQuantity: options.defaultQuantity,
-});
+export const toItemOptionsView = (options: ItemOptions): ItemOptionsView =>
+  encodeItemOptionsView({
+    item: options.item,
+    availableSizes: options.availableSizes,
+    defaultSize: options.defaultSize,
+    defaultMilk: options.defaultMilk,
+    defaultTemperature: options.defaultTemperature,
+    defaultShots: options.defaultShots,
+    defaultQuantity: options.defaultQuantity,
+  });

@@ -36,7 +36,9 @@ const validateCustomerName = Effect.fnUntraced(function* (
   customerName: string,
 ): Effect.fn.Return<CustomerName, InvalidOrderInputError> {
   return yield* decodeCustomerName(customerName).pipe(
-    Effect.mapError(() => invalidOrderInput("customerName must not be blank")),
+    Effect.catchTag("SchemaError", () =>
+      Effect.fail(invalidOrderInput("customerName must not be blank")),
+    ),
   );
 });
 

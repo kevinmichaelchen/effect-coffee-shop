@@ -9,10 +9,15 @@ export const OrderStatusSchema = Schema.Literals(orderStatuses);
 
 const orderIdPattern = /^order-\d+$/;
 
-export const OrderIdSchema = Schema.String.check(Schema.isPattern(orderIdPattern)).annotate({
-  identifier: "OrderId",
-});
+export const OrderIdSchema = Schema.String.check(Schema.isPattern(orderIdPattern))
+  .pipe(Schema.brand("OrderId"))
+  .annotate({
+    identifier: "OrderId",
+  });
 export type OrderId = typeof OrderIdSchema.Type;
+export const orderIdFromString = Schema.decodeUnknownSync(OrderIdSchema);
+
+const OptionalStringSchema = Schema.OptionFromOptionalKey(Schema.String);
 
 export const CoffeeOrderItemSchema = Schema.Struct({
   drinkId: DrinkIdSchema,
@@ -21,7 +26,7 @@ export const CoffeeOrderItemSchema = Schema.Struct({
   milk: MilkSchema,
   temperature: TemperatureSchema,
   shots: ShotCountSchema,
-  notes: Schema.optionalKey(Schema.String),
+  notes: OptionalStringSchema,
   quantity: QuantitySchema,
   unitPrice: MoneySchema,
   lineTotal: MoneySchema,

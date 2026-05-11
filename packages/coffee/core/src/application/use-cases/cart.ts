@@ -1,4 +1,6 @@
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
+import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import type { DrinkNotFoundError, InvalidOrderInputError } from "../../domain/errors.ts";
@@ -85,11 +87,11 @@ const normalizeCartItem = Effect.fnUntraced(function* (
     id,
     drinkId: resolved.drinkId,
     size: resolved.size,
-    milk: resolved.milk,
-    temperature: resolved.temperature,
-    shots: resolved.shots,
+    milk: Option.some(resolved.milk),
+    temperature: Option.some(resolved.temperature),
+    shots: Option.some(resolved.shots),
+    notes: resolved.notes,
     quantity: resolved.quantity,
-    ...(resolved.notes === undefined ? {} : { notes: resolved.notes }),
   };
 });
 
@@ -150,26 +152,33 @@ export const updateCartItem = Effect.fn("CoffeeOrders.updateCartItem")(function*
       onSome: Effect.succeed,
     }),
   );
-  const milk = input.milk ?? currentItem.milk;
-  const temperature = input.temperature ?? currentItem.temperature;
-  const shots = input.shots ?? currentItem.shots;
-  const notes = input.notes ?? currentItem.notes;
+  const milk = Option.fromUndefinedOr(input.milk).pipe(Option.orElse(() => currentItem.milk));
+  const temperature = Option.fromUndefinedOr(input.temperature).pipe(
+    Option.orElse(() => currentItem.temperature),
+  );
+  const shots = Option.fromUndefinedOr(input.shots).pipe(Option.orElse(() => currentItem.shots));
+  const notes = Option.fromUndefinedOr(input.notes).pipe(Option.orElse(() => currentItem.notes));
   const item = yield* normalizeCartItem(
     input.cartItemId,
     toOrderItemInput({
       drinkId: input.drinkId ?? currentItem.drinkId,
       size: input.size ?? currentItem.size,
       quantity: input.quantity ?? currentItem.quantity,
-      ...(milk === undefined ? {} : { milk }),
-      ...(temperature === undefined ? {} : { temperature }),
-      ...(shots === undefined ? {} : { shots }),
-      ...(notes === undefined ? {} : { notes }),
+      milk,
+      temperature,
+      shots,
+      notes,
     }),
   );
 
   return yield* saveSnapshot({
     ownerUserId: cart.ownerUserId,
-    items: cart.items.map((cartItem) => (cartItem.id === input.cartItemId ? item : cartItem)),
+    items: Arr.map(cart.items, (cartItem) =>
+      Match.value(cartItem.id === input.cartItemId).pipe(
+        Match.when(true, () => item),
+        Match.orElse(() => cartItem),
+      ),
+    ),
   });
 });
 
@@ -182,9 +191,12 @@ export const removeCartItem = Effect.fn("CoffeeOrders.removeCartItem")(function*
 > {
   const cart = yield* readActorCart();
 
-  if (!cart.items.some((item) => item.id === input.cartItemId)) {
-    return yield* invalidOrderInput(`cart item ${input.cartItemId} was not found`);
-  }
+  yield* Effect.succeed(cart.items).pipe(
+    Effect.filterOrFail(
+      (items) => items.some((item) => item.id === input.cartItemId),
+      () => invalidOrderInput(`cart item ${input.cartItemId} was not found`),
+    ),
+  );
 
   return yield* saveSnapshot({
     ownerUserId: cart.ownerUserId,
@@ -214,16 +226,24 @@ export const checkoutCart = Effect.fn("CoffeeOrders.checkoutCart")(function* (
 > {
   const cart = yield* readActorCart();
 
-  if (cart.items.length === 0) {
-    return yield* invalidOrderInput("cart must include at least one item");
-  }
+  yield* Effect.succeed(cart.items).pipe(
+    Effect.filterOrFail(
+      (items) => items.length > 0,
+      () => invalidOrderInput("cart must include at least one item"),
+    ),
+  );
 
   const items = yield* decodeOrderItemsInput(cart.items.map(toOrderItemInput)).pipe(
-    Effect.mapError(() => invalidOrderInput("cart must include at least one item")),
+    Effect.catchTag("SchemaError", () =>
+      Effect.fail(invalidOrderInput("cart must include at least one item")),
+    ),
   );
   const order = yield* placeOrder({
     items,
-    ...(input.customerName === undefined ? {} : { customerName: input.customerName }),
+    ...Option.match(Option.fromUndefinedOr(input.customerName), {
+      onNone: () => ({}),
+      onSome: (customerName) => ({ customerName }),
+    }),
   });
   const cartRepository = yield* CartRepository;
   yield* cartRepository

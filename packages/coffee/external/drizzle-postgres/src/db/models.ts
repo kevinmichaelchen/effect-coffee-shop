@@ -65,7 +65,7 @@ type DrizzleOrderItemRow = typeof DrizzleOrderItemRowSchema.Type;
 type DrizzleCartItemRow = typeof DrizzleCartItemRowSchema.Type;
 
 const decodeCartItem = Schema.decodeUnknownSync(CartItemSchema);
-const decodeCoffeeOrder = Schema.decodeUnknownSync(CoffeeOrderSchema);
+const decodeCoffeeOrderType = Schema.decodeUnknownSync(Schema.toType(CoffeeOrderSchema));
 const decodeCoffeeOrderItem = Schema.decodeUnknownSync(CoffeeOrderItemSchema);
 const decodeMenuItem = Schema.decodeUnknownSync(MenuItemSchema);
 const decodeMoneyFromCents = Schema.decodeUnknownSync(MoneyFromCentsSchema);
@@ -102,7 +102,7 @@ export const toCoffeeOrder = (
   order: DrizzleOrderRow,
   items: readonly DrizzleOrderItemRow[],
 ): CoffeeOrder =>
-  decodeCoffeeOrder({
+  decodeCoffeeOrderType({
     id: order.id,
     customerName: order.customerName,
     ownerUserId: order.ownerUserId,
@@ -134,7 +134,7 @@ export const toOrderItemInsert = (
   milk: item.milk,
   temperature: item.temperature,
   shots: item.shots,
-  notes: item.notes ?? null,
+  notes: Option.getOrNull(item.notes),
   quantity: item.quantity,
   unitPriceCents: moneyToCents(item.unitPrice),
   lineTotalCents: moneyToCents(item.lineTotal),
@@ -165,10 +165,10 @@ export const toCartItemInsert = (
   position,
   drinkId: item.drinkId,
   size: item.size,
-  milk: item.milk ?? "none",
-  temperature: item.temperature ?? "hot",
-  shots: item.shots ?? 0,
-  notes: item.notes ?? null,
+  milk: Option.getOrElse(item.milk, () => "none"),
+  temperature: Option.getOrElse(item.temperature, () => "hot"),
+  shots: Option.getOrElse(item.shots, () => 0),
+  notes: Option.getOrNull(item.notes),
   quantity: item.quantity,
 });
 

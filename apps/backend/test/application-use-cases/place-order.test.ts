@@ -1,5 +1,6 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import {
   CurrentActor,
@@ -214,7 +215,7 @@ describe("place order", () => {
 
       assert.strictEqual(order.customerName, "Avery");
       assert.ok(item !== undefined);
-      assert.strictEqual(item.notes, undefined);
+      assert.isTrue(Option.isNone(item.notes));
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 

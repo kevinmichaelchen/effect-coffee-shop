@@ -14,7 +14,8 @@ import { OrderRepository } from "../ports/OrderRepository.ts";
 
 type RepositoryServices = CartRepository | MenuRepository | OrderRepository;
 type RunTest = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) => Promise<A>;
-type CoffeeOrderOverrides = Pick<CoffeeOrder, "id"> & {
+type CoffeeOrderOverrides = {
+  readonly id: string;
   readonly createdAt?: CoffeeOrder["createdAt"];
   readonly customerName?: string;
   readonly items?: unknown;
@@ -58,7 +59,7 @@ const makeReadyOrder = ({
   id,
   createdAt = laterTime,
   ownerUserId = "user-avery",
-}: Pick<CoffeeOrder, "id"> & Partial<Pick<CoffeeOrder, "createdAt" | "ownerUserId">>) =>
+}: { readonly id: string } & Partial<Pick<CoffeeOrder, "createdAt" | "ownerUserId">>) =>
   makeOrder({ id, createdAt, ownerUserId, status: "ready" });
 
 export const defineRepositoryContract = (name: string, run: RunTest) => {
