@@ -945,3 +945,54 @@ The champion remains:
 The product-readiness definition is still useful, but do not rerun the current
 RL config unchanged. The safer next use is SFT or prompt optimization on
 `product_behavior_final_response_sft.jsonl`, then re-evaluate before more RL.
+
+## Iteration 8: Expanded Tool Surface Baselines
+
+### Goal
+
+Incorporate the app's newer order tools into the Prime environment so "good"
+means more than one-shot `place_order`: Beanline should use direct order tools
+for complete orders, cart tools for multi-item workflows, option/menu tools only
+when needed, and concise receipts after success.
+
+### Environment Changes
+
+Published environment versions:
+
+- `0.1.8`: added Prime analogs for `get_item_options`, `validate_order`,
+  `quote_order`, cart tools, and `checkout_cart`; updated product-readiness cart
+  examples to expect real cart workflows.
+- `0.1.9`: fixed `load_environment` so hosted evals and trainer eval envs use
+  the requested split as `eval_dataset`; before this, hosted split evals were
+  unintentionally scoring the generic 8-example eval set.
+- `0.1.10`: made the tool boundary tolerate single-item `items_json` objects
+  and merge legacy top-level tool args into parsed items.
+- `0.1.11`: tightened the system prompt to prefer the smallest useful tool path
+  and avoid menu/options probes before complete one-shot orders.
+
+The live app assistant prompt and SFT corpora were kept aligned with the Prime
+prompt.
+
+### Baselines
+
+| Model | Env | Split | Reward | Tool correctness | Price format | Notes |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.9` | `hard_eval` | `0.359` | `0.375` | `0.375` | First true split-specific baseline after eval routing fix. |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.10` | `hard_eval` | `0.462` | `0.500` | `0.375` | Single-object `items_json` tolerance recovered some tool calls. |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.11` | `hard_eval` | `0.520` | `0.625` | `0.375` | Direct-order prompt helped but still below the old champion gate. |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.10` | `product_readiness` | `0.610` | `0.622` | `0.688` | All 16 product-readiness examples now run. |
+| Raw `Qwen/Qwen3.5-2B` | `0.1.11` | `hard_eval` | `0.783` | `0.812` | `0.812` | Better receipt priors, still below `0.830` and weaker tool discipline. |
+
+Important caveat: `0.1.8` hosted evals are not comparable because the eval split
+bug meant both "hard" and "product" jobs used the generic eval set.
+
+### Decision
+
+Do not promote any expanded-tool candidate yet. The old champion remains best
+for the old `0.1.5` hard gate, but the expanded tool surface defines a better
+product target and exposes weaknesses in both the 0.8B champion and raw 2B.
+
+Next Prime spend: run the small 0.8B receipt-drill warmup against `0.1.11`.
+Promote only if it beats `0.830` hard reward, improves price formatting, keeps
+tool correctness near the old champion, and does not increase verbosity or tool
+overuse.

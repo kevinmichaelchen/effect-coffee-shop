@@ -32,8 +32,9 @@ Prime CLI rejects it as a `checkpoint_id` for new training runs.
 ## Receipt Run
 
 Use the small budget-capped receipt-drill warmup. Environment
-`kevinmichaelchen/effect-coffee-ordering@0.1.6` is already published and
-integration tested.
+`kevinmichaelchen/effect-coffee-ordering@0.1.11` is published with the expanded
+tool surface, split-specific eval routing, single-item `items_json` tolerance,
+and a direct-order-first prompt.
 
 ```sh
 cd experiments/prime-intellect/effect-coffee-ordering
@@ -45,27 +46,38 @@ prime --plain train configs/rl/effect-coffee-ordering-qwen-0.8b-receipt-drill-wa
 The process now has a broader `product_readiness` split and matching SFT corpora
 for:
 
-- multi-item/cart requests,
+- multi-item/cart requests using cart tools,
 - substitutions and unavailable ingredients,
 - ambiguous orders that need clarification,
 - modifier edge cases,
 - pickup timing, customer name, and order notes,
 - concise refusal behavior.
 
-Environment `kevinmichaelchen/effect-coffee-ordering@0.1.7` is published and
-Prime integration logs passed.
+Environment `kevinmichaelchen/effect-coffee-ordering@0.1.11` is published.
+Prime hosted evals confirmed `product_readiness` now runs all 16 examples after
+the `eval_dataset` routing fix.
 
 Do not rerun `effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml`
-unchanged. Run `e2s3bs35k9qwzlfbrfw0ol51` was stopped after its first interval
+until the receipt drill or a prompt/SFT pass improves direct order behavior.
+Run `e2s3bs35k9qwzlfbrfw0ol51` was stopped after its first interval
 eval because it failed the promotion gate:
 
 | Step | Hard eval Avg@2 | Hard mean completion length | Product-readiness Avg@2 | Product mean completion length |
 | ---: | ---: | ---: | ---: | ---: |
 | `32` | `0.7545` | `620.5625` | `0.7545` | `629.25` |
 
-Cost was `$0.1226`; no adapter was promoted. Prefer SFT or prompt optimization
-on `product_behavior_final_response_sft.jsonl` before spending more RL on this
-split.
+Cost was `$0.1226`; no adapter was promoted.
+
+Recent baseline evals on the expanded tool surface:
+
+| Model | Env | Split | Reward | Tool correctness | Price format | Note |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.11` | `hard_eval` | `0.520` | `0.625` | `0.375` | Too much menu/options probing; bad final prices on successful orders. |
+| Raw `Qwen/Qwen3.5-2B` | `0.1.11` | `hard_eval` | `0.783` | `0.812` | `0.812` | Better receipt priors, still below champion gate and weaker tool discipline. |
+
+These results mean the expanded tool surface is useful but not yet promotion
+ready. The next Prime spend should be the small 0.8B receipt-drill warmup on
+`0.1.11`, not larger-model RL.
 
 Inspect the stopped run:
 
@@ -123,7 +135,7 @@ Promote the candidate only if all of these hold:
 - `price_format` is materially above `0.625`.
 - Tool correctness stays near `0.984`.
 - Product-readiness eval shows correct clarification, substitution, and
-  unsupported-cart behavior.
+  cart behavior.
 - Final answers are not more verbose than the champion.
 - The model does not repeat tools after a successful order.
 
