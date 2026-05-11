@@ -5,6 +5,8 @@ import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
 import { CartRepository } from "@effect-coffee-shop/coffee-core/application/ports/CartRepository";
+import { CheckoutSessionIdGenerator } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionIdGenerator";
+import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
 import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
 import { OrderIdGenerator } from "@effect-coffee-shop/coffee-core/application/ports/OrderIdGenerator";
 import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
@@ -17,11 +19,17 @@ import { DrizzlePostgresCoffeeAppLive } from "../live.ts";
 type ContractServices =
   | CoffeeDb
   | CartRepository
+  | CheckoutSessionIdGenerator
+  | CheckoutSessionRepository
   | MenuRepository
   | OrderIdGenerator
   | OrderRepository;
 type ContractRuntime = ManagedRuntime.ManagedRuntime<ContractServices, unknown>;
-type RepositoryServices = CartRepository | MenuRepository | OrderRepository;
+type RepositoryServices =
+  | CartRepository
+  | CheckoutSessionRepository
+  | MenuRepository
+  | OrderRepository;
 
 const postgresTestUrl = process.env.COFFEE_POSTGRES_TEST_URL;
 const describeWithPostgres = postgresTestUrl === undefined ? describe.skip : describe;
@@ -45,10 +53,13 @@ const runRepositoryContract = <A>(effect: Effect.Effect<A, PersistenceError, Rep
 const resetDatabase = Effect.gen(function* () {
   const db = yield* CoffeeDb;
 
+  yield* db.execute(sql`delete from checkout_session_items`);
+  yield* db.execute(sql`delete from checkout_sessions`);
   yield* db.execute(sql`delete from cart_items`);
   yield* db.execute(sql`delete from carts`);
   yield* db.execute(sql`delete from order_items`);
   yield* db.execute(sql`delete from orders`);
+  yield* db.execute(sql`alter sequence coffee_checkout_session_id_seq restart with 1`);
   yield* db.execute(sql`alter sequence coffee_order_id_seq restart with 1`);
 });
 
@@ -87,6 +98,20 @@ describeWithPostgres("Drizzle Postgres coffee repositories", () => {
 
         expect(first).toBe("order-0001");
         expect(second).toBe("order-0002");
+      }),
+    );
+  });
+
+  it("generates sequence-backed checkout session ids", async () => {
+    await run(
+      Effect.gen(function* () {
+        const checkoutSessionIdGenerator = yield* CheckoutSessionIdGenerator;
+
+        const first = yield* checkoutSessionIdGenerator.next;
+        const second = yield* checkoutSessionIdGenerator.next;
+
+        expect(first).toBe("checkout-session-0001");
+        expect(second).toBe("checkout-session-0002");
       }),
     );
   });

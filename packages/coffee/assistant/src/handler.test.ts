@@ -180,6 +180,12 @@ const verifyUiMessages = async () => {
   expect(firstModelInputText.indexOf('"name":"add_cart_item"')).toBeLessThan(
     firstModelInputText.indexOf('"name":"list_menu"'),
   );
+  expect(firstModelInputText.indexOf('"name":"prepare_cart_checkout"')).toBeLessThan(
+    firstModelInputText.indexOf('"name":"list_menu"'),
+  );
+  expect(firstModelInputText.indexOf('"name":"get_checkout_session"')).toBeLessThan(
+    firstModelInputText.indexOf('"name":"list_menu"'),
+  );
   expect(firstModelInputText.indexOf('"name":"checkout_cart"')).toBeLessThan(
     firstModelInputText.indexOf('"name":"list_menu"'),
   );

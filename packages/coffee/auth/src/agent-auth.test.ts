@@ -127,6 +127,8 @@ describe("coffee agent auth", () => {
         "update_cart_item",
         "remove_cart_item",
         "clear_cart",
+        "prepare_cart_checkout",
+        "get_checkout_session",
         "checkout_cart",
       ]);
     });

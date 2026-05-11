@@ -3,6 +3,11 @@ import * as Schema from "effect/Schema";
 import * as SchemaTransformation from "effect/SchemaTransformation";
 import { CartItemIdSchema } from "../domain/cart.ts";
 import {
+  CheckoutSessionIdSchema,
+  CheckoutSessionStatusSchema,
+  type CheckoutSession,
+} from "../domain/checkout-session.ts";
+import {
   DrinkIdSchema,
   DrinkKindSchema,
   DrinkSizeSchema,
@@ -76,6 +81,11 @@ export const CheckoutCartRequestSchema = Schema.Struct({
   customerName: Schema.optionalKey(BoundaryStringSchema),
 }).annotate({ identifier: "CheckoutCartRequest" });
 export type CheckoutCartRequest = typeof CheckoutCartRequestSchema.Type;
+
+export const CheckoutSessionIdRequestSchema = Schema.Struct({
+  checkoutSessionId: CheckoutSessionIdSchema,
+}).annotate({ identifier: "CheckoutSessionIdRequest" });
+export type CheckoutSessionIdRequest = typeof CheckoutSessionIdRequestSchema.Type;
 
 export const ListOrdersRequestSchema = Schema.Struct({
   status: Schema.optionalKey(BoundaryStringSchema),
@@ -184,6 +194,29 @@ export const CartViewSchema = Schema.Struct({
 }).annotate({ identifier: "CartView" });
 export type CartView = typeof CartViewSchema.Type;
 
+export const CheckoutSessionViewSchema = Schema.Struct({
+  id: Schema.toEncoded(CheckoutSessionIdSchema),
+  ownerUserId: Schema.String,
+  status: CheckoutSessionStatusSchema,
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewSchema),
+  totalPriceCents: Schema.Int,
+  createdAt: Schema.DateTimeUtc,
+  updatedAt: Schema.DateTimeUtc,
+  expiresAt: Schema.DateTimeUtc,
+}).annotate({ identifier: "CheckoutSessionView" });
+export type CheckoutSessionView = typeof CheckoutSessionViewSchema.Type;
+
+export const NoCheckoutSessionViewSchema = Schema.Struct({
+  status: Schema.Literal("no_checkout_session"),
+}).annotate({ identifier: "NoCheckoutSessionView" });
+export type NoCheckoutSessionView = typeof NoCheckoutSessionViewSchema.Type;
+
+export const CheckoutSessionLookupViewSchema = Schema.Union([
+  CheckoutSessionViewSchema,
+  NoCheckoutSessionViewSchema,
+]).annotate({ identifier: "CheckoutSessionLookupView" });
+export type CheckoutSessionLookupView = typeof CheckoutSessionLookupViewSchema.Type;
+
 export const ItemOptionsViewSchema = Schema.Struct({
   item: MenuItemViewSchema,
   availableSizes: Schema.Array(DrinkSizeSchema),
@@ -279,6 +312,21 @@ const CartViewModelSchema = Schema.Struct({
   }),
 );
 
+const CheckoutSessionViewModelSchema = Schema.Struct({
+  id: CheckoutSessionIdSchema,
+  ownerUserId: Schema.String,
+  status: CheckoutSessionStatusSchema,
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewModelSchema),
+  totalPrice: MoneyFromCentsSchema,
+  createdAt: Schema.DateTimeUtc,
+  updatedAt: Schema.DateTimeUtc,
+  expiresAt: Schema.DateTimeUtc,
+}).pipe(
+  Schema.encodeKeys({
+    totalPrice: "totalPriceCents",
+  }),
+);
+
 const ItemOptionsViewModelSchema = Schema.Struct({
   item: MenuItemViewModelSchema,
   availableSizes: Schema.Array(DrinkSizeSchema),
@@ -295,6 +343,7 @@ const encodeCoffeeOrderView = Schema.encodeSync(CoffeeOrderViewModelSchema);
 const encodeOrderQuoteView = Schema.encodeSync(OrderQuoteViewModelSchema);
 const encodeOrderValidationView = Schema.encodeSync(OrderValidationViewModelSchema);
 const encodeCartView = Schema.encodeSync(CartViewModelSchema);
+const encodeCheckoutSessionView = Schema.encodeSync(CheckoutSessionViewModelSchema);
 const encodeItemOptionsView = Schema.encodeSync(ItemOptionsViewModelSchema);
 
 export const toMenuItemView = (item: MenuItem): MenuItemView =>
@@ -359,6 +408,18 @@ export const toCartView = (cart: CartSnapshot): CartView =>
       item: cartItem.item,
     })),
     totalPrice: cart.totalPrice,
+  });
+
+export const toCheckoutSessionView = (session: CheckoutSession): CheckoutSessionView =>
+  encodeCheckoutSessionView({
+    id: session.id,
+    ownerUserId: session.ownerUserId,
+    status: session.status,
+    items: session.items,
+    totalPrice: session.totalPrice,
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
+    expiresAt: session.expiresAt,
   });
 
 export const toItemOptionsView = (options: ItemOptions): ItemOptionsView =>

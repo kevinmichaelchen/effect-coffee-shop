@@ -13,6 +13,8 @@ import type {
   CoffeeOrders,
   OrderId,
 } from "@effect-coffee-shop/coffee-core/domain/order";
+import type * as Option from "effect/Option";
+import type { CheckoutSession } from "../domain/checkout-session.ts";
 import type {
   CartItemIdRequest,
   CartSnapshot,
@@ -33,6 +35,8 @@ import {
 import { InternalAppError } from "./errors.ts";
 import { CartItemIdGenerator } from "./ports/CartItemIdGenerator.ts";
 import { CartRepository } from "./ports/CartRepository.ts";
+import { CheckoutSessionIdGenerator } from "./ports/CheckoutSessionIdGenerator.ts";
+import { CheckoutSessionRepository } from "./ports/CheckoutSessionRepository.ts";
 import { MenuRepository } from "./ports/MenuRepository.ts";
 import { OrderIdGenerator } from "./ports/OrderIdGenerator.ts";
 import { OrderRepository } from "./ports/OrderRepository.ts";
@@ -41,6 +45,7 @@ import {
   addCartItem,
   checkoutCart,
   clearCart,
+  getCurrentCheckoutSession,
   getCart,
   getItemOptions,
   getOrder,
@@ -49,6 +54,7 @@ import {
   markReady,
   placeOrder,
   pickUpOrder,
+  prepareCartCheckout,
   quoteOrder,
   removeCartItem,
   startBrewing,
@@ -159,6 +165,14 @@ export class CoffeeOrderApp extends Context.Service<
       CoffeeOrder,
       AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
     >;
+    readonly prepareCartCheckout: () => Effect.Effect<
+      CheckoutSession,
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+    >;
+    readonly getCurrentCheckoutSession: () => Effect.Effect<
+      Option.Option<CheckoutSession>,
+      AuthenticationRequiredError | InternalAppError
+    >;
   }
 >()("effect-coffee-shop/application/CoffeeOrderApp") {
   static readonly layer = Layer.effect(
@@ -167,6 +181,8 @@ export class CoffeeOrderApp extends Context.Service<
       const menuRepository = yield* MenuRepository;
       const cartItemIdGenerator = yield* CartItemIdGenerator;
       const cartRepository = yield* CartRepository;
+      const checkoutSessionIdGenerator = yield* CheckoutSessionIdGenerator;
+      const checkoutSessionRepository = yield* CheckoutSessionRepository;
       const orderIdGenerator = yield* OrderIdGenerator;
       const orderRepository = yield* OrderRepository;
 
@@ -228,6 +244,17 @@ export class CoffeeOrderApp extends Context.Service<
             Effect.provideService(MenuRepository, menuRepository),
             Effect.provideService(OrderIdGenerator, orderIdGenerator),
             Effect.provideService(OrderRepository, orderRepository),
+          ),
+        prepareCartCheckout: () =>
+          prepareCartCheckout().pipe(
+            Effect.provideService(CartRepository, cartRepository),
+            Effect.provideService(CheckoutSessionIdGenerator, checkoutSessionIdGenerator),
+            Effect.provideService(CheckoutSessionRepository, checkoutSessionRepository),
+            Effect.provideService(MenuRepository, menuRepository),
+          ),
+        getCurrentCheckoutSession: () =>
+          getCurrentCheckoutSession().pipe(
+            Effect.provideService(CheckoutSessionRepository, checkoutSessionRepository),
           ),
       });
     }),

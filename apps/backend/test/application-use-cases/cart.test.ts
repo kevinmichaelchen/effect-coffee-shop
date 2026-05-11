@@ -1,5 +1,6 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import {
@@ -14,8 +15,10 @@ import {
   checkoutCart,
   clearCart,
   getCart,
+  getCurrentCheckoutSession,
   getItemOptions,
   listOrders,
+  prepareCartCheckout,
   quoteOrder,
   removeCartItem,
   updateCartItem,
@@ -108,6 +111,34 @@ describe("cart and order planning", () => {
       assert.strictEqual(order.items.length, 1);
       assert.strictEqual(order.items[0]?.quantity, 2);
       assert.strictEqual(afterCheckout.items.length, 0);
+    }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
+  );
+
+  it.effect("prepares a checkout session from the current cart without placing an order", () =>
+    Effect.gen(function* () {
+      yield* addCartItem({
+        drinkId: "latte",
+        size: "medium",
+        milk: "oat",
+        shots: 2,
+        quantity: 2,
+      });
+
+      const session = yield* prepareCartCheckout();
+      const currentSession = yield* getCurrentCheckoutSession();
+      const cart = yield* getCart();
+      const orders = yield* listOrders({});
+
+      assert.strictEqual(session.id, "checkout-session-0001");
+      assert.strictEqual(session.status, "awaiting_confirmation");
+      assert.strictEqual(session.ownerUserId, "system");
+      assert.strictEqual(session.items.length, 1);
+      assert.strictEqual(session.items[0]?.drinkName, "Latte");
+      assert.strictEqual(session.items[0]?.quantity, 2);
+      assert.strictEqual(moneyToCents(session.totalPrice), 1186);
+      assert.deepStrictEqual(currentSession, Option.some(session));
+      assert.strictEqual(cart.items.length, 1);
+      assert.strictEqual(orders.length, 0);
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 

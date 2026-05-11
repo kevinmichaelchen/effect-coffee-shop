@@ -3,11 +3,13 @@ import {
   cartItemIdActionJsonSchema,
   checkoutCartActionJsonSchema,
   emptyActionJsonSchema,
+  getCheckoutSessionActionJsonSchema,
   itemOptionsActionJsonSchema,
   listOrdersActionJsonSchema,
   orderItemActionJsonSchema,
   orderIdActionJsonSchema,
   placeOrderActionJsonSchema,
+  prepareCartCheckoutActionJsonSchema,
   quoteOrderActionJsonSchema,
   updateCartItemActionJsonSchema,
 } from "@effect-coffee-shop/coffee-actions/json-schema";
@@ -27,6 +29,14 @@ export const orderIdToolParameters = toAssistantToolParameters(orderIdActionJson
 export const cartItemIdToolParameters = toAssistantToolParameters(cartItemIdActionJsonSchema);
 
 export const checkoutCartToolParameters = toAssistantToolParameters(checkoutCartActionJsonSchema);
+
+export const prepareCartCheckoutToolParameters = toAssistantToolParameters(
+  prepareCartCheckoutActionJsonSchema,
+);
+
+export const getCheckoutSessionToolParameters = toAssistantToolParameters(
+  getCheckoutSessionActionJsonSchema,
+);
 
 export const itemOptionsToolParameters = toAssistantToolParameters(itemOptionsActionJsonSchema);
 

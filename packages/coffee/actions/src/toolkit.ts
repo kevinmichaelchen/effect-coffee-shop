@@ -18,6 +18,14 @@ export const AddCartItemTool = Tool.make("add_cart_item", coffeeActionSpecs.add_
 export const UpdateCartItemTool = Tool.make("update_cart_item", coffeeActionSpecs.update_cart_item);
 export const RemoveCartItemTool = Tool.make("remove_cart_item", coffeeActionSpecs.remove_cart_item);
 export const ClearCartTool = Tool.make("clear_cart", coffeeActionSpecs.clear_cart);
+export const PrepareCartCheckoutTool = Tool.make(
+  "prepare_cart_checkout",
+  coffeeActionSpecs.prepare_cart_checkout,
+);
+export const GetCheckoutSessionTool = Tool.make(
+  "get_checkout_session",
+  coffeeActionSpecs.get_checkout_session,
+);
 export const CheckoutCartTool = Tool.make("checkout_cart", coffeeActionSpecs.checkout_cart);
 
 export const CoffeeActionToolkit = Toolkit.make(
@@ -37,5 +45,7 @@ export const CoffeeActionToolkit = Toolkit.make(
   UpdateCartItemTool,
   RemoveCartItemTool,
   ClearCartTool,
+  PrepareCartCheckoutTool,
+  GetCheckoutSessionTool,
   CheckoutCartTool,
 );

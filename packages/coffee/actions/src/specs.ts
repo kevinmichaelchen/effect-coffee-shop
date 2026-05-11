@@ -1,6 +1,8 @@
 import {
   CartItemIdRequestSchema,
   CartViewSchema,
+  CheckoutSessionLookupViewSchema,
+  CheckoutSessionViewSchema,
   CheckoutCartRequestSchema,
   CoffeeOrderViewSchema,
   CoffeeOrdersViewSchema,
@@ -98,6 +100,17 @@ export const coffeeActionSpecs = {
     CartItemIdRequestSchema,
   ),
   clear_cart: cartViewActionSpec("Clear the signed-in actor's cart", EmptyActionInputSchema),
+  prepare_cart_checkout: actionSpec({
+    description:
+      "Price the signed-in actor's cart and store an immutable checkout session awaiting confirmation",
+    parameters: EmptyActionInputSchema,
+    success: CheckoutSessionViewSchema,
+  }),
+  get_checkout_session: actionSpec({
+    description: "Fetch the signed-in actor's latest checkout session awaiting confirmation",
+    parameters: EmptyActionInputSchema,
+    success: CheckoutSessionLookupViewSchema,
+  }),
   checkout_cart: actionSpec({
     description: "Place the signed-in actor's cart as one multi-item order",
     parameters: CheckoutCartRequestSchema,

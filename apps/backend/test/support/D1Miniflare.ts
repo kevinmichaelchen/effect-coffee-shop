@@ -7,10 +7,15 @@ import { SqlCoffeeRepositoriesLive } from "@effect-coffee-shop/coffee-external-s
 import { makeCloudflareSqlCoffeeSchemaLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
 import type { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
 import { CartRepository } from "@effect-coffee-shop/coffee-core/application/ports/CartRepository";
+import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
 import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
 import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
 
-type RepositoryServices = CartRepository | MenuRepository | OrderRepository;
+type RepositoryServices =
+  | CartRepository
+  | CheckoutSessionRepository
+  | MenuRepository
+  | OrderRepository;
 
 export type SqlCoffeeRepositoriesTestHarness = {
   readonly run: <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) => Promise<A>;
@@ -41,6 +46,7 @@ export const createSqlCoffeeRepositoriesTestHarness =
         return {
           menuRepository: yield* MenuRepository,
           cartRepository: yield* CartRepository,
+          checkoutSessionRepository: yield* CheckoutSessionRepository,
           orderRepository: yield* OrderRepository,
         };
       }).pipe(Effect.provide(repositoryLayer)),
@@ -49,6 +55,7 @@ export const createSqlCoffeeRepositoriesTestHarness =
     const providedRepositories = Layer.mergeAll(
       Layer.succeed(MenuRepository)(repositories.menuRepository),
       Layer.succeed(CartRepository)(repositories.cartRepository),
+      Layer.succeed(CheckoutSessionRepository)(repositories.checkoutSessionRepository),
       Layer.succeed(OrderRepository)(repositories.orderRepository),
     );
 
@@ -58,6 +65,8 @@ export const createSqlCoffeeRepositoriesTestHarness =
     const reset = () =>
       db
         .batch([
+          db.prepare("DELETE FROM checkout_session_items"),
+          db.prepare("DELETE FROM checkout_sessions"),
           db.prepare("DELETE FROM cart_items"),
           db.prepare("DELETE FROM carts"),
           db.prepare("DELETE FROM order_items"),

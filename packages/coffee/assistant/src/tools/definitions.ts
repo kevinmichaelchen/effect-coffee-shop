@@ -8,6 +8,7 @@ import {
   CancelOrderTool,
   CheckoutCartTool,
   ClearCartTool,
+  GetCheckoutSessionTool,
   GetOrderTool,
   GetCartTool,
   GetItemOptionsTool,
@@ -16,6 +17,7 @@ import {
   MarkReadyTool,
   PickUpOrderTool,
   PlaceOrderTool,
+  PrepareCartCheckoutTool,
   QuoteOrderTool,
   RemoveCartItemTool,
   StartBrewingTool,
@@ -34,11 +36,13 @@ import {
   cartItemIdToolParameters,
   checkoutCartToolParameters,
   emptyToolParameters,
+  getCheckoutSessionToolParameters,
   itemOptionsToolParameters,
   listOrdersToolParameters,
   orderItemToolParameters,
   orderIdToolParameters,
   placeOrderToolParameters,
+  prepareCartCheckoutToolParameters,
   quoteOrderToolParameters,
   updateCartItemToolParameters,
 } from "./parameters.ts";
@@ -52,6 +56,16 @@ type AssistantToolEmitter = (activity: AssistantToolActivity) => void;
 const assistantToolInputs = [
   { action: "place_order", parameters: placeOrderToolParameters, tool: PlaceOrderTool },
   { action: "add_cart_item", parameters: orderItemToolParameters, tool: AddCartItemTool },
+  {
+    action: "prepare_cart_checkout",
+    parameters: prepareCartCheckoutToolParameters,
+    tool: PrepareCartCheckoutTool,
+  },
+  {
+    action: "get_checkout_session",
+    parameters: getCheckoutSessionToolParameters,
+    tool: GetCheckoutSessionTool,
+  },
   { action: "checkout_cart", parameters: checkoutCartToolParameters, tool: CheckoutCartTool },
   { action: "get_cart", parameters: emptyToolParameters, tool: GetCartTool },
   {

@@ -165,6 +165,12 @@ const agentActionInputFor = (capability: string): Option.Option<AgentActionInput
     Match.when("clear_cart", () =>
       Option.some(agentActionInput("clear_cart", decodeEmptyActionInput)),
     ),
+    Match.when("prepare_cart_checkout", () =>
+      Option.some(agentActionInput("prepare_cart_checkout", decodeEmptyActionInput)),
+    ),
+    Match.when("get_checkout_session", () =>
+      Option.some(agentActionInput("get_checkout_session", decodeEmptyActionInput)),
+    ),
     Match.when("checkout_cart", () =>
       Option.some(agentActionInput("checkout_cart", decodeCheckoutCartInput)),
     ),
