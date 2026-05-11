@@ -996,3 +996,32 @@ Next Prime spend: run the small 0.8B receipt-drill warmup against `0.1.11`.
 Promote only if it beats `0.830` hard reward, improves price formatting, keeps
 tool correctness near the old champion, and does not increase verbosity or tool
 overuse.
+
+### Receipt-Drill Warmup Attempt
+
+Run `w402wq3sb943xintnex94sga` tested the updated
+`effect-coffee-ordering-qwen-0.8b-receipt-drill-warmup.toml` against
+environment `0.1.11`.
+
+- Start point: checkpoint `oo8lrytspz37lfsdlloubig7`
+- Stopped at latest step `36`
+- Cost: `$0.36`
+- READY adapter: `h3g7ts9xw0antutgxb5c8sue` at step `30`
+- READY checkpoint: `lkltzsp29ckjbs9fl83x9gb5` at step `30`
+
+Key training metrics:
+
+| Step | Reward | Tool correctness | Price format | Receipt style | Max-turns reached |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| `30` | `0.590` | `0.859` | `0.182` | `0.558` | `0.750` |
+| `34` | `0.715` | `1.000` | `0.400` | `0.729` | `0.859` |
+| `35` | `0.683` | `0.996` | `0.273` | `0.649` | `0.766` |
+
+Decision: stop and do not promote. The run learned order fields and tool
+correctness faster than receipt formatting. Rollouts still produced wrong final
+currency/amount style such as `₹520` for a `$5.20` order and continued to call
+menu/option tools before complete orders.
+
+Next direction: do not rerun unchanged. Prefer prompt optimization or SFT on
+the final-response and tool-trajectory corpora, or simplify the tool schema
+further before spending more RL.

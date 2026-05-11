@@ -76,8 +76,26 @@ Recent baseline evals on the expanded tool surface:
 | Raw `Qwen/Qwen3.5-2B` | `0.1.11` | `hard_eval` | `0.783` | `0.812` | `0.812` | Better receipt priors, still below champion gate and weaker tool discipline. |
 
 These results mean the expanded tool surface is useful but not yet promotion
-ready. The next Prime spend should be the small 0.8B receipt-drill warmup on
-`0.1.11`, not larger-model RL.
+ready.
+
+Receipt-drill warmup on `0.1.11` was attempted and stopped early:
+
+| Run | Latest step | Cost | Best observed training signal | Decision |
+| --- | ---: | ---: | --- | --- |
+| `w402wq3sb943xintnex94sga` | `36` | `$0.36` | step `34`: reward `0.715`, tool correctness `1.000`, price format `0.400`; step `35`: reward `0.683`, price format `0.273` | Do not promote. |
+
+READY adapter/checkpoint from this run:
+
+- Adapter `h3g7ts9xw0antutgxb5c8sue` at step `30`
+- Checkpoint `lkltzsp29ckjbs9fl83x9gb5` at step `30`
+
+The failure is still final receipt formatting and tool overuse. Rollouts showed
+correct order fields but wrong final currency/amount style such as `₹520`
+instead of `$5.20`, plus repeated menu/option probes.
+
+Next best action is not another unchanged RL run. Use prompt optimization or SFT
+on the final-response and tool-trajectory corpora, or simplify the tool schema
+further so 0.8B has fewer equivalent ways to express one order.
 
 Inspect the stopped run:
 
