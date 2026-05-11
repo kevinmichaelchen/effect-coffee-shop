@@ -90,29 +90,36 @@ class EnvironmentLogicTests(unittest.TestCase):
 
         self.assertEqual(payload["cart"]["items"][0]["cart_item_id"], "cart-item-0002")
 
-    def test_product_efficiency_rewards_expected_cart_sequence_and_counts(self):
+    def test_product_efficiency_rewards_confirmation_before_purchase(self):
         latte = env.quote_payload(None, "latte", "medium", "oat", "hot", 1, "", 1)["items"][0]
         espresso = env.quote_payload(None, "espresso", "small", "none", "hot", 1, "", 1)["items"][0]
         order = env.order_payload([latte, espresso], "Ava")
-        final_text = f"Latte {order['id']} {env.cents_to_dollars(order['price_cents'])}."
+        first_cart = {"items": [{"cart_item_id": "cart-item-0001", "item": latte}], "total_price_cents": 518}
+        second_cart = {
+            "items": [
+                {"cart_item_id": "cart-item-0001", "item": latte},
+                {"cart_item_id": "cart-item-0002", "item": espresso},
+            ],
+            "total_price_cents": 818,
+        }
+        final_text = "I have a medium hot oat milk Latte and a small hot Espresso for Ava, total $8.18. Should I place it?"
         info = env.PRODUCT_READINESS_TASKS[0]["info"]
         good_completion = [
-            {"role": "tool", "name": "add_cart_item", "content": json.dumps({"ok": True, "cart": {"items": []}})},
-            {"role": "tool", "name": "add_cart_item", "content": json.dumps({"ok": True, "cart": {"items": []}})},
-            {"role": "tool", "name": "checkout_cart", "content": json.dumps({"ok": True, "order": order})},
+            {"role": "tool", "name": "add_cart_item", "content": json.dumps({"ok": True, "cart": first_cart})},
+            {"role": "tool", "name": "add_cart_item", "content": json.dumps({"ok": True, "cart": second_cart})},
             {"role": "assistant", "content": final_text},
         ]
-        missing_add_completion = [
-            {"role": "tool", "name": "add_cart_item", "content": json.dumps({"ok": True, "cart": {"items": []}})},
+        premature_checkout_completion = [
+            {"role": "tool", "name": "add_cart_item", "content": json.dumps({"ok": True, "cart": first_cart})},
             {"role": "tool", "name": "checkout_cart", "content": json.dumps({"ok": True, "order": order})},
-            {"role": "assistant", "content": final_text},
+            {"role": "assistant", "content": f"Latte {order['id']} {env.cents_to_dollars(order['price_cents'])}."},
         ]
 
         good_score = asyncio.run(env.product_efficiency(good_completion, info))
-        missing_add_score = asyncio.run(env.product_efficiency(missing_add_completion, info))
+        premature_checkout_score = asyncio.run(env.product_efficiency(premature_checkout_completion, info))
 
         self.assertEqual(good_score, 1.0)
-        self.assertLess(missing_add_score, good_score)
+        self.assertLess(premature_checkout_score, good_score)
 
     def test_price_format_rejects_wrong_currency_and_cent_totals(self):
         item = env.quote_payload(None, "latte", "medium", "whole", "hot", 1, "", 1)["items"][0]

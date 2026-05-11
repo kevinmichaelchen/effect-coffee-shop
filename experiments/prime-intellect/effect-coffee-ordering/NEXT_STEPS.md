@@ -32,10 +32,10 @@ Prime CLI rejects it as a `checkpoint_id` for new training runs.
 ## Receipt Run
 
 Use the small budget-capped receipt-drill warmup only after fresh baselines on
-`kevinmichaelchen/effect-coffee-ordering@0.1.16`. Version `0.1.16` should be
+`kevinmichaelchen/effect-coffee-ordering@0.1.17`. Version `0.1.17` should be
 used for the next baseline because it contains the PR 47 hardening, prompt-only
 receipt/direct-tool-path tightening, order-first tool presentation, and the
-confirmation-before-purchase policy.
+confirmation-before-purchase policy plus aligned product-readiness scoring.
 
 ```sh
 cd experiments/prime-intellect/effect-coffee-ordering
@@ -55,10 +55,12 @@ for:
 - pre-purchase confirmation before real-money order submission,
 - concise refusal behavior.
 
-Environment `kevinmichaelchen/effect-coffee-ordering@0.1.16` is published and
+Environment `kevinmichaelchen/effect-coffee-ordering@0.1.17` is published and
 should be selected for new hosted baselines, evals, or training. It changes the
 intended product behavior: Beanline should read back the interpreted order and
 ask for confirmation before calling `place_order` or `checkout_cart`.
+The product-readiness split now rewards this confirmation path instead of
+one-shot purchase on initial order requests.
 Product-readiness is still blocked by Prime inference 503 errors.
 
 Do not rerun `effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml`
@@ -100,12 +102,12 @@ correct order fields but wrong final currency/amount style such as `₹520`
 instead of `$5.20`, plus repeated menu/option probes.
 
 Next best action is not another unchanged RL run. Retry product-readiness on
-`0.1.16` once Prime inference is stable, then use SFT on the final-response and
+`0.1.17` once Prime inference is stable, then use SFT on the final-response and
 tool-trajectory corpora so 0.8B learns quote/readback/confirmation before
 purchase.
 
 Before any new hosted training spend, run fresh hosted baselines on
-`kevinmichaelchen/effect-coffee-ordering@0.1.16`; the warmup configs now pin
+`kevinmichaelchen/effect-coffee-ordering@0.1.17`; the warmup configs now pin
 that version.
 
 Inspect the stopped run:
@@ -162,6 +164,11 @@ Current hosted blocker: product-readiness attempts on `0.1.14` reached and
 installed the `0.1.14` package, but failed before scoring with Prime inference
 503 auth-service errors. Adapter `rqvfrcdy4xt95oka37b0xjyu` now reports
 `NOT_DEPLOYED` after the latest unload retry.
+
+Product-readiness eval `exuegi7g55rdsnndi8cd2n15` on `0.1.17` installed the
+new package but failed before scoring during inference preflight with a `502 Bad
+Gateway` connection error from `api.pinference.ai`. This is still a hosted
+inference blocker, not model evidence.
 
 ## Promote Only If
 

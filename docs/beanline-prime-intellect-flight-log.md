@@ -1152,3 +1152,28 @@ ELI5 decision: this is a meaningful product improvement even before a hosted
 model score, because the previous training target could spend the user's money
 without a final readback. The old hard eval rewards one-shot ordering, so it is
 no longer sufficient as the promotion gate for this behavior.
+
+### Confirmation-First Product-Readiness Scoring
+
+Published `kevinmichaelchen/effect-coffee-ordering@0.1.17` on
+2026-05-11 03:20:06 UTC.
+
+- Version id: `dei01l9qcvcxv2n2vkj87c0g`
+- Content hash:
+  `0b444f35bc5680737bd588ad620ba2ee65614874e4375cae309738a5846d2a46`
+- Wheel SHA256:
+  `cc884461c613cc1bf84977dfe3889ec28d05bb158056e6410ca1572f04a4abd4`
+- Integration action: `s7r314i55tgd9wer65wh8cg9`; logs showed package pull,
+  install/import, and Prime integration tests passing (`4 passed`).
+- Change: added a `confirm_order` expected action to product-readiness scoring.
+  Initial order requests now reward quote/cart readback, correct interpreted
+  items, exact `$x.xx` total, an explicit confirmation question, and no
+  premature `place_order`/`checkout_cart`.
+- Product-readiness eval `exuegi7g55rdsnndi8cd2n15` installed
+  `effect-coffee-ordering==0.1.17` but failed before scoring during inference
+  preflight with a `502 Bad Gateway` connection error from `api.pinference.ai`.
+- Adapter `rqvfrcdy4xt95oka37b0xjyu` was unloaded after one HTTP 500 retry; it
+  now reports `deployment_status: "NOT_DEPLOYED"`.
+
+ELI5 decision: this makes the test match the product. Before this, the model
+could score well by doing the thing we no longer want: buying immediately.
