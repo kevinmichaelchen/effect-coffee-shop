@@ -31,10 +31,12 @@ Prime CLI rejects it as a `checkpoint_id` for new training runs.
 
 ## Receipt Run
 
-Use the small budget-capped receipt-drill warmup. Environment
-`kevinmichaelchen/effect-coffee-ordering@0.1.11` is published with the expanded
-tool surface, split-specific eval routing, single-item `items_json` tolerance,
-and a direct-order-first prompt.
+Use the small budget-capped receipt-drill warmup only after fresh baselines on
+`kevinmichaelchen/effect-coffee-ordering@0.1.12`. Version `0.1.12` is published
+and contains the PR 47 hardening: shared coffee-domain logic, cart id fixes,
+local tests, stricter cart tool sequence/count grading, the expanded tool
+surface, split-specific eval routing, single-item `items_json` tolerance, and a
+direct-order-first prompt.
 
 ```sh
 cd experiments/prime-intellect/effect-coffee-ordering
@@ -53,9 +55,10 @@ for:
 - pickup timing, customer name, and order notes,
 - concise refusal behavior.
 
-Environment `kevinmichaelchen/effect-coffee-ordering@0.1.11` is published.
-Prime hosted evals confirmed `product_readiness` now runs all 16 examples after
-the `eval_dataset` routing fix.
+Environment `kevinmichaelchen/effect-coffee-ordering@0.1.12` is published and
+should be selected for new hosted baselines, evals, or training. Prime hosted
+evals on earlier versions confirmed `product_readiness` now runs all 16
+examples after the `eval_dataset` routing fix.
 
 Do not rerun `effect-coffee-ordering-qwen-0.8b-product-readiness-warmup.toml`
 until the receipt drill or a prompt/SFT pass improves direct order behavior.
@@ -97,6 +100,10 @@ Next best action is not another unchanged RL run. Use prompt optimization or SFT
 on the final-response and tool-trajectory corpora, or simplify the tool schema
 further so 0.8B has fewer equivalent ways to express one order.
 
+Before any new hosted training spend, run fresh hosted baselines on
+`kevinmichaelchen/effect-coffee-ordering@0.1.12`; the warmup configs now pin
+that version.
+
 Inspect the stopped run:
 
 ```sh
@@ -125,8 +132,7 @@ prime --plain eval run kevinmichaelchen/effect-coffee-ordering \
   --num-examples 8 \
   --rollouts-per-example 2 \
   --max-tokens 256 \
-  --temperature 0.4 \
-  --abbreviated-summary
+  --temperature 0.4
 
 prime --plain eval run kevinmichaelchen/effect-coffee-ordering \
   --hosted \
@@ -135,15 +141,24 @@ prime --plain eval run kevinmichaelchen/effect-coffee-ordering \
   --num-examples 16 \
   --rollouts-per-example 2 \
   --max-tokens 256 \
-  --temperature 0.4 \
-  --abbreviated-summary
+  --temperature 0.4
 
 prime --plain eval get <eval_id> --output json
 prime --plain deployments delete <candidate_adapter_id>
 ```
 
+The current Prime CLI rejects `--abbreviated-summary`, so do not include it.
 The explicit `--env-args '{"split":"hard_eval"}'` matters. Without it, ad hoc
-evals can fall back to the environment default split.
+evals can fall back to the environment default split. Hosted evals currently
+resolve the latest published environment even when the command includes
+`@0.1.12`, so verify `version_id` in `prime --plain eval get <eval_id>
+--output json`.
+
+Current hosted blocker: fresh champion eval attempts on `0.1.12` reached and
+installed the `0.1.12` package, but failed before scoring. Initial attempts saw
+the undeployed adapter as unavailable; after deployment recovered, follow-up
+evals still failed during Prime inference preflight with 503/502 errors. Retry
+after Prime inference is stable, and unload the adapter after the evals finish.
 
 ## Promote Only If
 

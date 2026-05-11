@@ -969,6 +969,8 @@ Published environment versions:
   and merge legacy top-level tool args into parsed items.
 - `0.1.11`: tightened the system prompt to prefer the smallest useful tool path
   and avoid menu/options probes before complete one-shot orders.
+- `0.1.12`: published the PR 47 hardening: shared coffee-domain logic, cart id
+  fixes, local tests, and stricter cart tool sequence/count grading.
 
 The live app assistant prompt and SFT corpora were kept aligned with the Prime
 prompt.
@@ -992,7 +994,9 @@ Do not promote any expanded-tool candidate yet. The old champion remains best
 for the old `0.1.5` hard gate, but the expanded tool surface defines a better
 product target and exposes weaknesses in both the 0.8B champion and raw 2B.
 
-Next Prime spend: run the small 0.8B receipt-drill warmup against `0.1.11`.
+Next Prime spend: run fresh hard and product-readiness baselines against
+`0.1.12` before any new training. Only run the small 0.8B receipt-drill warmup
+against `0.1.12` if those baselines support it.
 Promote only if it beats `0.830` hard reward, improves price formatting, keeps
 tool correctness near the old champion, and does not increase verbosity or tool
 overuse.
@@ -1025,3 +1029,46 @@ menu/option tools before complete orders.
 Next direction: do not rerun unchanged. Prefer prompt optimization or SFT on
 the final-response and tool-trajectory corpora, or simplify the tool schema
 further before spending more RL.
+
+### Environment `0.1.12` Publication
+
+Published `kevinmichaelchen/effect-coffee-ordering@0.1.12` on
+2026-05-11 02:06:07 UTC.
+
+- Version id: `aepqx6281krso8wapgeo0tm1`
+- Content hash:
+  `03ec63d33b739383d016885d3860ba2d4ab3fd802d42eae06ce856ae82a4142f`
+- Wheel SHA256:
+  `2bcb56917e4556a9fee3a00cdf28336019d5535c8608339704e1dc920f411fb9`
+- Integration action: `hnig60wrqy8ed6nht2muyt0n`
+- Verification: action logs showed package pull, install/import, and Prime
+  integration tests passing (`4 passed`).
+- Caveat: the existing Prime environment still reports `PRIVATE` visibility even
+  though the push used `--visibility PUBLIC`; the current CLI exposes no
+  separate visibility update command.
+
+### Blocked `0.1.12` Champion Baselines
+
+Attempted fresh hosted baselines for champion adapter
+`rqvfrcdy4xt95oka37b0xjyu` on `0.1.12`.
+
+| Eval id | Split | Status | Result |
+| --- | --- | --- | --- |
+| `jxlbpddxbkkigg0zyjl99ffe` | `hard_eval` | failed before scoring | Hosted eval pulled and installed `effect-coffee-ordering==0.1.12`, then inference returned `404` for `Qwen/Qwen3.5-0.8B:rqvfrcdy4xt95oka37b0xjyu`. |
+| `yf28igow4r0mwwi2ey6bscfe` | `product_readiness` | failed before scoring | Same failure: `0.1.12` installed, but the champion adapter model string was unavailable to hosted inference. |
+| `s4ewj8fmw7muxoqwqb9f8wum` | `hard_eval` | failed before scoring | After the adapter deployed successfully, hosted eval installed `0.1.12` but inference preflight returned a 503 auth-service/model lookup error. |
+| `gvedyecbd8xomrrirltdr6w4` | `product_readiness` | failed before scoring | After the adapter deployed successfully, hosted eval installed `0.1.12` but chat-completions preflight returned a 502 connection error. |
+
+Deployment and inference notes:
+
+- `prime --plain deployments create rqvfrcdy4xt95oka37b0xjyu --yes` failed
+  twice with Prime HTTP 502/proxy registration errors, then later succeeded once
+  `prime --plain inference models` recovered from a 503 auth-service error.
+- `prime --plain deployments delete rqvfrcdy4xt95oka37b0xjyu` failed once with
+  HTTP 500, then succeeded on retry. `prime --plain deployments list --output
+  json` confirmed `deployment_status: "NOT_DEPLOYED"`.
+- Wallet balance remained `$42.26` after the failed hosted evals and unload.
+
+Decision: no promotion and no model-quality conclusion. This is a Prime hosted
+inference/deployment blocker, not evidence that Beanline improved or regressed.
+Retry the same baselines after Prime inference and adapter deployment recover.
