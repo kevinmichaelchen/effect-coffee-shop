@@ -7,6 +7,16 @@ This is a Bun workspace monorepo. The backend composes the Coffee domain for
 Bun and Cloudflare runtimes; the browser app is a separate Vite/React
 workspace.
 
+## Project Images
+
+| Beanline architecture counter | Typed order pipeline |
+| --- | --- |
+| ![Beanline architecture counter](./docs/assets/readme-images/beanline-architecture-counter.webp) | ![Typed order pipeline](./docs/assets/readme-images/typed-order-pipeline.webp) |
+
+| Assistant at the bar | Flight log SFT workbench |
+| --- | --- |
+| ![Assistant at the bar](./docs/assets/readme-images/assistant-at-the-bar.webp) | ![Flight log SFT workbench](./docs/assets/readme-images/flight-log-sft-workbench.webp) |
+
 ## Layout
 
 - [`apps/backend`](./apps/backend): composition root for HTTP, CLI, MCP, Bun,
