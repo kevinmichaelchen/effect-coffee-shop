@@ -4,15 +4,15 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { sql } from "drizzle-orm";
-import { orderIdFromString, type OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
+import { orderIdFromString } from "@effect-coffee-shop/coffee-core/domain/order";
 import { OrderIdGenerator } from "@effect-coffee-shop/coffee-core/application/ports/OrderIdGenerator";
+import { makePaddedIdFormatter } from "@effect-coffee-shop/coffee-core/application/ports/monotonic-id-generator";
 import { CoffeeDb } from "../db/Db.ts";
 import { OrderIdSequenceRowSchema } from "../db/models.ts";
 
 const decodeOrderIdSequenceRow = Schema.decodeUnknownEffect(OrderIdSequenceRowSchema);
 
-const formatOrderId = (currentId: number): OrderId =>
-  orderIdFromString(`order-${String(currentId).padStart(4, "0")}`);
+const formatOrderId = makePaddedIdFormatter("order", orderIdFromString);
 
 export const DrizzleOrderIdGeneratorLive = Layer.effect(
   OrderIdGenerator,
