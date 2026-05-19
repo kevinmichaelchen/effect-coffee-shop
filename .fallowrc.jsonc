@@ -67,7 +67,7 @@
     "minTokens": 50,
     "minLines": 5,
     "minOccurrences": 3,
-    "threshold": 15,
+    "threshold": 14.8,
     "ignoreImports": true
   },
 
