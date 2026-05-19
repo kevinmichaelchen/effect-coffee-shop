@@ -30,6 +30,7 @@ import {
   type CoffeeOrder,
   type CoffeeOrderItem,
 } from "@effect-coffee-shop/coffee-core/domain/order";
+import { toPersistedCoffeeOrderItemFields } from "@effect-coffee-shop/coffee-core/application/ports/coffee-order-item-persistence";
 import {
   cartItemsTable,
   checkoutSessionItemsTable,
@@ -196,16 +197,7 @@ export const toOrderItemInsert = (
 ): typeof orderItemsTable.$inferInsert => ({
   orderId,
   position,
-  drinkId: item.drinkId,
-  drinkName: item.drinkName,
-  size: item.size,
-  milk: item.milk,
-  temperature: item.temperature,
-  shots: item.shots,
-  notes: Option.getOrNull(item.notes),
-  quantity: item.quantity,
-  unitPriceCents: moneyToCents(item.unitPrice),
-  lineTotalCents: moneyToCents(item.lineTotal),
+  ...toPersistedCoffeeOrderItemFields(item),
 });
 
 export const toCheckoutSessionInsert = (
@@ -227,16 +219,7 @@ export const toCheckoutSessionItemInsert = (
 ): typeof checkoutSessionItemsTable.$inferInsert => ({
   sessionId,
   position,
-  drinkId: item.drinkId,
-  drinkName: item.drinkName,
-  size: item.size,
-  milk: item.milk,
-  temperature: item.temperature,
-  shots: item.shots,
-  notes: Option.getOrNull(item.notes),
-  quantity: item.quantity,
-  unitPriceCents: moneyToCents(item.unitPrice),
-  lineTotalCents: moneyToCents(item.lineTotal),
+  ...toPersistedCoffeeOrderItemFields(item),
 });
 
 export const toCartItem = (item: DrizzleCartItemRow): CartItem =>
