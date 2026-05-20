@@ -1,4 +1,5 @@
 import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
+import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -20,7 +21,7 @@ const createAiRunMock = () =>
 
 const createAssistantRequest = (messages: unknown) =>
   new Request("http://example.com/assistant", {
-    body: JSON.stringify({ messages }),
+    body: jsonString({ messages }),
     headers: {
       "content-type": "application/json",
     },
@@ -170,7 +171,7 @@ const verifyUiMessages = async () => {
     createAssistantHandlerOptions(aiRun),
   );
   const body = await response.text();
-  const firstModelInputText = JSON.stringify(aiRun.mock.calls[0]?.[1] ?? {});
+  const firstModelInputText = jsonString(aiRun.mock.calls[0]?.[1] ?? {});
 
   expect(response.status).toBe(200);
   expect(aiRun).toHaveBeenCalledTimes(1);

@@ -39,7 +39,7 @@ export const DrizzleCartRepositoryLive = Layer.effect(
       yield* Effect.forEach(
         cart.items.map((item, position) => toCartItemInsert(cart.ownerUserId, item, position)),
         (item) => db.insert(cartItemsTable).values(item),
-        { discard: true },
+        { concurrency: 1, discard: true },
       );
       return cart;
     });

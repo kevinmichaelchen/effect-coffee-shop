@@ -1,4 +1,5 @@
 import type { ModelMessage } from "@tanstack/ai";
+import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
@@ -176,21 +177,24 @@ function appendToolCallMessages(
   toolCalls: readonly AssistantToolCall[],
   tools: readonly AssistantToolDefinition[],
 ): Effect.Effect<readonly AssistantConversationMessage[]> {
-  return Effect.forEach(toolCalls, (toolCall) =>
-    executeToolCall(toolCall, tools).pipe(
-      Effect.map((content): readonly AssistantConversationMessage[] => [
-        {
-          role: "assistant",
-          content: JSON.stringify(toolCall),
-          toolCalls: [toolCall],
-        },
-        {
-          content,
-          name: toolCall.name,
-          role: "tool",
-        },
-      ]),
-    ),
+  return Effect.forEach(
+    toolCalls,
+    (toolCall) =>
+      executeToolCall(toolCall, tools).pipe(
+        Effect.map((content): readonly AssistantConversationMessage[] => [
+          {
+            role: "assistant",
+            content: jsonString(toolCall),
+            toolCalls: [toolCall],
+          },
+          {
+            content,
+            name: toolCall.name,
+            role: "tool",
+          },
+        ]),
+      ),
+    { concurrency: 1 },
   ).pipe(Effect.map((messages) => conversation.concat(messages.flat())));
 }
 

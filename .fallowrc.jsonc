@@ -33,6 +33,7 @@
   ],
 
   "ignoreDependencies": [
+    "@mpsuesser/oxlint-plugin-effect",
     "oxlint-tsgolint"
   ],
 

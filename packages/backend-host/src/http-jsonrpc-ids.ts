@@ -1,4 +1,5 @@
 import * as Schema from "effect/Schema";
+import { jsonString } from "./json.ts";
 
 const maxSurrogateRequestId = Number.MAX_SAFE_INTEGER;
 
@@ -234,13 +235,13 @@ function rewriteJsonRpcResponseEnvelope(
 
 function createJsonRequest(request: Request, body: JsonRpcRequestBody): Request {
   return new Request(request, {
-    body: JSON.stringify(body),
+    body: jsonString(body),
     method: "POST",
   });
 }
 
 function createJsonResponse(response: Response, body: JsonRpcResponseBody): Response {
-  return new Response(JSON.stringify(body), {
+  return new Response(jsonString(body), {
     headers: Object.fromEntries(
       Array.from(response.headers).filter(([name]) => name.toLowerCase() !== "content-length"),
     ),

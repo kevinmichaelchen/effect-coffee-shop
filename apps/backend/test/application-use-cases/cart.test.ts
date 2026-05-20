@@ -1,5 +1,6 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
+import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
@@ -154,7 +155,7 @@ describe("cart and order planning", () => {
         checkoutSessionId: checkoutSessionIdFromString("checkout-session-9999"),
       }).pipe(Effect.exit);
 
-      assert.isTrue(exit._tag === "Failure");
+      assert.isTrue(Exit.isFailure(exit));
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 

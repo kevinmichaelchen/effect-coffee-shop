@@ -1,5 +1,6 @@
-import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import {
   createAssistantModelRunnerLayer,
@@ -51,7 +52,11 @@ export async function startCoffeeBunServer<
   });
 
   registerShutdown(dispose, server);
-  console.log(`Coffee HTTP server listening on ${server.url}`);
+  await Effect.runPromise(
+    Effect.logInfo("Coffee HTTP server listening").pipe(
+      Effect.annotateLogs("url", String(server.url)),
+    ),
+  );
 }
 
 async function readPort(envName: string): Promise<number> {

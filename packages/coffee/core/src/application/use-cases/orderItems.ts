@@ -217,7 +217,7 @@ export const resolveOrderQuote = Effect.fnUntraced(function* (
     ),
   );
 
-  const resolvedItemArray = yield* Effect.forEach(items, resolveOrderItem);
+  const resolvedItemArray = yield* Effect.forEach(items, resolveOrderItem, { concurrency: 1 });
   const resolvedItems = yield* decodeResolvedItems(resolvedItemArray).pipe(
     Effect.catchTag("SchemaError", () =>
       Effect.fail(invalidOrderInput("items must include at least one drink")),
