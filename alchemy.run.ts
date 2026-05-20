@@ -1,5 +1,6 @@
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
+import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Redacted from "effect/Redacted";
 
@@ -26,6 +27,8 @@ const betterAuthSecret = Effect.gen(function* () {
   return generated.text;
 });
 
+const clampSamplingRate = (rate: number): number => Math.min(1, Math.max(0, rate));
+
 export default Alchemy.Stack(
   "effect-v4-onion",
   {
@@ -34,6 +37,9 @@ export default Alchemy.Stack(
   },
   Effect.gen(function* () {
     const aiGatewayEnabled = process.env.COFFEE_ASSISTANT_AI_GATEWAY === "1";
+    const observabilitySamplingRate = clampSamplingRate(
+      yield* Config.number("COFFEE_OBSERVABILITY_SAMPLING_RATE").pipe(Config.withDefault(1)),
+    );
 
     const coffeeDb = yield* Cloudflare.D1Database("coffee-db", {
       migrationsDir: "./packages/coffee/external/sqlite/src/sql/migrations",
@@ -54,16 +60,16 @@ export default Alchemy.Stack(
       main: "./apps/backend/src/cloudflare/worker.ts",
       observability: {
         enabled: true,
-        headSamplingRate: 1,
+        headSamplingRate: observabilitySamplingRate,
         logs: {
           enabled: true,
-          headSamplingRate: 1,
+          headSamplingRate: observabilitySamplingRate,
           invocationLogs: true,
           persist: true,
         },
         traces: {
           enabled: true,
-          headSamplingRate: 1,
+          headSamplingRate: observabilitySamplingRate,
           persist: true,
         },
       },

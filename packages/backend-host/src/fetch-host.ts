@@ -1,6 +1,13 @@
 import type { ExecutionContext } from "@cloudflare/workers-types";
+import * as Effect from "effect/Effect";
 import { logRequestCompleted, logRequestFailed } from "./logging.ts";
 import type { CloudflareMount, CloudflareRequestContext } from "./mount.ts";
+import {
+  recordWorkerRequestCompleted,
+  recordWorkerRequestFailed,
+  requestSpanAttributes,
+  runHostEffect,
+} from "./observability.ts";
 
 const notFoundResponse = () => new Response("Not Found", { status: 404 });
 
@@ -29,44 +36,90 @@ export const createCloudflareHost =
     try {
       if (mount === undefined) {
         const response = notFoundResponse();
-        logRequestCompleted({
-          durationMs: performance.now() - startedAt,
-          request,
-          response,
-          routeKind,
-        });
+        const durationMs = performance.now() - startedAt;
+
+        await runHostEffect(
+          Effect.gen(function* () {
+            yield* recordWorkerRequestCompleted({
+              durationMs,
+              method: request.method,
+              routeKind,
+              status: response.status,
+            });
+            yield* logRequestCompleted({
+              durationMs,
+              request,
+              response,
+              routeKind,
+            });
+          }).pipe(
+            Effect.withSpan("worker.request"),
+            Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
+          ),
+        );
+
         return response;
       }
 
-      const { logFields, response } = await mount.handle(
-        createRequestContext(request, env, executionContext),
+      return await runHostEffect(
+        Effect.gen(function* () {
+          const { logFields, response } = yield* Effect.promise(() =>
+            mount.handle(createRequestContext(request, env, executionContext)),
+          );
+          const durationMs = performance.now() - startedAt;
+
+          yield* recordWorkerRequestCompleted({
+            durationMs,
+            method: request.method,
+            routeKind,
+            status: response.status,
+          });
+
+          if (logFields === undefined) {
+            yield* logRequestCompleted({
+              durationMs,
+              request,
+              response,
+              routeKind,
+            });
+          } else {
+            yield* logRequestCompleted({
+              durationMs,
+              extraFields: logFields,
+              request,
+              response,
+              routeKind,
+            });
+          }
+
+          return response;
+        }).pipe(
+          Effect.withSpan("worker.request"),
+          Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
+        ),
+      );
+    } catch (error) {
+      const durationMs = performance.now() - startedAt;
+
+      await runHostEffect(
+        Effect.gen(function* () {
+          yield* recordWorkerRequestFailed({
+            durationMs,
+            method: request.method,
+            routeKind,
+          });
+          yield* logRequestFailed({
+            durationMs,
+            error,
+            request,
+            routeKind,
+          });
+        }).pipe(
+          Effect.withSpan("worker.request"),
+          Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
+        ),
       );
 
-      if (logFields === undefined) {
-        logRequestCompleted({
-          durationMs: performance.now() - startedAt,
-          request,
-          response,
-          routeKind,
-        });
-      } else {
-        logRequestCompleted({
-          durationMs: performance.now() - startedAt,
-          extraFields: logFields,
-          request,
-          response,
-          routeKind,
-        });
-      }
-
-      return response;
-    } catch (error) {
-      logRequestFailed({
-        durationMs: performance.now() - startedAt,
-        error,
-        request,
-        routeKind,
-      });
       throw error;
     }
   };

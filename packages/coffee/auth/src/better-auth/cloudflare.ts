@@ -6,6 +6,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { createCoffeeAgentAuthOptions } from "../agent/options.ts";
 import { logStructuredEvent } from "@effect-coffee-shop/backend-host/logging";
+import { runHostEffect } from "@effect-coffee-shop/backend-host/observability";
 import {
   AppActorSchema,
   anonymousActor,
@@ -63,12 +64,14 @@ function buildAuthOptions(input: {
         message: string,
         ...args: readonly unknown[]
       ) =>
-        logStructuredEvent({
-          event: "auth.better_auth.log",
-          auth_log_arity: args.length,
-          auth_log_level: level,
-          auth_message: message,
-        }),
+        void runHostEffect(
+          logStructuredEvent({
+            event: "auth.better_auth.log",
+            auth_log_arity: args.length,
+            auth_log_level: level,
+            auth_message: message,
+          }),
+        ),
     },
     plugins: [
       agentAuth(createCoffeeAgentAuthOptions({ appLayer: input.appLayer })),

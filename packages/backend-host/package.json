@@ -10,6 +10,7 @@
     "./json": "./src/json.ts",
     "./logging": "./src/logging.ts",
     "./mount": "./src/mount.ts",
+    "./observability": "./src/observability.ts",
     "./request-services": "./src/request-services.ts"
   },
   "scripts": {

@@ -23,6 +23,7 @@ import {
   actorObservabilityAttributes,
   annotateObservabilitySpan,
   logInfoWithAttributes,
+  recordOrderAction,
 } from "@effect-coffee-shop/coffee-core/application/observability";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
@@ -79,6 +80,12 @@ const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* 
     ...observabilityAttributes,
     order_status: updatedOrder.status,
     previous_order_status: order.status,
+  });
+  yield* recordOrderAction({
+    action: "change-status",
+    actor,
+    result: "success",
+    status: updatedOrder.status,
   });
 
   return updatedOrder;
