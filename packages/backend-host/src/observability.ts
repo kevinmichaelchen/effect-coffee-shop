@@ -7,27 +7,38 @@ import * as Option from "effect/Option";
 import { FetchHttpClient } from "effect/unstable/http";
 import { Otlp } from "effect/unstable/observability";
 
-export const HostObservabilityLive = Layer.mergeAll(
+const serviceName = "effect-coffee-shop";
+const nonBlankString = Option.filter((value: string) => value.trim().length > 0);
+
+const ConsoleObservabilityLive = Layer.mergeAll(
   Logger.layer([Logger.consoleJson], { mergeWithExisting: true }),
   Metric.enableRuntimeMetricsLayer,
-  Layer.unwrap(
-    Effect.gen(function* () {
-      const endpoint = yield* Config.option(Config.string("OTEL_EXPORTER_OTLP_ENDPOINT")).pipe(
-        Effect.map(Option.filter((value) => value.trim().length > 0)),
-      );
+);
 
-      return Option.match(endpoint, {
-        onNone: () => Layer.empty,
-        onSome: (baseUrl) =>
-          Otlp.layerJson({
-            baseUrl,
-            resource: {
-              serviceName: "effect-coffee-shop",
-            },
-          }).pipe(Layer.provide(FetchHttpClient.layer)),
-      });
-    }),
+const makeOtlpObservabilityLayer = (baseUrl: string) =>
+  Otlp.layerJson({
+    baseUrl,
+    resource: {
+      serviceName,
+    },
+  }).pipe(Layer.provide(FetchHttpClient.layer));
+
+const resolveOtlpObservabilityLayer = (endpoint: Option.Option<string>) =>
+  Option.match(endpoint, {
+    onNone: () => Layer.empty,
+    onSome: makeOtlpObservabilityLayer,
+  });
+
+const OtlpObservabilityLive = Layer.unwrap(
+  Config.option(Config.string("OTEL_EXPORTER_OTLP_ENDPOINT")).pipe(
+    Effect.map(nonBlankString),
+    Effect.map(resolveOtlpObservabilityLayer),
   ),
+);
+
+export const HostObservabilityLive = Layer.mergeAll(
+  ConsoleObservabilityLive,
+  OtlpObservabilityLive,
 );
 
 const requestTotal = Metric.counter("worker_requests_total", {
