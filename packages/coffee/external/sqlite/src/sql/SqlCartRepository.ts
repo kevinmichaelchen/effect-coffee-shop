@@ -33,7 +33,7 @@ const makeSqlCartQueries = Effect.gen(function* () {
     yield* Effect.forEach(
       cart.items.map((item, position) => toSqlCartItemSave(cart.ownerUserId, item, position)),
       (item) => saveCartItem({ item }).pipe(Effect.provideService(SqlClient.SqlClient, sqlClient)),
-      { discard: true },
+      { concurrency: 1, discard: true },
     );
     return cart;
   });

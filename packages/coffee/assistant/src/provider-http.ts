@@ -1,3 +1,4 @@
+import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import * as Effect from "effect/Effect";
 import * as Match from "effect/Match";
 import * as Option from "effect/Option";
@@ -50,7 +51,7 @@ function postJson(input: {
   return Effect.tryPromise({
     try: () =>
       fetch(input.url, {
-        body: JSON.stringify(input.body),
+        body: jsonString(input.body),
         headers,
         method: "POST",
       }),

@@ -4,6 +4,7 @@ import type {
   AiTextGenerationToolLegacyOutput,
   AiTextGenerationToolOutput,
 } from "@cloudflare/workers-types";
+import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -171,7 +172,7 @@ function toHybridToolCall(
   return {
     arguments: toolCall.arguments,
     function: {
-      arguments: JSON.stringify(toolCall.arguments),
+      arguments: jsonString(toolCall.arguments),
       name: toolCall.name,
     },
     id: `legacy-${index}`,

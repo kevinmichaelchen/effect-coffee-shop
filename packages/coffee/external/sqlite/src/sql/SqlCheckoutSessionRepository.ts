@@ -165,7 +165,7 @@ const makeSqlCheckoutSessionQueries = Effect.gen(function* () {
         saveCheckoutSessionItem({ item }).pipe(
           Effect.provideService(SqlClient.SqlClient, sqlClient),
         ),
-      { discard: true },
+      { concurrency: 1, discard: true },
     );
     return session;
   });

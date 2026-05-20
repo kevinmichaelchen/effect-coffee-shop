@@ -76,7 +76,7 @@ export const DrizzleOrderRepositoryLive = Layer.effect(
       yield* Effect.forEach(
         order.items.map((item, position) => toOrderItemInsert(order.id, item, position)),
         (item) => db.insert(orderItemsTable).values(item),
-        { discard: true },
+        { concurrency: 1, discard: true },
       );
 
       return order;
@@ -99,7 +99,7 @@ export const DrizzleOrderRepositoryLive = Layer.effect(
         .orderBy(asc(ordersTable.createdAt), asc(ordersTable.id))
         .pipe(
           Effect.flatMap(decodeOrderRows),
-          Effect.flatMap((orders) => Effect.forEach(orders, hydrateOrder)),
+          Effect.flatMap((orders) => Effect.forEach(orders, hydrateOrder, { concurrency: 1 })),
         );
     });
 

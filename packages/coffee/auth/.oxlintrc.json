@@ -1,6 +1,7 @@
 {
   "$schema": "../../../node_modules/oxlint/configuration_schema.json",
   "plugins": ["oxc", "typescript", "unicorn", "node"],
+  "jsPlugins": ["@mpsuesser/oxlint-plugin-effect"],
   "options": {
     "typeAware": true,
     "typeCheck": true,
@@ -9,6 +10,18 @@
   "rules": {
     "no-bitwise": "error",
     "no-plusplus": "error",
+    "effect/avoid-any": "error",
+    "effect/avoid-direct-json": "error",
+    "effect/avoid-direct-tag-checks": "error",
+    "effect/avoid-process-env": "error",
+    "effect/avoid-sync-fs": "error",
+    "effect/casting-awareness": "error",
+    "effect/effect-catchall-default": "error",
+    "effect/prefer-redacted-config": "error",
+    "effect/require-effect-concurrency": "error",
+    "effect/throw-in-effect-gen": "error",
+    "effect/use-console-service": "error",
+    "effect/use-filesystem-service": "error",
     "typescript/no-floating-promises": "error",
     "typescript/no-non-null-assertion": "error",
     "no-restricted-imports": [

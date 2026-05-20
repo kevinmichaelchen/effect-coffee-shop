@@ -161,6 +161,11 @@ export interface SqlMenuItemSeed {
   readonly maxShots: number;
 }
 
+const encodeMilksJson = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Array(MilkSchema)));
+const encodeTemperaturesJson = Schema.encodeUnknownSync(
+  Schema.fromJsonString(Schema.Array(TemperatureSchema)),
+);
+
 export const toSqlOrderSave = (order: CoffeeOrder): SqlOrderSave => ({
   id: order.id,
   customerName: order.customerName,
@@ -257,7 +262,7 @@ export const toSqlMenuItemSeed = (item: MenuItem, sortOrder: number): SqlMenuIte
   kind: item.kind,
   sortOrder,
   basePriceCents: moneyToCents(item.basePrice),
-  availableMilks: JSON.stringify(item.availableMilks),
-  availableTemperatures: JSON.stringify(item.availableTemperatures),
+  availableMilks: encodeMilksJson(item.availableMilks),
+  availableTemperatures: encodeTemperaturesJson(item.availableTemperatures),
   maxShots: item.maxShots,
 });

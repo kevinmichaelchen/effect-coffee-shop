@@ -54,7 +54,7 @@ const makeSqlOrderQueries = Effect.gen(function* () {
     yield* Effect.forEach(
       order.items.map((item, position) => toSqlOrderItemSave(order.id, item, position)),
       (item) => saveOrderItem({ item }).pipe(Effect.provideService(SqlClient.SqlClient, sqlClient)),
-      { discard: true },
+      { concurrency: 1, discard: true },
     );
 
     return order;
@@ -88,7 +88,7 @@ const makeSqlOrderQueries = Effect.gen(function* () {
             }),
         }),
     }).pipe(Effect.provideService(SqlClient.SqlClient, sqlClient), Effect.flatMap(decodeSqlOrders));
-    return yield* Effect.forEach(rows, (row) => hydrateOrder(sqlClient, row));
+    return yield* Effect.forEach(rows, (row) => hydrateOrder(sqlClient, row), { concurrency: 1 });
   });
 
   return { getById, list, save } as const;

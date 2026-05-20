@@ -64,7 +64,7 @@ export const DrizzleCheckoutSessionRepositoryLive = Layer.effect(
           toCheckoutSessionItemInsert(session.id, item, position),
         ),
         (item) => db.insert(checkoutSessionItemsTable).values(item),
-        { discard: true },
+        { concurrency: 1, discard: true },
       );
       return session;
     });

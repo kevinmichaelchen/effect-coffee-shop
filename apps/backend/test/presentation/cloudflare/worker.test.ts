@@ -1,4 +1,5 @@
 import type { D1Database, ExecutionContext } from "@cloudflare/workers-types";
+import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import { Miniflare } from "miniflare";
 import { describe, expect, it, vi } from "vitest";
 import worker, { type CloudflareWorkerEnv } from "../../../src/cloudflare/worker.ts";
@@ -63,7 +64,7 @@ const expectDirectHttpBearerRejection = async (response: Response): Promise<void
 
 const mcpInitializeRequest = (id: number | string): Request =>
   new Request("http://example.com/mcp", {
-    body: JSON.stringify({
+    body: jsonString({
       id,
       jsonrpc: "2.0",
       method: "initialize",
@@ -121,7 +122,7 @@ describe("cloudflare worker", () => {
     await withTestEnv(async ({ env }) => {
       const response = await fetchWorker(
         new Request("http://example.com/api/assistant", {
-          body: JSON.stringify({
+          body: jsonString({
             messages: [],
           }),
           headers: {
@@ -141,14 +142,14 @@ describe("cloudflare worker", () => {
     await withTestEnv(async ({ assetsFetch, env }) => {
       const response = await fetchWorker(mcpInitializeRequest(1), env);
 
-      const json = (await response.json()) as {
+      const json: {
         readonly result: {
           readonly protocolVersion: string;
           readonly serverInfo: {
             readonly name: string;
           };
         };
-      };
+      } = await response.json();
 
       expect(response.status).toBe(200);
       expect(response.headers.get("Mcp-Protocol-Version")).toBe("2025-06-18");
@@ -162,12 +163,12 @@ describe("cloudflare worker", () => {
     await withTestEnv(async ({ assetsFetch, env }) => {
       const response = await fetchWorker(mcpInitializeRequest("init"), env);
 
-      const json = (await response.json()) as {
+      const json: {
         readonly id: string;
         readonly result: {
           readonly protocolVersion: string;
         };
-      };
+      } = await response.json();
 
       expect(response.status).toBe(200);
       expect(json.id).toBe("init");
@@ -208,13 +209,13 @@ describe("cloudflare worker", () => {
         },
       );
 
-      const json = (await response.json()) as {
+      const json: {
         readonly default_location: string;
         readonly endpoints: {
           readonly execute: string;
         };
         readonly provider_name: string;
-      };
+      } = await response.json();
 
       expect(response.status).toBe(200);
       expect(json.provider_name).toBe("Effect Coffee Shop");

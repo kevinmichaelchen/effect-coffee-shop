@@ -1,4 +1,6 @@
+import * as Console from "effect/Console";
 import * as Effect from "effect/Effect";
+import * as Formatter from "effect/Formatter";
 import * as Path from "effect/Path";
 import { measureMcpMiniflareBootstrap, measureMcpWorkerBundle } from "../test/support/McpMiniflare";
 
@@ -43,6 +45,9 @@ const program = Effect.gen(function* () {
   };
 });
 
-const report = await Effect.runPromise(program.pipe(Effect.provide(Path.layer)));
-
-console.log(JSON.stringify(report, null, 2));
+await Effect.runPromise(
+  program.pipe(
+    Effect.flatMap((report) => Console.log(Formatter.formatJson(report, { space: 2 }))),
+    Effect.provide(Path.layer),
+  ),
+);

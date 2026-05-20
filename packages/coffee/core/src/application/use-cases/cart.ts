@@ -59,13 +59,16 @@ const toSnapshot = Effect.fnUntraced(function* (
   DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
   MenuRepository
 > {
-  const items = yield* Effect.forEach(cart.items, (cartItem) =>
-    resolveOrderItem(toOrderItemInput(cartItem)).pipe(
-      Effect.map((item) => ({
-        cartItemId: cartItem.id,
-        item,
-      })),
-    ),
+  const items = yield* Effect.forEach(
+    cart.items,
+    (cartItem) =>
+      resolveOrderItem(toOrderItemInput(cartItem)).pipe(
+        Effect.map((item) => ({
+          cartItemId: cartItem.id,
+          item,
+        })),
+      ),
+    { concurrency: 1 },
   );
 
   return {
