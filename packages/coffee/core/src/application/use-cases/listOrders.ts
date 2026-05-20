@@ -13,6 +13,7 @@ import {
   actorObservabilityAttributes,
   annotateObservabilitySpan,
   logInfoWithAttributes,
+  recordOrderAction,
 } from "@effect-coffee-shop/coffee-core/application/observability";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 import { type ListOrdersRequest } from "../contracts.ts";
@@ -44,6 +45,11 @@ export const listOrders = Effect.fn("CoffeeOrders.listOrders")(function* (
       ...observabilityAttributes,
       order_count: orders.length,
     });
+    yield* recordOrderAction({
+      action: "list",
+      actor,
+      result: "success",
+    });
 
     return orders;
   }
@@ -64,6 +70,12 @@ export const listOrders = Effect.fn("CoffeeOrders.listOrders")(function* (
   yield* logInfoWithAttributes("listed coffee orders", {
     ...observabilityAttributes,
     order_count: orders.length,
+  });
+  yield* recordOrderAction({
+    action: "list",
+    actor,
+    result: "success",
+    status: request.status,
   });
 
   return orders;

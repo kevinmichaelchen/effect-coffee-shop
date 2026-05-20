@@ -2,6 +2,10 @@ import { toServerSentEventsResponse } from "@tanstack/ai";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";
+import {
+  HostObservabilityLive,
+  runHostEffect,
+} from "@effect-coffee-shop/backend-host/observability";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import {
@@ -144,24 +148,28 @@ async function streamAssistantResponse(input: {
       toolCallCount += 1;
     }
 
-    logAssistantToolActivity({
-      activity,
-      actor: input.actor,
-      model: input.model,
-      runId,
-    });
+    void runHostEffect(
+      logAssistantToolActivity({
+        activity,
+        actor: input.actor,
+        model: input.model,
+        runId,
+      }),
+    );
     input.queue.push(
       createAssistantCustomChunk(input.model, getAssistantToolActivityEvent(), activity),
     );
   };
 
   input.queue.push(createAssistantRunStartedChunk(runId, input.model));
-  logAssistantRunStarted({
-    actor: input.actor,
-    gatewayEnabled: input.gatewayEnabled,
-    model: input.model,
-    runId,
-  });
+  void runHostEffect(
+    logAssistantRunStarted({
+      actor: input.actor,
+      gatewayEnabled: input.gatewayEnabled,
+      model: input.model,
+      runId,
+    }),
+  );
 
   try {
     const response = await Effect.runPromise(
@@ -172,7 +180,17 @@ async function streamAssistantResponse(input: {
         requestMetadata: createAssistantGatewayMetadata(input.actor, runId),
         systemPrompt: coffeeAssistantSystemPrompt,
         tools: createCoffeeAssistantTools(runApp, emitActivity),
-      }).pipe(Effect.provide(input.modelLayer)),
+      }).pipe(
+        Effect.withSpan("assistant.run"),
+        Effect.annotateSpans({
+          actor_kind: input.actor.kind,
+          assistant_gateway_enabled: input.gatewayEnabled,
+          assistant_model: input.model,
+          assistant_run_id: runId,
+        }),
+        Effect.provide(input.modelLayer),
+        Effect.provide(HostObservabilityLive),
+      ),
     );
 
     input.queue.push(createAssistantTextStartChunk(messageId, input.model));
@@ -181,21 +199,27 @@ async function streamAssistantResponse(input: {
     input.queue.push(createAssistantRunFinishedChunk(runId, input.model));
     input.queue.close();
 
-    logAssistantRunCompleted({
-      actor: input.actor,
-      durationMs: performance.now() - startedAt,
-      model: input.model,
-      runId,
-      toolCallCount,
-    });
+    await runHostEffect(
+      logAssistantRunCompleted({
+        actor: input.actor,
+        durationMs: performance.now() - startedAt,
+        gatewayEnabled: input.gatewayEnabled,
+        model: input.model,
+        runId,
+        toolCallCount,
+      }),
+    );
   } catch (error) {
-    logAssistantRunFailed({
-      actor: input.actor,
-      durationMs: performance.now() - startedAt,
-      error,
-      model: input.model,
-      runId,
-    });
+    await runHostEffect(
+      logAssistantRunFailed({
+        actor: input.actor,
+        durationMs: performance.now() - startedAt,
+        error,
+        gatewayEnabled: input.gatewayEnabled,
+        model: input.model,
+        runId,
+      }),
+    );
     throw error;
   }
 }
@@ -208,7 +232,9 @@ function createCoffeeAppRunner<TAppLayer extends Layer.Layer<never, any, any>>(
   const services = emptyWebHandlerServices().pipe(Context.add(CurrentActor, actor));
 
   return async <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) =>
-    Effect.runPromiseWith(services)(effect.pipe(Effect.provide(liveLayer)));
+    Effect.runPromiseWith(services)(
+      effect.pipe(Effect.provide(liveLayer), Effect.provide(HostObservabilityLive)),
+    );
 }
 
 function connectAbortSignal(signal: AbortSignal): AbortController {

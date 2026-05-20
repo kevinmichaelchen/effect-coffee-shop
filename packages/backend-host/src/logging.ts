@@ -1,3 +1,4 @@
+import * as Effect from "effect/Effect";
 import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 type StructuredLogValue = boolean | number | string | null;
@@ -20,8 +21,12 @@ export function actorLogFields(actor: AppActor | undefined): StructuredLogRecord
   };
 }
 
-export function logStructuredEvent(record: StructuredLogRecord): void {
-  console.log(record);
+export function logStructuredEvent(record: StructuredLogRecord) {
+  return Effect.logInfo("structured event").pipe(Effect.annotateLogs(record));
+}
+
+export function logStructuredError(record: StructuredLogRecord) {
+  return Effect.logError("structured event").pipe(Effect.annotateLogs(record));
 }
 
 export function logRequestCompleted(input: {
@@ -30,8 +35,8 @@ export function logRequestCompleted(input: {
   readonly request: Request;
   readonly response: Response;
   readonly routeKind: string;
-}): void {
-  logStructuredEvent({
+}) {
+  return logStructuredEvent({
     event: "worker.request.complete",
     ...requestLogFields(input.request, input.routeKind),
     ...input.extraFields,
@@ -46,8 +51,8 @@ export function logRequestFailed(input: {
   readonly extraFields?: StructuredLogRecord;
   readonly request: Request;
   readonly routeKind: string;
-}): void {
-  logStructuredEvent({
+}) {
+  return logStructuredError({
     event: "worker.request.error",
     ...requestLogFields(input.request, input.routeKind),
     ...input.extraFields,

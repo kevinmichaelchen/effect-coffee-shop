@@ -23,6 +23,7 @@ import {
   actorObservabilityAttributes,
   annotateObservabilitySpan,
   logInfoWithAttributes,
+  recordOrderAction,
 } from "@effect-coffee-shop/coffee-core/application/observability";
 import { OrderIdGenerator } from "../ports/OrderIdGenerator.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
@@ -88,6 +89,12 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
     order_action: "place",
     order_id: savedOrder.id,
     order_status: savedOrder.status,
+  });
+  yield* recordOrderAction({
+    action: "place",
+    actor,
+    result: "success",
+    status: savedOrder.status,
   });
 
   return savedOrder;
