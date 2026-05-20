@@ -347,52 +347,20 @@ const encodeCartView = Schema.encodeSync(CartViewModelSchema);
 const encodeCheckoutSessionView = Schema.encodeSync(CheckoutSessionViewModelSchema);
 const encodeItemOptionsView = Schema.encodeSync(ItemOptionsViewModelSchema);
 
-export const toMenuItemView = (item: MenuItem): MenuItemView =>
-  encodeMenuItemView({
-    id: item.id,
-    name: item.name,
-    kind: item.kind,
-    basePrice: item.basePrice,
-    availableMilks: item.availableMilks,
-    availableTemperatures: item.availableTemperatures,
-    maxShots: item.maxShots,
-  });
+export const toMenuItemView = (item: MenuItem): MenuItemView => encodeMenuItemView(item);
 
 export const toMenuView = (menu: readonly MenuItem[]): MenuView => Arr.map(menu, toMenuItemView);
 
 export const toCoffeeOrderItemView = (item: CoffeeOrderItem): CoffeeOrderItemView =>
-  encodeCoffeeOrderItemView({
-    drinkId: item.drinkId,
-    drinkName: item.drinkName,
-    size: item.size,
-    milk: item.milk,
-    temperature: item.temperature,
-    shots: item.shots,
-    notes: item.notes,
-    quantity: item.quantity,
-    unitPrice: item.unitPrice,
-    lineTotal: item.lineTotal,
-  });
+  encodeCoffeeOrderItemView(item);
 
 export const toCoffeeOrderView = (order: CoffeeOrder): CoffeeOrderView =>
-  encodeCoffeeOrderView({
-    id: order.id,
-    customerName: order.customerName,
-    ownerUserId: order.ownerUserId,
-    items: order.items,
-    status: order.status,
-    totalPrice: order.totalPrice,
-    createdAt: order.createdAt,
-  });
+  encodeCoffeeOrderView(order);
 
 export const toCoffeeOrdersView = (orders: readonly CoffeeOrder[]): CoffeeOrdersView =>
   Arr.map(orders, toCoffeeOrderView);
 
-export const toOrderQuoteView = (quote: OrderQuote): OrderQuoteView =>
-  encodeOrderQuoteView({
-    items: quote.items,
-    totalPrice: quote.totalPrice,
-  });
+export const toOrderQuoteView = (quote: OrderQuote): OrderQuoteView => encodeOrderQuoteView(quote);
 
 export const toOrderValidationView = (quote: OrderQuote): OrderValidationView =>
   encodeOrderValidationView({
@@ -412,16 +380,7 @@ export const toCartView = (cart: CartSnapshot): CartView =>
   });
 
 export const toCheckoutSessionView = (session: CheckoutSession): CheckoutSessionView =>
-  encodeCheckoutSessionView({
-    id: session.id,
-    ownerUserId: session.ownerUserId,
-    status: session.status,
-    items: session.items,
-    totalPrice: session.totalPrice,
-    createdAt: session.createdAt,
-    updatedAt: session.updatedAt,
-    expiresAt: session.expiresAt,
-  });
+  encodeCheckoutSessionView(session);
 
 export const toItemOptionsView = (options: ItemOptions): ItemOptionsView =>
   encodeItemOptionsView({
