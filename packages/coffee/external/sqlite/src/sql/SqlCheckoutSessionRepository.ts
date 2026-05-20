@@ -17,6 +17,7 @@ import {
 } from "@effect-coffee-shop/coffee-core/domain/order";
 import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
 import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
+import { toPersistedCoffeeOrderItemFields } from "@effect-coffee-shop/coffee-core/application/ports/coffee-order-item-persistence";
 import { deleteCheckoutSessionItemsBySessionId } from "./queries/.generated/delete-checkout-session-items-by-session-id.sql.ts";
 import { deleteCurrentCheckoutSessionByOwner } from "./queries/.generated/delete-current-checkout-session-by-owner.sql.ts";
 import { findCheckoutSessionById } from "./queries/.generated/find-checkout-session-by-id.sql.ts";
@@ -133,16 +134,7 @@ const toSqlCheckoutSessionItemSave = (
 ) => ({
   sessionId,
   position,
-  drinkId: item.drinkId,
-  drinkName: item.drinkName,
-  size: item.size,
-  milk: item.milk,
-  temperature: item.temperature,
-  shots: item.shots,
-  notes: Option.getOrNull(item.notes),
-  quantity: item.quantity,
-  unitPriceCents: moneyToCents(item.unitPrice),
-  lineTotalCents: moneyToCents(item.lineTotal),
+  ...toPersistedCoffeeOrderItemFields(item),
 });
 
 const makeSqlCheckoutSessionQueries = Effect.gen(function* () {

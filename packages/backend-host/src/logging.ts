@@ -65,6 +65,6 @@ function requestLogFields(request: Request, routeKind: string): StructuredLogRec
   };
 }
 
-function roundDurationMs(durationMs: number): number {
+export function roundDurationMs(durationMs: number): number {
   return Number(durationMs.toFixed(2));
 }

@@ -4,11 +4,9 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { sql } from "drizzle-orm";
-import {
-  checkoutSessionIdFromString,
-  type CheckoutSessionId,
-} from "@effect-coffee-shop/coffee-core/domain/checkout-session";
+import { checkoutSessionIdFromString } from "@effect-coffee-shop/coffee-core/domain/checkout-session";
 import { CheckoutSessionIdGenerator } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionIdGenerator";
+import { makePaddedIdFormatter } from "@effect-coffee-shop/coffee-core/application/ports/monotonic-id-generator";
 import { CoffeeDb } from "../db/Db.ts";
 import { CheckoutSessionIdSequenceRowSchema } from "../db/models.ts";
 
@@ -16,8 +14,10 @@ const decodeCheckoutSessionIdSequenceRow = Schema.decodeUnknownEffect(
   CheckoutSessionIdSequenceRowSchema,
 );
 
-const formatCheckoutSessionId = (currentId: number): CheckoutSessionId =>
-  checkoutSessionIdFromString(`checkout-session-${String(currentId).padStart(4, "0")}`);
+const formatCheckoutSessionId = makePaddedIdFormatter(
+  "checkout-session",
+  checkoutSessionIdFromString,
+);
 
 export const DrizzleCheckoutSessionIdGeneratorLive = Layer.effect(
   CheckoutSessionIdGenerator,

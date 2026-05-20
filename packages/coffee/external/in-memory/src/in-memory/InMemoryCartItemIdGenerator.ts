@@ -1,21 +1,15 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { cartItemIdFromString, type CartItemId } from "@effect-coffee-shop/coffee-core/domain/cart";
+import { cartItemIdFromString } from "@effect-coffee-shop/coffee-core/domain/cart";
 import { CartItemIdGenerator } from "@effect-coffee-shop/coffee-core/application/ports/CartItemIdGenerator";
+import {
+  makeMonotonicIdGenerator,
+  makePaddedIdFormatter,
+} from "@effect-coffee-shop/coffee-core/application/ports/monotonic-id-generator";
 
-const formatCartItemId = (currentId: number): CartItemId =>
-  cartItemIdFromString(`cart-item-${String(currentId).padStart(4, "0")}`);
+const formatCartItemId = makePaddedIdFormatter("cart-item", cartItemIdFromString);
 
 export const InMemoryCartItemIdGeneratorLive = Layer.effect(
   CartItemIdGenerator,
-  Effect.sync(() => {
-    let currentId = 0;
-
-    return CartItemIdGenerator.of({
-      next: Effect.sync(() => {
-        currentId += 1;
-        return formatCartItemId(currentId);
-      }),
-    });
-  }),
+  makeMonotonicIdGenerator(formatCartItemId).pipe(Effect.map(CartItemIdGenerator.of)),
 );

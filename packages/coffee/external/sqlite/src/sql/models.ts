@@ -23,6 +23,7 @@ import {
   type CoffeeOrder,
   type CoffeeOrderItem,
 } from "@effect-coffee-shop/coffee-core/domain/order";
+import { toPersistedCoffeeOrderItemFields } from "@effect-coffee-shop/coffee-core/application/ports/coffee-order-item-persistence";
 
 const SqlNullableStringOptionSchema = Schema.OptionFromNullishOr(Schema.String, {
   onNoneEncoding: null,
@@ -176,16 +177,7 @@ export const toSqlOrderItemSave = (
 ): SqlOrderItemSave => ({
   orderId,
   position,
-  drinkId: item.drinkId,
-  drinkName: item.drinkName,
-  size: item.size,
-  milk: item.milk,
-  temperature: item.temperature,
-  shots: item.shots,
-  notes: Option.getOrNull(item.notes),
-  quantity: item.quantity,
-  unitPriceCents: moneyToCents(item.unitPrice),
-  lineTotalCents: moneyToCents(item.lineTotal),
+  ...toPersistedCoffeeOrderItemFields(item),
 });
 
 export const toSqlCartItemSave = (
