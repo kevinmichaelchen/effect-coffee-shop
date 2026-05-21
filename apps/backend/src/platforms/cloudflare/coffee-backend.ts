@@ -42,7 +42,7 @@ let cachedBackend:
     }
   | undefined;
 
-export const getCloudflareCoffeeBackend = (db: D1Database): CloudflareCoffeeBackend => {
+const getCloudflareCoffeeBackend = (db: D1Database): CloudflareCoffeeBackend => {
   if (cachedBackend?.db === db) {
     return cachedBackend.backend;
   }
