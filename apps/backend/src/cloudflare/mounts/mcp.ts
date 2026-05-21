@@ -1,36 +1,28 @@
 import { readCloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
 import {
-  cloudflarePathname,
+  cloudflarePathIsOrStartsWith,
   cloudflareResponse,
   type CloudflareMount,
 } from "@effect-coffee-shop/backend-host/mount";
 import {
   createCloudflareRequestServices,
-  getCloudflareBackendHandler,
+  getCloudflareRuntimeBackend,
 } from "../../composition/coffee-backend.ts";
-import { ensureCloudflareAuthPersistence } from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
-const isMcpRequest = (request: Request): boolean => {
-  const pathname = cloudflarePathname(request);
-  return pathname === "/mcp" || pathname.startsWith("/mcp/");
-};
+const isMcpRequest = (request: Request): boolean => cloudflarePathIsOrStartsWith(request, "/mcp");
 
 export const cloudflareMcpMount: CloudflareMount<CloudflareWorkerEnv> = {
   name: "mcp",
   matches: isMcpRequest,
   handle: async ({ env, request }) => {
     const runtime = readCloudflareRuntime(env);
+    const backend = getCloudflareRuntimeBackend(runtime);
 
-    await ensureCloudflareAuthPersistence({
-      db: runtime.bindings.db,
-    });
+    await backend.ensureAuthPersistence();
 
     return cloudflareResponse(
-      await getCloudflareBackendHandler(runtime.bindings.db)(
-        request,
-        createCloudflareRequestServices(systemActor),
-      ),
+      await backend.handler(request, createCloudflareRequestServices(systemActor)),
     );
   },
 };

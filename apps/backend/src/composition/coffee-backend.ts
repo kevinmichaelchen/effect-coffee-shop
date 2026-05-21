@@ -6,44 +6,59 @@ import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";
 import { createCoffeeWebHandler } from "@effect-coffee-shop/coffee-http/web-handler";
 import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
 import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
+import { ensureCloudflareAuthPersistence } from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
 import {
   CurrentActor,
   type AppActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
-const makeBackendHandler = (db: D1Database) =>
-  createCoffeeWebHandler(
+const makeCloudflareBackend = (db: D1Database) => {
+  const appLayer = makeCloudflareCoffeeAppLive(db);
+  const webHandler = createCoffeeWebHandler(
     Layer.mergeAll(CoffeeHttpApiLive, CoffeeMcpHttpLive),
-    makeCloudflareCoffeeAppLive(db),
+    appLayer,
   );
 
-type WorkerHandler = ReturnType<typeof makeBackendHandler>["handler"];
+  return {
+    appLayer,
+    db,
+    dispose: webHandler.dispose,
+    ensureAuthPersistence: async () => ensureCloudflareAuthPersistence({ db }),
+    handler: webHandler.handler,
+  };
+};
 
-let cachedHandler:
+type CloudflareCoffeeBackend = ReturnType<typeof makeCloudflareBackend>;
+
+let cachedBackend:
   | {
+      backend: CloudflareCoffeeBackend;
       db: D1Database;
-      dispose: () => Promise<void>;
-      handler: WorkerHandler;
     }
   | undefined;
 
-export const getCloudflareBackendHandler = (db: D1Database): WorkerHandler => {
-  if (cachedHandler?.db === db) {
-    return cachedHandler.handler;
+export const getCloudflareCoffeeBackend = (db: D1Database): CloudflareCoffeeBackend => {
+  if (cachedBackend?.db === db) {
+    return cachedBackend.backend;
   }
 
-  void cachedHandler?.dispose();
+  void cachedBackend?.backend.dispose();
 
-  const next = makeBackendHandler(db);
+  const backend = makeCloudflareBackend(db);
 
-  cachedHandler = {
+  cachedBackend = {
+    backend,
     db,
-    dispose: next.dispose,
-    handler: next.handler,
   };
 
-  return next.handler;
+  return backend;
 };
+
+export const getCloudflareRuntimeBackend = (runtime: {
+  readonly bindings: {
+    readonly db: D1Database;
+  };
+}): CloudflareCoffeeBackend => getCloudflareCoffeeBackend(runtime.bindings.db);
 
 export const createCloudflareRequestServices = (actor: AppActor): Context.Context<unknown> =>
   emptyWebHandlerServices().pipe(Context.add(CurrentActor, actor));

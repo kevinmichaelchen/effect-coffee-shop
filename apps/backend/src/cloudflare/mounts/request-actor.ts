@@ -1,8 +1,5 @@
-import {
-  ensureCloudflareAuthPersistence,
-  resolveCloudflareActor,
-} from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
-import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
+import { resolveCloudflareActor } from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
+import { getCloudflareRuntimeBackend } from "../../composition/coffee-backend.ts";
 import { readCloudflareRuntime, revealOptionalSecret, type CloudflareWorkerEnv } from "../env.ts";
 
 export const resolveCloudflareRequestActor = async (input: {
@@ -10,16 +7,14 @@ export const resolveCloudflareRequestActor = async (input: {
   readonly request: Request;
 }) => {
   const runtime = readCloudflareRuntime(input.env);
+  const backend = getCloudflareRuntimeBackend(runtime);
   const secret = revealOptionalSecret(runtime.config.betterAuthSecret);
-  const appLayer = makeCloudflareCoffeeAppLive(runtime.bindings.db);
 
-  await ensureCloudflareAuthPersistence({
-    db: runtime.bindings.db,
-  });
+  await backend.ensureAuthPersistence();
 
   const actor = await resolveCloudflareActor({
-    appLayer,
-    db: runtime.bindings.db,
+    appLayer: backend.appLayer,
+    db: backend.db,
     request: input.request,
     secret,
     staffUserIds: runtime.config.staffUserIds,
@@ -27,7 +22,7 @@ export const resolveCloudflareRequestActor = async (input: {
 
   return {
     actor,
-    appLayer,
+    backend,
     runtime,
   };
 };
