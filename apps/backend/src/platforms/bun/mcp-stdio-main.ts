@@ -1,3 +1,8 @@
+/**
+ * Starts the Coffee MCP stdio server on Bun.
+ *
+ * @module
+ */
 import * as BunServices from "@effect/platform-bun/BunServices";
 import * as BunRuntime from "@effect/platform-bun/BunRuntime";
 import * as Layer from "effect/Layer";

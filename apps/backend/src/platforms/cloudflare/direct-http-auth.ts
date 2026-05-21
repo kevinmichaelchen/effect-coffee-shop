@@ -1,3 +1,8 @@
+/**
+ * Rejects direct HTTP requests that try to use agent bearer tokens.
+ *
+ * @module
+ */
 import * as Option from "effect/Option";
 
 const hasBearerAuthorization = (request: Request): boolean => {

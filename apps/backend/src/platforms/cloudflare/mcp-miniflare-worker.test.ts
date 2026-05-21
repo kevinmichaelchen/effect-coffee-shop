@@ -1,3 +1,8 @@
+/**
+ * Tests the Miniflare-backed MCP worker surface.
+ *
+ * @module
+ */
 import { assert } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";

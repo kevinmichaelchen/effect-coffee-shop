@@ -1,3 +1,8 @@
+/**
+ * Mounts the Coffee MCP HTTP route on the Cloudflare Worker.
+ *
+ * @module
+ */
 import { readCloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
 import {
   cloudflarePathIsOrStartsWith,

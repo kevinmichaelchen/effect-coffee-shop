@@ -1,3 +1,8 @@
+/**
+ * Starts the Coffee MCP HTTP server on Bun.
+ *
+ * @module
+ */
 import * as BunHttpServer from "@effect/platform-bun/BunHttpServer";
 import * as BunRuntime from "@effect/platform-bun/BunRuntime";
 import * as Config from "effect/Config";

@@ -1,3 +1,8 @@
+/**
+ * Mounts the Coffee HTTP API routes on the Cloudflare Worker.
+ *
+ * @module
+ */
 import * as Option from "effect/Option";
 import { actorLogFields } from "@effect-coffee-shop/backend-host/logging";
 import type { CloudflareWorkerEnv } from "../env.ts";

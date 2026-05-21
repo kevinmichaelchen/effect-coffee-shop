@@ -1,3 +1,8 @@
+/**
+ * Defines Cloudflare Worker mount contracts and request path helpers.
+ *
+ * @module
+ */
 import type { ExecutionContext } from "@cloudflare/workers-types";
 import type { StructuredLogRecord } from "./logging.ts";
 

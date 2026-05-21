@@ -1,3 +1,8 @@
+/**
+ * Mounts Better Auth and agent discovery routes on the Cloudflare Worker.
+ *
+ * @module
+ */
 import * as Option from "effect/Option";
 import { getCloudflareRuntimeBackend } from "../coffee-backend.ts";
 import { readCloudflareRuntime, revealSecret, type CloudflareWorkerEnv } from "../env.ts";

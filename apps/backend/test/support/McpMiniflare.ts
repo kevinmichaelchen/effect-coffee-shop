@@ -1,3 +1,8 @@
+/**
+ * Provides Miniflare helpers for exercising the MCP worker in tests.
+ *
+ * @module
+ */
 import { build } from "esbuild";
 import * as Option from "effect/Option";
 import { Miniflare } from "miniflare";

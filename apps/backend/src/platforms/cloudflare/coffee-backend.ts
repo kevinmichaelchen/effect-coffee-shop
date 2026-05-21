@@ -1,3 +1,8 @@
+/**
+ * Composes and caches the D1-backed Coffee web backend for Cloudflare Workers.
+ *
+ * @module
+ */
 import type { D1Database } from "@cloudflare/workers-types";
 import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";

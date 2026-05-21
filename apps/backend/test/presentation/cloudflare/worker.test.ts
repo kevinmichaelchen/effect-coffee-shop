@@ -1,3 +1,8 @@
+/**
+ * Tests the production Cloudflare Worker request routing surface.
+ *
+ * @module
+ */
 import type { D1Database, ExecutionContext } from "@cloudflare/workers-types";
 import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import { Miniflare } from "miniflare";

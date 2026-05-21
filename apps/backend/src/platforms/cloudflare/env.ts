@@ -1,3 +1,8 @@
+/**
+ * Decodes Cloudflare Worker bindings and scalar environment configuration.
+ *
+ * @module
+ */
 import type {
   AiTextGenerationInput,
   AiTextGenerationOutput,

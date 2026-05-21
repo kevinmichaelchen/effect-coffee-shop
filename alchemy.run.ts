@@ -1,3 +1,8 @@
+/**
+ * Defines the Alchemy stack that deploys the Coffee Shop UI and Cloudflare Worker.
+ *
+ * @module
+ */
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Config from "effect/Config";

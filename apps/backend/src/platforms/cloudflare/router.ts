@@ -1,3 +1,8 @@
+/**
+ * Routes Cloudflare Worker requests across auth, assistant, API, MCP, and assets mounts.
+ *
+ * @module
+ */
 import type { ExecutionContext } from "@cloudflare/workers-types";
 import { cloudflareAssistantMount } from "./mounts/assistant.ts";
 import { cloudflareAgentDiscoveryMount, cloudflareAuthMount } from "./mounts/auth.ts";

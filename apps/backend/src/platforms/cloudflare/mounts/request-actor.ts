@@ -1,3 +1,8 @@
+/**
+ * Resolves the current application actor for a Cloudflare request.
+ *
+ * @module
+ */
 import { resolveCloudflareActor } from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
 import { getCloudflareRuntimeBackend } from "../coffee-backend.ts";
 import { readCloudflareRuntime, revealOptionalSecret, type CloudflareWorkerEnv } from "../env.ts";

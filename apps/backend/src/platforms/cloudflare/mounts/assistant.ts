@@ -1,3 +1,8 @@
+/**
+ * Mounts the assistant HTTP route on the Cloudflare Worker.
+ *
+ * @module
+ */
 import * as Option from "effect/Option";
 import {
   createAssistantModelRunnerLayer,
