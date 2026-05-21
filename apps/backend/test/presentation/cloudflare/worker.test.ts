@@ -2,7 +2,7 @@ import type { D1Database, ExecutionContext } from "@cloudflare/workers-types";
 import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import { Miniflare } from "miniflare";
 import { describe, expect, it, vi } from "vitest";
-import worker, { type CloudflareWorkerEnv } from "../../../src/cloudflare/worker.ts";
+import worker, { type CloudflareWorkerEnv } from "../../../src/platforms/cloudflare/worker.ts";
 
 const makeTestEnv = async (): Promise<{
   assetsFetch: ReturnType<typeof vi.fn<(request: Request) => Promise<Response>>>;

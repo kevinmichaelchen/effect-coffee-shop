@@ -6,7 +6,7 @@ import * as Redacted from "effect/Redacted";
 import {
   cloudflareBindingNames,
   cloudflareEnvNames,
-} from "./apps/backend/src/cloudflare/env.ts";
+} from "./apps/backend/src/platforms/cloudflare/env.ts";
 
 const optionalSecret = (value: string | undefined) =>
   value === undefined || value.trim().length === 0
@@ -61,7 +61,7 @@ export default Alchemy.Stack(
       compatibility: {
         flags: ["nodejs_compat"],
       },
-      main: "./apps/backend/src/cloudflare/worker.ts",
+      main: "./apps/backend/src/platforms/cloudflare/worker.ts",
       observability: {
         enabled: true,
         headSamplingRate: observabilitySamplingRate,

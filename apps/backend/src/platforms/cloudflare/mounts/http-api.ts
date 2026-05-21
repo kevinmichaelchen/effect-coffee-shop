@@ -8,7 +8,7 @@ import {
   rewriteRequestPathPrefix,
   type CloudflareMount,
 } from "@effect-coffee-shop/backend-host/mount";
-import { createCloudflareRequestServices } from "../../composition/coffee-backend.ts";
+import { createCloudflareRequestServices } from "../coffee-backend.ts";
 import { resolveCloudflareRequestActor } from "./request-actor.ts";
 
 const isApiRequest = (request: Request): boolean => cloudflarePathIsOrStartsWith(request, "/api");

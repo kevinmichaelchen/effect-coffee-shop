@@ -6,7 +6,7 @@ import {
   createMcpMiniflareClient,
   type McpMiniflareClient,
   type McpRequest,
-} from "../../test/support/McpMiniflare.ts";
+} from "../../../test/support/McpMiniflare.ts";
 
 const StringIdResponseSchema = Schema.Struct({
   id: Schema.String,

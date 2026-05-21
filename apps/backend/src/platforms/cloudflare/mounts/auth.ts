@@ -1,5 +1,5 @@
 import * as Option from "effect/Option";
-import { getCloudflareRuntimeBackend } from "../../composition/coffee-backend.ts";
+import { getCloudflareRuntimeBackend } from "../coffee-backend.ts";
 import { readCloudflareRuntime, revealSecret, type CloudflareWorkerEnv } from "../env.ts";
 import {
   cloudflarePathEquals,

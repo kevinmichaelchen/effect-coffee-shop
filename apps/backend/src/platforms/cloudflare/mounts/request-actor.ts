@@ -1,5 +1,5 @@
 import { resolveCloudflareActor } from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
-import { getCloudflareRuntimeBackend } from "../../composition/coffee-backend.ts";
+import { getCloudflareRuntimeBackend } from "../coffee-backend.ts";
 import { readCloudflareRuntime, revealOptionalSecret, type CloudflareWorkerEnv } from "../env.ts";
 
 export const resolveCloudflareRequestActor = async (input: {
