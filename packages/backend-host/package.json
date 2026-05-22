@@ -6,7 +6,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./fetch-host": "./src/fetch-host.ts",
-    "./http-jsonrpc-ids": "./src/http-jsonrpc-ids.ts",
     "./json": "./src/json.ts",
     "./logging": "./src/logging.ts",
     "./mount": "./src/mount.ts",
@@ -23,7 +22,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@effect-coffee-shop/coffee-core": "workspace:*",
     "effect": "catalog:"
   },
   "devDependencies": {

@@ -3,19 +3,17 @@
  *
  * @module
  */
-import type {
-  AiTextGenerationToolLegacyOutput,
-  RoleScopedChatInput,
-} from "@cloudflare/workers-types";
+import type { RoleScopedChatInput } from "@cloudflare/workers-types";
 import * as Match from "effect/Match";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import type {
   AssistantConversationMessage,
   AssistantRequestMetadata,
   AssistantToolCall,
   AssistantToolDefinition,
-} from "./model.ts";
-import { getAssistantToolDescription, getAssistantToolName } from "./model.ts";
+} from "../../application/model.ts";
+import { getAssistantToolDescription, getAssistantToolName } from "../../application/model.ts";
 
 export type AssistantGatewayOptions = Readonly<{
   gateway: Readonly<{
@@ -31,6 +29,14 @@ export type AssistantRunnableTool = Readonly<{
   name: string;
   parameters?: AssistantToolDefinition["parameters"];
 }>;
+
+const WorkersAiToolCallSchema = Schema.Struct({
+  arguments: Schema.Unknown,
+  name: Schema.String,
+});
+
+type WorkersAiToolCall = typeof WorkersAiToolCallSchema.Type;
+const isWorkersAiToolCall = Schema.is(WorkersAiToolCallSchema);
 
 export function createGatewayOptions(
   gatewayId: string | undefined,
@@ -54,13 +60,11 @@ export function createGatewayOptions(
   );
 }
 
-export function isToolCall(
-  value: AiTextGenerationToolLegacyOutput | undefined,
-): value is AiTextGenerationToolLegacyOutput {
-  return value !== undefined && typeof value.name === "string";
+export function isToolCall(value: unknown): value is WorkersAiToolCall {
+  return isWorkersAiToolCall(value);
 }
 
-export function toAssistantToolCall(toolCall: AiTextGenerationToolLegacyOutput): AssistantToolCall {
+export function toAssistantToolCall(toolCall: WorkersAiToolCall): AssistantToolCall {
   return {
     arguments: toolCall.arguments,
     name: toolCall.name,

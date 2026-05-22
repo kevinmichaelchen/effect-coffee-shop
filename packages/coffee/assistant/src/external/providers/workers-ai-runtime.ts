@@ -13,7 +13,7 @@ import {
   type AssistantRequestMetadata,
   type AssistantModelRunnerService,
   extractResponseText,
-} from "./model.ts";
+} from "../../application/model.ts";
 import { runWorkersAiOverRest } from "./workers-ai-rest.ts";
 import {
   createGatewayOptions,
@@ -24,11 +24,11 @@ import {
   type AssistantGatewayOptions,
 } from "./workers-ai-format.ts";
 
-interface WorkersAiBinding {
+export interface WorkersAiBinding {
   run(
     model: string,
     inputs: AiTextGenerationInput,
-    options?: AssistantGatewayOptions,
+    options?: object,
   ): Promise<AiTextGenerationOutput>;
 }
 
@@ -37,11 +37,13 @@ export type WorkersAiConfig =
       readonly kind: "workers-ai-binding";
       readonly binding: WorkersAiBinding;
       readonly gatewayId?: string;
+      readonly model: string;
     }
   | {
       readonly kind: "workers-ai-rest";
       readonly accountId: string;
       readonly apiKey: Redacted<string>;
+      readonly model: string;
     };
 
 export function makeWorkersAiRunner(config: WorkersAiConfig): AssistantModelRunnerService {
@@ -51,7 +53,7 @@ export function makeWorkersAiRunner(config: WorkersAiConfig): AssistantModelRunn
     run: (request) =>
       runner
         .run(
-          request.model,
+          config.model,
           {
             max_tokens: request.maxTokens,
             messages: toWorkersAiMessages(request.conversation),

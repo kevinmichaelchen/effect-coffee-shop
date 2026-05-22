@@ -115,24 +115,6 @@
       "name": "@effect-coffee-shop/backend-host",
       "version": "0.1.0",
       "dependencies": {
-        "@effect-coffee-shop/coffee-core": "workspace:*",
-        "effect": "catalog:",
-      },
-      "devDependencies": {
-        "@types/bun": "catalog:",
-        "lintcn": "catalog:",
-        "oxfmt": "catalog:",
-        "oxlint": "catalog:",
-        "oxlint-tsgolint": "catalog:",
-        "typescript": "catalog:",
-        "vitest": "catalog:",
-      },
-    },
-    "packages/coffee/actions": {
-      "name": "@effect-coffee-shop/coffee-actions",
-      "version": "0.1.0",
-      "dependencies": {
-        "@effect-coffee-shop/coffee-core": "workspace:*",
         "effect": "catalog:",
       },
       "devDependencies": {
@@ -271,11 +253,27 @@
         "vitest": "catalog:",
       },
     },
+    "packages/coffee/presentation/actions": {
+      "name": "@effect-coffee-shop/coffee-actions",
+      "version": "0.1.0",
+      "dependencies": {
+        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "effect": "catalog:",
+      },
+      "devDependencies": {
+        "@types/bun": "catalog:",
+        "lintcn": "catalog:",
+        "oxfmt": "catalog:",
+        "oxlint": "catalog:",
+        "oxlint-tsgolint": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
     "packages/coffee/presentation/cli": {
       "name": "@effect-coffee-shop/coffee-cli",
       "version": "0.1.0",
       "dependencies": {
-        "@effect-coffee-shop/backend-host": "workspace:*",
         "@effect-coffee-shop/coffee-core": "workspace:*",
         "effect": "catalog:",
       },
@@ -294,7 +292,6 @@
       "version": "0.1.0",
       "dependencies": {
         "@effect-coffee-shop/backend-host": "workspace:*",
-        "@effect-coffee-shop/coffee-assistant": "workspace:*",
         "@effect-coffee-shop/coffee-core": "workspace:*",
         "effect": "catalog:",
       },
@@ -315,7 +312,6 @@
       "name": "@effect-coffee-shop/coffee-mcp",
       "version": "0.1.0",
       "dependencies": {
-        "@effect-coffee-shop/backend-host": "workspace:*",
         "@effect-coffee-shop/coffee-actions": "workspace:*",
         "@effect-coffee-shop/coffee-core": "workspace:*",
         "effect": "catalog:",
@@ -570,7 +566,7 @@
 
     "@effect-coffee-shop/backend-host": ["@effect-coffee-shop/backend-host@workspace:packages/backend-host"],
 
-    "@effect-coffee-shop/coffee-actions": ["@effect-coffee-shop/coffee-actions@workspace:packages/coffee/actions"],
+    "@effect-coffee-shop/coffee-actions": ["@effect-coffee-shop/coffee-actions@workspace:packages/coffee/presentation/actions"],
 
     "@effect-coffee-shop/coffee-assistant": ["@effect-coffee-shop/coffee-assistant@workspace:packages/coffee/assistant"],
 

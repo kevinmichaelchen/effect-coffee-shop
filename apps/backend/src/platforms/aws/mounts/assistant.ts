@@ -10,11 +10,12 @@ import {
   rewriteRequestPathPrefix,
   type FetchMount,
 } from "@effect-coffee-shop/backend-host/mount";
+import { handleAssistantRequest } from "@effect-coffee-shop/coffee-assistant/handler";
 import {
   createAssistantModelRunnerLayer,
-  handleAssistantRequest,
-} from "@effect-coffee-shop/coffee-assistant/handler";
-import { actorLogFields } from "@effect-coffee-shop/backend-host/logging";
+  getAssistantModelLabel,
+} from "@effect-coffee-shop/coffee-assistant/providers";
+import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-core/application/observability";
 import type { AwsRuntime } from "../env.ts";
 import { handleDirectHttpRequest } from "../../../host/direct-http-auth.ts";
 import { resolveAwsRequestActor } from "./request-actor.ts";
@@ -43,10 +44,12 @@ export const awsAssistantMount: FetchMount<AwsRuntime> = {
         await handleAssistantRequest(rewriteApiRequest(request), {
           actor,
           appLayer: backend.appLayer,
-          model: runtime.config.assistantModel,
+          model: Option.getOrUndefined(
+            Option.map(runtime.config.assistantAi, getAssistantModelLabel),
+          ),
           modelLayer,
         }),
-        actorLogFields(actor),
+        actorObservabilityAttributes(actor),
       );
     }),
 };

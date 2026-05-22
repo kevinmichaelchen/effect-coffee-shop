@@ -17,8 +17,11 @@ import {
 import { createCoffeeRequestServices, makeCoffeeBackend } from "../../host/coffee-backend.ts";
 import type { CoffeeAuthDatabase } from "@effect-coffee-shop/coffee-auth/better-auth/shared";
 import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";
+import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
 
 const AwsAuthPersistenceLive = DrizzlePostgresSchemaLive.pipe(Layer.provideMerge(CoffeeDb.layer));
+const AwsCoffeeRoutesLive = Layer.mergeAll(CoffeeHttpApiLive, CoffeeMcpHttpLive);
 
 const makeBetterAuthDatabase = Effect.gen(function* () {
   yield* DrizzlePostgresSchemaReady;
@@ -41,6 +44,7 @@ const makeAwsBackend = () => {
       authDatabase: async (): Promise<CoffeeAuthDatabase> =>
         persistenceRuntime.runPromise(makeBetterAuthDatabase),
     },
+    routes: AwsCoffeeRoutesLive,
   });
 
   return {

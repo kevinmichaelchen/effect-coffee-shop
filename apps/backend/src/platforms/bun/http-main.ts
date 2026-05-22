@@ -5,7 +5,7 @@
  */
 import { CoffeeAppLive } from "#app-layer";
 import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";
-import { startCoffeeBunServer } from "@effect-coffee-shop/coffee-http/bun-server";
+import { startCoffeeBunServer } from "./coffee-bun-server.ts";
 
 await startCoffeeBunServer({
   appLayer: CoffeeAppLive,

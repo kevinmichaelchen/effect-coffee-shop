@@ -5,7 +5,7 @@
  */
 import * as Tool from "effect/unstable/ai/Tool";
 import * as Toolkit from "effect/unstable/ai/Toolkit";
-import { coffeeActionSpecs } from "./specs.ts";
+import { coffeeActionSpecs } from "@effect-coffee-shop/coffee-actions/specs";
 
 export const ListMenuTool = Tool.make("list_menu", coffeeActionSpecs.list_menu);
 export const GetItemOptionsTool = Tool.make("get_item_options", coffeeActionSpecs.get_item_options);

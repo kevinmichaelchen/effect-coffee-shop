@@ -3,7 +3,7 @@
 `@effect-coffee-shop/coffee-mcp` adapts Coffee application capabilities to MCP.
 
 It defines MCP resources, prompts, tools, and server layers for stdio and HTTP transports. It uses
-the neutral action catalog from [`coffee-actions`](../../actions) for tools, while MCP-only
+the neutral action catalog from [`coffee-actions`](../actions) for tools, while MCP-only
 resources and prompts stay in this package.
 
 ## FAQ
@@ -15,9 +15,11 @@ server layers.
 
 ### How Do Actions Become MCP Tools?
 
-[`src/action-tools.ts`](./src/action-tools.ts) adapts `CoffeeActionToolkit` from
-[`coffee-actions`](../../actions) into MCP tools. The action names, schemas, and neutral action
-metadata stay in `coffee-actions`; this package only performs the MCP projection.
+[`src/action-toolkit.ts`](./src/action-toolkit.ts) builds Effect AI `Tool`/`Toolkit` definitions
+from the neutral action catalog in [`coffee-actions`](../actions).
+[`src/action-tools.ts`](./src/action-tools.ts) wires that toolkit to `CoffeeOrderApp`. The action
+names, schemas, and neutral action metadata stay in `coffee-actions`; this package performs the MCP
+projection.
 
 ### What Is The Difference Between Resources, Prompts, And Tools?
 
@@ -33,7 +35,9 @@ mount routing belong in their owning packages.
 
 ## Directory Map
 
-- [`src/action-tools.ts`](./src/action-tools.ts) adapts neutral Coffee actions into MCP tools.
+- [`src/action-toolkit.ts`](./src/action-toolkit.ts) projects neutral Coffee actions into Effect AI
+  toolkit definitions.
+- [`src/action-tools.ts`](./src/action-tools.ts) adapts the toolkit into MCP tools.
 - [`src/resources.ts`](./src/resources.ts) defines menu and order MCP resources.
 - [`src/prompts.ts`](./src/prompts.ts) defines recommendation and open-order summary prompts.
 - [`src/server.ts`](./src/server.ts) composes MCP features into stdio and HTTP server layers.

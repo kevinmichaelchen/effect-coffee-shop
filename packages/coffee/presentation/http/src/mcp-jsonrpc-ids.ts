@@ -1,7 +1,7 @@
 import * as Schema from "effect/Schema";
-import { jsonString } from "./json.ts";
 
 const maxSurrogateRequestId = Number.MAX_SAFE_INTEGER;
+const encodeJsonString = Schema.encodeUnknownSync(Schema.UnknownFromJsonString);
 
 const JsonRpcIdSchema = Schema.Union([Schema.String, Schema.Number]);
 
@@ -28,6 +28,7 @@ type JsonRpcResponseBody = JsonRpcResponseEnvelope | ReadonlyArray<JsonRpcRespon
 
 const isJsonRpcRequestEnvelope = Schema.is(JsonRpcRequestEnvelopeSchema);
 const isJsonRpcResponseEnvelope = Schema.is(JsonRpcResponseEnvelopeSchema);
+const jsonString = (value: unknown): string => encodeJsonString(value);
 
 interface JsonRpcRequestNormalization {
   readonly request: Request;

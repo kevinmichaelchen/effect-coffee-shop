@@ -128,7 +128,7 @@ describe("sqlite row models", () => {
     expect(decoded.ownerUserId).toBe("user-avery");
     expect(decoded.drinkId).toBe("latte");
     expect(cartItem.drinkId).toBe("latte");
-    expect(Option.getOrThrow(cartItem.milk)).toBe("oat");
+    expect(Option.getOrElse(cartItem.milk, () => "missing")).toBe("oat");
     expect(encodeSqlCartItem(decoded)).toEqual({
       owner_user_id: "user-avery",
       id: "cart-item-0001",

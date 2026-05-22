@@ -5,10 +5,10 @@
  */
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
-import * as String from "effect/String";
+import * as Str from "effect/String";
 
 export const optionalTrimmedString = (value: string | undefined): Option.Option<string> =>
-  Option.fromUndefinedOr(value).pipe(Option.map(String.trim), Option.filter(String.isNonEmpty));
+  Option.fromUndefinedOr(value).pipe(Option.map(Str.trim), Option.filter(Str.isNonEmpty));
 
 export const optionalTrimmedRedactedString = (
   value: string | undefined,
@@ -30,9 +30,9 @@ export const trimOptionalRedactedString = (
 
 export const parseCsvSet = (value: string | undefined): ReadonlySet<string> =>
   new Set(
-    String.split(value ?? "", ",")
-      .map(String.trim)
-      .filter(String.isNonEmpty),
+    Str.split(value ?? "", ",")
+      .map(Str.trim)
+      .filter(Str.isNonEmpty),
   );
 
 export const revealOptionalSecret = (

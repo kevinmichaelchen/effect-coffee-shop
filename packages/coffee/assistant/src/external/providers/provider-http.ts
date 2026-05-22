@@ -10,7 +10,10 @@ import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/unstable/http";
 import * as HttpClientResponse from "effect/unstable/http/HttpClientResponse";
-import { AssistantModelRequestError, AssistantModelResponseDecodeError } from "./model.ts";
+import {
+  AssistantModelRequestError,
+  AssistantModelResponseDecodeError,
+} from "../../application/model.ts";
 
 export function decodeJsonTextEffect<SchemaType extends Schema.Decoder<unknown>>(input: {
   readonly provider: string;

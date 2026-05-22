@@ -6,7 +6,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./api": "./src/api.ts",
-    "./bun-server": "./src/bun-server.ts",
     "./web-handler": "./src/web-handler.ts"
   },
   "scripts": {
@@ -20,7 +19,6 @@
   },
   "dependencies": {
     "@effect-coffee-shop/backend-host": "workspace:*",
-    "@effect-coffee-shop/coffee-assistant": "workspace:*",
     "@effect-coffee-shop/coffee-core": "workspace:*",
     "effect": "catalog:"
   },

@@ -14,7 +14,7 @@ const shotCount = Schema.decodeUnknownSync(ShotCountSchema);
 const getMenuItem = (id: string) => {
   const item = menuItems.find((candidate) => candidate.id === id);
   if (item === undefined) {
-    throw new Error(`Missing menu item for test: ${id}`);
+    assert.fail(`Missing menu item for test: ${id}`);
   }
   return item;
 };

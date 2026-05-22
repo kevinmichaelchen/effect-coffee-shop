@@ -1,13 +1,13 @@
 import type { SqlCoffeeRepositoriesTestHarness } from "../support/D1Miniflare.ts";
 import { createSqlCoffeeRepositoriesTestHarness } from "../support/D1Miniflare.ts";
-import { afterAll, beforeAll, beforeEach } from "vitest";
+import { afterAll, assert, beforeAll, beforeEach } from "vitest";
 import { defineRepositoryContract } from "@effect-coffee-shop/coffee-core/application/testing/repository-contract";
 
 let harness: SqlCoffeeRepositoriesTestHarness | undefined;
 
 const getHarness = () => {
   if (harness === undefined) {
-    throw new Error("SQL repository test harness is not initialized");
+    assert.fail("SQL repository test harness is not initialized");
   }
 
   return harness;

@@ -1,0 +1,59 @@
+direction: down
+
+classes: {
+  app: {
+    style.fill: "#E7F0FF"
+    style.stroke: "#2563EB"
+  }
+  presentation: {
+    style.fill: "#ECFDF5"
+    style.stroke: "#059669"
+  }
+  application: {
+    style.fill: "#FFF7ED"
+    style.stroke: "#EA580C"
+  }
+  external: {
+    style.fill: "#F5F3FF"
+    style.stroke: "#7C3AED"
+  }
+  domain: {
+    style.fill: "#FEF2F2"
+    style.stroke: "#DC2626"
+  }
+}
+
+apps: "apps/backend\nchooses model provider + mounts" {
+  class: app
+}
+
+http: "assistant HTTP presentation\nrequest decode + SSE chunks + host observability" {
+  class: presentation
+}
+
+assistant: "assistant application\nsystem prompt, tool loop, AssistantModelRunner port" {
+  class: application
+}
+
+tools: "assistant tool projection\nCoffee action catalog to model-callable tools" {
+  class: presentation
+}
+
+providers: "external model providers\nWorkers AI, REST, Ollama, Bedrock Runtime" {
+  class: external
+}
+
+actions: "presentation/actions\nneutral capability catalog" {
+  class: presentation
+}
+
+core: "coffee-core\nCoffee application behavior" {
+  class: domain
+}
+
+apps -> http: "mount"
+http -> assistant: "run chat"
+assistant -> tools: "call tools"
+tools -> actions: "dispatch"
+actions -> core: "run use cases"
+providers -> assistant: "implement model port"

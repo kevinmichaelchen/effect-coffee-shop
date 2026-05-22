@@ -46,17 +46,58 @@ overrides, see [`apps/ui`](./apps/ui).
 
 ## Architecture At A Glance
 
+<details>
+<summary>Architecture diagrams</summary>
+
+The package layer view shows dependency direction. The runtime surface view shows how the backend
+exposes HTTP, MCP, auth, assistant, discovery, and static asset surfaces through the Fetch host. The
+assistant boundary view shows the internal split between HTTP presentation, chat application logic,
+Coffee tool projection, and external model providers.
+
+![Package layer diagram](./docs/architecture/package-layers.svg)
+
+![Backend runtime surface diagram](./docs/architecture/backend-runtime-surfaces.svg)
+
+![Assistant boundary diagram](./docs/architecture/assistant-boundaries.svg)
+
+Editable sources live in [`docs/architecture`](./docs/architecture).
+
+</details>
+
 | Layer | Workspace | Owns |
 | --- | --- | --- |
 | Domain/application | [`packages/coffee/core`](./packages/coffee/core) | Coffee domain model, use cases, ports, actors, contracts, and repository contract tests. |
-| Shared capabilities | [`packages/coffee/actions`](./packages/coffee/actions) | Neutral Coffee action names, schemas, dispatch, and result formatting. |
 | Presentation | [`packages/coffee/presentation`](./packages/coffee/presentation) | HTTP, CLI, and MCP protocol adapters over the application service. |
+| Presentation support | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions) | Shared Coffee capability names, schemas, dispatch, and neutral result formatting for presentation and capability adapters. |
 | Assistant | [`packages/coffee/assistant`](./packages/coffee/assistant) | Provider-neutral assistant runtime, streaming chunks, model adapters, and tool projection. |
 | Auth | [`packages/coffee/auth`](./packages/coffee/auth) | Better Auth setup, actor resolution, and Agent Auth capability execution. |
 | External adapters | [`packages/coffee/external`](./packages/coffee/external) | In-memory, SQLite/D1, and Drizzle/Postgres implementations of Coffee ports. |
 | Host utilities | [`packages/backend-host`](./packages/backend-host) | Runtime-agnostic Fetch host primitives, mounts, logging, and request-scoped services. |
 | Runtime shell | [`apps/backend`](./apps/backend) | Bun, Cloudflare, and AWS composition roots that choose concrete Layers. |
 | Browser app | [`apps/ui`](./apps/ui) | Vite/React UI, local proxying, passkey flows, and assistant client integration. |
+
+## Why Coffee Actions Exists
+
+[`coffee-core`](./packages/coffee/core) owns the real Coffee behavior: domain
+rules, use cases, ports, and typed errors. Several outside surfaces need to
+offer those same use cases, but each surface speaks a different protocol:
+MCP tools, assistant tools, and Agent Auth capabilities all have different
+metadata and schema shapes.
+
+[`coffee-actions`](./packages/coffee/presentation/actions) lives under presentation because it is
+shared presentation-side support. It gives each shared Coffee capability one stable name,
+description, input schema, neutral result format, and dispatch path into `CoffeeOrderApp`. That keeps
+MCP, the assistant, and Agent Auth from each inventing their own version of `list_menu`,
+`place_order`, or `checkout_cart`.
+
+Concrete surfaces still own their protocol projection. MCP builds Effect AI toolkit definitions in
+[`coffee-mcp`](./packages/coffee/presentation/mcp), and the assistant builds model-callable tool
+definitions in [`coffee-assistant`](./packages/coffee/assistant).
+
+It is not a fifth onion layer, and it is not a second business layer. If the behavior changes,
+change `coffee-core`. If one surface needs a private helper, keep that helper in the surface
+package. Add or change `coffee-actions` when multiple external surfaces need the same Coffee use
+case in a protocol-neutral shape.
 
 ## Choose Your Path
 
@@ -66,7 +107,7 @@ overrides, see [`apps/ui`](./apps/ui).
 | Work on the browser UI | [`apps/ui/README.md`](./apps/ui/README.md) |
 | Understand package boundaries | [`packages/README.md`](./packages/README.md) |
 | Add or change Coffee business behavior | [`packages/coffee/core`](./packages/coffee/core) |
-| Add a shared tool/capability action | [`packages/coffee/actions`](./packages/coffee/actions) |
+| Add a shared tool/capability action | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions) |
 | Change HTTP, CLI, or MCP surfaces | [`packages/coffee/presentation`](./packages/coffee/presentation) |
 | Change assistant behavior or providers | [`packages/coffee/assistant`](./packages/coffee/assistant) |
 | Change auth or Agent Auth capabilities | [`packages/coffee/auth`](./packages/coffee/auth) |
@@ -85,6 +126,7 @@ overrides, see [`apps/ui`](./apps/ui).
 | `bun run build-storybook` | Build the UI Storybook static site. |
 | `bun run check` | Run typecheck, lint, format check, tests, custom lint, and Fallow. |
 | `bun run check:affected` | Run the affected workspace gate against the current branch. |
+| `bun run test:local:full` | Run the full local gate, including a disposable Postgres contract test. |
 | `bun run build` | Build distributable workspace artifacts through Turborepo. |
 
 Workspace-specific gates:
@@ -93,6 +135,11 @@ Workspace-specific gates:
 bun run --cwd apps/backend check
 bun run --cwd apps/ui check
 ```
+
+Testing details live near the runtime and adapter they exercise:
+[`apps/backend`](./apps/backend/README.md#local-test-suite) covers the local integration pyramid,
+and [`coffee-external-drizzle-postgres`](./packages/coffee/external/drizzle-postgres/README.md)
+covers the optional Postgres contract test.
 
 Hook checks:
 

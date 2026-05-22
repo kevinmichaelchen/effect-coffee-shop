@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./action-toolkit": "./src/action-toolkit.ts",
     "./action-tools": "./src/action-tools.ts",
     "./prompts": "./src/prompts.ts",
     "./resources": "./src/resources.ts",
@@ -20,7 +21,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@effect-coffee-shop/backend-host": "workspace:*",
     "@effect-coffee-shop/coffee-actions": "workspace:*",
     "@effect-coffee-shop/coffee-core": "workspace:*",
     "effect": "catalog:"

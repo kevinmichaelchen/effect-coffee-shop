@@ -29,6 +29,20 @@ const CoffeeOrderItemSchema = Schema.Struct({
   lineTotalCents: Schema.Int,
 });
 
+const OrderItemRequestSchema = Schema.Struct({
+  drinkId: Schema.String,
+  size: DrinkSizeSchema,
+  milk: Schema.optional(MilkSchema),
+  temperature: Schema.optional(TemperatureSchema),
+  shots: Schema.optional(Schema.Int),
+  notes: Schema.optional(Schema.String),
+  quantity: Schema.optional(Schema.Int),
+});
+
+export const PlaceOrderRequestSchema = Schema.Struct({
+  items: Schema.Array(OrderItemRequestSchema),
+});
+
 export const CoffeeOrderSchema = Schema.Struct({
   id: Schema.String,
   customerName: Schema.String,
@@ -46,3 +60,8 @@ export const CoffeeApiErrorSchema = Schema.Struct({
 
 export const MenuSchema = Schema.Array(MenuItemSchema);
 export const CoffeeOrdersSchema = Schema.Array(CoffeeOrderSchema);
+
+export type MenuItem = typeof MenuItemSchema.Type;
+export type CoffeeOrder = typeof CoffeeOrderSchema.Type;
+export type PlaceOrderRequest = typeof PlaceOrderRequestSchema.Type;
+export type CoffeeApiError = typeof CoffeeApiErrorSchema.Type;

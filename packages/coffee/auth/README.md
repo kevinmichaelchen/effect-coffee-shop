@@ -4,7 +4,7 @@
 
 It is intentionally cross-cutting: Better Auth handles identity/session concerns, Agent Auth exposes
 delegated Coffee capabilities, and actor resolution feeds authenticated identity into the application
-layer. The package depends inward on [`coffee-actions`](../actions) and
+layer. The package depends inward on [`coffee-actions`](../presentation/actions) and
 [`coffee-core/application`](../core/src/application), while Cloudflare-specific Better Auth wiring is
 isolated under [`src/better-auth`](./src/better-auth).
 

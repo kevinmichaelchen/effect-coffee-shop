@@ -9,13 +9,15 @@ import type {
   AiTextGenerationToolLegacyOutput,
   AiTextGenerationToolOutput,
 } from "@cloudflare/workers-types";
-import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import * as HttpClientResponse from "effect/unstable/http/HttpClientResponse";
-import { AssistantModelRequestError, AssistantModelResponseDecodeError } from "./model.ts";
+import {
+  AssistantModelRequestError,
+  AssistantModelResponseDecodeError,
+} from "../../application/model.ts";
 import {
   createProviderStatusMessage,
   decodeJsonTextEffect,
@@ -52,6 +54,7 @@ const WorkersAiEnvelopeSchema = Schema.Struct({
 });
 
 type WorkersAiDecodedOutput = Schema.Schema.Type<typeof WorkersAiOutputSchema>;
+const encodeJsonString = Schema.encodeUnknownSync(Schema.UnknownFromJsonString);
 
 export function runWorkersAiOverRest(input: {
   readonly accountId: string;
@@ -177,7 +180,7 @@ function toHybridToolCall(
   return {
     arguments: toolCall.arguments,
     function: {
-      arguments: jsonString(toolCall.arguments),
+      arguments: encodeJsonString(toolCall.arguments),
       name: toolCall.name,
     },
     id: `legacy-${index}`,

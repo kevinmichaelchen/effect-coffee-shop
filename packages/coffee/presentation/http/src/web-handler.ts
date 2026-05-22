@@ -10,10 +10,7 @@ import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
 import { HostObservabilityLive } from "@effect-coffee-shop/backend-host/observability";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
-import {
-  normalizeMcpHttpRequestIds,
-  restoreMcpHttpResponseIds,
-} from "@effect-coffee-shop/backend-host/http-jsonrpc-ids";
+import { normalizeMcpHttpRequestIds, restoreMcpHttpResponseIds } from "./mcp-jsonrpc-ids.ts";
 
 export interface CoffeeWebHandler {
   readonly dispose: () => Promise<void>;

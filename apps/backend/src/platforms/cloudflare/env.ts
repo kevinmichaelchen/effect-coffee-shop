@@ -35,6 +35,7 @@ export const cloudflareBindingNames = {
 export const cloudflareEnvNames = {
   aiGatewayId: "AI_GATEWAY_ID",
   betterAuthSecret: "BETTER_AUTH_SECRET",
+  coffeeAssistantModel: "COFFEE_ASSISTANT_MODEL",
   coffeeStaffUserIds: "COFFEE_STAFF_USER_IDS",
 } as const;
 
@@ -42,6 +43,7 @@ export interface CloudflareWorkerEnv {
   AI?: WorkersAiBinding;
   AI_GATEWAY_ID?: string;
   BETTER_AUTH_SECRET?: string;
+  COFFEE_ASSISTANT_MODEL?: string;
   COFFEE_STAFF_USER_IDS?: string;
   DB: D1Database;
   ASSETS?: AssetFetcher;
@@ -55,6 +57,7 @@ export interface CloudflareRuntime {
   };
   readonly config: {
     readonly aiGatewayId: Option.Option<string>;
+    readonly assistantModel: Option.Option<string>;
     readonly betterAuthSecret: Option.Option<Redacted.Redacted<string>>;
     readonly staffUserIds: ReadonlySet<string>;
   };
@@ -62,6 +65,7 @@ export interface CloudflareRuntime {
 
 const cloudflareConfig = Config.all({
   aiGatewayId: Config.option(Config.string("aiGatewayId")),
+  coffeeAssistantModel: Config.option(Config.string("coffeeAssistantModel")),
   betterAuthSecret: Config.option(Config.redacted("betterAuthSecret")),
   coffeeStaffUserIds: Config.string("coffeeStaffUserIds").pipe(Config.withDefault("")),
 });
@@ -79,6 +83,7 @@ export const readCloudflareRuntime = (env: CloudflareWorkerEnv): CloudflareRunti
     },
     config: {
       aiGatewayId: Option.flatMap(decodedConfig.aiGatewayId, optionalTrimmedString),
+      assistantModel: Option.flatMap(decodedConfig.coffeeAssistantModel, optionalTrimmedString),
       betterAuthSecret: trimOptionalRedactedString(
         decodedConfig.betterAuthSecret,
         "BETTER_AUTH_SECRET",

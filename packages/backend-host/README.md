@@ -3,8 +3,8 @@
 `@effect-coffee-shop/backend-host` provides runtime-agnostic Fetch host utilities.
 
 It is not a Coffee business package. It owns the reusable host plumbing needed by Bun, Cloudflare,
-AWS, and tests: mount dispatch, request logging, observability, JSON helpers, request-scoped
-services, and the MCP HTTP JSON-RPC id compatibility shim.
+AWS, and tests: mount dispatch, request logging, observability, JSON encoding helpers, and
+request-scoped services.
 
 ## Directory Map
 
@@ -13,18 +13,17 @@ services, and the MCP HTTP JSON-RPC id compatibility shim.
 - [`src/mount.ts`](./src/mount.ts) defines mount contracts and request path helpers.
 - [`src/request-services.ts`](./src/request-services.ts) creates the base request service context
   supplied to web handlers.
-- [`src/logging.ts`](./src/logging.ts) writes structured request and actor logs.
+- [`src/logging.ts`](./src/logging.ts) writes structured request logs from generic log fields.
 - [`src/observability.ts`](./src/observability.ts) wires console logging, runtime metrics, and
-  optional OTLP export.
-- [`src/json.ts`](./src/json.ts) contains shared JSON formatting helpers.
-- [`src/http-jsonrpc-ids.ts`](./src/http-jsonrpc-ids.ts) adapts MCP HTTP JSON-RPC ids across host
-  boundaries.
+  optional OTLP export. Set `OTEL_SERVICE_NAME` to choose the exported service name.
+- [`src/json.ts`](./src/json.ts) contains shared JSON encoding helpers.
 
 ## Boundary Rule
 
 This package may know about generic Fetch requests and shared host concerns. It should not choose a
-Coffee persistence layer, parse deployment-specific bindings, or define Coffee domain/application
-behavior. Runtime composition belongs in [`apps/backend`](../../apps/backend).
+Coffee persistence layer, parse deployment-specific bindings, adapt MCP protocol details, or define
+Coffee domain/application behavior. Runtime composition belongs in
+[`apps/backend`](../../apps/backend).
 
 ## Commands
 

@@ -1,3 +1,5 @@
+import type { CoffeeOrder, MenuItem, PlaceOrderRequest } from "./coffee-schemas.ts";
+
 export const drinkSizes = ["small", "medium", "large"] as const;
 export const milks = ["whole", "oat", "almond", "none"] as const;
 export const temperatures = ["hot", "iced", "extra-hot"] as const;
@@ -9,53 +11,6 @@ type Temperature = (typeof temperatures)[number];
 export type OrderStatus = (typeof orderStatuses)[number];
 export type OrderAction = "start-brewing" | "mark-ready" | "pick-up" | "cancel";
 
-export interface MenuItem {
-  readonly id: string;
-  readonly name: string;
-  readonly kind: "espresso" | "tea";
-  readonly basePriceCents: number;
-  readonly availableMilks: readonly Milk[];
-  readonly availableTemperatures: readonly Temperature[];
-  readonly maxShots: number;
-}
-
-export interface CoffeeOrder {
-  readonly id: string;
-  readonly customerName: string;
-  readonly ownerUserId: string;
-  readonly items: readonly CoffeeOrderItem[];
-  readonly status: OrderStatus;
-  readonly totalPriceCents: number;
-  readonly createdAt: string;
-}
-
-export interface CoffeeOrderItem {
-  readonly drinkId: string;
-  readonly drinkName: string;
-  readonly size: DrinkSize;
-  readonly milk: Milk;
-  readonly temperature: Temperature;
-  readonly shots: number;
-  readonly notes?: string | undefined;
-  readonly quantity: number;
-  readonly unitPriceCents: number;
-  readonly lineTotalCents: number;
-}
-
-export interface PlaceOrderRequest {
-  items: readonly OrderItemRequest[];
-}
-
-export interface OrderItemRequest {
-  readonly drinkId: string;
-  readonly size: DrinkSize;
-  readonly milk?: Milk;
-  readonly temperature?: Temperature;
-  readonly shots?: number;
-  readonly notes?: string;
-  readonly quantity?: number;
-}
-
 export interface OrderDraft {
   drinkId: string;
   size: DrinkSize;
@@ -66,10 +21,7 @@ export interface OrderDraft {
   notes: string;
 }
 
-export interface CoffeeApiError {
-  readonly _tag?: string | undefined;
-  readonly message?: string | undefined;
-}
+export type { CoffeeApiError, CoffeeOrder, MenuItem, PlaceOrderRequest } from "./coffee-schemas.ts";
 
 interface OrderActionOption {
   action: OrderAction;

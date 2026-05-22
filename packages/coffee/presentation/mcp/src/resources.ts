@@ -13,7 +13,7 @@ import {
   toCoffeeOrdersView,
   toMenuView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
-import { prettyJson } from "@effect-coffee-shop/backend-host/json";
+import { prettyJson } from "./json.ts";
 
 export const MenuResource = McpServer.resource({
   uri: "coffee://menu",

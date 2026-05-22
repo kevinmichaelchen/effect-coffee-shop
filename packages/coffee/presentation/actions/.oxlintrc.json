@@ -1,5 +1,5 @@
 {
-  "$schema": "../../../node_modules/oxlint/configuration_schema.json",
+  "$schema": "../../../../node_modules/oxlint/configuration_schema.json",
   "plugins": ["oxc", "typescript", "unicorn", "node"],
   "jsPlugins": ["@mpsuesser/oxlint-plugin-effect"],
   "options": {
@@ -13,10 +13,19 @@
     "effect/avoid-any": "error",
     "effect/avoid-direct-json": "error",
     "effect/avoid-direct-tag-checks": "error",
+    "effect/avoid-non-null-assertion": "error",
+    "effect/avoid-object-type": "error",
+    "effect/avoid-option-getorthrow": "error",
     "effect/avoid-process-env": "error",
     "effect/avoid-sync-fs": "error",
+    "effect/avoid-try-catch": "error",
+    "effect/avoid-ts-ignore": "error",
+    "effect/avoid-untagged-errors": "error",
     "effect/casting-awareness": "error",
+    "effect/context-tag-extends": "error",
     "effect/effect-catchall-default": "error",
+    "effect/no-barrel-imports": "error",
+    "effect/prefer-namespace-imports": "error",
     "effect/prefer-redacted-config": "error",
     "effect/require-effect-concurrency": "error",
     "effect/throw-in-effect-gen": "error",
@@ -50,6 +59,8 @@
           "better-auth",
           "better-auth/*",
           "bun:*",
+          "effect/unstable/ai",
+          "effect/unstable/ai/*",
           "node:*"
         ]
       }

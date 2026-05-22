@@ -1,0 +1,84 @@
+direction: down
+
+classes: {
+  runtime: {
+    style.fill: "#E7F0FF"
+    style.stroke: "#2563EB"
+  }
+  host: {
+    style.fill: "#F8FAFC"
+    style.stroke: "#64748B"
+  }
+  surface: {
+    style.fill: "#ECFDF5"
+    style.stroke: "#059669"
+  }
+  implementation: {
+    style.fill: "#FFF7ED"
+    style.stroke: "#EA580C"
+  }
+}
+
+clients: "clients\nbrowser, agents, staff, tests"
+
+runtimes: "deployable runtimes" {
+  class: runtime
+  bun: "Bun\nlocal HTTP, local API, MCP stdio/HTTP" {
+    class: runtime
+  }
+  cloudflare: "Cloudflare Worker\nD1, assets, Workers AI" {
+    class: runtime
+  }
+  aws: "AWS Lambda\nPostgres, Function URL" {
+    class: runtime
+  }
+}
+
+fetch_host: "backend-host createFetchHost\nordered mount dispatch + request telemetry" {
+  class: host
+}
+
+mount_manifest: "surface manifest\npath matchers are explicit and toggleable" {
+  class: host
+}
+
+surfaces: "mounted surfaces" {
+  class: surface
+  api: "HTTP API\n/api/*" {
+    class: surface
+  }
+  mcp: "MCP HTTP\n/mcp" {
+    class: surface
+  }
+  auth: "Better Auth\n/api/auth/*" {
+    class: surface
+  }
+  assistant: "Assistant\n/api/assistant or local /assistant" {
+    class: surface
+  }
+  discovery: "Agent discovery\n/.well-known/*" {
+    class: surface
+  }
+  assets: "Static assets\nCloudflare fallback" {
+    class: surface
+  }
+}
+
+implementations: "surface implementations" {
+  class: implementation
+  route_layers: "Effect route layers\ncoffee-http + coffee-mcp" {
+    class: implementation
+  }
+  app_layer: "Coffee app layer\npersistence + domain services" {
+    class: implementation
+  }
+  auth_assistant: "auth + assistant adapters\nsession, capability, model runners" {
+    class: implementation
+  }
+}
+
+clients -> runtimes: "requests"
+runtimes -> fetch_host: "Fetch entrypoint"
+fetch_host -> mount_manifest: "find matching surface"
+mount_manifest -> surfaces: "delegate"
+surfaces -> implementations: "run handler"

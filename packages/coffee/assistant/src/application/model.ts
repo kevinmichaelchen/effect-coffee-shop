@@ -3,24 +3,26 @@
  *
  * @module
  */
-import type { ModelMessage } from "@tanstack/ai";
-import type { CoffeeActionJsonSchema } from "@effect-coffee-shop/coffee-actions/json-schema";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as Tool from "effect/unstable/ai/Tool";
+import * as Str from "effect/String";
 
-export interface AssistantToolActivity {
-  readonly detail: string;
-  readonly kind: "tool-call" | "tool-result";
-  readonly label: string;
-}
+const AssistantToolActivitySchema = Schema.Struct({
+  detail: Schema.String,
+  kind: Schema.Literals(["tool-call", "tool-result"] as const),
+  label: Schema.String,
+});
 
-export interface AssistantToolCall {
-  readonly arguments: unknown;
-  readonly id?: string;
-  readonly name: string;
-}
+const AssistantToolCallSchema = Schema.Struct({
+  arguments: Schema.Unknown,
+  id: Schema.optionalKey(Schema.String),
+  name: Schema.String,
+});
+
+export type AssistantToolActivity = typeof AssistantToolActivitySchema.Type;
+export type AssistantToolCall = typeof AssistantToolCallSchema.Type;
 
 export type AssistantConversationMessage =
   | {
@@ -35,16 +37,30 @@ export type AssistantConversationMessage =
     };
 
 export interface AssistantToolDefinition {
+  readonly description: string;
   readonly execute: (input: unknown) => Effect.Effect<string>;
-  readonly parameters: CoffeeActionJsonSchema;
-  readonly tool: Tool.Any;
+  readonly name: string;
+  readonly parameters: AssistantToolParameters;
 }
+
+export type AssistantToolParameters = Readonly<{
+  properties: Readonly<
+    Record<
+      string,
+      Readonly<{
+        description?: string;
+        type: string;
+      }>
+    >
+  >;
+  required: readonly string[];
+  type: "object";
+}>;
 
 export interface AssistantModelRequest {
   readonly conversation: readonly AssistantConversationMessage[];
   readonly eventId: string | undefined;
   readonly maxTokens: number;
-  readonly model: string;
   readonly requestMetadata: AssistantRequestMetadata | undefined;
   readonly tools: readonly AssistantToolDefinition[];
 }
@@ -90,76 +106,18 @@ export type AssistantRequestMetadata = Readonly<
 
 const assistantFallbackMessage = "I couldn't generate a final response.";
 
-function extractMessageText(content: ModelMessage["content"]): string {
-  if (content === null) {
-    return "";
-  }
-
-  if (typeof content === "string") {
-    return content;
-  }
-
-  return content
-    .filter((part) => part.type === "text")
-    .map((part) => part.content)
-    .join("");
-}
-
 export function extractResponseText(text: string | undefined): string {
-  const trimmedText = text?.trim();
-
-  if (!trimmedText) {
-    return assistantFallbackMessage;
-  }
-
-  return trimmedText;
-}
-
-export function getAssistantToolDescription(tool: AssistantToolDefinition): string {
-  return tool.tool.description ?? "";
-}
-
-export function getAssistantToolName(tool: AssistantToolDefinition): string {
-  return tool.tool.name;
-}
-
-export function toAssistantConversationMessages(
-  messages: readonly ModelMessage[],
-  systemPrompt: string,
-): AssistantConversationMessage[] {
-  return messages.reduce<AssistantConversationMessage[]>(
-    (conversation, message) => {
-      const converted = toAssistantConversationMessage(message);
-
-      if (converted === null) {
-        return conversation;
-      }
-
-      return conversation.concat(converted);
-    },
-    [{ role: "system", content: systemPrompt }],
+  return Option.fromUndefinedOr(text).pipe(
+    Option.map(Str.trim),
+    Option.filter(Str.isNonEmpty),
+    Option.getOrElse(() => assistantFallbackMessage),
   );
 }
 
-function toAssistantConversationMessage(
-  message: ModelMessage,
-): AssistantConversationMessage | null {
-  const content = extractMessageText(message.content);
+export function getAssistantToolDescription(tool: AssistantToolDefinition): string {
+  return tool.description;
+}
 
-  if (content === "") {
-    return null;
-  }
-
-  if (message.role === "tool") {
-    return {
-      content,
-      name: "tool",
-      role: "tool",
-    };
-  }
-
-  return {
-    role: message.role,
-    content,
-  };
+export function getAssistantToolName(tool: AssistantToolDefinition): string {
+  return tool.name;
 }

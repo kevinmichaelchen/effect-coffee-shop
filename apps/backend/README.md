@@ -24,7 +24,7 @@ See [`../../packages`](../../packages) for the package map this app composes.
 
 Runtime-specific binding decoding and layer composition belong here. Domain rules and application use
 cases stay in [`coffee-core`](../../packages/coffee/core), action contracts stay in
-[`coffee-actions`](../../packages/coffee/actions), and presentation protocol definitions stay in the
+[`coffee-actions`](../../packages/coffee/presentation/actions), and presentation protocol definitions stay in the
 [`coffee-http`](../../packages/coffee/presentation/http),
 [`coffee-mcp`](../../packages/coffee/presentation/mcp), and
 [`coffee-cli`](../../packages/coffee/presentation/cli).
@@ -43,6 +43,23 @@ bun run --cwd apps/backend lint
 bun run --cwd apps/backend lint:custom
 bun run --cwd apps/backend fmt:check
 ```
+
+## Local Test Suite
+
+The backend tests are local-only. Cloudflare-shaped coverage runs through Miniflare, not a real
+Cloudflare account, and assistant/model tests use fake local providers.
+
+Use the root full-local gate when you want unit, integration, Storybook browser, custom lint,
+Fallow, and the Postgres repository contract in one command:
+
+```bash
+bun run test:local:full
+```
+
+That script starts a disposable local Postgres container, runs the forced Turborepo test gate, runs
+the Drizzle/Postgres contract with `COFFEE_POSTGRES_TEST_URL`, then removes the container. The
+Postgres adapter keeps its direct contract-test details in
+[`coffee-external-drizzle-postgres`](../../packages/coffee/external/drizzle-postgres/README.md).
 
 Database helper commands proxy to the
 [`SQLite external package`](../../packages/coffee/external/sqlite):

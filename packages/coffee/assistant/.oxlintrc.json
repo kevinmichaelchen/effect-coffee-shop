@@ -1,0 +1,146 @@
+{
+  "$schema": "../../../node_modules/oxlint/configuration_schema.json",
+  "plugins": ["oxc", "typescript", "unicorn", "node"],
+  "jsPlugins": ["@mpsuesser/oxlint-plugin-effect"],
+  "options": {
+    "typeAware": true,
+    "typeCheck": true,
+    "maxWarnings": 0
+  },
+  "rules": {
+    "no-bitwise": "error",
+    "no-plusplus": "error",
+    "effect/avoid-any": "error",
+    "effect/avoid-direct-json": "error",
+    "effect/avoid-direct-tag-checks": "error",
+    "effect/avoid-non-null-assertion": "error",
+    "effect/avoid-object-type": "error",
+    "effect/avoid-option-getorthrow": "error",
+    "effect/avoid-process-env": "error",
+    "effect/avoid-sync-fs": "error",
+    "effect/avoid-try-catch": "error",
+    "effect/avoid-ts-ignore": "error",
+    "effect/avoid-untagged-errors": "error",
+    "effect/casting-awareness": "error",
+    "effect/context-tag-extends": "error",
+    "effect/effect-catchall-default": "error",
+    "effect/no-barrel-imports": "error",
+    "effect/prefer-namespace-imports": "error",
+    "effect/prefer-redacted-config": "error",
+    "effect/require-effect-concurrency": "error",
+    "effect/throw-in-effect-gen": "error",
+    "effect/use-console-service": "error",
+    "effect/use-filesystem-service": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-non-null-assertion": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          "@effect-coffee-shop/backend",
+          "@effect-coffee-shop/backend/*",
+          "@effect-coffee-shop/coffee-cli",
+          "@effect-coffee-shop/coffee-cli/*",
+          "@effect-coffee-shop/coffee-http",
+          "@effect-coffee-shop/coffee-http/*",
+          "@effect-coffee-shop/coffee-mcp",
+          "@effect-coffee-shop/coffee-mcp/*",
+          "bun:*",
+          "node:*"
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/application/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "@cloudflare/*",
+              "@effect-coffee-shop/backend-host",
+              "@effect-coffee-shop/backend-host/*",
+              "@effect-coffee-shop/coffee-actions",
+              "@effect-coffee-shop/coffee-actions/*",
+              "@tanstack/*",
+              "../external/*",
+              "../external/**",
+              "../presentation/*",
+              "../presentation/**",
+              "../../external/*",
+              "../../external/**",
+              "../../presentation/*",
+              "../../presentation/**",
+              "effect/unstable/http",
+              "effect/unstable/http/*"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/tools/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "@cloudflare/*",
+              "@effect-coffee-shop/backend-host",
+              "@effect-coffee-shop/backend-host/*",
+              "@tanstack/*",
+              "../external/*",
+              "../external/**",
+              "../presentation/*",
+              "../presentation/**",
+              "effect/unstable/http",
+              "effect/unstable/http/*"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/external/providers/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "@effect-coffee-shop/backend-host",
+              "@effect-coffee-shop/backend-host/*",
+              "@effect-coffee-shop/coffee-actions",
+              "@effect-coffee-shop/coffee-actions/*",
+              "@effect-coffee-shop/coffee-core",
+              "@effect-coffee-shop/coffee-core/*",
+              "@tanstack/*",
+              "../presentation/*",
+              "../presentation/**",
+              "../../presentation/*",
+              "../../presentation/**"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/presentation/http/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["../external/*", "../external/**", "../../external/*", "../../external/**"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
+}

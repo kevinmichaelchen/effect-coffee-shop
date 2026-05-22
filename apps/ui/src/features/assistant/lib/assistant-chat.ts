@@ -21,17 +21,13 @@ export interface AssistantStatus {
   readonly phase: "error" | "idle" | "ready" | "running";
 }
 
-export interface AssistantToolActivity {
-  readonly detail: string;
-  readonly kind: "tool-call" | "tool-result";
-  readonly label: string;
-}
-
 const AssistantToolActivitySchema = Schema.Struct({
   detail: Schema.String,
   kind: Schema.Literals(["tool-call", "tool-result"] as const),
   label: Schema.String,
 });
+
+export type AssistantToolActivity = typeof AssistantToolActivitySchema.Type;
 
 const isAssistantToolActivitySchema = Schema.is(AssistantToolActivitySchema);
 

@@ -50,11 +50,7 @@ type TestEnv = Awaited<ReturnType<typeof makeTestEnv>>;
 const withTestEnv = async <A>(run: (env: TestEnv) => Promise<A>): Promise<A> => {
   const testEnv = await makeTestEnv();
 
-  try {
-    return await run(testEnv);
-  } finally {
-    await testEnv.dispose();
-  }
+  return run(testEnv).finally(() => testEnv.dispose());
 };
 
 const directHttpBearerError =

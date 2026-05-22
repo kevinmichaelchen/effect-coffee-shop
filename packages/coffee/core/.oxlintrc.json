@@ -13,10 +13,19 @@
     "effect/avoid-any": "error",
     "effect/avoid-direct-json": "error",
     "effect/avoid-direct-tag-checks": "error",
+    "effect/avoid-non-null-assertion": "error",
+    "effect/avoid-object-type": "error",
+    "effect/avoid-option-getorthrow": "error",
     "effect/avoid-process-env": "error",
     "effect/avoid-sync-fs": "error",
+    "effect/avoid-try-catch": "error",
+    "effect/avoid-ts-ignore": "error",
+    "effect/avoid-untagged-errors": "error",
     "effect/casting-awareness": "error",
+    "effect/context-tag-extends": "error",
     "effect/effect-catchall-default": "error",
+    "effect/no-barrel-imports": "error",
+    "effect/prefer-namespace-imports": "error",
     "effect/prefer-redacted-config": "error",
     "effect/require-effect-concurrency": "error",
     "effect/throw-in-effect-gen": "error",
@@ -26,6 +35,41 @@
     "typescript/no-non-null-assertion": "error"
   },
   "overrides": [
+    {
+      "files": ["src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "@effect-coffee-shop/backend",
+              "@effect-coffee-shop/backend/*",
+              "@effect-coffee-shop/backend-host",
+              "@effect-coffee-shop/backend-host/*",
+              "@effect-coffee-shop/coffee-actions",
+              "@effect-coffee-shop/coffee-actions/*",
+              "@effect-coffee-shop/coffee-assistant",
+              "@effect-coffee-shop/coffee-assistant/*",
+              "@effect-coffee-shop/coffee-auth",
+              "@effect-coffee-shop/coffee-auth/*",
+              "@effect-coffee-shop/coffee-cli",
+              "@effect-coffee-shop/coffee-cli/*",
+              "@effect-coffee-shop/coffee-external-*",
+              "@effect-coffee-shop/coffee-external-*/*",
+              "@effect-coffee-shop/coffee-http",
+              "@effect-coffee-shop/coffee-http/*",
+              "@effect-coffee-shop/coffee-mcp",
+              "@effect-coffee-shop/coffee-mcp/*",
+              "@tanstack/*",
+              "better-auth",
+              "better-auth/*",
+              "bun:*",
+              "node:*"
+            ]
+          }
+        ]
+      }
+    },
     {
       "files": ["src/domain/**/*.ts"],
       "rules": {
