@@ -1,7 +1,7 @@
 # Drizzle Postgres External Layer
 
-`@effect-coffee-shop/coffee-external-drizzle-postgres` provides a
-Postgres-backed implementation of the Coffee application ports.
+`@effect-coffee-shop/coffee-external-drizzle-postgres` provides a Postgres-backed implementation of
+the Coffee application ports.
 
 See [`coffee-core`](../../core) for the ports implemented by this package.
 
@@ -30,12 +30,19 @@ bun run --cwd packages/coffee/external/drizzle-postgres test
 
 `db:migrate` and the live layer read `COFFEE_POSTGRES_URL`.
 
-## Tests
+## Contract Tests
 
-The Postgres repository contract suite runs only when
-`COFFEE_POSTGRES_TEST_URL` points at a disposable database:
+The Postgres repository contract suite runs only when `COFFEE_POSTGRES_TEST_URL` points at a
+disposable database:
 
 ```bash
-COFFEE_POSTGRES_TEST_URL=postgres://postgres:postgres@localhost:5432/effect_coffee_drizzle_test \
+COFFEE_POSTGRES_TEST_URL=postgres://postgres:postgres@localhost:55432/effect_coffee_drizzle_test \
   bun run --cwd packages/coffee/external/drizzle-postgres test
+```
+
+For the full local suite, including a disposable Postgres container and cleanup, use the root script.
+It runs this package's contract after the forced Turborepo gate:
+
+```bash
+bun run test:local:full
 ```

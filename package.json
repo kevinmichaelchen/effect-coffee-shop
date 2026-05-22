@@ -115,6 +115,7 @@
     "check": "turbo run typecheck lint fmt:check test && bun run lint:custom && bun run fallow",
     "check:affected": "turbo run typecheck lint fmt:check test --affected && bun run lint:custom && bun run fallow:audit",
     "test": "turbo run test",
+    "test:local:full": "bash scripts/test-local-full.sh",
     "test:affected": "turbo run test --affected",
     "typecheck:affected": "turbo run typecheck --affected",
     "lint:affected": "turbo run lint --affected",

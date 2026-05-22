@@ -44,6 +44,23 @@ bun run --cwd apps/backend lint:custom
 bun run --cwd apps/backend fmt:check
 ```
 
+## Local Test Suite
+
+The backend tests are local-only. Cloudflare-shaped coverage runs through Miniflare, not a real
+Cloudflare account, and assistant/model tests use fake local providers.
+
+Use the root full-local gate when you want unit, integration, Storybook browser, custom lint,
+Fallow, and the Postgres repository contract in one command:
+
+```bash
+bun run test:local:full
+```
+
+That script starts a disposable local Postgres container, runs the forced Turborepo test gate, runs
+the Drizzle/Postgres contract with `COFFEE_POSTGRES_TEST_URL`, then removes the container. The
+Postgres adapter keeps its direct contract-test details in
+[`coffee-external-drizzle-postgres`](../../packages/coffee/external/drizzle-postgres/README.md).
+
 Database helper commands proxy to the
 [`SQLite external package`](../../packages/coffee/external/sqlite):
 

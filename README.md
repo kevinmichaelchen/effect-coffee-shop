@@ -126,6 +126,7 @@ case in a protocol-neutral shape.
 | `bun run build-storybook` | Build the UI Storybook static site. |
 | `bun run check` | Run typecheck, lint, format check, tests, custom lint, and Fallow. |
 | `bun run check:affected` | Run the affected workspace gate against the current branch. |
+| `bun run test:local:full` | Run the full local gate, including a disposable Postgres contract test. |
 | `bun run build` | Build distributable workspace artifacts through Turborepo. |
 
 Workspace-specific gates:
@@ -134,6 +135,11 @@ Workspace-specific gates:
 bun run --cwd apps/backend check
 bun run --cwd apps/ui check
 ```
+
+Testing details live near the runtime and adapter they exercise:
+[`apps/backend`](./apps/backend/README.md#local-test-suite) covers the local integration pyramid,
+and [`coffee-external-drizzle-postgres`](./packages/coffee/external/drizzle-postgres/README.md)
+covers the optional Postgres contract test.
 
 Hook checks:
 
