@@ -1,0 +1,49 @@
+direction: down
+
+classes: {
+  app: {
+    style.fill: "#E7F0FF"
+    style.stroke: "#2563EB"
+  }
+  presentation: {
+    style.fill: "#ECFDF5"
+    style.stroke: "#059669"
+  }
+  application: {
+    style.fill: "#FFF7ED"
+    style.stroke: "#EA580C"
+  }
+  domain: {
+    style.fill: "#FEF2F2"
+    style.stroke: "#DC2626"
+  }
+  external: {
+    style.fill: "#F5F3FF"
+    style.stroke: "#7C3AED"
+  }
+}
+
+app: "apps/backend\ncomposition root\nchooses concrete layers" {
+  class: app
+}
+
+presentation: "presentation and capability adapters\nHTTP, MCP, CLI, auth, assistant" {
+  class: presentation
+}
+
+actions: "coffee-actions\nuse-case contracts\nand tool projection" {
+  class: application
+}
+
+core: "coffee-core\nbusiness behavior" {
+  class: domain
+}
+
+external: "external implementations\nrepositories, model runners, auth runtime" {
+  class: external
+}
+
+app -> presentation: "mount surfaces"
+presentation -> actions: "project tools/capabilities"
+actions -> core: "run use cases"
+external -> core: "implement ports"
