@@ -3,11 +3,13 @@
  *
  * @module
  */
+import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
+import * as ScopedCache from "effect/ScopedCache";
 import { AssistantModelRunner, type AssistantModelRunnerService } from "../../application/model.ts";
 import { type OllamaConfig, makeOllamaRunner } from "./ollama-runtime.ts";
 import {
@@ -130,7 +132,18 @@ export function createAssistantModelRunner(config: AssistantAiConfig): Assistant
 export function createAssistantModelRunnerLayer(
   config: AssistantAiConfig,
 ): Layer.Layer<AssistantModelRunner> {
-  return Layer.succeed(AssistantModelRunner)(createAssistantModelRunner(config));
+  return Layer.effect(
+    AssistantModelRunner,
+    Effect.gen(function* () {
+      const runnerCache = yield* ScopedCache.make({
+        capacity: 1,
+        lookup: (_model: string) => Effect.succeed(createAssistantModelRunner(config)),
+        timeToLive: "1 hour",
+      });
+
+      return yield* ScopedCache.get(runnerCache, getAssistantModelLabel(config));
+    }),
+  );
 }
 
 function getOllamaConfig(input: {

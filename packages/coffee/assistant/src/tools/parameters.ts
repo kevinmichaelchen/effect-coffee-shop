@@ -4,7 +4,6 @@
  * @module
  */
 import {
-  type CoffeeActionJsonSchema,
   cartItemIdActionJsonSchema,
   checkoutCartActionJsonSchema,
   emptyActionJsonSchema,
@@ -19,40 +18,26 @@ import {
   updateCartItemActionJsonSchema,
 } from "@effect-coffee-shop/coffee-actions/json-schema";
 
-function toAssistantToolParameters(schema: CoffeeActionJsonSchema): CoffeeActionJsonSchema {
-  return {
-    properties: { ...schema.properties },
-    required: [...schema.required],
-    type: schema.type,
-  };
-}
+export const emptyToolParameters = emptyActionJsonSchema;
 
-export const emptyToolParameters = toAssistantToolParameters(emptyActionJsonSchema);
+export const orderIdToolParameters = orderIdActionJsonSchema;
 
-export const orderIdToolParameters = toAssistantToolParameters(orderIdActionJsonSchema);
+export const cartItemIdToolParameters = cartItemIdActionJsonSchema;
 
-export const cartItemIdToolParameters = toAssistantToolParameters(cartItemIdActionJsonSchema);
+export const checkoutCartToolParameters = checkoutCartActionJsonSchema;
 
-export const checkoutCartToolParameters = toAssistantToolParameters(checkoutCartActionJsonSchema);
+export const prepareCartCheckoutToolParameters = prepareCartCheckoutActionJsonSchema;
 
-export const prepareCartCheckoutToolParameters = toAssistantToolParameters(
-  prepareCartCheckoutActionJsonSchema,
-);
+export const getCheckoutSessionToolParameters = getCheckoutSessionActionJsonSchema;
 
-export const getCheckoutSessionToolParameters = toAssistantToolParameters(
-  getCheckoutSessionActionJsonSchema,
-);
+export const itemOptionsToolParameters = itemOptionsActionJsonSchema;
 
-export const itemOptionsToolParameters = toAssistantToolParameters(itemOptionsActionJsonSchema);
+export const listOrdersToolParameters = listOrdersActionJsonSchema;
 
-export const listOrdersToolParameters = toAssistantToolParameters(listOrdersActionJsonSchema);
+export const orderItemToolParameters = orderItemActionJsonSchema;
 
-export const orderItemToolParameters = toAssistantToolParameters(orderItemActionJsonSchema);
+export const placeOrderToolParameters = placeOrderActionJsonSchema;
 
-export const placeOrderToolParameters = toAssistantToolParameters(placeOrderActionJsonSchema);
+export const quoteOrderToolParameters = quoteOrderActionJsonSchema;
 
-export const quoteOrderToolParameters = toAssistantToolParameters(quoteOrderActionJsonSchema);
-
-export const updateCartItemToolParameters = toAssistantToolParameters(
-  updateCartItemActionJsonSchema,
-);
+export const updateCartItemToolParameters = updateCartItemActionJsonSchema;

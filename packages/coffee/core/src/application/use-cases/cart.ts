@@ -21,7 +21,7 @@ import type {
   OrderItemInput,
   UpdateCartItemRequest,
 } from "../contracts.ts";
-import { OrderItemsInputSchema } from "../contracts.ts";
+import { CartItemQuoteSchema, OrderItemsInputSchema } from "../contracts.ts";
 import { InternalAppError, internalAppErrorFromPersistence } from "../errors.ts";
 import { CartItemIdGenerator } from "../ports/CartItemIdGenerator.ts";
 import { CartRepository } from "../ports/CartRepository.ts";
@@ -29,7 +29,12 @@ import { CheckoutSessionRepository } from "../ports/CheckoutSessionRepository.ts
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderIdGenerator } from "../ports/OrderIdGenerator.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
-import { invalidOrderInput, resolveOrderItem, toOrderItemInput } from "./orderItems.ts";
+import {
+  invalidOrderInput,
+  resolveOrderItem,
+  resolveOrderItems,
+  toOrderItemInput,
+} from "./orderItems.ts";
 import { placeOrder } from "./placeOrder.ts";
 
 const decodeOrderItemsInput = Schema.decodeUnknownEffect(OrderItemsInputSchema);
@@ -64,23 +69,24 @@ const toSnapshot = Effect.fnUntraced(function* (
   DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
   MenuRepository
 > {
-  const items = yield* Effect.forEach(
-    cart.items,
-    (cartItem) =>
-      resolveOrderItem(toOrderItemInput(cartItem)).pipe(
-        Effect.map((item) => ({
-          cartItemId: cartItem.id,
-          item,
-        })),
-      ),
-    { concurrency: 1 },
-  );
+  const resolvedItems = yield* resolveOrderItems(cart.items.map(toOrderItemInput));
+  const items = cart.items.map((cartItem, index) => ({
+    cartItemId: cartItem.id,
+    item: resolvedItems[index],
+  }));
 
-  return {
-    ownerUserId: cart.ownerUserId,
+  return yield* Schema.decodeUnknownEffect(Schema.Array(Schema.toType(CartItemQuoteSchema)))(
     items,
-    totalPrice: sumMoney(items.map((cartItem) => cartItem.item.lineTotal)),
-  };
+  ).pipe(
+    Effect.catchTag("SchemaError", () =>
+      Effect.fail(invalidOrderInput("cart items could not be resolved")),
+    ),
+    Effect.map((decodedItems) => ({
+      ownerUserId: cart.ownerUserId,
+      items: decodedItems,
+      totalPrice: sumMoney(decodedItems.map((cartItem) => cartItem.item.lineTotal)),
+    })),
+  );
 });
 
 const normalizeCartItem = Effect.fnUntraced(function* (
