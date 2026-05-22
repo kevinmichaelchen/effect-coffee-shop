@@ -7,8 +7,7 @@ under `packages/coffee`, while shared host utilities stay directly under
 ## Packages
 
 - [`backend-host`](./backend-host): runtime-agnostic fetch host primitives, mount
-  dispatch, request logging, request-scoped services, JSON formatting, and the
-  MCP HTTP JSON-RPC id shim.
+  dispatch, request logging, request-scoped services, and JSON encoding helpers.
 - [`coffee/core`](./coffee/core): Coffee bounded-context Onion Core.
 - [`coffee/external/in-memory`](./coffee/external/in-memory): in-memory Coffee
   External Layer.
