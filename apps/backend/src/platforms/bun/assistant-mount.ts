@@ -7,7 +7,7 @@ import * as Option from "effect/Option";
 import { handleAssistantRequest } from "@effect-coffee-shop/coffee-assistant/handler";
 import {
   createAssistantModelRunnerLayer,
-  getAssistantModel,
+  getAssistantModelLabel,
   getBunAssistantAiConfig,
 } from "@effect-coffee-shop/coffee-assistant/providers";
 import { fetchResponse, requestPathEquals } from "@effect-coffee-shop/backend-host/mount";
@@ -25,7 +25,8 @@ export const makeBunAssistantMount = (input: {
   matches: isAssistantRequest,
   handle: async ({ env, request }) => {
     const ai = getBunAssistantAiConfig(env);
-    const modelLayer = Option.match(Option.fromNullishOr(ai), {
+    const assistantAi = Option.fromNullishOr(ai);
+    const modelLayer = Option.match(assistantAi, {
       onNone: () => undefined,
       onSome: createAssistantModelRunnerLayer,
     });
@@ -34,7 +35,7 @@ export const makeBunAssistantMount = (input: {
       await handleAssistantRequest(request, {
         actor: systemActor,
         appLayer: input.appLayer,
-        model: getAssistantModel(env, ai),
+        model: Option.getOrUndefined(Option.map(assistantAi, getAssistantModelLabel)),
         modelLayer,
       }),
     );

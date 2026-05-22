@@ -55,6 +55,7 @@ describe("cloudflare runtime config", () => {
       AI_GATEWAY_ID: " gateway-123 ",
       ASSETS: makeAssetFetcher(),
       BETTER_AUTH_SECRET: " secret-123 ",
+      COFFEE_ASSISTANT_MODEL: " @cf/example/model ",
       COFFEE_STAFF_USER_IDS: " staff-a, staff-b , , staff-a ",
       DB: database,
     });
@@ -62,6 +63,7 @@ describe("cloudflare runtime config", () => {
     expect(Option.isSome(runtime.bindings.ai)).toBe(true);
     expect(Option.isSome(runtime.bindings.assets)).toBe(true);
     expect(Option.getOrUndefined(runtime.config.aiGatewayId)).toBe("gateway-123");
+    expect(Option.getOrUndefined(runtime.config.assistantModel)).toBe("@cf/example/model");
     expect(Option.map(runtime.config.betterAuthSecret, Redacted.value)).toEqual(
       Option.some("secret-123"),
     );
@@ -72,6 +74,7 @@ describe("cloudflare runtime config", () => {
     const runtime = readCloudflareRuntime({
       AI_GATEWAY_ID: "   ",
       BETTER_AUTH_SECRET: "",
+      COFFEE_ASSISTANT_MODEL: " ",
       COFFEE_STAFF_USER_IDS: " ,  , ",
       DB: database,
     } satisfies CloudflareWorkerEnv);
@@ -79,6 +82,7 @@ describe("cloudflare runtime config", () => {
     expect(Option.isNone(runtime.bindings.ai)).toBe(true);
     expect(Option.isNone(runtime.bindings.assets)).toBe(true);
     expect(Option.isNone(runtime.config.aiGatewayId)).toBe(true);
+    expect(Option.isNone(runtime.config.assistantModel)).toBe(true);
     expect(Option.isNone(runtime.config.betterAuthSecret)).toBe(true);
     expect([...runtime.config.staffUserIds]).toEqual([]);
   });

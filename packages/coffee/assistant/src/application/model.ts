@@ -56,7 +56,6 @@ export interface AssistantModelRequest {
   readonly conversation: readonly AssistantConversationMessage[];
   readonly eventId: string | undefined;
   readonly maxTokens: number;
-  readonly model: string;
   readonly requestMetadata: AssistantRequestMetadata | undefined;
   readonly tools: readonly AssistantToolDefinition[];
 }

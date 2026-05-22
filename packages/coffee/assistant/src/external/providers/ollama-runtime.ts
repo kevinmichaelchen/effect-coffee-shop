@@ -31,6 +31,7 @@ import {
 export interface OllamaConfig {
   readonly endpoint: string;
   readonly kind: "ollama";
+  readonly model: string;
 }
 
 const OllamaToolCallSchema = Schema.Struct({
@@ -89,19 +90,20 @@ export function makeOllamaRunner(config: OllamaConfig): AssistantModelRunnerServ
   const endpoint = normalizeEndpoint(config.endpoint);
 
   return {
-    run: (request) => runOllamaChat(endpoint, request),
+    run: (request) => runOllamaChat(endpoint, config.model, request),
   };
 }
 
 function runOllamaChat(
   endpoint: string,
+  model: string,
   request: AssistantModelRequest,
 ): Effect.Effect<
   AssistantModelResponse,
   AssistantModelRequestError | AssistantModelResponseDecodeError
 > {
   return postJsonResponse({
-    body: toOllamaChatRequest(request),
+    body: toOllamaChatRequest(model, request),
     onResponse: readOllamaResponse,
     onStatusError: rejectOllamaRequest,
     provider: "Ollama",
@@ -155,10 +157,10 @@ function readOllamaResponse(
   });
 }
 
-function toOllamaChatRequest(request: AssistantModelRequest): OllamaChatRequest {
+function toOllamaChatRequest(model: string, request: AssistantModelRequest): OllamaChatRequest {
   return {
     messages: request.conversation.map(toOllamaMessage),
-    model: request.model,
+    model,
     options: {
       num_predict: request.maxTokens,
     },

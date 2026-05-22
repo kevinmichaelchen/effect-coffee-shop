@@ -8,7 +8,6 @@ import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import {
   getAssistantAiConfigFromEnv,
-  getAssistantModel,
   type AssistantAiConfig,
 } from "@effect-coffee-shop/coffee-assistant/providers";
 import { optionalTrimmedRedactedString, parseCsvSet } from "../env.ts";
@@ -43,7 +42,6 @@ export type AwsLambdaEnv = Schema.Schema.Type<typeof AwsLambdaEnvSchema>;
 export interface AwsRuntime {
   readonly config: {
     readonly assistantAi: Option.Option<AssistantAiConfig>;
-    readonly assistantModel: string | undefined;
     readonly betterAuthSecret: Option.Option<Redacted.Redacted<string>>;
     readonly staffUserIds: ReadonlySet<string>;
   };
@@ -68,7 +66,6 @@ export const readAwsRuntime = (env: unknown): AwsRuntime => {
   return {
     config: {
       assistantAi: Option.fromNullishOr(assistantAi),
-      assistantModel: getAssistantModel(assistantEnv, assistantAi),
       betterAuthSecret: optionalTrimmedRedactedString(
         decodedEnv.BETTER_AUTH_SECRET,
         awsEnvNames.betterAuthSecret,

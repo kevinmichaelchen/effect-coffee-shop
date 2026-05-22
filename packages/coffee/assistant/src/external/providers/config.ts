@@ -10,7 +10,11 @@ import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import { AssistantModelRunner, type AssistantModelRunnerService } from "../../application/model.ts";
 import { type OllamaConfig, makeOllamaRunner } from "./ollama-runtime.ts";
-import { type WorkersAiConfig, makeWorkersAiRunner } from "./workers-ai-runtime.ts";
+import {
+  type WorkersAiBinding,
+  type WorkersAiConfig,
+  makeWorkersAiRunner,
+} from "./workers-ai-runtime.ts";
 
 const defaultOllamaEndpoint = "http://localhost:11434";
 const assistantProviderOllama = "ollama";
@@ -24,6 +28,7 @@ export function getAssistantAiConfigFromEnv(
   env: Record<string, string | undefined>,
 ): AssistantAiConfig | undefined {
   const provider = readOptionalEnv(env.COFFEE_ASSISTANT_PROVIDER);
+  const model = readOptionalEnv(env.COFFEE_ASSISTANT_MODEL);
   const ollamaEndpoint =
     readOptionalEnv(env.COFFEE_ASSISTANT_OLLAMA_URL) ?? readOptionalEnv(env.OLLAMA_HOST);
   const accountId = readOptionalEnv(env.CLOUDFLARE_ACCOUNT_ID);
@@ -31,6 +36,7 @@ export function getAssistantAiConfigFromEnv(
   const workersAiRestConfig = getWorkersAiRestConfig({
     accountId,
     apiKey,
+    model,
   });
   const explicitProviderConfig: Option.Option<Option.Option<AssistantAiConfig>> = Match.value(
     provider,
@@ -39,9 +45,9 @@ export function getAssistantAiConfigFromEnv(
       assistantProviderOllama,
       (): Option.Option<Option.Option<OllamaConfig>> =>
         Option.some(
-          Option.some({
-            kind: "ollama",
+          getOllamaConfig({
             endpoint: ollamaEndpoint ?? defaultOllamaEndpoint,
+            model,
           }),
         ),
     ),
@@ -49,13 +55,10 @@ export function getAssistantAiConfigFromEnv(
     Match.when(assistantProviderWorkersAiRest, () => Option.some(workersAiRestConfig)),
     Match.orElse(() => Option.none()),
   );
-  const ambientOllamaConfig: Option.Option<OllamaConfig> = Option.map(
-    Option.fromUndefinedOr(ollamaEndpoint),
-    (endpoint) => ({
-      kind: "ollama",
-      endpoint,
-    }),
-  );
+  const ambientOllamaConfig = getOllamaConfig({
+    endpoint: ollamaEndpoint,
+    model,
+  });
 
   return explicitProviderConfig.pipe(
     Option.match({
@@ -68,18 +71,53 @@ export function getAssistantAiConfigFromEnv(
 
 export const getBunAssistantAiConfig = getAssistantAiConfigFromEnv;
 
-export function getAssistantModel(
-  env?: Record<string, string | undefined>,
-  ai?: AssistantAiConfig,
-): string | undefined {
-  return Option.match(Option.fromUndefinedOr(readOptionalEnv(env?.COFFEE_ASSISTANT_MODEL)), {
-    onNone: () =>
-      Match.value(ai?.kind).pipe(
-        Match.when("ollama", () => undefined),
-        Match.orElse(() => getDefaultWorkersAiModel()),
-      ),
-    onSome: (model) => model,
+export function createWorkersAiBindingConfig(input: {
+  readonly binding: WorkersAiBinding;
+  readonly gatewayId: string | undefined;
+  readonly model: string | undefined;
+}): WorkersAiConfig | undefined {
+  return Option.fromUndefinedOr(readOptionalEnv(input.model)).pipe(
+    Option.map((model) =>
+      Option.match(Option.fromUndefinedOr(input.gatewayId), {
+        onNone: () =>
+          createWorkersAiBindingConfigValue({
+            binding: input.binding,
+            model,
+          }),
+        onSome: (gatewayId) =>
+          createWorkersAiBindingConfigValue({
+            binding: input.binding,
+            gatewayId,
+            model,
+          }),
+      }),
+    ),
+    Option.getOrUndefined,
+  );
+}
+
+function createWorkersAiBindingConfigValue(input: {
+  readonly binding: WorkersAiBinding;
+  readonly gatewayId?: string;
+  readonly model: string;
+}): WorkersAiConfig {
+  return Option.match(Option.fromUndefinedOr(input.gatewayId), {
+    onNone: () => ({
+      kind: "workers-ai-binding",
+      binding: input.binding,
+      model: input.model,
+    }),
+    onSome: (gatewayId) => ({
+      kind: "workers-ai-binding",
+      binding: input.binding,
+      gatewayId,
+      model: input.model,
+    }),
   });
+}
+
+export function getAssistantModelLabel(config: AssistantAiConfig): string {
+  return config.model;
 }
 
 export function createAssistantModelRunner(config: AssistantAiConfig): AssistantModelRunnerService {
@@ -95,8 +133,20 @@ export function createAssistantModelRunnerLayer(
   return Layer.succeed(AssistantModelRunner)(createAssistantModelRunner(config));
 }
 
-function getDefaultWorkersAiModel(): string {
-  return "@cf/meta/llama-3.1-8b-instruct-fast";
+function getOllamaConfig(input: {
+  readonly endpoint: string | undefined;
+  readonly model: string | undefined;
+}): Option.Option<OllamaConfig> {
+  return Option.all({
+    endpoint: Option.fromUndefinedOr(input.endpoint),
+    model: Option.fromUndefinedOr(input.model),
+  }).pipe(
+    Option.map(({ endpoint, model }) => ({
+      kind: "ollama",
+      endpoint,
+      model,
+    })),
+  );
 }
 
 function readOptionalEnv(value: string | undefined): string | undefined {
@@ -109,15 +159,18 @@ function readOptionalEnv(value: string | undefined): string | undefined {
 function getWorkersAiRestConfig(input: {
   readonly accountId: string | undefined;
   readonly apiKey: string | undefined;
+  readonly model: string | undefined;
 }): Option.Option<WorkersAiConfig> {
   return Option.all({
     accountId: Option.fromUndefinedOr(input.accountId),
     apiKey: Option.fromUndefinedOr(input.apiKey),
+    model: Option.fromUndefinedOr(input.model),
   }).pipe(
-    Option.map(({ accountId, apiKey }) => ({
+    Option.map(({ accountId, apiKey, model }) => ({
       kind: "workers-ai-rest",
       accountId,
       apiKey: Redacted.make(apiKey, { label: "CLOUDFLARE_API_TOKEN" }),
+      model,
     })),
   );
 }

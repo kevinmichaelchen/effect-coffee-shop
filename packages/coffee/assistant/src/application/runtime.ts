@@ -26,7 +26,6 @@ const encodeJsonString = Schema.encodeUnknownSync(Schema.UnknownFromJsonString);
 interface AssistantConversationRoundInput {
   readonly conversation: readonly AssistantConversationMessage[];
   readonly eventId: string | undefined;
-  readonly model: string;
   readonly requestMetadata: AssistantRequestMetadata | undefined;
   readonly round: number;
   readonly tools: readonly AssistantToolDefinition[];
@@ -35,7 +34,6 @@ interface AssistantConversationRoundInput {
 export function runAssistantConversation(input: {
   readonly eventId?: string;
   readonly messages: readonly AssistantConversationMessage[];
-  readonly model: string;
   readonly requestMetadata?: AssistantRequestMetadata;
   readonly systemPrompt: string;
   readonly tools: readonly AssistantToolDefinition[];
@@ -45,7 +43,6 @@ export function runAssistantConversation(input: {
   return runAssistantConversationRound({
     conversation,
     eventId: input.eventId,
-    model: input.model,
     requestMetadata: input.requestMetadata,
     round: 0,
     tools: input.tools,
@@ -63,7 +60,6 @@ function runAssistantConversationRound(
         conversation: input.conversation,
         eventId: input.eventId,
         maxTokens: assistantMaxTokens,
-        model: input.model,
         requestMetadata: input.requestMetadata,
         tools: input.tools,
       })
@@ -82,7 +78,6 @@ function runAssistantConversationRound(
               runAssistantConversationRound({
                 conversation,
                 eventId: input.eventId,
-                model: input.model,
                 requestMetadata: input.requestMetadata,
                 round: input.round + 1,
                 tools: input.tools,

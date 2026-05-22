@@ -14,6 +14,7 @@ import {
   booleanWithDefault,
   numberBetweenWithDefault,
   optionalTrimmedRedacted,
+  optionalTrimmedString,
   stringWithDefault,
 } from "./config.ts";
 import { coffeeStackName, uiBuild } from "./shared.ts";
@@ -42,6 +43,7 @@ export default Alchemy.Stack(
   },
   Effect.gen(function* () {
     const aiGatewayEnabled = yield* booleanWithDefault("COFFEE_ASSISTANT_AI_GATEWAY", false);
+    const assistantModel = yield* optionalTrimmedString(cloudflareEnvNames.coffeeAssistantModel);
     const observabilitySamplingRate = yield* numberBetweenWithDefault({
       defaultValue: 1,
       maximum: 1,
@@ -100,6 +102,7 @@ export default Alchemy.Stack(
       env: {
         [cloudflareEnvNames.aiGatewayId]: assistantGateway?.gatewayId ?? "",
         [cloudflareEnvNames.betterAuthSecret]: yield* betterAuthSecret,
+        [cloudflareEnvNames.coffeeAssistantModel]: assistantModel ?? "",
         [cloudflareEnvNames.coffeeStaffUserIds]: yield* stringWithDefault(
           cloudflareEnvNames.coffeeStaffUserIds,
           "",

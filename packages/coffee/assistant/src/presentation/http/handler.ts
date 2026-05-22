@@ -75,7 +75,9 @@ export async function handleAssistantRequest(
   }
 
   if (options.model === undefined) {
-    return unavailableResponse("Set COFFEE_ASSISTANT_MODEL for the selected Beanline AI provider.");
+    return unavailableResponse(
+      "Set COFFEE_ASSISTANT_MODEL on the selected Beanline AI provider adapter.",
+    );
   }
 
   const body = await parseAssistantRequestBody(request);
@@ -153,7 +155,6 @@ async function streamAssistantResponse(input: {
     runAssistantConversation({
       eventId: runId,
       messages: toAssistantConversationMessages(input.body.messages),
-      model: input.model,
       requestMetadata: createAssistantGatewayMetadata(input.actor, runId),
       systemPrompt: coffeeAssistantSystemPrompt,
       tools: createCoffeeAssistantTools(runApp, emitActivity),

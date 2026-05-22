@@ -7,7 +7,8 @@ import * as Option from "effect/Option";
 import { handleAssistantRequest } from "@effect-coffee-shop/coffee-assistant/handler";
 import {
   createAssistantModelRunnerLayer,
-  getAssistantModel,
+  createWorkersAiBindingConfig,
+  getAssistantModelLabel,
   type AssistantAiConfig,
 } from "@effect-coffee-shop/coffee-assistant/providers";
 import { type CloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
@@ -30,10 +31,13 @@ const getAssistantAiConfig = (runtime: CloudflareRuntime): Option.Option<Assista
   Option.match(runtime.bindings.ai, {
     onNone: () => Option.none(),
     onSome: (binding) =>
-      Option.match(runtime.config.aiGatewayId, {
-        onNone: () => Option.some({ binding, kind: "workers-ai-binding" }),
-        onSome: (gatewayId) => Option.some({ binding, gatewayId, kind: "workers-ai-binding" }),
-      }),
+      Option.fromNullishOr(
+        createWorkersAiBindingConfig({
+          binding,
+          gatewayId: Option.getOrUndefined(runtime.config.aiGatewayId),
+          model: Option.getOrUndefined(runtime.config.assistantModel),
+        }),
+      ),
   });
 
 export const cloudflareAssistantMount: FetchMount<CloudflareWorkerEnv> = {
@@ -42,8 +46,9 @@ export const cloudflareAssistantMount: FetchMount<CloudflareWorkerEnv> = {
   handle: async ({ env, request }) =>
     handleDirectHttpRequest(request, async () => {
       const { actor, backend, runtime } = await resolveCloudflareRequestActor({ env, request });
+      const assistantAi = getAssistantAiConfig(runtime);
 
-      const modelLayer = Option.match(getAssistantAiConfig(runtime), {
+      const modelLayer = Option.match(assistantAi, {
         onNone: () => undefined,
         onSome: createAssistantModelRunnerLayer,
       });
@@ -53,7 +58,7 @@ export const cloudflareAssistantMount: FetchMount<CloudflareWorkerEnv> = {
           actor,
           appLayer: backend.appLayer,
           gatewayEnabled: Option.isSome(runtime.config.aiGatewayId),
-          model: getAssistantModel(),
+          model: Option.getOrUndefined(Option.map(assistantAi, getAssistantModelLabel)),
           modelLayer,
         }),
         actorObservabilityAttributes(actor),
