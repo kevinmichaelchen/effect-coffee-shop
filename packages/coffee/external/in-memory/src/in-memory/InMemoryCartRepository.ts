@@ -10,7 +10,9 @@ import * as Ref from "effect/Ref";
 import type { Cart } from "@effect-coffee-shop/coffee-core/domain/cart";
 import { CartRepository } from "@effect-coffee-shop/coffee-core/application/ports/CartRepository";
 
-const emptyCart = (ownerUserId: string): Cart => ({
+type CartOwnerUserId = Cart["ownerUserId"];
+
+const emptyCart = (ownerUserId: CartOwnerUserId): Cart => ({
   ownerUserId,
   items: [],
 });
@@ -18,7 +20,7 @@ const emptyCart = (ownerUserId: string): Cart => ({
 export const InMemoryCartRepositoryLive = Layer.effect(
   CartRepository,
   Effect.gen(function* () {
-    const carts = yield* Ref.make(HashMap.empty<string, Cart>());
+    const carts = yield* Ref.make(HashMap.empty<CartOwnerUserId, Cart>());
 
     return CartRepository.of({
       getByOwnerUserId: (ownerUserId) => Ref.get(carts).pipe(Effect.map(HashMap.get(ownerUserId))),

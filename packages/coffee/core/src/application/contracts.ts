@@ -31,6 +31,8 @@ import {
   type CoffeeOrderItem,
 } from "../domain/order.ts";
 
+// Keep menu-choice request fields as trimmed strings so use cases can surface
+// domain-specific errors instead of boundary SchemaError failures.
 const BoundaryStringSchema = Schema.Trim;
 const CartItemIdInputSchema = CartItemIdSchema.annotate({
   description: "Cart line id, such as cart-item-0001.",
