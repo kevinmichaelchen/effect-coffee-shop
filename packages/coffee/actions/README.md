@@ -2,6 +2,14 @@
 
 `@effect-coffee-shop/coffee-actions` is the neutral Coffee capability contract package.
 
+## What Is An Action?
+
+An action is a named Coffee application capability with a stable input schema, result schema,
+description, and execution path. It is not an MCP-specific concept. MCP, the assistant, and Agent
+Auth all adapt these same neutral actions into their own protocols, but the canonical action
+contract lives here so those presentation layers do not each invent their own version of `list_menu`,
+`place_order`, or `checkout_cart`.
+
 It sits at the application/presentation boundary:
 
 - It depends inward on `coffee-core` domain and application contracts.

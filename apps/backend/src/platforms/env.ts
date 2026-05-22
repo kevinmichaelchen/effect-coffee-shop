@@ -5,15 +5,10 @@
  */
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
-import * as Schema from "effect/Schema";
+import * as String from "effect/String";
 
-const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
-
-export const optionalTrimmedString = (value: string | undefined): Option.Option<string> => {
-  const trimmed = decodeTrimmedString(value ?? "");
-
-  return Option.liftPredicate(trimmed, (input) => input !== "");
-};
+export const optionalTrimmedString = (value: string | undefined): Option.Option<string> =>
+  Option.fromUndefinedOr(value).pipe(Option.map(String.trim), Option.filter(String.isNonEmpty));
 
 export const optionalTrimmedRedactedString = (
   value: string | undefined,
@@ -34,12 +29,7 @@ export const trimOptionalRedactedString = (
   );
 
 export const parseCsvSet = (value: string | undefined): ReadonlySet<string> =>
-  new Set(
-    (value ?? "")
-      .split(",")
-      .map((entry) => decodeTrimmedString(entry))
-      .filter((entry) => entry !== ""),
-  );
+  new Set(String.split(value ?? "", ",").map(String.trim).filter(String.isNonEmpty));
 
 export const revealOptionalSecret = (
   secret: Option.Option<Redacted.Redacted<string>>,
