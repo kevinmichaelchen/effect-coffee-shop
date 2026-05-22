@@ -1,24 +1,22 @@
 /**
- * Composes the Coffee HTTP and MCP surfaces for Fetch-based runtimes.
+ * Builds a Coffee web handler for Fetch-based runtimes.
  *
  * @module
  */
 import * as Context from "effect/Context";
-import * as Layer from "effect/Layer";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
 import {
   CurrentActor,
   type AppActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";
 import {
   createCoffeeWebHandler,
   type CoffeeWebHandler,
 } from "@effect-coffee-shop/coffee-http/web-handler";
-import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
 
 type CoffeeWebHandlerInput = Parameters<typeof createCoffeeWebHandler>;
 
+export type CoffeeRoutesLayer = CoffeeWebHandlerInput[0];
 export type CoffeeAppLayer = CoffeeWebHandlerInput[1];
 
 export interface CoffeeBackend<TPersistence = never> {
@@ -33,15 +31,13 @@ export interface CoffeeBackendOptions<TPersistence> {
   readonly appLayer: CoffeeAppLayer;
   readonly ensureAuthPersistence: () => Promise<void>;
   readonly persistence: TPersistence;
+  readonly routes: CoffeeRoutesLayer;
 }
 
 export const makeCoffeeBackend = <TPersistence>(
   options: CoffeeBackendOptions<TPersistence>,
 ): CoffeeBackend<TPersistence> => {
-  const webHandler = createCoffeeWebHandler(
-    Layer.mergeAll(CoffeeHttpApiLive, CoffeeMcpHttpLive),
-    options.appLayer,
-  );
+  const webHandler = createCoffeeWebHandler(options.routes, options.appLayer);
 
   return {
     appLayer: options.appLayer,
