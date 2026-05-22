@@ -46,6 +46,21 @@ overrides, see [`apps/ui`](./apps/ui).
 
 ## Architecture At A Glance
 
+<details>
+<summary>Architecture diagrams</summary>
+
+The package layer view shows dependency direction. The runtime surface view
+shows how the backend exposes HTTP, MCP, auth, assistant, discovery, and static
+asset surfaces through the Fetch host.
+
+![Package layer diagram](./docs/architecture/package-layers.svg)
+
+![Backend runtime surface diagram](./docs/architecture/backend-runtime-surfaces.svg)
+
+Editable sources live in [`docs/architecture`](./docs/architecture).
+
+</details>
+
 | Layer | Workspace | Owns |
 | --- | --- | --- |
 | Domain/application | [`packages/coffee/core`](./packages/coffee/core) | Coffee domain model, use cases, ports, actors, contracts, and repository contract tests. |
@@ -57,6 +72,25 @@ overrides, see [`apps/ui`](./apps/ui).
 | Host utilities | [`packages/backend-host`](./packages/backend-host) | Runtime-agnostic Fetch host primitives, mounts, logging, and request-scoped services. |
 | Runtime shell | [`apps/backend`](./apps/backend) | Bun, Cloudflare, and AWS composition roots that choose concrete Layers. |
 | Browser app | [`apps/ui`](./apps/ui) | Vite/React UI, local proxying, passkey flows, and assistant client integration. |
+
+## Why Coffee Actions Exists
+
+[`coffee-core`](./packages/coffee/core) owns the real Coffee behavior: domain
+rules, use cases, ports, and typed errors. Several outside surfaces need to
+offer those same use cases, but each surface speaks a different protocol:
+MCP tools, assistant tools, and Agent Auth capabilities all have different
+metadata and schema shapes.
+
+[`coffee-actions`](./packages/coffee/actions) is the small shared catalog in
+the middle. It gives each shared Coffee capability one stable name, description,
+input schema, neutral result format, and dispatch path into `CoffeeOrderApp`.
+That keeps MCP, the assistant, and Agent Auth from each inventing their own
+version of `list_menu`, `place_order`, or `checkout_cart`.
+
+It is not a second business layer. If the behavior changes, change
+`coffee-core`. If one surface needs a private helper, keep that helper in the
+surface package. Add or change `coffee-actions` when multiple external surfaces
+need the same Coffee use case in a protocol-neutral shape.
 
 ## Choose Your Path
 
