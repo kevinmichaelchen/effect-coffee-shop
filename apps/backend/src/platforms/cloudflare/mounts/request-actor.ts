@@ -19,7 +19,7 @@ export const resolveCloudflareRequestActor = async (input: {
 
   const actor = await resolveCloudflareActor({
     appLayer: backend.appLayer,
-    db: backend.db,
+    db: backend.persistence,
     request: input.request,
     secret,
     staffUserIds: runtime.config.staffUserIds,

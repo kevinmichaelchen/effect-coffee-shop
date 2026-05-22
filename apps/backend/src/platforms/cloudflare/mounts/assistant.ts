@@ -11,19 +11,18 @@ import {
 } from "@effect-coffee-shop/coffee-assistant/handler";
 import type { AssistantAiConfig } from "@effect-coffee-shop/coffee-assistant/runtime";
 import { type CloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
-import { rejectDirectHttpBearerRequest } from "../direct-http-auth.ts";
+import { handleDirectHttpRequest } from "../../../host/direct-http-auth.ts";
 import {
-  cloudflarePathEquals,
-  cloudflareResponse,
+  requestPathEquals,
+  fetchResponse,
   rewriteRequestPathPrefix,
-  type CloudflareMount,
+  type FetchMount,
 } from "@effect-coffee-shop/backend-host/mount";
 import { actorLogFields } from "@effect-coffee-shop/backend-host/logging";
 import { resolveCloudflareRequestActor } from "./request-actor.ts";
 
 const isAssistantRequest = (request: Request): boolean =>
-  cloudflarePathEquals(request, "/api/assistant") ||
-  cloudflarePathEquals(request, "/api/assistant/");
+  requestPathEquals(request, "/api/assistant") || requestPathEquals(request, "/api/assistant/");
 
 const rewriteApiRequest = (request: Request): Request => rewriteRequestPathPrefix(request, "/api");
 
@@ -37,30 +36,27 @@ const getAssistantAiConfig = (runtime: CloudflareRuntime): Option.Option<Assista
       }),
   });
 
-export const cloudflareAssistantMount: CloudflareMount<CloudflareWorkerEnv> = {
+export const cloudflareAssistantMount: FetchMount<CloudflareWorkerEnv> = {
   name: "assistant",
   matches: isAssistantRequest,
   handle: async ({ env, request }) =>
-    Option.match(rejectDirectHttpBearerRequest(request), {
-      onNone: async () => {
-        const { actor, backend, runtime } = await resolveCloudflareRequestActor({ env, request });
+    handleDirectHttpRequest(request, async () => {
+      const { actor, backend, runtime } = await resolveCloudflareRequestActor({ env, request });
 
-        const modelLayer = Option.match(getAssistantAiConfig(runtime), {
-          onNone: () => undefined,
-          onSome: createAssistantModelRunnerLayer,
-        });
+      const modelLayer = Option.match(getAssistantAiConfig(runtime), {
+        onNone: () => undefined,
+        onSome: createAssistantModelRunnerLayer,
+      });
 
-        return cloudflareResponse(
-          await handleAssistantRequest(rewriteApiRequest(request), {
-            actor,
-            appLayer: backend.appLayer,
-            gatewayEnabled: Option.isSome(runtime.config.aiGatewayId),
-            model: getAssistantModel(),
-            modelLayer,
-          }),
-          actorLogFields(actor),
-        );
-      },
-      onSome: async (response: Response) => cloudflareResponse(response),
+      return fetchResponse(
+        await handleAssistantRequest(rewriteApiRequest(request), {
+          actor,
+          appLayer: backend.appLayer,
+          gatewayEnabled: Option.isSome(runtime.config.aiGatewayId),
+          model: getAssistantModel(),
+          modelLayer,
+        }),
+        actorLogFields(actor),
+      );
     }),
 };

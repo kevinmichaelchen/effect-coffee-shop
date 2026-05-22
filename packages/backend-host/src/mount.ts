@@ -1,42 +1,45 @@
 /**
- * Defines Cloudflare Worker mount contracts and request path helpers.
+ * Defines Fetch host mount contracts and request path helpers.
  *
  * @module
  */
-import type { ExecutionContext } from "@cloudflare/workers-types";
 import type { StructuredLogRecord } from "./logging.ts";
 
-export interface CloudflareRequestContext<TEnv> {
-  readonly env: TEnv;
-  readonly executionContext: ExecutionContext;
-  readonly request: Request;
+export interface HostRuntimeContext {
+  readonly waitUntil?: (promise: Promise<unknown>) => void;
 }
 
-export interface CloudflareMountResult {
+export interface FetchRequestContext<TEnv> {
+  readonly env: TEnv;
+  readonly request: Request;
+  readonly runtime: HostRuntimeContext;
+}
+
+export interface FetchMountResult {
   readonly response: Response;
   readonly logFields?: StructuredLogRecord;
 }
 
-export interface CloudflareMount<TEnv> {
+export interface FetchMount<TEnv> {
   readonly name: string;
   readonly matches: (request: Request) => boolean;
-  readonly handle: (context: CloudflareRequestContext<TEnv>) => Promise<CloudflareMountResult>;
+  readonly handle: (context: FetchRequestContext<TEnv>) => Promise<FetchMountResult>;
 }
 
-export const cloudflarePathname = (request: Request): string => new URL(request.url).pathname;
+export const requestPathname = (request: Request): string => new URL(request.url).pathname;
 
-export const cloudflarePathEquals = (request: Request, pathname: string): boolean =>
-  cloudflarePathname(request) === pathname;
+export const requestPathEquals = (request: Request, pathname: string): boolean =>
+  requestPathname(request) === pathname;
 
-export const cloudflarePathIsOrStartsWith = (request: Request, pathname: string): boolean => {
-  const requestPathname = cloudflarePathname(request);
-  return requestPathname === pathname || requestPathname.startsWith(`${pathname}/`);
+export const requestPathIsOrStartsWith = (request: Request, pathname: string): boolean => {
+  const pathnameFromRequest = requestPathname(request);
+  return pathnameFromRequest === pathname || pathnameFromRequest.startsWith(`${pathname}/`);
 };
 
-export const cloudflareResponse = (
+export const fetchResponse = (
   response: Response,
   logFields?: StructuredLogRecord,
-): CloudflareMountResult => (logFields === undefined ? { response } : { logFields, response });
+): FetchMountResult => (logFields === undefined ? { response } : { logFields, response });
 
 export const rewriteRequestPath = (request: Request, pathname: string): Request => {
   const url = new URL(request.url);
@@ -45,7 +48,7 @@ export const rewriteRequestPath = (request: Request, pathname: string): Request 
 };
 
 export const rewriteRequestPathPrefix = (request: Request, prefix: string): Request => {
-  const pathname = cloudflarePathname(request);
+  const pathname = requestPathname(request);
   const rewrittenPathname = pathname === prefix ? "/" : pathname.slice(prefix.length);
   return rewriteRequestPath(request, rewrittenPathname);
 };

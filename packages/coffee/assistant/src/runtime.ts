@@ -37,7 +37,7 @@ interface AssistantConversationRoundInput {
   readonly tools: readonly AssistantToolDefinition[];
 }
 
-export function getBunAssistantAiConfig(
+export function getAssistantAiConfigFromEnv(
   env: Record<string, string | undefined>,
 ): AssistantAiConfig | undefined {
   const provider = readOptionalEnv(env.COFFEE_ASSISTANT_PROVIDER);
@@ -64,6 +64,8 @@ export function getBunAssistantAiConfig(
     apiKey,
   };
 }
+
+export const getBunAssistantAiConfig = getAssistantAiConfigFromEnv;
 
 export function getAssistantModel(
   env?: Record<string, string | undefined>,

@@ -1,0 +1,10 @@
+export const coffeeStackName = "effect-v4-onion";
+
+export const uiBuild = {
+  command: "bun run build",
+  include: ["index.html", "package.json", "public/**", "src/**", "tsconfig*.json", "vite.config.*"],
+  lockfile: true,
+  output: "dist",
+} as const;
+
+export const clampSamplingRate = (rate: number): number => Math.min(1, Math.max(0, rate));

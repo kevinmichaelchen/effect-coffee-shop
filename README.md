@@ -82,14 +82,21 @@ bun run --cwd apps/backend check
 bun run --cwd apps/ui check
 ```
 
-Cloudflare candidate stack:
+Infrastructure stack:
 
 ```bash
 bun run cf:configure
 bun run cf:login
-bun run cf:dev -- --profile default
-bun run cf:deploy -- --profile default
+bun run infra:dev -- --profile default
+bun run infra:deploy -- --profile default
 ```
+
+`alchemy.run.ts` is the deploy-target selector. It exports the Cloudflare stack by
+default; swap that single export to `./infra/alchemy/aws.ts` for AWS. The AWS
+stack expects `COFFEE_POSTGRES_URL` at deploy time and uses Alchemy's AWS Lambda
+and Website resources for the runtime and static site. The `infra:*` commands
+follow the selector; `cf:*` and `aws:*` stay pinned to their provider-specific
+stack files.
 
 Hook checks:
 

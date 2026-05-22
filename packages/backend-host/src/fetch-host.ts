@@ -1,10 +1,9 @@
-import type { ExecutionContext } from "@cloudflare/workers-types";
 import * as Effect from "effect/Effect";
 import { logRequestCompleted, logRequestFailed } from "./logging.ts";
-import type { CloudflareMount, CloudflareRequestContext } from "./mount.ts";
+import type { FetchMount, FetchRequestContext, HostRuntimeContext } from "./mount.ts";
 import {
-  recordWorkerRequestCompleted,
-  recordWorkerRequestFailed,
+  recordFetchHostRequestCompleted,
+  recordFetchHostRequestFailed,
   requestSpanAttributes,
   runHostEffect,
 } from "./observability.ts";
@@ -14,21 +13,21 @@ const notFoundResponse = () => new Response("Not Found", { status: 404 });
 const createRequestContext = <TEnv>(
   request: Request,
   env: TEnv,
-  executionContext: ExecutionContext,
-): CloudflareRequestContext<TEnv> => ({
+  runtime: HostRuntimeContext,
+): FetchRequestContext<TEnv> => ({
   env,
-  executionContext,
   request,
+  runtime,
 });
 
 const findMatchingMount = <TEnv>(
-  mounts: ReadonlyArray<CloudflareMount<TEnv>>,
+  mounts: ReadonlyArray<FetchMount<TEnv>>,
   request: Request,
-): CloudflareMount<TEnv> | undefined => mounts.find((mount) => mount.matches(request));
+): FetchMount<TEnv> | undefined => mounts.find((mount) => mount.matches(request));
 
-export const createCloudflareHost =
-  <TEnv>(mounts: ReadonlyArray<CloudflareMount<TEnv>>) =>
-  async (request: Request, env: TEnv, executionContext: ExecutionContext): Promise<Response> => {
+export const createFetchHost =
+  <TEnv>(mounts: ReadonlyArray<FetchMount<TEnv>>) =>
+  async (request: Request, env: TEnv, runtime: HostRuntimeContext = {}): Promise<Response> => {
     const mount = findMatchingMount(mounts, request);
     const routeKind = mount?.name ?? "unmatched";
     const startedAt = performance.now();
@@ -40,7 +39,7 @@ export const createCloudflareHost =
 
         await runHostEffect(
           Effect.gen(function* () {
-            yield* recordWorkerRequestCompleted({
+            yield* recordFetchHostRequestCompleted({
               durationMs,
               method: request.method,
               routeKind,
@@ -53,7 +52,7 @@ export const createCloudflareHost =
               routeKind,
             });
           }).pipe(
-            Effect.withSpan("worker.request"),
+            Effect.withSpan("fetch_host.request"),
             Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
           ),
         );
@@ -64,11 +63,11 @@ export const createCloudflareHost =
       return await runHostEffect(
         Effect.gen(function* () {
           const { logFields, response } = yield* Effect.promise(() =>
-            mount.handle(createRequestContext(request, env, executionContext)),
+            mount.handle(createRequestContext(request, env, runtime)),
           );
           const durationMs = performance.now() - startedAt;
 
-          yield* recordWorkerRequestCompleted({
+          yield* recordFetchHostRequestCompleted({
             durationMs,
             method: request.method,
             routeKind,
@@ -94,7 +93,7 @@ export const createCloudflareHost =
 
           return response;
         }).pipe(
-          Effect.withSpan("worker.request"),
+          Effect.withSpan("fetch_host.request"),
           Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
         ),
       );
@@ -103,7 +102,7 @@ export const createCloudflareHost =
 
       await runHostEffect(
         Effect.gen(function* () {
-          yield* recordWorkerRequestFailed({
+          yield* recordFetchHostRequestFailed({
             durationMs,
             method: request.method,
             routeKind,
@@ -115,7 +114,7 @@ export const createCloudflareHost =
             routeKind,
           });
         }).pipe(
-          Effect.withSpan("worker.request"),
+          Effect.withSpan("fetch_host.request"),
           Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
         ),
       );

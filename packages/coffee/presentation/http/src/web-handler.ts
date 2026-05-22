@@ -10,7 +10,7 @@ import {
   restoreMcpHttpResponseIds,
 } from "@effect-coffee-shop/backend-host/http-jsonrpc-ids";
 
-interface CoffeeWebHandler {
+export interface CoffeeWebHandler {
   readonly dispose: () => Promise<void>;
   readonly handler: (request: Request, services?: Context.Context<unknown>) => Promise<Response>;
 }

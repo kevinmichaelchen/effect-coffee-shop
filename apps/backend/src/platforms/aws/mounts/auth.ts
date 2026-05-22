@@ -1,11 +1,9 @@
 /**
- * Mounts Better Auth and agent discovery routes on the Cloudflare Worker.
+ * Mounts Better Auth and agent discovery routes on AWS Lambda.
  *
  * @module
  */
 import * as Option from "effect/Option";
-import { getCloudflareRuntimeBackend } from "../coffee-backend.ts";
-import { readCloudflareRuntime, revealSecret, type CloudflareWorkerEnv } from "../env.ts";
 import {
   requestPathEquals,
   requestPathIsOrStartsWith,
@@ -13,7 +11,9 @@ import {
   rewriteRequestPath,
   type FetchMount,
 } from "@effect-coffee-shop/backend-host/mount";
-import { createCloudflareAuth } from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
+import { createCoffeeAuth } from "@effect-coffee-shop/coffee-auth/better-auth/shared";
+import { getAwsRuntimeBackend } from "../coffee-backend.ts";
+import { revealSecret, type AwsRuntime } from "../env.ts";
 
 const betterAuthUnavailableResponse = () =>
   new Response("Better Auth is unavailable. Configure BETTER_AUTH_SECRET.", { status: 503 });
@@ -24,27 +24,24 @@ const isAgentDiscoveryRequest = (request: Request): boolean =>
 const isAuthRequest = (request: Request): boolean =>
   requestPathIsOrStartsWith(request, "/api/auth");
 
-const handleAuthRequest = async (request: Request, env: CloudflareWorkerEnv): Promise<Response> => {
-  const runtime = readCloudflareRuntime(env);
-
-  return Option.match(runtime.config.betterAuthSecret, {
+const handleAuthRequest = async (request: Request, runtime: AwsRuntime): Promise<Response> =>
+  Option.match(runtime.config.betterAuthSecret, {
     onNone: async () => betterAuthUnavailableResponse(),
     onSome: async (secret) => {
-      const backend = getCloudflareRuntimeBackend(runtime);
+      const backend = getAwsRuntimeBackend();
 
       await backend.ensureAuthPersistence();
 
-      return createCloudflareAuth({
+      return createCoffeeAuth({
         appLayer: backend.appLayer,
-        db: backend.persistence,
+        database: await backend.persistence.authDatabase(),
         request,
         secret: revealSecret(secret),
       }).handler(request);
     },
   });
-};
 
-export const cloudflareAgentDiscoveryMount: FetchMount<CloudflareWorkerEnv> = {
+export const awsAgentDiscoveryMount: FetchMount<AwsRuntime> = {
   name: "agent-discovery",
   matches: isAgentDiscoveryRequest,
   handle: async ({ env, request }) =>
@@ -53,7 +50,7 @@ export const cloudflareAgentDiscoveryMount: FetchMount<CloudflareWorkerEnv> = {
     ),
 };
 
-export const cloudflareAuthMount: FetchMount<CloudflareWorkerEnv> = {
+export const awsAuthMount: FetchMount<AwsRuntime> = {
   name: "auth",
   matches: isAuthRequest,
   handle: async ({ env, request }) => fetchResponse(await handleAuthRequest(request, env)),

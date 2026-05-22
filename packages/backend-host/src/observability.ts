@@ -41,18 +41,18 @@ export const HostObservabilityLive = Layer.mergeAll(
   OtlpObservabilityLive,
 );
 
-const requestTotal = Metric.counter("worker_requests_total", {
-  description: "Total Cloudflare worker requests handled by route, method, and outcome.",
+const requestTotal = Metric.counter("fetch_host_requests_total", {
+  description: "Total Fetch host requests handled by route, method, and outcome.",
   incremental: true,
 });
 
-const requestFailureTotal = Metric.counter("worker_request_failures_total", {
-  description: "Total Cloudflare worker request failures by route and method.",
+const requestFailureTotal = Metric.counter("fetch_host_request_failures_total", {
+  description: "Total Fetch host request failures by route and method.",
   incremental: true,
 });
 
-const requestDurationMs = Metric.histogram("worker_request_duration_ms", {
-  description: "Cloudflare worker request duration in milliseconds.",
+const requestDurationMs = Metric.histogram("fetch_host_request_duration_ms", {
+  description: "Fetch host request duration in milliseconds.",
   boundaries: Metric.exponentialBoundaries({ start: 1, factor: 2, count: 16 }),
 });
 
@@ -62,7 +62,7 @@ export function runHostEffect<A, E>(effect: Effect.Effect<A, E>): Promise<A> {
   return Effect.runPromise(effect.pipe(Effect.provide(HostObservabilityLive)));
 }
 
-export function recordWorkerRequestCompleted(input: {
+export function recordFetchHostRequestCompleted(input: {
   readonly durationMs: number;
   readonly method: string;
   readonly routeKind: string;
@@ -81,7 +81,7 @@ export function recordWorkerRequestCompleted(input: {
   });
 }
 
-export function recordWorkerRequestFailed(input: {
+export function recordFetchHostRequestFailed(input: {
   readonly durationMs: number;
   readonly method: string;
   readonly routeKind: string;
