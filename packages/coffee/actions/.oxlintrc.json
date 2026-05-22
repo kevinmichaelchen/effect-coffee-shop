@@ -59,6 +59,8 @@
           "better-auth",
           "better-auth/*",
           "bun:*",
+          "effect/unstable/ai",
+          "effect/unstable/ai/*",
           "node:*"
         ]
       }

@@ -1,6 +1,6 @@
 # Coffee Actions
 
-`@effect-coffee-shop/coffee-actions` is the neutral Coffee capability adapter package.
+`@effect-coffee-shop/coffee-actions` is the neutral Coffee capability catalog package.
 
 ## FAQ
 
@@ -13,7 +13,7 @@ layer.
 
 ### Why Does This Package Exist If `coffee-core/application` Already Has Use Cases?
 
-What it adds is a stable adapter contract for surfaces that cannot directly expose
+What it adds is a stable adapter contract for surfaces that should not directly expose
 [`CoffeeOrderApp`](../core/src/application/CoffeeOrderApp.ts) methods: action names, descriptions,
 boundary schemas, JSON input metadata, presentation-neutral result formatting, and dispatch from an
 action name to the underlying application use case.
@@ -36,12 +36,12 @@ It sits at the application/presentation boundary:
 - It depends inward on [`coffee-core`](../core) domain and application contracts.
 - It defines shared action names, descriptions, schemas, JSON input metadata, execution helpers, and
   presentation-neutral formatting.
-- It does not depend on HTTP, MCP, assistant runtimes, Better Auth, Cloudflare, Bun, Node, or
-  external adapter packages.
+- It does not depend on HTTP, MCP, assistant runtimes, Effect AI toolkits, Better Auth, Cloudflare,
+  Bun, Node, or external adapter packages.
 
 Presentation packages adapt these neutral actions into their own transport or runtime format. For
-example, [`coffee-mcp`](../presentation/mcp) turns them into Effect MCP tools,
-[`coffee-assistant`](../assistant) turns them into provider-neutral AI tools, and
+example, [`coffee-mcp`](../presentation/mcp) owns the Effect AI toolkit projection for MCP,
+[`coffee-assistant`](../assistant) turns them into model-callable assistant tools, and
 [`coffee-auth`](../auth) turns them into Agent Auth capabilities.
 
 ### What Does Not Belong Here?
@@ -72,5 +72,5 @@ new or changed application behavior to external adapters.
 
 ## Boundary Rule
 
-If a type comes from a delivery/runtime SDK, it belongs in the consuming presentation or auth package,
-not here.
+If a type comes from a delivery/runtime SDK or Effect AI toolkit projection, it belongs in the
+consuming presentation, assistant, or auth package, not here.

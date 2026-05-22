@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./action-toolkit": "./src/action-toolkit.ts",
     "./action-tools": "./src/action-tools.ts",
     "./prompts": "./src/prompts.ts",
     "./resources": "./src/resources.ts",

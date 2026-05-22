@@ -19,7 +19,7 @@ import {
   toOrderQuoteView,
   toOrderValidationView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
-import { CoffeeActionToolkit } from "@effect-coffee-shop/coffee-actions/toolkit";
+import { CoffeeActionToolkit } from "./action-toolkit.ts";
 
 const noCheckoutSessionView: NoCheckoutSessionView = {
   status: "no_checkout_session",

@@ -9,8 +9,7 @@
     "./format": "./src/format.ts",
     "./json-schema": "./src/json-schema.ts",
     "./schemas": "./src/schemas.ts",
-    "./specs": "./src/specs.ts",
-    "./toolkit": "./src/toolkit.ts"
+    "./specs": "./src/specs.ts"
   },
   "scripts": {
     "typecheck": "tsgo --noEmit",
