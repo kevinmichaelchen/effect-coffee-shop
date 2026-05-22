@@ -1,3 +1,8 @@
+/**
+ * Verifies assistant request handling, provider routing, and stream output.
+ *
+ * @module
+ */
 import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
 import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";

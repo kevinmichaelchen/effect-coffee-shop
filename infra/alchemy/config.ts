@@ -3,6 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
+import * as String from "effect/String";
 
 export const booleanWithDefault = (name: string, defaultValue: boolean) =>
   Config.boolean(name).pipe(Config.withDefault(defaultValue), Effect.orDie);
@@ -32,7 +33,7 @@ export const stringWithDefault = (name: string, defaultValue: string) =>
 export const optionalTrimmedString = (name: string) =>
   optionalString(name).pipe(
     Effect.map((value) => {
-      const trimmed = value?.trim();
+      const trimmed = value === undefined ? undefined : String.trim(value);
 
       return trimmed === undefined || trimmed === "" ? undefined : trimmed;
     }),
@@ -43,7 +44,7 @@ export const optionalTrimmedRedacted = (name: string) =>
     Config.option,
     Config.map(
       Option.flatMap((redacted) => {
-        const trimmed = Redacted.value(redacted).trim();
+        const trimmed = String.trim(Redacted.value(redacted));
 
         return trimmed === ""
           ? Option.none()
@@ -57,9 +58,6 @@ export const optionalTrimmedRedacted = (name: string) =>
 export const optionalCsv = (name: string) =>
   optionalTrimmedString(name).pipe(
     Effect.map((value) =>
-      value
-        ?.split(",")
-        .map((part) => part.trim())
-        .filter((part) => part !== ""),
+      value ? String.split(value, ",").map(String.trim).filter(String.isNonEmpty) : undefined,
     ),
   );

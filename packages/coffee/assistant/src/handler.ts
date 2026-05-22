@@ -1,3 +1,8 @@
+/**
+ * Handles Beanline assistant HTTP requests and streams model responses.
+ *
+ * @module
+ */
 import { toServerSentEventsResponse } from "@tanstack/ai";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

@@ -1,3 +1,8 @@
+/**
+ * Records assistant run metrics and structured log events.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Metric from "effect/Metric";
 import {

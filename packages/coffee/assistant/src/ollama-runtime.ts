@@ -1,3 +1,8 @@
+/**
+ * Runs assistant requests against an Ollama-compatible chat API.
+ *
+ * @module
+ */
 import * as Schema from "effect/Schema";
 import * as Effect from "effect/Effect";
 import * as HttpClientResponse from "effect/unstable/http/HttpClientResponse";

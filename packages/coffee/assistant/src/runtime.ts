@@ -1,3 +1,8 @@
+/**
+ * Selects assistant model providers and runs multi-turn tool conversations.
+ *
+ * @module
+ */
 import type { ModelMessage } from "@tanstack/ai";
 import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import * as Effect from "effect/Effect";

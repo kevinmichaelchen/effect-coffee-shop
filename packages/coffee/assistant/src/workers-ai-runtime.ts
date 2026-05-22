@@ -1,3 +1,8 @@
+/**
+ * Builds assistant model runners for Cloudflare Workers AI bindings and REST.
+ *
+ * @module
+ */
 import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";

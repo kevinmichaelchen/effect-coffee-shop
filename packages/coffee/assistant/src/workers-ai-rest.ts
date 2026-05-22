@@ -1,3 +1,8 @@
+/**
+ * Runs assistant requests against Cloudflare Workers AI over REST.
+ *
+ * @module
+ */
 import type {
   AiTextGenerationInput,
   AiTextGenerationOutput,
