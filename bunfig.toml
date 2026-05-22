@@ -2,3 +2,5 @@
 linker = "isolated"
 globalStore = true
 minimumReleaseAge = 259200
+# Bun 1.3.11 only honors package-level release-age exclusions.
+minimumReleaseAgeExcludes = ["alchemy"]
