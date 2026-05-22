@@ -4,7 +4,6 @@
  * @module
  */
 import type * as Context from "effect/Context";
-import { actorLogFields } from "@effect-coffee-shop/backend-host/logging";
 import {
   fetchResponse,
   requestPathIsOrStartsWith,
@@ -12,6 +11,7 @@ import {
   type FetchMount,
 } from "@effect-coffee-shop/backend-host/mount";
 import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-core/application/observability";
 import { handleDirectHttpRequest } from "./direct-http-auth.ts";
 import type { CoffeeBackend } from "./coffee-backend.ts";
 
@@ -43,7 +43,7 @@ export const makeCoffeeHttpApiMount = <TEnv>(
 
       return fetchResponse(
         await backend.handler(rewriteApiRequest(request), options.createRequestServices(actor)),
-        actorLogFields(actor),
+        actorObservabilityAttributes(actor),
       );
     }),
 });

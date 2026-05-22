@@ -23,7 +23,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@effect-coffee-shop/coffee-core": "workspace:*",
     "effect": "catalog:"
   },
   "devDependencies": {

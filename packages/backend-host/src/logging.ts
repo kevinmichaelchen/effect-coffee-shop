@@ -1,25 +1,7 @@
 import * as Effect from "effect/Effect";
-import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 type StructuredLogValue = boolean | number | string | null;
 export type StructuredLogRecord = Readonly<Record<string, StructuredLogValue>>;
-
-export function actorLogFields(actor: AppActor | undefined): StructuredLogRecord {
-  if (actor === undefined) {
-    return {};
-  }
-
-  if (actor.kind === "anonymous") {
-    return {
-      actor_kind: actor.kind,
-    };
-  }
-
-  return {
-    actor_kind: actor.kind,
-    actor_user_id: actor.userId,
-  };
-}
 
 export function logStructuredEvent(record: StructuredLogRecord) {
   return Effect.logInfo("structured event").pipe(Effect.annotateLogs(record));

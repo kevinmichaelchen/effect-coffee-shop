@@ -18,7 +18,7 @@ import {
   rewriteRequestPathPrefix,
   type FetchMount,
 } from "@effect-coffee-shop/backend-host/mount";
-import { actorLogFields } from "@effect-coffee-shop/backend-host/logging";
+import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-core/application/observability";
 import { resolveCloudflareRequestActor } from "./request-actor.ts";
 
 const isAssistantRequest = (request: Request): boolean =>
@@ -56,7 +56,7 @@ export const cloudflareAssistantMount: FetchMount<CloudflareWorkerEnv> = {
           model: getAssistantModel(),
           modelLayer,
         }),
-        actorLogFields(actor),
+        actorObservabilityAttributes(actor),
       );
     }),
 };

@@ -1,11 +1,10 @@
 /**
- * Runs the Coffee HTTP API with the Bun HTTP server adapter.
+ * Runs the composed Coffee backend with the Bun HTTP server adapter.
  *
  * @module
  */
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import {
   createAssistantModelRunnerLayer,
@@ -18,15 +17,16 @@ import {
   CurrentActor,
   systemActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import { createCoffeeWebHandler } from "./web-handler.ts";
+import { createCoffeeWebHandler } from "@effect-coffee-shop/coffee-http/web-handler";
 
-export async function startCoffeeBunServer<
-  TAppLayer extends Layer.Layer<never, any, any>,
-  TRoutes extends Layer.Layer<never, any, any>,
->(input: {
-  readonly appLayer: TAppLayer;
+type CoffeeWebHandlerInput = Parameters<typeof createCoffeeWebHandler>;
+type CoffeeRoutesLayer = CoffeeWebHandlerInput[0];
+type CoffeeAppLayer = CoffeeWebHandlerInput[1];
+
+export async function startCoffeeBunServer(input: {
+  readonly appLayer: CoffeeAppLayer;
   readonly portEnv?: string;
-  readonly routes: TRoutes;
+  readonly routes: CoffeeRoutesLayer;
 }): Promise<void> {
   const port = await readPort(input.portEnv ?? "COFFEE_HTTP_PORT");
   const { dispose, handler } = createCoffeeWebHandler(input.routes, input.appLayer);

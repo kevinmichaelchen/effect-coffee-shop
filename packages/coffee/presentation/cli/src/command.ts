@@ -16,7 +16,7 @@ import {
   toCoffeeOrdersView,
   toMenuView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
-import { prettyJson } from "@effect-coffee-shop/backend-host/json";
+import { prettyJson } from "./json.ts";
 
 const customerName = Flag.string("customer-name").pipe(
   Flag.withAlias("c"),

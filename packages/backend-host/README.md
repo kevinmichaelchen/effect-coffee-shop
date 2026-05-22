@@ -13,7 +13,7 @@ services, and the MCP HTTP JSON-RPC id compatibility shim.
 - [`src/mount.ts`](./src/mount.ts) defines mount contracts and request path helpers.
 - [`src/request-services.ts`](./src/request-services.ts) creates the base request service context
   supplied to web handlers.
-- [`src/logging.ts`](./src/logging.ts) writes structured request and actor logs.
+- [`src/logging.ts`](./src/logging.ts) writes structured request logs from generic log fields.
 - [`src/observability.ts`](./src/observability.ts) wires console logging, runtime metrics, and
   optional OTLP export.
 - [`src/json.ts`](./src/json.ts) contains shared JSON formatting helpers.

@@ -14,7 +14,7 @@ import {
   createAssistantModelRunnerLayer,
   handleAssistantRequest,
 } from "@effect-coffee-shop/coffee-assistant/handler";
-import { actorLogFields } from "@effect-coffee-shop/backend-host/logging";
+import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-core/application/observability";
 import type { AwsRuntime } from "../env.ts";
 import { handleDirectHttpRequest } from "../../../host/direct-http-auth.ts";
 import { resolveAwsRequestActor } from "./request-actor.ts";
@@ -46,7 +46,7 @@ export const awsAssistantMount: FetchMount<AwsRuntime> = {
           model: runtime.config.assistantModel,
           modelLayer,
         }),
-        actorLogFields(actor),
+        actorObservabilityAttributes(actor),
       );
     }),
 };

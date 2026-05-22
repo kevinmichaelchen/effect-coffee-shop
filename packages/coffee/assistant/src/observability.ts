@@ -6,12 +6,12 @@
 import * as Effect from "effect/Effect";
 import * as Metric from "effect/Metric";
 import {
-  actorLogFields,
   logStructuredEvent,
   logStructuredError,
   roundDurationMs,
 } from "@effect-coffee-shop/backend-host/logging";
 import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-core/application/observability";
 
 type AssistantToolActivity = {
   readonly detail: string;
@@ -47,7 +47,7 @@ interface AssistantTimedRunLogFieldsInput extends AssistantRunLogFieldsInput {
 }
 
 const assistantRunLogFields = (input: AssistantRunLogFieldsInput) => ({
-  ...actorLogFields(input.actor),
+  ...actorObservabilityAttributes(input.actor),
   assistant_model: input.model,
   assistant_run_id: input.runId,
 });

@@ -11,7 +11,7 @@ import {
   toCoffeeOrdersView,
   toMenuView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
-import { prettyJson } from "@effect-coffee-shop/backend-host/json";
+import { prettyJson } from "./json.ts";
 
 export const RecommendDrinkPrompt = McpServer.prompt({
   name: "recommend-drink",

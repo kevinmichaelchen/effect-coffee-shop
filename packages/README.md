@@ -19,7 +19,7 @@ under `packages/coffee`, while shared host utilities stay directly under
 - [`coffee/actions`](./coffee/actions): shared coffee action contracts used by
   MCP tools, assistant tools, and Agent Auth capability execution.
 - [`coffee/presentation/http`](./coffee/presentation/http): Effect HTTP API
-  routes, web handler construction, and the local Bun HTTP server.
+  routes and web handler construction.
 - [`coffee/presentation/mcp`](./coffee/presentation/mcp): MCP resources,
   prompts, tools, and stdio/HTTP MCP Layers.
 - [`coffee/presentation/cli`](./coffee/presentation/cli): CLI command tree over
