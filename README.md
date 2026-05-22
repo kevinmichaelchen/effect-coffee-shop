@@ -49,13 +49,16 @@ overrides, see [`apps/ui`](./apps/ui).
 <details>
 <summary>Architecture diagrams</summary>
 
-The package layer view shows dependency direction. The runtime surface view
-shows how the backend exposes HTTP, MCP, auth, assistant, discovery, and static
-asset surfaces through the Fetch host.
+The package layer view shows dependency direction. The runtime surface view shows how the backend
+exposes HTTP, MCP, auth, assistant, discovery, and static asset surfaces through the Fetch host. The
+assistant boundary view shows the internal split between HTTP presentation, chat application logic,
+Coffee tool projection, and external model providers.
 
 ![Package layer diagram](./docs/architecture/package-layers.svg)
 
 ![Backend runtime surface diagram](./docs/architecture/backend-runtime-surfaces.svg)
+
+![Assistant boundary diagram](./docs/architecture/assistant-boundaries.svg)
 
 Editable sources live in [`docs/architecture`](./docs/architecture).
 
@@ -81,11 +84,14 @@ offer those same use cases, but each surface speaks a different protocol:
 MCP tools, assistant tools, and Agent Auth capabilities all have different
 metadata and schema shapes.
 
-[`coffee-actions`](./packages/coffee/actions) is the small shared catalog in
-the middle. It gives each shared Coffee capability one stable name, description,
-input schema, neutral result format, and dispatch path into `CoffeeOrderApp`.
-That keeps MCP, the assistant, and Agent Auth from each inventing their own
-version of `list_menu`, `place_order`, or `checkout_cart`.
+[`coffee-actions`](./packages/coffee/actions) is the small shared catalog in the middle. It gives
+each shared Coffee capability one stable name, description, input schema, neutral result format, and
+dispatch path into `CoffeeOrderApp`. That keeps MCP, the assistant, and Agent Auth from each
+inventing their own version of `list_menu`, `place_order`, or `checkout_cart`.
+
+Concrete surfaces still own their protocol projection. MCP builds Effect AI toolkit definitions in
+[`coffee-mcp`](./packages/coffee/presentation/mcp), and the assistant builds model-callable tool
+definitions in [`coffee-assistant`](./packages/coffee/assistant).
 
 It is not a second business layer. If the behavior changes, change
 `coffee-core`. If one surface needs a private helper, keep that helper in the
