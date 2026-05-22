@@ -1,3 +1,8 @@
+/**
+ * Builds the SQLite persistence layer for Cloudflare D1 runtimes.
+ *
+ * @module
+ */
 import type { D1Database } from "@cloudflare/workers-types";
 import { D1Client } from "@effect/sql-d1";
 import * as Effect from "effect/Effect";

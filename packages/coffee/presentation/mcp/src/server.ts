@@ -1,3 +1,8 @@
+/**
+ * Composes Coffee MCP resources, prompts, and tools into server layers.
+ *
+ * @module
+ */
 import * as Layer from "effect/Layer";
 import * as McpServer from "effect/unstable/ai/McpServer";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";

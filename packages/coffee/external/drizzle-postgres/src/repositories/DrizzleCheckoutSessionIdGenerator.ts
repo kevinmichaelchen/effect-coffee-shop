@@ -1,3 +1,8 @@
+/**
+ * Allocates checkout session identifiers from the Postgres backing store.
+ *
+ * @module
+ */
 import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

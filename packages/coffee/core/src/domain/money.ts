@@ -1,3 +1,8 @@
+/**
+ * Defines exact cent-based money values and arithmetic helpers.
+ *
+ * @module
+ */
 import * as Equal from "effect/Equal";
 import * as Hash from "effect/Hash";
 import * as Schema from "effect/Schema";

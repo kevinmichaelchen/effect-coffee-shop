@@ -1,3 +1,8 @@
+/**
+ * Validates, defaults, and prices requested Coffee order items.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";

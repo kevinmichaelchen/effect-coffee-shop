@@ -1,3 +1,8 @@
+/**
+ * Reads and validates Alchemy deployment configuration from environment variables.
+ *
+ * @module
+ */
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";

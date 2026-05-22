@@ -1,3 +1,8 @@
+/**
+ * Public exports for the Coffee domain model and application service contracts.
+ *
+ * @module
+ */
 export * as DomainErrors from "./domain/errors.ts";
 export * as Cart from "./domain/cart.ts";
 export * as CheckoutSession from "./domain/checkout-session.ts";

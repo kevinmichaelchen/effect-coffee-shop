@@ -1,3 +1,8 @@
+/**
+ * Composes Drizzle/Postgres repositories and schema readiness into one layer.
+ *
+ * @module
+ */
 import * as Layer from "effect/Layer";
 import { CoffeeDb } from "./db/Db.ts";
 import { DrizzlePostgresSchemaLive } from "./db/migrate.ts";

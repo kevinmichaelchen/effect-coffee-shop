@@ -1,3 +1,8 @@
+/**
+ * Runs the Coffee HTTP API with the Bun HTTP server adapter.
+ *
+ * @module
+ */
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

@@ -1,3 +1,8 @@
+/**
+ * Public exports and layers for in-memory Coffee repositories.
+ *
+ * @module
+ */
 import * as Layer from "effect/Layer";
 import { InMemoryCartItemIdGeneratorLive } from "./in-memory/InMemoryCartItemIdGenerator.ts";
 import { InMemoryCartRepositoryLive } from "./in-memory/InMemoryCartRepository.ts";

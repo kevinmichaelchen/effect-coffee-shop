@@ -1,3 +1,8 @@
+/**
+ * Builds Effect AI toolkit definitions for Coffee actions.
+ *
+ * @module
+ */
 import * as Tool from "effect/unstable/ai/Tool";
 import * as Toolkit from "effect/unstable/ai/Toolkit";
 import { coffeeActionSpecs } from "./specs.ts";

@@ -1,3 +1,8 @@
+/**
+ * Declares Coffee application observability spans and metric helpers.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Metric from "effect/Metric";
 import * as Option from "effect/Option";

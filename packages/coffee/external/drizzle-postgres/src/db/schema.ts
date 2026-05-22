@@ -1,3 +1,8 @@
+/**
+ * Defines Drizzle tables and sequences for Coffee Postgres persistence.
+ *
+ * @module
+ */
 import { index, integer, jsonb, pgSequence, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
 import type { Milk, Temperature } from "@effect-coffee-shop/coffee-core/domain/menu";
 import { authSchema } from "./auth-schema.ts";

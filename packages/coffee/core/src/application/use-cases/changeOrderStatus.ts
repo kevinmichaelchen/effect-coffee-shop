@@ -1,3 +1,8 @@
+/**
+ * Implements staff order status transitions for the Coffee queue.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import {

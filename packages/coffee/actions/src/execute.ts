@@ -1,3 +1,8 @@
+/**
+ * Executes named Coffee actions against the application service.
+ *
+ * @module
+ */
 import type * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";

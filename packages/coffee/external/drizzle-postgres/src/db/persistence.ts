@@ -1,3 +1,8 @@
+/**
+ * Provides Drizzle/Postgres helpers for Coffee persistence operations.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { menuItems } from "@effect-coffee-shop/coffee-core/domain/menu";

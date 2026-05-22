@@ -1,3 +1,8 @@
+/**
+ * Quotes and validates proposed Coffee orders without persisting them.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import type { DrinkNotFoundError, InvalidOrderInputError } from "../../domain/errors.ts";
 import type { OrderQuote, QuoteOrderRequest } from "../contracts.ts";

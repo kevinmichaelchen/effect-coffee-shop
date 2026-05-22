@@ -1,3 +1,8 @@
+/**
+ * Places Coffee orders and performs cart checkout from confirmed sessions.
+ *
+ * @module
+ */
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Match from "effect/Match";

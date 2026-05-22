@@ -1,3 +1,8 @@
+/**
+ * Defines Better Auth tables for the Postgres persistence schema.
+ *
+ * @module
+ */
 import { boolean, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 const createdAt = () => timestamp("createdAt", { withTimezone: true }).notNull();

@@ -1,3 +1,8 @@
+/**
+ * Lists Coffee orders visible to the current actor.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import { InvalidOrderInputError } from "@effect-coffee-shop/coffee-core/domain/errors";
 import { isOrderStatus, type CoffeeOrders } from "@effect-coffee-shop/coffee-core/domain/order";

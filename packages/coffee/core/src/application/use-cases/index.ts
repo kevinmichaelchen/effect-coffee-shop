@@ -1,3 +1,8 @@
+/**
+ * Re-exports Coffee application use case functions.
+ *
+ * @module
+ */
 export {
   addCartItem,
   checkoutCart,

@@ -1,3 +1,8 @@
+/**
+ * Provides deterministic in-memory order identifiers.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { orderIdFromString } from "@effect-coffee-shop/coffee-core/domain/order";

@@ -1,3 +1,8 @@
+/**
+ * Adapts the Coffee HTTP API into a Web Fetch handler.
+ *
+ * @module
+ */
 import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";
 import * as HttpServer from "effect/unstable/http/HttpServer";

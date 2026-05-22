@@ -1,3 +1,8 @@
+/**
+ * Defines immutable checkout sessions created before cart confirmation.
+ *
+ * @module
+ */
 import * as Schema from "effect/Schema";
 import { MoneySchema } from "./money.ts";
 import { CoffeeOrderItemSchema } from "./order.ts";

@@ -1,3 +1,8 @@
+/**
+ * Converts Coffee action schemas into JSON Schema metadata for tools.
+ *
+ * @module
+ */
 export type CoffeeActionJsonSchema = Readonly<{
   properties: Readonly<
     Record<

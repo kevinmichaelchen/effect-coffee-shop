@@ -1,3 +1,8 @@
+/**
+ * Defines MCP resources for menu and order inspection.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as McpSchema from "effect/unstable/ai/McpSchema";
 import * as McpServer from "effect/unstable/ai/McpServer";

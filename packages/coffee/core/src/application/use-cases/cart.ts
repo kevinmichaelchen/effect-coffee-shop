@@ -1,3 +1,8 @@
+/**
+ * Implements actor-owned cart mutation, pricing, and checkout preparation flows.
+ *
+ * @module
+ */
 import * as Arr from "effect/Array";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";

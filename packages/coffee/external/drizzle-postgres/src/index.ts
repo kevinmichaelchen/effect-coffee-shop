@@ -1,3 +1,8 @@
+/**
+ * Public exports for the Drizzle/Postgres Coffee persistence adapter.
+ *
+ * @module
+ */
 export { CoffeeDb, PgCoffeeClientLive } from "./db/Db.ts";
 export { DrizzlePostgresSchemaLive } from "./db/migrate.ts";
 export { DrizzlePostgresSchemaReady } from "./db/schema-ready.ts";

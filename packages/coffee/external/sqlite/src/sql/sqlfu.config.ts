@@ -1,3 +1,8 @@
+/**
+ * Configures SQLFu code generation for the SQLite persistence schema.
+ *
+ * @module
+ */
 import { defineConfig } from "sqlfu";
 
 export default defineConfig({

@@ -1,3 +1,8 @@
+/**
+ * Defines the Coffee menu catalog, item options, and lookup helpers.
+ *
+ * @module
+ */
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { MoneySchema, moneyFromCents, scaleMoney, addMoney, type Money } from "./money.ts";

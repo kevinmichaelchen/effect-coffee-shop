@@ -1,3 +1,8 @@
+/**
+ * Configures a Bun SQLite client from runtime configuration.
+ *
+ * @module
+ */
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";

@@ -1,3 +1,8 @@
+/**
+ * Maps Postgres rows to Coffee domain models and persistence payloads.
+ *
+ * @module
+ */
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { createSelectSchema } from "drizzle-orm/effect-schema";

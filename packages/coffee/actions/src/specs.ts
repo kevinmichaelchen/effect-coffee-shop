@@ -1,3 +1,8 @@
+/**
+ * Defines the catalog of Coffee actions and their parameter/result schemas.
+ *
+ * @module
+ */
 import {
   CartItemIdRequestSchema,
   CartViewSchema,

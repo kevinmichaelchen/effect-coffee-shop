@@ -1,3 +1,8 @@
+/**
+ * Stores actor carts in memory for local and test runtimes.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";

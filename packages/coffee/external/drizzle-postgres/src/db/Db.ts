@@ -1,3 +1,8 @@
+/**
+ * Defines the Drizzle/Postgres database service and live client layer.
+ *
+ * @module
+ */
 import { PgClient } from "@effect/sql-pg";
 import * as Config from "effect/Config";
 import * as Context from "effect/Context";
