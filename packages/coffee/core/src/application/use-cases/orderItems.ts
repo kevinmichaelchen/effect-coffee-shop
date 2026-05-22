@@ -5,6 +5,8 @@
  */
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Request from "effect/Request";
+import * as RequestResolver from "effect/RequestResolver";
 import * as Schema from "effect/Schema";
 import {
   DrinkNotFoundError,
@@ -52,6 +54,15 @@ const decodeTemperature = Schema.decodeUnknownEffect(TemperatureSchema);
 const decodeResolvedItems = Schema.decodeUnknownEffect(
   Schema.NonEmptyArray(Schema.toType(CoffeeOrderItemSchema)),
 );
+type OrderItemResolutionError = DrinkNotFoundError | InvalidOrderInputError | InternalAppError;
+
+class ResolveOrderItemRequest extends Request.TaggedClass("ResolveOrderItemRequest")<
+  {
+    readonly input: OrderItemInput;
+  },
+  CoffeeOrderItem,
+  OrderItemResolutionError
+> {}
 
 const trimmedOption = (value: string | undefined): Option.Option<string> =>
   Option.fromUndefinedOr(value).pipe(
@@ -208,6 +219,24 @@ export const resolveOrderItem = Effect.fnUntraced(function* (
   };
 });
 
+export const resolveOrderItems = Effect.fnUntraced(function* (
+  items: readonly OrderItemInput[],
+): Effect.fn.Return<readonly CoffeeOrderItem[], OrderItemResolutionError, MenuRepository> {
+  const menuRepository = yield* MenuRepository;
+  const resolver = yield* RequestResolver.fromEffect(
+    (entry: Request.Entry<ResolveOrderItemRequest>) =>
+      resolveOrderItem(entry.request.input).pipe(
+        Effect.provideService(MenuRepository, menuRepository),
+      ),
+  ).pipe(RequestResolver.withCache({ capacity: 128 }));
+
+  return yield* Effect.forEach(
+    items,
+    (input) => Effect.request(new ResolveOrderItemRequest({ input }), resolver),
+    { concurrency: "unbounded" },
+  );
+});
+
 export const resolveOrderQuote = Effect.fnUntraced(function* (
   items: readonly OrderItemInput[],
 ): Effect.fn.Return<
@@ -222,7 +251,7 @@ export const resolveOrderQuote = Effect.fnUntraced(function* (
     ),
   );
 
-  const resolvedItemArray = yield* Effect.forEach(items, resolveOrderItem, { concurrency: 1 });
+  const resolvedItemArray = yield* resolveOrderItems(items);
   const resolvedItems = yield* decodeResolvedItems(resolvedItemArray).pipe(
     Effect.catchTag("SchemaError", () =>
       Effect.fail(invalidOrderInput("items must include at least one drink")),

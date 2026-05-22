@@ -40,7 +40,9 @@ export const AppErrorSchema = Schema.Union([
 export const EmptyActionInputSchema = Schema.Struct({});
 
 export const OrderIdActionInputSchema = Schema.Struct({
-  orderId: OrderIdSchema,
+  orderId: OrderIdSchema.annotate({
+    description: "Coffee shop ticket id, such as order-0001.",
+  }),
 });
 
 export const decodeEmptyActionInput = Schema.decodeUnknownPromise(EmptyActionInputSchema);

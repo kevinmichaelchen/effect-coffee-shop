@@ -4,6 +4,9 @@
  * @module
  */
 import { EventType, type StreamChunk } from "@tanstack/ai";
+import * as Effect from "effect/Effect";
+import * as Queue from "effect/Queue";
+import * as Stream from "effect/Stream";
 
 export interface AssistantChunkQueue<TChunk> {
   readonly stream: AsyncIterable<TChunk>;
@@ -17,43 +20,10 @@ export type AssistantStreamChunk = StreamChunk;
 export function createAssistantChunkQueue<TChunk>(
   signal?: AbortSignal,
 ): AssistantChunkQueue<TChunk> {
-  const items: TChunk[] = [];
-  let failed: unknown;
-  let isClosed = false;
-  let pendingReject: ((error: unknown) => void) | undefined;
-  let pendingResolve: ((result: IteratorResult<TChunk>) => void) | undefined;
-
-  const settlePending = (result: IteratorResult<TChunk>) => {
-    pendingReject = undefined;
-    pendingResolve?.(result);
-    pendingResolve = undefined;
-  };
-
-  const fail = (error: unknown) => {
-    failed = error;
-    isClosed = true;
-    pendingResolve = undefined;
-    pendingReject?.(error);
-    pendingReject = undefined;
-  };
-
-  const close = () => {
-    isClosed = true;
-    settlePending({ value: undefined, done: true });
-  };
-
-  const push = (chunk: TChunk) => {
-    if (isClosed) {
-      return;
-    }
-
-    if (pendingResolve) {
-      settlePending({ value: chunk, done: false });
-      return;
-    }
-
-    items.push(chunk);
-  };
+  const queue = Effect.runSync(Queue.unbounded<TChunk, unknown>());
+  const close = () => void Effect.runSync(Queue.end(queue));
+  const fail = (error: unknown) => void Effect.runSync(Queue.fail(queue, error));
+  const push = (chunk: TChunk) => void Effect.runSync(Queue.offer(queue, chunk));
 
   signal?.addEventListener("abort", close, { once: true });
 
@@ -61,39 +31,7 @@ export function createAssistantChunkQueue<TChunk>(
     close,
     fail,
     push,
-    stream: {
-      async *[Symbol.asyncIterator]() {
-        while (true) {
-          if (items.length > 0) {
-            const next = items.shift();
-
-            if (next !== undefined) {
-              yield next;
-              continue;
-            }
-          }
-
-          if (failed !== undefined) {
-            throw failed;
-          }
-
-          if (isClosed) {
-            return;
-          }
-
-          const next = await new Promise<IteratorResult<TChunk>>((resolve, reject) => {
-            pendingResolve = resolve;
-            pendingReject = reject;
-          });
-
-          if (next.done) {
-            return;
-          }
-
-          yield next.value;
-        }
-      },
-    },
+    stream: Stream.toAsyncIterable(Stream.fromQueue(queue)),
   };
 }
 

@@ -20,11 +20,7 @@ import {
 } from "@effect-coffee-shop/coffee-actions/json-schema";
 
 function toAssistantToolParameters(schema: CoffeeActionJsonSchema): CoffeeActionJsonSchema {
-  return {
-    properties: { ...schema.properties },
-    required: [...schema.required],
-    type: schema.type,
-  };
+  return { ...schema };
 }
 
 export const emptyToolParameters = toAssistantToolParameters(emptyActionJsonSchema);

@@ -5,6 +5,7 @@
  */
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as JsonSchema from "effect/JsonSchema";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import * as Str from "effect/String";
@@ -43,19 +44,7 @@ export interface AssistantToolDefinition {
   readonly parameters: AssistantToolParameters;
 }
 
-export type AssistantToolParameters = Readonly<{
-  properties: Readonly<
-    Record<
-      string,
-      Readonly<{
-        description?: string;
-        type: string;
-      }>
-    >
-  >;
-  required: readonly string[];
-  type: "object";
-}>;
+export type AssistantToolParameters = JsonSchema.JsonSchema;
 
 export interface AssistantModelRequest {
   readonly conversation: readonly AssistantConversationMessage[];

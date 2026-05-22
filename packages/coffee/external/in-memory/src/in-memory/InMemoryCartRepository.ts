@@ -4,8 +4,9 @@
  * @module
  */
 import * as Effect from "effect/Effect";
+import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
+import * as Ref from "effect/Ref";
 import type { Cart } from "@effect-coffee-shop/coffee-core/domain/cart";
 import { CartRepository } from "@effect-coffee-shop/coffee-core/application/ports/CartRepository";
 
@@ -16,23 +17,19 @@ const emptyCart = (ownerUserId: string): Cart => ({
 
 export const InMemoryCartRepositoryLive = Layer.effect(
   CartRepository,
-  Effect.sync(() => {
-    const carts = new Map<string, Cart>();
+  Effect.gen(function* () {
+    const carts = yield* Ref.make(HashMap.empty<string, Cart>());
 
     return CartRepository.of({
-      getByOwnerUserId: (ownerUserId) =>
-        Effect.succeed(Option.fromUndefinedOr(carts.get(ownerUserId))),
-      save: (cart) =>
-        Effect.sync(() => {
-          carts.set(cart.ownerUserId, cart);
-          return cart;
-        }),
+      getByOwnerUserId: (ownerUserId) => Ref.get(carts).pipe(Effect.map(HashMap.get(ownerUserId))),
+      save: (cart) => Ref.update(carts, HashMap.set(cart.ownerUserId, cart)).pipe(Effect.as(cart)),
       clear: (ownerUserId) =>
-        Effect.sync(() => {
-          const cart = emptyCart(ownerUserId);
-          carts.delete(ownerUserId);
-          return cart;
-        }),
+        Ref.update(carts, HashMap.remove(ownerUserId)).pipe(
+          Effect.map(() => {
+            const cart = emptyCart(ownerUserId);
+            return cart;
+          }),
+        ),
     });
   }),
 );
