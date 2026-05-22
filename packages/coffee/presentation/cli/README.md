@@ -19,8 +19,9 @@ application layer.
 
 ## Boundary Rule
 
-CLI flags and command formatting belong here. Business rules stay in `coffee-core/application`, and
-runtime persistence choices stay in the backend app that runs the command.
+CLI flags and command formatting belong here. Business rules stay in
+[`coffee-core/application`](../../core/src/application), and runtime persistence choices stay in the
+[`backend app`](../../../../apps/backend) that runs the command.
 
 ## Commands
 

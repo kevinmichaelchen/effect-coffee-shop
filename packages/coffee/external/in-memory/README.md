@@ -7,17 +7,19 @@ It is useful for local development, tests, and adapter contracts that do not
 need durable storage. The composition root chooses whether to use this package
 or a durable external layer.
 
+See [`coffee-core`](../../core) for the ports implemented by this package.
+
 ## Exports
 
 | Name                              | Description                                      |
 | --------------------------------- | ------------------------------------------------ |
-| `CoffeeAppLive`                   | Complete in-memory Coffee application layer.     |
-| `InMemoryCoffeeRepositoriesLive`  | Combined in-memory Coffee repositories.          |
-| `InMemoryCartRepositoryLive`      | In-memory cart repository implementation.        |
-| `InMemoryCartItemIdGeneratorLive` | In-memory cart item ID generator implementation. |
-| `InMemoryMenuRepositoryLive`      | In-memory menu repository implementation.        |
-| `InMemoryOrderRepositoryLive`     | In-memory order repository implementation.       |
-| `InMemoryOrderIdGeneratorLive`    | In-memory order ID generator implementation.     |
+| [`CoffeeAppLive`](./src/index.ts) | Complete in-memory Coffee application layer. |
+| [`InMemoryCoffeeRepositoriesLive`](./src/index.ts) | Combined in-memory Coffee repositories. |
+| [`InMemoryCartRepositoryLive`](./src/in-memory/InMemoryCartRepository.ts) | In-memory cart repository implementation. |
+| [`InMemoryCartItemIdGeneratorLive`](./src/in-memory/InMemoryCartItemIdGenerator.ts) | In-memory cart item ID generator implementation. |
+| [`InMemoryMenuRepositoryLive`](./src/in-memory/InMemoryMenuRepository.ts) | In-memory menu repository implementation. |
+| [`InMemoryOrderRepositoryLive`](./src/in-memory/InMemoryOrderRepository.ts) | In-memory order repository implementation. |
+| [`InMemoryOrderIdGeneratorLive`](./src/in-memory/InMemoryOrderIdGenerator.ts) | In-memory order ID generator implementation. |
 
 ## Commands
 

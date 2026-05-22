@@ -8,16 +8,18 @@ or core business behavior.
 
 ## Directory Map
 
-- `src/api.ts` defines health, session, menu, and order HTTP API groups and handlers.
-- `src/web-handler.ts` turns API layers into a Fetch-compatible handler.
-- `src/bun-server.ts` runs the HTTP API through the Bun server adapter.
-- `src/test-support.ts` contains HTTP test helpers.
+- [`src/api.ts`](./src/api.ts) defines health, session, menu, and order HTTP API groups and
+  handlers.
+- [`src/web-handler.ts`](./src/web-handler.ts) turns API layers into a Fetch-compatible handler.
+- [`src/bun-server.ts`](./src/bun-server.ts) runs the HTTP API through the Bun server adapter.
+- [`src/test-support.ts`](./src/test-support.ts) contains HTTP test helpers.
 
 ## Boundary Rule
 
 HTTP paths, HTTP payload decoding, response schemas, and HTTP handler composition belong here.
 Request actor resolution and concrete persistence are provided by runtime shells such as
-`apps/backend`.
+[`apps/backend`](../../../../apps/backend). Business behavior stays in
+[`coffee-core`](../../core).
 
 ## Commands
 

@@ -7,39 +7,42 @@
 ### What Is A Coffee Action?
 
 An action is a presentation-safe handle for a Coffee application use case. The application layer in
-`coffee-core` remains the source of truth for domain types, business rules, authorization, and
-Effect-based use case functions. This package does not add another business layer.
+[`coffee-core`](../core) remains the source of truth for domain types, business rules,
+authorization, and Effect-based use case functions. This package does not add another business
+layer.
 
 ### Why Does This Package Exist If `coffee-core/application` Already Has Use Cases?
 
 What it adds is a stable adapter contract for surfaces that cannot directly expose
-`CoffeeOrderApp` methods: action names, descriptions, boundary schemas, JSON input metadata,
-presentation-neutral result formatting, and dispatch from an action name to the underlying
-application use case.
+[`CoffeeOrderApp`](../core/src/application/CoffeeOrderApp.ts) methods: action names, descriptions,
+boundary schemas, JSON input metadata, presentation-neutral result formatting, and dispatch from an
+action name to the underlying application use case.
 
 That keeps MCP, the assistant, and Agent Auth from each inventing their own version of `list_menu`,
 `place_order`, or `checkout_cart`. They all adapt this same neutral action catalog into their own
-protocols, while the actual behavior stays in `coffee-core/application`.
+protocols, while the actual behavior stays in
+[`coffee-core/application`](../core/src/application).
 
 ### Is This An MCP Package?
 
 No. MCP is one consumer of these action contracts, but this package does not define MCP resources,
 prompts, servers, transports, or SDK-specific tool wiring. MCP-specific adaptation belongs in
-`packages/coffee/presentation/mcp`.
+[`packages/coffee/presentation/mcp`](../presentation/mcp).
 
 ### What Belongs Here?
 
 It sits at the application/presentation boundary:
 
-- It depends inward on `coffee-core` domain and application contracts.
+- It depends inward on [`coffee-core`](../core) domain and application contracts.
 - It defines shared action names, descriptions, schemas, JSON input metadata, execution helpers, and
   presentation-neutral formatting.
 - It does not depend on HTTP, MCP, assistant runtimes, Better Auth, Cloudflare, Bun, Node, or
   external adapter packages.
 
 Presentation packages adapt these neutral actions into their own transport or runtime format. For
-example, MCP turns them into Effect MCP tools, the assistant turns them into provider-neutral AI
-tools, and auth turns them into Agent Auth capabilities.
+example, [`coffee-mcp`](../presentation/mcp) turns them into Effect MCP tools,
+[`coffee-assistant`](../assistant) turns them into provider-neutral AI tools, and
+[`coffee-auth`](../auth) turns them into Agent Auth capabilities.
 
 ### What Does Not Belong Here?
 
@@ -54,17 +57,18 @@ helper, keep that helper in the surface package.
 
 ### When Should I Change `coffee-core` Instead?
 
-Change `coffee-core` when the business behavior, domain model, authorization rule, persistence port,
-or Effect use case contract changes. Then update this package only to expose the new or changed
-application behavior to external adapters.
+Change [`coffee-core`](../core) when the business behavior, domain model, authorization rule,
+persistence port, or Effect use case contract changes. Then update this package only to expose the
+new or changed application behavior to external adapters.
 
 ## Directory Map
 
-- `src/specs.ts` defines canonical Coffee action specs.
-- `src/schemas.ts` defines shared Effect schemas and decoders.
-- `src/json-schema.ts` defines runtime-neutral JSON object schemas for tool/capability adapters.
-- `src/execute.ts` maps action names to `CoffeeOrderApp` use cases.
-- `src/format.ts` contains shared text formatting for tool/capability results.
+- [`src/specs.ts`](./src/specs.ts) defines canonical Coffee action specs.
+- [`src/schemas.ts`](./src/schemas.ts) defines shared Effect schemas and decoders.
+- [`src/json-schema.ts`](./src/json-schema.ts) defines runtime-neutral JSON object schemas for
+  tool/capability adapters.
+- [`src/execute.ts`](./src/execute.ts) maps action names to `CoffeeOrderApp` use cases.
+- [`src/format.ts`](./src/format.ts) contains shared text formatting for tool/capability results.
 
 ## Boundary Rule
 

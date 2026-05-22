@@ -8,19 +8,23 @@ services, and the MCP HTTP JSON-RPC id compatibility shim.
 
 ## Directory Map
 
-- `src/fetch-host.ts` routes Fetch requests to matching mounts and records request telemetry.
-- `src/mount.ts` defines mount contracts and request path helpers.
-- `src/request-services.ts` creates the base request service context supplied to web handlers.
-- `src/logging.ts` writes structured request and actor logs.
-- `src/observability.ts` wires console logging, runtime metrics, and optional OTLP export.
-- `src/json.ts` contains shared JSON formatting helpers.
-- `src/http-jsonrpc-ids.ts` adapts MCP HTTP JSON-RPC ids across host boundaries.
+- [`src/fetch-host.ts`](./src/fetch-host.ts) routes Fetch requests to matching mounts and records
+  request telemetry.
+- [`src/mount.ts`](./src/mount.ts) defines mount contracts and request path helpers.
+- [`src/request-services.ts`](./src/request-services.ts) creates the base request service context
+  supplied to web handlers.
+- [`src/logging.ts`](./src/logging.ts) writes structured request and actor logs.
+- [`src/observability.ts`](./src/observability.ts) wires console logging, runtime metrics, and
+  optional OTLP export.
+- [`src/json.ts`](./src/json.ts) contains shared JSON formatting helpers.
+- [`src/http-jsonrpc-ids.ts`](./src/http-jsonrpc-ids.ts) adapts MCP HTTP JSON-RPC ids across host
+  boundaries.
 
 ## Boundary Rule
 
 This package may know about generic Fetch requests and shared host concerns. It should not choose a
 Coffee persistence layer, parse deployment-specific bindings, or define Coffee domain/application
-behavior.
+behavior. Runtime composition belongs in [`apps/backend`](../../apps/backend).
 
 ## Commands
 

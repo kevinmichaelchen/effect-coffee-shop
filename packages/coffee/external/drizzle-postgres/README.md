@@ -3,16 +3,18 @@
 `@effect-coffee-shop/coffee-external-drizzle-postgres` provides a
 Postgres-backed implementation of the Coffee application ports.
 
+See [`coffee-core`](../../core) for the ports implemented by this package.
+
 ## Exports
 
 | Name                                    | Description                                         |
 | --------------------------------------- | --------------------------------------------------- |
-| `DrizzlePostgresCoffeeAppLive`          | Complete Postgres Coffee application layer.         |
-| `DrizzlePostgresCoffeeRepositoriesLive` | Combined Drizzle-backed Coffee repositories/cart.   |
-| `DrizzlePostgresSchemaLive`             | Postgres migration and schema setup layer.          |
-| `DrizzlePostgresSchemaReady`            | Schema readiness service tag for Postgres startup.  |
-| `CoffeeDb`                              | Effect service tag for the Drizzle database client. |
-| `PgCoffeeClientLive`                    | Postgres SQL client layer for Coffee storage.       |
+| [`DrizzlePostgresCoffeeAppLive`](./src/live.ts) | Complete Postgres Coffee application layer. |
+| [`DrizzlePostgresCoffeeRepositoriesLive`](./src/live.ts) | Combined Drizzle-backed Coffee repositories/cart. |
+| [`DrizzlePostgresSchemaLive`](./src/live.ts) | Postgres migration and schema setup layer. |
+| [`DrizzlePostgresSchemaReady`](./src/db/schema-ready.ts) | Schema readiness service tag for Postgres startup. |
+| [`CoffeeDb`](./src/db/Db.ts) | Effect service tag for the Drizzle database client. |
+| [`PgCoffeeClientLive`](./src/db/Db.ts) | Postgres SQL client layer for Coffee storage. |
 
 ## Commands
 
