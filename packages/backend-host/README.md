@@ -3,8 +3,8 @@
 `@effect-coffee-shop/backend-host` provides runtime-agnostic Fetch host utilities.
 
 It is not a Coffee business package. It owns the reusable host plumbing needed by Bun, Cloudflare,
-AWS, and tests: mount dispatch, request logging, observability, JSON helpers, and request-scoped
-services.
+AWS, and tests: mount dispatch, request logging, observability, JSON encoding helpers, and
+request-scoped services.
 
 ## Directory Map
 
@@ -16,7 +16,7 @@ services.
 - [`src/logging.ts`](./src/logging.ts) writes structured request logs from generic log fields.
 - [`src/observability.ts`](./src/observability.ts) wires console logging, runtime metrics, and
   optional OTLP export.
-- [`src/json.ts`](./src/json.ts) contains shared JSON formatting helpers.
+- [`src/json.ts`](./src/json.ts) contains shared JSON encoding helpers.
 
 ## Boundary Rule
 
