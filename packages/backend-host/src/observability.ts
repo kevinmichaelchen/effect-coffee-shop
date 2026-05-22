@@ -7,7 +7,7 @@ import * as Option from "effect/Option";
 import { FetchHttpClient } from "effect/unstable/http";
 import { Otlp } from "effect/unstable/observability";
 
-const serviceName = "effect-coffee-shop";
+const defaultServiceName = "backend-host";
 const nonBlankString = Option.filter((value: string) => value.trim().length > 0);
 
 const ConsoleObservabilityLive = Layer.mergeAll(
@@ -15,25 +15,47 @@ const ConsoleObservabilityLive = Layer.mergeAll(
   Metric.enableRuntimeMetricsLayer,
 );
 
-const makeOtlpObservabilityLayer = (baseUrl: string) =>
+const makeOtlpObservabilityLayer = (input: {
+  readonly baseUrl: string;
+  readonly serviceName: string;
+}) =>
   Otlp.layerJson({
-    baseUrl,
+    baseUrl: input.baseUrl,
     resource: {
-      serviceName,
+      serviceName: input.serviceName,
     },
   }).pipe(Layer.provide(FetchHttpClient.layer));
 
-const resolveOtlpObservabilityLayer = (endpoint: Option.Option<string>) =>
-  Option.match(endpoint, {
+const resolveOtlpObservabilityLayer = (input: {
+  readonly endpoint: Option.Option<string>;
+  readonly serviceName: string;
+}) =>
+  Option.match(input.endpoint, {
     onNone: () => Layer.empty,
-    onSome: makeOtlpObservabilityLayer,
+    onSome: (baseUrl) =>
+      makeOtlpObservabilityLayer({
+        baseUrl,
+        serviceName: input.serviceName,
+      }),
+  });
+
+const resolveOtelServiceName = (serviceName: Option.Option<string>): string =>
+  Option.match(nonBlankString(serviceName), {
+    onNone: () => defaultServiceName,
+    onSome: (value) => value,
   });
 
 const OtlpObservabilityLive = Layer.unwrap(
-  Config.option(Config.string("OTEL_EXPORTER_OTLP_ENDPOINT")).pipe(
-    Effect.map(nonBlankString),
-    Effect.map(resolveOtlpObservabilityLayer),
-  ),
+  Effect.gen(function* () {
+    const endpoint = yield* Config.option(Config.string("OTEL_EXPORTER_OTLP_ENDPOINT")).pipe(
+      Effect.map(nonBlankString),
+    );
+    const serviceName = yield* Config.option(Config.string("OTEL_SERVICE_NAME")).pipe(
+      Effect.map(resolveOtelServiceName),
+    );
+
+    return resolveOtlpObservabilityLayer({ endpoint, serviceName });
+  }),
 );
 
 export const HostObservabilityLive = Layer.mergeAll(

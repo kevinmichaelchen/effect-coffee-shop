@@ -15,7 +15,7 @@ request-scoped services.
   supplied to web handlers.
 - [`src/logging.ts`](./src/logging.ts) writes structured request logs from generic log fields.
 - [`src/observability.ts`](./src/observability.ts) wires console logging, runtime metrics, and
-  optional OTLP export.
+  optional OTLP export. Set `OTEL_SERVICE_NAME` to choose the exported service name.
 - [`src/json.ts`](./src/json.ts) contains shared JSON encoding helpers.
 
 ## Boundary Rule
