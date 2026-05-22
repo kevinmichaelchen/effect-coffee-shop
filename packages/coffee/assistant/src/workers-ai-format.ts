@@ -1,3 +1,8 @@
+/**
+ * Converts assistant messages and tools into Cloudflare Workers AI shapes.
+ *
+ * @module
+ */
 import type {
   AiTextGenerationToolLegacyOutput,
   RoleScopedChatInput,

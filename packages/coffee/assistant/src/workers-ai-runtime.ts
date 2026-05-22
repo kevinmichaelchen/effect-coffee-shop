@@ -1,5 +1,12 @@
+/**
+ * Builds assistant model runners for Cloudflare Workers AI bindings and REST.
+ *
+ * @module
+ */
 import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
+import type { Redacted } from "effect/Redacted";
 import {
   AssistantModelRequestError,
   AssistantModelResponseDecodeError,
@@ -34,7 +41,7 @@ export type WorkersAiConfig =
   | {
       readonly kind: "workers-ai-rest";
       readonly accountId: string;
-      readonly apiKey: string;
+      readonly apiKey: Redacted<string>;
     };
 
 export function makeWorkersAiRunner(config: WorkersAiConfig): AssistantModelRunnerService {
@@ -113,7 +120,10 @@ function runWorkersAiBinding(
 ): Effect.Effect<AiTextGenerationOutput, AssistantModelRequestError> {
   return Effect.tryPromise({
     try: () =>
-      options === undefined ? binding.run(model, inputs) : binding.run(model, inputs, options),
+      Option.match(Option.fromUndefinedOr(options), {
+        onNone: () => binding.run(model, inputs),
+        onSome: (options) => binding.run(model, inputs, options),
+      }),
     catch: () =>
       new AssistantModelRequestError({
         message: "Workers AI binding request failed.",

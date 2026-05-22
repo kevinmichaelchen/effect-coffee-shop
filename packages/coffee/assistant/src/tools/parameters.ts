@@ -1,3 +1,8 @@
+/**
+ * Provides isolated JSON Schema parameter objects for assistant tools.
+ *
+ * @module
+ */
 import {
   type CoffeeActionJsonSchema,
   cartItemIdActionJsonSchema,

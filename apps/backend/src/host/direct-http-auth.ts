@@ -4,6 +4,7 @@
  * @module
  */
 import * as Option from "effect/Option";
+import { fetchResponse, type FetchMountResult } from "@effect-coffee-shop/backend-host/mount";
 
 const hasBearerAuthorization = (request: Request): boolean => {
   const authorization = request.headers.get("authorization");
@@ -15,7 +16,7 @@ const hasBearerAuthorization = (request: Request): boolean => {
   return authorization.trimStart().toLowerCase().startsWith("bearer ");
 };
 
-export const rejectDirectHttpBearerRequest = (request: Request): Option.Option<Response> => {
+const rejectDirectHttpBearerRequest = (request: Request): Option.Option<Response> => {
   if (!hasBearerAuthorization(request)) {
     return Option.none();
   }
@@ -32,3 +33,12 @@ export const rejectDirectHttpBearerRequest = (request: Request): Option.Option<R
     ),
   );
 };
+
+export const handleDirectHttpRequest = async (
+  request: Request,
+  handleAcceptedRequest: () => Promise<FetchMountResult>,
+): Promise<FetchMountResult> =>
+  await Option.match(rejectDirectHttpBearerRequest(request), {
+    onNone: handleAcceptedRequest,
+    onSome: async (response) => fetchResponse(response),
+  });

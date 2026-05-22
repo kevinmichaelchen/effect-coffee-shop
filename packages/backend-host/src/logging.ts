@@ -37,7 +37,7 @@ export function logRequestCompleted(input: {
   readonly routeKind: string;
 }) {
   return logStructuredEvent({
-    event: "worker.request.complete",
+    event: "fetch_host.request.complete",
     ...requestLogFields(input.request, input.routeKind),
     ...input.extraFields,
     duration_ms: roundDurationMs(input.durationMs),
@@ -53,7 +53,7 @@ export function logRequestFailed(input: {
   readonly routeKind: string;
 }) {
   return logStructuredError({
-    event: "worker.request.error",
+    event: "fetch_host.request.error",
     ...requestLogFields(input.request, input.routeKind),
     ...input.extraFields,
     duration_ms: roundDurationMs(input.durationMs),
@@ -63,9 +63,9 @@ export function logRequestFailed(input: {
 
 function requestLogFields(request: Request, routeKind: string): StructuredLogRecord {
   return {
-    cf_ray: request.headers.get("cf-ray"),
     http_method: request.method,
     http_path: new URL(request.url).pathname,
+    request_id: request.headers.get("cf-ray") ?? request.headers.get("x-amzn-trace-id"),
     route_kind: routeKind,
   };
 }

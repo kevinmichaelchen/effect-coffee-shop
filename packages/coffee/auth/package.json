@@ -8,6 +8,7 @@
     "./agent/capabilities": "./src/agent/capabilities.ts",
     "./agent/options": "./src/agent/options.ts",
     "./better-auth/cloudflare": "./src/better-auth/cloudflare.ts",
+    "./better-auth/shared": "./src/better-auth/shared.ts",
     "./better-auth/users": "./src/better-auth/users.ts"
   },
   "scripts": {

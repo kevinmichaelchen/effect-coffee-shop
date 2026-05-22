@@ -1,3 +1,8 @@
+/**
+ * Defines assistant model, tool, runner, and provider error types.
+ *
+ * @module
+ */
 import type { ModelMessage } from "@tanstack/ai";
 import type { CoffeeActionJsonSchema } from "@effect-coffee-shop/coffee-actions/json-schema";
 import * as Context from "effect/Context";

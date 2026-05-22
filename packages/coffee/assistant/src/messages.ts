@@ -1,3 +1,8 @@
+/**
+ * Decodes assistant request bodies and normalizes UI/model messages.
+ *
+ * @module
+ */
 import type { ModelMessage } from "@tanstack/ai";
 import * as Schema from "effect/Schema";
 

@@ -1,3 +1,8 @@
+/**
+ * Runs assistant requests against Cloudflare Workers AI over REST.
+ *
+ * @module
+ */
 import type {
   AiTextGenerationInput,
   AiTextGenerationOutput,
@@ -7,7 +12,9 @@ import type {
 import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
+import * as HttpClientResponse from "effect/unstable/http/HttpClientResponse";
 import { AssistantModelRequestError, AssistantModelResponseDecodeError } from "./model.ts";
 import {
   createProviderStatusMessage,
@@ -48,7 +55,7 @@ type WorkersAiDecodedOutput = Schema.Schema.Type<typeof WorkersAiOutputSchema>;
 
 export function runWorkersAiOverRest(input: {
   readonly accountId: string;
-  readonly apiKey: string;
+  readonly apiKey: Redacted.Redacted<string>;
   readonly model: string;
   readonly request: AiTextGenerationInput;
 }): Effect.Effect<
@@ -56,10 +63,8 @@ export function runWorkersAiOverRest(input: {
   AssistantModelRequestError | AssistantModelResponseDecodeError
 > {
   return postJsonResponse({
+    bearerToken: input.apiKey,
     body: input.request,
-    headers: {
-      authorization: `Bearer ${input.apiKey}`,
-    },
     onResponse: readWorkersAiOutput,
     onStatusError: rejectWorkersAiRequest,
     provider: "Workers AI",
@@ -68,7 +73,7 @@ export function runWorkersAiOverRest(input: {
 }
 
 function rejectWorkersAiRequest(
-  response: Response,
+  response: HttpClientResponse.HttpClientResponse,
 ): Effect.Effect<never, AssistantModelRequestError> {
   return Effect.gen(function* () {
     const rawBody = yield* readResponseText({
@@ -112,7 +117,7 @@ function rejectWorkersAiRequest(
 }
 
 function readWorkersAiOutput(
-  response: Response,
+  response: HttpClientResponse.HttpClientResponse,
 ): Effect.Effect<
   AiTextGenerationOutput,
   AssistantModelRequestError | AssistantModelResponseDecodeError

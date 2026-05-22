@@ -5,16 +5,16 @@
  */
 import { readCloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
 import {
-  cloudflarePathIsOrStartsWith,
-  cloudflareResponse,
-  type CloudflareMount,
+  requestPathIsOrStartsWith,
+  fetchResponse,
+  type FetchMount,
 } from "@effect-coffee-shop/backend-host/mount";
 import { createCloudflareRequestServices, getCloudflareRuntimeBackend } from "../coffee-backend.ts";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
-const isMcpRequest = (request: Request): boolean => cloudflarePathIsOrStartsWith(request, "/mcp");
+const isMcpRequest = (request: Request): boolean => requestPathIsOrStartsWith(request, "/mcp");
 
-export const cloudflareMcpMount: CloudflareMount<CloudflareWorkerEnv> = {
+export const cloudflareMcpMount: FetchMount<CloudflareWorkerEnv> = {
   name: "mcp",
   matches: isMcpRequest,
   handle: async ({ env, request }) => {
@@ -23,7 +23,7 @@ export const cloudflareMcpMount: CloudflareMount<CloudflareWorkerEnv> = {
 
     await backend.ensureAuthPersistence();
 
-    return cloudflareResponse(
+    return fetchResponse(
       await backend.handler(request, createCloudflareRequestServices(systemActor)),
     );
   },

@@ -1,3 +1,8 @@
+/**
+ * Builds TanStack AI stream chunks and async queues for assistant responses.
+ *
+ * @module
+ */
 import { EventType, type StreamChunk } from "@tanstack/ai";
 
 export interface AssistantChunkQueue<TChunk> {

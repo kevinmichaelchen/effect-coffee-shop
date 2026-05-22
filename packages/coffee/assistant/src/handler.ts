@@ -1,3 +1,8 @@
+/**
+ * Handles Beanline assistant HTTP requests and streams model responses.
+ *
+ * @module
+ */
 import { toServerSentEventsResponse } from "@tanstack/ai";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -39,6 +44,7 @@ import {
 import {
   type AssistantModelRunner,
   createAssistantModelRunnerLayer,
+  getAssistantAiConfigFromEnv,
   getAssistantModel,
   getBunAssistantAiConfig,
   runAssistantConversation,
@@ -125,7 +131,12 @@ export async function handleAssistantRequest(
   });
 }
 
-export { createAssistantModelRunnerLayer, getAssistantModel, getBunAssistantAiConfig };
+export {
+  getAssistantAiConfigFromEnv,
+  createAssistantModelRunnerLayer,
+  getAssistantModel,
+  getBunAssistantAiConfig,
+};
 
 type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;
 

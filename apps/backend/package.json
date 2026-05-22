@@ -37,11 +37,14 @@
     "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-cli": "workspace:*",
     "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect-coffee-shop/coffee-external-drizzle-postgres": "workspace:*",
     "@effect-coffee-shop/coffee-external-in-memory": "workspace:*",
     "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
     "@effect-coffee-shop/coffee-http": "workspace:*",
     "@effect-coffee-shop/coffee-mcp": "workspace:*",
     "@effect/platform-bun": "catalog:",
+    "alchemy": "catalog:",
+    "better-auth": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {

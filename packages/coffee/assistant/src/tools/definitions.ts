@@ -1,3 +1,8 @@
+/**
+ * Exposes Coffee application actions as assistant-callable tools.
+ *
+ * @module
+ */
 import type { CoffeeActionName } from "@effect-coffee-shop/coffee-actions/specs";
 import {
   executeCoffeeAction,
