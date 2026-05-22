@@ -1,5 +1,5 @@
 {
-  "$schema": "../../../node_modules/oxlint/configuration_schema.json",
+  "$schema": "../../../../node_modules/oxlint/configuration_schema.json",
   "plugins": ["oxc", "typescript", "unicorn", "node"],
   "jsPlugins": ["@mpsuesser/oxlint-plugin-effect"],
   "options": {

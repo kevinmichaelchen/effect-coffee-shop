@@ -15,8 +15,9 @@ under `packages/coffee`, while shared host utilities stay directly under
   Coffee External Layer.
 - [`coffee/external/drizzle-postgres`](./coffee/external/drizzle-postgres):
   Drizzle-backed Postgres Coffee External Layer.
-- [`coffee/actions`](./coffee/actions): protocol-neutral Coffee action catalog
-  used by MCP tools, assistant tools, and Agent Auth capability execution.
+- [`coffee/presentation/actions`](./coffee/presentation/actions):
+  protocol-neutral Coffee action catalog used by MCP tools, assistant tools,
+  and Agent Auth capability execution.
 - [`coffee/presentation/http`](./coffee/presentation/http): Effect HTTP API
   routes and web handler construction.
 - [`coffee/presentation/mcp`](./coffee/presentation/mcp): MCP resources,

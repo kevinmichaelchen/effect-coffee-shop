@@ -24,7 +24,7 @@ See [`../../packages`](../../packages) for the package map this app composes.
 
 Runtime-specific binding decoding and layer composition belong here. Domain rules and application use
 cases stay in [`coffee-core`](../../packages/coffee/core), action contracts stay in
-[`coffee-actions`](../../packages/coffee/actions), and presentation protocol definitions stay in the
+[`coffee-actions`](../../packages/coffee/presentation/actions), and presentation protocol definitions stay in the
 [`coffee-http`](../../packages/coffee/presentation/http),
 [`coffee-mcp`](../../packages/coffee/presentation/mcp), and
 [`coffee-cli`](../../packages/coffee/presentation/cli).

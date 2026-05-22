@@ -67,8 +67,8 @@ Editable sources live in [`docs/architecture`](./docs/architecture).
 | Layer | Workspace | Owns |
 | --- | --- | --- |
 | Domain/application | [`packages/coffee/core`](./packages/coffee/core) | Coffee domain model, use cases, ports, actors, contracts, and repository contract tests. |
-| Shared capabilities | [`packages/coffee/actions`](./packages/coffee/actions) | Neutral Coffee action names, schemas, dispatch, and result formatting. |
 | Presentation | [`packages/coffee/presentation`](./packages/coffee/presentation) | HTTP, CLI, and MCP protocol adapters over the application service. |
+| Presentation support | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions) | Shared Coffee capability names, schemas, dispatch, and neutral result formatting for presentation and capability adapters. |
 | Assistant | [`packages/coffee/assistant`](./packages/coffee/assistant) | Provider-neutral assistant runtime, streaming chunks, model adapters, and tool projection. |
 | Auth | [`packages/coffee/auth`](./packages/coffee/auth) | Better Auth setup, actor resolution, and Agent Auth capability execution. |
 | External adapters | [`packages/coffee/external`](./packages/coffee/external) | In-memory, SQLite/D1, and Drizzle/Postgres implementations of Coffee ports. |
@@ -84,19 +84,20 @@ offer those same use cases, but each surface speaks a different protocol:
 MCP tools, assistant tools, and Agent Auth capabilities all have different
 metadata and schema shapes.
 
-[`coffee-actions`](./packages/coffee/actions) is the small shared catalog in the middle. It gives
-each shared Coffee capability one stable name, description, input schema, neutral result format, and
-dispatch path into `CoffeeOrderApp`. That keeps MCP, the assistant, and Agent Auth from each
-inventing their own version of `list_menu`, `place_order`, or `checkout_cart`.
+[`coffee-actions`](./packages/coffee/presentation/actions) lives under presentation because it is
+shared presentation-side support. It gives each shared Coffee capability one stable name,
+description, input schema, neutral result format, and dispatch path into `CoffeeOrderApp`. That keeps
+MCP, the assistant, and Agent Auth from each inventing their own version of `list_menu`,
+`place_order`, or `checkout_cart`.
 
 Concrete surfaces still own their protocol projection. MCP builds Effect AI toolkit definitions in
 [`coffee-mcp`](./packages/coffee/presentation/mcp), and the assistant builds model-callable tool
 definitions in [`coffee-assistant`](./packages/coffee/assistant).
 
-It is not a second business layer. If the behavior changes, change
-`coffee-core`. If one surface needs a private helper, keep that helper in the
-surface package. Add or change `coffee-actions` when multiple external surfaces
-need the same Coffee use case in a protocol-neutral shape.
+It is not a fifth onion layer, and it is not a second business layer. If the behavior changes,
+change `coffee-core`. If one surface needs a private helper, keep that helper in the surface
+package. Add or change `coffee-actions` when multiple external surfaces need the same Coffee use
+case in a protocol-neutral shape.
 
 ## Choose Your Path
 
@@ -106,7 +107,7 @@ need the same Coffee use case in a protocol-neutral shape.
 | Work on the browser UI | [`apps/ui/README.md`](./apps/ui/README.md) |
 | Understand package boundaries | [`packages/README.md`](./packages/README.md) |
 | Add or change Coffee business behavior | [`packages/coffee/core`](./packages/coffee/core) |
-| Add a shared tool/capability action | [`packages/coffee/actions`](./packages/coffee/actions) |
+| Add a shared tool/capability action | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions) |
 | Change HTTP, CLI, or MCP surfaces | [`packages/coffee/presentation`](./packages/coffee/presentation) |
 | Change assistant behavior or providers | [`packages/coffee/assistant`](./packages/coffee/assistant) |
 | Change auth or Agent Auth capabilities | [`packages/coffee/auth`](./packages/coffee/auth) |

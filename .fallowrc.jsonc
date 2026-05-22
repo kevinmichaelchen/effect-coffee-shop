@@ -17,6 +17,8 @@
     "apps/ui/vitest.config.ts",
     "packages/coffee/core/src/index.ts",
     "packages/coffee/core/src/**/*.test.ts",
+    "packages/coffee/presentation/actions/src/index.ts",
+    "packages/coffee/presentation/actions/src/**/*.test.ts",
     "packages/coffee/external/in-memory/src/index.ts",
     "packages/coffee/external/sqlite/src/index.ts",
     "packages/coffee/external/sqlite/src/bun/live.ts",
@@ -124,7 +126,7 @@
       },
       {
         "name": "actions",
-        "patterns": ["packages/coffee/actions/**"]
+        "patterns": ["packages/coffee/presentation/actions/**"]
       },
       {
         "name": "assistant",

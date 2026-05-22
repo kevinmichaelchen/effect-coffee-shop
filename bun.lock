@@ -127,23 +127,6 @@
         "vitest": "catalog:",
       },
     },
-    "packages/coffee/actions": {
-      "name": "@effect-coffee-shop/coffee-actions",
-      "version": "0.1.0",
-      "dependencies": {
-        "@effect-coffee-shop/coffee-core": "workspace:*",
-        "effect": "catalog:",
-      },
-      "devDependencies": {
-        "@types/bun": "catalog:",
-        "lintcn": "catalog:",
-        "oxfmt": "catalog:",
-        "oxlint": "catalog:",
-        "oxlint-tsgolint": "catalog:",
-        "typescript": "catalog:",
-        "vitest": "catalog:",
-      },
-    },
     "packages/coffee/assistant": {
       "name": "@effect-coffee-shop/coffee-assistant",
       "version": "0.1.0",
@@ -261,6 +244,23 @@
       },
       "devDependencies": {
         "@cloudflare/workers-types": "catalog:",
+        "@types/bun": "catalog:",
+        "lintcn": "catalog:",
+        "oxfmt": "catalog:",
+        "oxlint": "catalog:",
+        "oxlint-tsgolint": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
+    "packages/coffee/presentation/actions": {
+      "name": "@effect-coffee-shop/coffee-actions",
+      "version": "0.1.0",
+      "dependencies": {
+        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "effect": "catalog:",
+      },
+      "devDependencies": {
         "@types/bun": "catalog:",
         "lintcn": "catalog:",
         "oxfmt": "catalog:",
@@ -566,7 +566,7 @@
 
     "@effect-coffee-shop/backend-host": ["@effect-coffee-shop/backend-host@workspace:packages/backend-host"],
 
-    "@effect-coffee-shop/coffee-actions": ["@effect-coffee-shop/coffee-actions@workspace:packages/coffee/actions"],
+    "@effect-coffee-shop/coffee-actions": ["@effect-coffee-shop/coffee-actions@workspace:packages/coffee/presentation/actions"],
 
     "@effect-coffee-shop/coffee-assistant": ["@effect-coffee-shop/coffee-assistant@workspace:packages/coffee/assistant"],
 
