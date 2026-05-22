@@ -1,3 +1,8 @@
+/**
+ * Defines MCP prompts for Coffee recommendations and queue summaries.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import * as McpServer from "effect/unstable/ai/McpServer";

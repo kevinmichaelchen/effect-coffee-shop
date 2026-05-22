@@ -1,3 +1,8 @@
+/**
+ * Lists the current Coffee menu through the menu repository port.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import type { Menu } from "@effect-coffee-shop/coffee-core/domain/menu";
 import {

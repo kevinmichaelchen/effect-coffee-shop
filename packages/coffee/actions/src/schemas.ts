@@ -1,3 +1,8 @@
+/**
+ * Defines action-layer input and error schemas shared by tool surfaces.
+ *
+ * @module
+ */
 import * as Schema from "effect/Schema";
 import {
   DrinkNotFoundError,

@@ -1,3 +1,8 @@
+/**
+ * Public exports for typed Coffee action execution and tool metadata.
+ *
+ * @module
+ */
 export * from "./execute.ts";
 export * from "./format.ts";
 export * from "./json-schema.ts";

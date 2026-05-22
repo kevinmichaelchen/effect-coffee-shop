@@ -1,3 +1,8 @@
+/**
+ * Composes SQLite repositories and schema readiness into one layer.
+ *
+ * @module
+ */
 import * as Layer from "effect/Layer";
 import { SqlCartItemIdGeneratorLive } from "./CartItemIdGenerator.ts";
 import { SqlCheckoutSessionIdGeneratorLive } from "./CheckoutSessionIdGenerator.ts";

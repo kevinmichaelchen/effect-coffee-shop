@@ -1,3 +1,8 @@
+/**
+ * Allocates cart item identifiers from the Postgres backing store.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { cartItemIdFromString } from "@effect-coffee-shop/coffee-core/domain/cart";

@@ -1,3 +1,8 @@
+/**
+ * Defines domain-level Coffee ordering error types.
+ *
+ * @module
+ */
 import * as Schema from "effect/Schema";
 import { OrderIdSchema, OrderStatusSchema } from "./order.ts";
 

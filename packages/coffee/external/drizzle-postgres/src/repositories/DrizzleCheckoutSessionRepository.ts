@@ -1,3 +1,8 @@
+/**
+ * Persists checkout sessions with Drizzle/Postgres.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";

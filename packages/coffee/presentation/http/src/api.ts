@@ -1,3 +1,8 @@
+/**
+ * Defines the Coffee HTTP API groups, endpoints, and server handlers.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";

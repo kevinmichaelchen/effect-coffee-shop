@@ -1,3 +1,8 @@
+/**
+ * Stores checkout sessions in memory for local and test runtimes.
+ *
+ * @module
+ */
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

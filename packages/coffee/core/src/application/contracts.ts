@@ -1,3 +1,8 @@
+/**
+ * Defines boundary schemas and view models for Coffee application use cases.
+ *
+ * @module
+ */
 import * as Arr from "effect/Array";
 import * as Schema from "effect/Schema";
 import * as SchemaTransformation from "effect/SchemaTransformation";

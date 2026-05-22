@@ -1,3 +1,8 @@
+/**
+ * Mounts the Coffee HTTP API inside the AWS runtime.
+ *
+ * @module
+ */
 import { createAwsRequestServices } from "../coffee-backend.ts";
 import type { AwsRuntime } from "../env.ts";
 import { makeCoffeeHttpApiMount } from "../../../host/http-api-mount.ts";

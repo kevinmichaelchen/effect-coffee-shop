@@ -1,3 +1,8 @@
+/**
+ * Fetches one Coffee order with actor-level access control.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import { OrderNotFoundError } from "@effect-coffee-shop/coffee-core/domain/errors";

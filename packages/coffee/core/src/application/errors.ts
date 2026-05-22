@@ -1,3 +1,8 @@
+/**
+ * Defines application error conversion and reporting helpers.
+ *
+ * @module
+ */
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";

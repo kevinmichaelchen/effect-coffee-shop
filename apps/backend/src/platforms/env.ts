@@ -1,3 +1,8 @@
+/**
+ * Parses platform environment values shared across backend runtimes.
+ *
+ * @module
+ */
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";

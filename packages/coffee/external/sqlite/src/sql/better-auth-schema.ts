@@ -1,3 +1,8 @@
+/**
+ * Defines Better Auth tables for SQLite and D1 deployments.
+ *
+ * @module
+ */
 import { agentAuth } from "@better-auth/agent-auth";
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";

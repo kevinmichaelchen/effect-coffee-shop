@@ -1,3 +1,8 @@
+/**
+ * Defines cart item identifiers and actor-owned cart state.
+ *
+ * @module
+ */
 import * as Schema from "effect/Schema";
 import { DrinkIdSchema, DrinkSizeSchema, MilkSchema, TemperatureSchema } from "./menu.ts";
 import { QuantitySchema, ShotCountSchema } from "./order-primitives.ts";

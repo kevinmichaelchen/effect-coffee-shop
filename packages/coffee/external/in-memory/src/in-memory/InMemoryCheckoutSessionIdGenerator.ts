@@ -1,3 +1,8 @@
+/**
+ * Provides deterministic in-memory checkout session identifiers.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { checkoutSessionIdFromString } from "@effect-coffee-shop/coffee-core/domain/checkout-session";

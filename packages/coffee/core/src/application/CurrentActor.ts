@@ -1,3 +1,8 @@
+/**
+ * Models the actor currently authorized to run Coffee application workflows.
+ *
+ * @module
+ */
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import * as Context from "effect/Context";

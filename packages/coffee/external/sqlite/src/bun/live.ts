@@ -1,3 +1,8 @@
+/**
+ * Builds the SQLite persistence layer for Bun runtimes.
+ *
+ * @module
+ */
 import * as BunServices from "@effect/platform-bun/BunServices";
 import { Database } from "bun:sqlite";
 import * as Effect from "effect/Effect";

@@ -1,3 +1,8 @@
+/**
+ * Public exports for SQLite and D1 Coffee persistence adapters.
+ *
+ * @module
+ */
 export {
   makeCloudflareCoffeeAppLive,
   makeCloudflareSqlCoffeeSchemaLive,

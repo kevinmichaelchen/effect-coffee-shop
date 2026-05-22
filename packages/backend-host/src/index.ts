@@ -1,3 +1,8 @@
+/**
+ * Public exports for backend host request, logging, and observability helpers.
+ *
+ * @module
+ */
 export * from "./fetch-host.ts";
 export * from "./http-jsonrpc-ids.ts";
 export * from "./json.ts";

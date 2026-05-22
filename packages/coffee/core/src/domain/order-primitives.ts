@@ -1,3 +1,8 @@
+/**
+ * Defines shared order primitive schemas for quantities and shot counts.
+ *
+ * @module
+ */
 import * as Schema from "effect/Schema";
 
 export const CustomerNameSchema = Schema.Trim.check(Schema.isNonEmpty()).pipe(
