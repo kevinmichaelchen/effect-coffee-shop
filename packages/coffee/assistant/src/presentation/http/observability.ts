@@ -10,14 +10,9 @@ import {
   logStructuredError,
   roundDurationMs,
 } from "@effect-coffee-shop/backend-host/logging";
+import type { AssistantToolActivity } from "../../application/model.ts";
 import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-core/application/observability";
-
-type AssistantToolActivity = {
-  readonly detail: string;
-  readonly kind: "tool-call" | "tool-result";
-  readonly label: string;
-};
 
 type MetricAttributes = Readonly<Record<string, string>>;
 

@@ -17,7 +17,7 @@ import {
   CurrentActor,
   type AppActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import { type AssistantModelRunner } from "../../application/model.ts";
+import { type AssistantModelRunner, type AssistantToolActivity } from "../../application/model.ts";
 import { runAssistantConversation } from "../../application/runtime.ts";
 import { coffeeAssistantSystemPrompt } from "../../application/system-prompt.ts";
 import {
@@ -56,11 +56,6 @@ interface AssistantHandlerOptions {
   readonly model: string | undefined;
   readonly modelLayer: Layer.Layer<AssistantModelRunner> | undefined;
 }
-type AssistantToolActivityRecordInput = {
-  readonly detail: string;
-  readonly kind: "tool-call" | "tool-result";
-  readonly label: string;
-};
 
 export async function handleAssistantRequest(
   request: Request,
@@ -123,7 +118,7 @@ async function streamAssistantResponse(input: {
   const runApp = createCoffeeAppRunner(input.appLayer, input.actor);
   const startedAt = performance.now();
   let toolCallCount = 0;
-  const emitActivity = (activity: AssistantToolActivityRecordInput) => {
+  const emitActivity = (activity: AssistantToolActivity) => {
     if (activity.kind === "tool-call") {
       toolCallCount += 1;
     }

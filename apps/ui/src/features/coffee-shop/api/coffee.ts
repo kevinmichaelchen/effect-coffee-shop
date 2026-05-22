@@ -10,10 +10,13 @@ import {
   CoffeeOrderSchema,
   CoffeeOrdersSchema,
   MenuSchema,
+  PlaceOrderRequestSchema,
 } from "#features/coffee-shop/lib/coffee-schemas.ts";
 import { requestJson } from "#shared/lib/http.ts";
+import * as Schema from "effect/Schema";
 
 const apiBaseUrl = import.meta.env.VITE_COFFEE_API_URL ?? "/api";
+const encodePlaceOrderRequest = Schema.encodeUnknownSync(PlaceOrderRequestSchema);
 
 function toRequestUrl(path: string): string {
   return `${apiBaseUrl}${path}`;
@@ -56,7 +59,7 @@ export async function createOrder(payload: PlaceOrderRequest): Promise<CoffeeOrd
   return requestJson({
     errorSchema: CoffeeApiErrorSchema,
     init: {
-      body: JSON.stringify(payload),
+      body: JSON.stringify(encodePlaceOrderRequest(payload)),
       headers: { "content-type": "application/json" },
       method: "POST",
     },

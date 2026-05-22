@@ -7,17 +7,20 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-export interface AssistantToolActivity {
-  readonly detail: string;
-  readonly kind: "tool-call" | "tool-result";
-  readonly label: string;
-}
+const AssistantToolActivitySchema = Schema.Struct({
+  detail: Schema.String,
+  kind: Schema.Literals(["tool-call", "tool-result"] as const),
+  label: Schema.String,
+});
 
-export interface AssistantToolCall {
-  readonly arguments: unknown;
-  readonly id?: string;
-  readonly name: string;
-}
+const AssistantToolCallSchema = Schema.Struct({
+  arguments: Schema.Unknown,
+  id: Schema.optionalKey(Schema.String),
+  name: Schema.String,
+});
+
+export type AssistantToolActivity = typeof AssistantToolActivitySchema.Type;
+export type AssistantToolCall = typeof AssistantToolCallSchema.Type;
 
 export type AssistantConversationMessage =
   | {
