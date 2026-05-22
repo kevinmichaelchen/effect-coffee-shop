@@ -3,26 +3,20 @@
  *
  * @module
  */
-import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import {
-  createAssistantModelRunnerLayer,
-  getAssistantModel,
-  getBunAssistantAiConfig,
-  handleAssistantRequest,
-} from "@effect-coffee-shop/coffee-assistant/handler";
-import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
-import {
-  CurrentActor,
-  systemActor,
-} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { createFetchHost } from "@effect-coffee-shop/backend-host/fetch-host";
+import { fetchResponse, type FetchMount } from "@effect-coffee-shop/backend-host/mount";
+import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { createCoffeeRequestServices } from "../../host/coffee-backend.ts";
 import { createCoffeeWebHandler } from "@effect-coffee-shop/coffee-http/web-handler";
 
 type CoffeeWebHandlerInput = Parameters<typeof createCoffeeWebHandler>;
 type CoffeeRoutesLayer = CoffeeWebHandlerInput[0];
 type CoffeeAppLayer = CoffeeWebHandlerInput[1];
+type CoffeeBunEnv = Record<string, string | undefined>;
+
+export type CoffeeBunMount = FetchMount<CoffeeBunEnv>;
 
 class InvalidBunServerPortError extends Schema.TaggedErrorClass<InvalidBunServerPortError>()(
   "InvalidBunServerPortError",
@@ -33,35 +27,24 @@ class InvalidBunServerPortError extends Schema.TaggedErrorClass<InvalidBunServer
 
 export async function startCoffeeBunServer(input: {
   readonly appLayer: CoffeeAppLayer;
+  readonly mounts?: ReadonlyArray<CoffeeBunMount>;
   readonly portEnv?: string;
   readonly routes: CoffeeRoutesLayer;
 }): Promise<void> {
   const port = await readPort(input.portEnv ?? "COFFEE_HTTP_PORT");
   const { dispose, handler } = createCoffeeWebHandler(input.routes, input.appLayer);
+  const routeRequest = createFetchHost<CoffeeBunEnv>([
+    ...(input.mounts ?? []),
+    {
+      name: "routes",
+      matches: () => true,
+      handle: async ({ request }) =>
+        fetchResponse(await handler(request, createCoffeeRequestServices(systemActor))),
+    },
+  ]);
   const server = Bun.serve({
     port,
-    fetch: async (request) => {
-      const pathname = new URL(request.url).pathname;
-      if (pathname === "/assistant") {
-        const ai = getBunAssistantAiConfig(Bun.env);
-        const modelLayer = Option.match(Option.fromNullishOr(ai), {
-          onNone: () => undefined,
-          onSome: createAssistantModelRunnerLayer,
-        });
-
-        return handleAssistantRequest(request, {
-          actor: systemActor,
-          appLayer: input.appLayer,
-          model: getAssistantModel(Bun.env, ai),
-          modelLayer,
-        });
-      }
-
-      return handler(
-        request,
-        emptyWebHandlerServices().pipe(Context.add(CurrentActor, systemActor)),
-      );
-    },
+    fetch: async (request) => routeRequest(request, Bun.env),
   });
 
   registerShutdown(dispose, server);
