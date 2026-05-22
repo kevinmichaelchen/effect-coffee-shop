@@ -5,7 +5,9 @@
  */
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
+import * as Str from "effect/String";
 
 const AssistantToolActivitySchema = Schema.Struct({
   detail: Schema.String,
@@ -105,13 +107,11 @@ export type AssistantRequestMetadata = Readonly<
 const assistantFallbackMessage = "I couldn't generate a final response.";
 
 export function extractResponseText(text: string | undefined): string {
-  const trimmedText = text?.trim();
-
-  if (!trimmedText) {
-    return assistantFallbackMessage;
-  }
-
-  return trimmedText;
+  return Option.fromUndefinedOr(text).pipe(
+    Option.map(Str.trim),
+    Option.filter(Str.isNonEmpty),
+    Option.getOrElse(() => assistantFallbackMessage),
+  );
 }
 
 export function getAssistantToolDescription(tool: AssistantToolDefinition): string {

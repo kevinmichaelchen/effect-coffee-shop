@@ -12,6 +12,7 @@ import {
   runHostEffect,
 } from "@effect-coffee-shop/backend-host/observability";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
+import type { CoffeeAppRunner } from "@effect-coffee-shop/coffee-actions/execute";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import {
   CurrentActor,
@@ -55,6 +56,16 @@ interface AssistantHandlerOptions {
   readonly gatewayEnabled?: boolean;
   readonly model: string | undefined;
   readonly modelLayer: Layer.Layer<AssistantModelRunner> | undefined;
+}
+
+interface PreparedAssistantRequest {
+  readonly actor: AppActor;
+  readonly appLayer: AssistantHandlerOptions["appLayer"];
+  readonly body: AssistantRequestBody;
+  readonly gatewayEnabled: boolean;
+  readonly model: string;
+  readonly modelLayer: NonNullable<AssistantHandlerOptions["modelLayer"]>;
+  readonly queue: AssistantChunkQueue<AssistantStreamChunk>;
 }
 
 export async function handleAssistantRequest(
@@ -102,26 +113,14 @@ export async function handleAssistantRequest(
   });
 }
 
-type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;
-
-async function streamAssistantResponse(input: {
-  readonly actor: AppActor;
-  readonly appLayer: Layer.Layer<never, any, any>;
-  readonly body: AssistantRequestBody;
-  readonly gatewayEnabled: boolean;
-  readonly model: string;
-  readonly modelLayer: Layer.Layer<AssistantModelRunner>;
-  readonly queue: AssistantChunkQueue<AssistantStreamChunk>;
-}): Promise<void> {
+async function streamAssistantResponse(input: PreparedAssistantRequest): Promise<void> {
   const messageId = createAssistantStreamId("msg");
   const runId = createAssistantStreamId("chat");
   const runApp = createCoffeeAppRunner(input.appLayer, input.actor);
   const startedAt = performance.now();
   let toolCallCount = 0;
   const emitActivity = (activity: AssistantToolActivity) => {
-    if (activity.kind === "tool-call") {
-      toolCallCount += 1;
-    }
+    toolCallCount += Number(activity.kind === "tool-call");
 
     void runHostEffect(
       logAssistantToolActivity({
@@ -194,14 +193,14 @@ async function streamAssistantResponse(input: {
   );
 }
 
-function createCoffeeAppRunner<TAppLayer extends Layer.Layer<never, any, any>>(
-  appLayer: TAppLayer,
+function createCoffeeAppRunner(
+  appLayer: AssistantHandlerOptions["appLayer"],
   actor: AppActor,
 ): CoffeeAppRunner {
   const liveLayer = CoffeeOrderApp.layer.pipe(Layer.provide(appLayer));
   const services = emptyWebHandlerServices().pipe(Context.add(CurrentActor, actor));
 
-  return async <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) =>
+  return async (effect) =>
     Effect.runPromiseWith(services)(
       effect.pipe(Effect.provide(liveLayer), Effect.provide(HostObservabilityLive)),
     );

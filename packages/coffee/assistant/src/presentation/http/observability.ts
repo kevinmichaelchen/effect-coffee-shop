@@ -70,47 +70,45 @@ export function createAssistantGatewayMetadata(actor: AppActor, runId: string) {
   } as const;
 }
 
-export function logAssistantRunStarted(input: {
+export const logAssistantRunStarted = Effect.fn("CoffeeAssistant.logRunStarted")(function* (input: {
   readonly actor: AppActor;
   readonly gatewayEnabled: boolean;
   readonly model: string;
   readonly runId: string;
 }) {
-  return Effect.gen(function* () {
-    yield* Metric.update(
-      Metric.withAttributes(
-        assistantRunsTotal,
-        assistantRunMetricAttributes({
-          gatewayEnabled: input.gatewayEnabled,
-          model: input.model,
-          outcome: "started",
-        }),
-      ),
-      1,
-    );
-    yield* logStructuredEvent({
-      event: "assistant.run.started",
-      ...assistantRunLogFields(input),
-      assistant_gateway_enabled: input.gatewayEnabled,
+  yield* Metric.update(
+    Metric.withAttributes(
+      assistantRunsTotal,
+      assistantRunMetricAttributes({
+        gatewayEnabled: input.gatewayEnabled,
+        model: input.model,
+        outcome: "started",
+      }),
+    ),
+    1,
+  );
+  yield* logStructuredEvent({
+    event: "assistant.run.started",
+    ...assistantRunLogFields(input),
+    assistant_gateway_enabled: input.gatewayEnabled,
+  });
+});
+
+export const logAssistantRunCompleted = Effect.fn("CoffeeAssistant.logRunCompleted")(
+  function* (input: {
+    readonly actor: AppActor;
+    readonly durationMs: number;
+    readonly gatewayEnabled: boolean;
+    readonly model: string;
+    readonly runId: string;
+    readonly toolCallCount: number;
+  }) {
+    const attributes = assistantRunMetricAttributes({
+      gatewayEnabled: input.gatewayEnabled,
+      model: input.model,
+      outcome: "success",
     });
-  });
-}
 
-export function logAssistantRunCompleted(input: {
-  readonly actor: AppActor;
-  readonly durationMs: number;
-  readonly gatewayEnabled: boolean;
-  readonly model: string;
-  readonly runId: string;
-  readonly toolCallCount: number;
-}) {
-  const attributes = assistantRunMetricAttributes({
-    gatewayEnabled: input.gatewayEnabled,
-    model: input.model,
-    outcome: "success",
-  });
-
-  return Effect.gen(function* () {
     yield* Metric.update(Metric.withAttributes(assistantRunsTotal, attributes), 1);
     yield* Metric.update(
       Metric.withAttributes(assistantRunDurationMs, attributes),
@@ -121,10 +119,10 @@ export function logAssistantRunCompleted(input: {
       ...assistantTimedRunLogFields(input),
       assistant_tool_call_count: input.toolCallCount,
     });
-  });
-}
+  },
+);
 
-export function logAssistantRunFailed(input: {
+export const logAssistantRunFailed = Effect.fn("CoffeeAssistant.logRunFailed")(function* (input: {
   readonly actor: AppActor;
   readonly durationMs: number;
   readonly error: unknown;
@@ -138,27 +136,25 @@ export function logAssistantRunFailed(input: {
     outcome: "error",
   });
 
-  return Effect.gen(function* () {
-    yield* Metric.update(Metric.withAttributes(assistantRunsTotal, attributes), 1);
-    yield* Metric.update(
-      Metric.withAttributes(assistantRunDurationMs, attributes),
-      roundDurationMs(input.durationMs),
-    );
-    yield* logStructuredError({
-      event: "assistant.run.error",
-      ...assistantTimedRunLogFields(input),
-      error_message: String(input.error),
-    });
+  yield* Metric.update(Metric.withAttributes(assistantRunsTotal, attributes), 1);
+  yield* Metric.update(
+    Metric.withAttributes(assistantRunDurationMs, attributes),
+    roundDurationMs(input.durationMs),
+  );
+  yield* logStructuredError({
+    event: "assistant.run.error",
+    ...assistantTimedRunLogFields(input),
+    error_message: String(input.error),
   });
-}
+});
 
-export function logAssistantToolActivity(input: {
-  readonly activity: AssistantToolActivity;
-  readonly actor: AppActor;
-  readonly model: string;
-  readonly runId: string;
-}) {
-  return Effect.gen(function* () {
+export const logAssistantToolActivity = Effect.fn("CoffeeAssistant.logToolActivity")(
+  function* (input: {
+    readonly activity: AssistantToolActivity;
+    readonly actor: AppActor;
+    readonly model: string;
+    readonly runId: string;
+  }) {
     yield* Metric.update(
       Metric.withAttributes(assistantToolActivityTotal, {
         assistant_model: input.model,
@@ -174,5 +170,5 @@ export function logAssistantToolActivity(input: {
       assistant_tool_name: input.activity.label,
       assistant_tool_payload: input.activity.detail,
     });
-  });
-}
+  },
+);
