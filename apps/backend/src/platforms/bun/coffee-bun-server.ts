@@ -4,6 +4,7 @@
  * @module
  */
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { createFetchHost } from "@effect-coffee-shop/backend-host/fetch-host";
 import { fetchResponse, type FetchMount } from "@effect-coffee-shop/backend-host/mount";
@@ -31,7 +32,7 @@ export async function startCoffeeBunServer(input: {
   readonly portEnv?: string;
   readonly routes: CoffeeRoutesLayer;
 }): Promise<void> {
-  const port = await readPort(input.portEnv ?? "COFFEE_HTTP_PORT");
+  const port = await Effect.runPromise(readPort(input.portEnv ?? "COFFEE_HTTP_PORT"));
   const { dispose, handler } = createCoffeeWebHandler(input.routes, input.appLayer);
   const routeRequest = createFetchHost<CoffeeBunEnv>([
     ...(input.mounts ?? []),
@@ -55,21 +56,26 @@ export async function startCoffeeBunServer(input: {
   );
 }
 
-async function readPort(envName: string): Promise<number> {
+function readPort(envName: string) {
   const fallbackPort = 3000;
-  const configuredPort = Bun.env[envName];
-  if (configuredPort === undefined) {
-    return fallbackPort;
-  }
-
-  const parsedPort = Number(configuredPort);
-  if (!Number.isInteger(parsedPort) || parsedPort <= 0) {
-    throw new InvalidBunServerPortError({
-      message: `Invalid ${envName} value: ${configuredPort}`,
-    });
-  }
-
-  return parsedPort;
+  return Option.match(Option.fromUndefinedOr(Bun.env[envName]), {
+    onNone: () => Effect.succeed(fallbackPort),
+    onSome: (configuredPort) => {
+      const parsedPort = Number(configuredPort);
+      return Option.match(
+        Option.liftPredicate(parsedPort, (port) => Number.isInteger(port) && port > 0),
+        {
+          onNone: () =>
+            Effect.fail(
+              new InvalidBunServerPortError({
+                message: `Invalid ${envName} value: ${configuredPort}`,
+              }),
+            ),
+          onSome: Effect.succeed,
+        },
+      );
+    },
+  });
 }
 
 function registerShutdown(
