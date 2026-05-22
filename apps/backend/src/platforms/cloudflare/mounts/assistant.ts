@@ -1,3 +1,8 @@
+/**
+ * Mounts the assistant HTTP route on the Cloudflare Worker.
+ *
+ * @module
+ */
 import * as Option from "effect/Option";
 import {
   createAssistantModelRunnerLayer,
@@ -8,32 +13,27 @@ import type { AssistantAiConfig } from "@effect-coffee-shop/coffee-assistant/run
 import { type CloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
 import { rejectDirectHttpBearerRequest } from "../direct-http-auth.ts";
 import {
-  cloudflarePathname,
+  cloudflarePathEquals,
   cloudflareResponse,
-  rewriteRequestPath,
+  rewriteRequestPathPrefix,
   type CloudflareMount,
 } from "@effect-coffee-shop/backend-host/mount";
 import { actorLogFields } from "@effect-coffee-shop/backend-host/logging";
 import { resolveCloudflareRequestActor } from "./request-actor.ts";
 
-const isAssistantRequest = (request: Request): boolean => {
-  const pathname = cloudflarePathname(request);
-  return pathname === "/api/assistant" || pathname === "/api/assistant/";
-};
+const isAssistantRequest = (request: Request): boolean =>
+  cloudflarePathEquals(request, "/api/assistant") ||
+  cloudflarePathEquals(request, "/api/assistant/");
 
-const rewriteApiRequest = (request: Request): Request => {
-  const pathname = cloudflarePathname(request);
-  const rewrittenPathname = pathname.replace(/^\/api(?=\/|$)/, "") || "/";
-  return rewriteRequestPath(request, rewrittenPathname);
-};
+const rewriteApiRequest = (request: Request): Request => rewriteRequestPathPrefix(request, "/api");
 
-const getAssistantAiConfig = (runtime: CloudflareRuntime): AssistantAiConfig | undefined =>
+const getAssistantAiConfig = (runtime: CloudflareRuntime): Option.Option<AssistantAiConfig> =>
   Option.match(runtime.bindings.ai, {
-    onNone: () => undefined,
+    onNone: () => Option.none(),
     onSome: (binding) =>
       Option.match(runtime.config.aiGatewayId, {
-        onNone: () => ({ binding, kind: "workers-ai-binding" }),
-        onSome: (gatewayId) => ({ binding, gatewayId, kind: "workers-ai-binding" }),
+        onNone: () => Option.some({ binding, kind: "workers-ai-binding" }),
+        onSome: (gatewayId) => Option.some({ binding, gatewayId, kind: "workers-ai-binding" }),
       }),
   });
 
@@ -41,12 +41,11 @@ export const cloudflareAssistantMount: CloudflareMount<CloudflareWorkerEnv> = {
   name: "assistant",
   matches: isAssistantRequest,
   handle: async ({ env, request }) =>
-    Option.match(Option.fromNullishOr(rejectDirectHttpBearerRequest(request)), {
+    Option.match(rejectDirectHttpBearerRequest(request), {
       onNone: async () => {
-        const { actor, appLayer, runtime } = await resolveCloudflareRequestActor({ env, request });
+        const { actor, backend, runtime } = await resolveCloudflareRequestActor({ env, request });
 
-        const ai = getAssistantAiConfig(runtime);
-        const modelLayer = Option.match(Option.fromNullishOr(ai), {
+        const modelLayer = Option.match(getAssistantAiConfig(runtime), {
           onNone: () => undefined,
           onSome: createAssistantModelRunnerLayer,
         });
@@ -54,7 +53,7 @@ export const cloudflareAssistantMount: CloudflareMount<CloudflareWorkerEnv> = {
         return cloudflareResponse(
           await handleAssistantRequest(rewriteApiRequest(request), {
             actor,
-            appLayer,
+            appLayer: backend.appLayer,
             gatewayEnabled: Option.isSome(runtime.config.aiGatewayId),
             model: getAssistantModel(),
             modelLayer,

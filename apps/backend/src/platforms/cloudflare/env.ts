@@ -1,3 +1,8 @@
+/**
+ * Decodes Cloudflare Worker bindings and scalar environment configuration.
+ *
+ * @module
+ */
 import type {
   AiTextGenerationInput,
   AiTextGenerationOutput,
@@ -19,6 +24,18 @@ export interface WorkersAiBinding {
     options?: object,
   ): Promise<AiTextGenerationOutput>;
 }
+
+export const cloudflareBindingNames = {
+  ai: "AI",
+  assets: "ASSETS",
+  db: "DB",
+} as const;
+
+export const cloudflareEnvNames = {
+  aiGatewayId: "AI_GATEWAY_ID",
+  betterAuthSecret: "BETTER_AUTH_SECRET",
+  coffeeStaffUserIds: "COFFEE_STAFF_USER_IDS",
+} as const;
 
 export interface CloudflareWorkerEnv {
   AI?: WorkersAiBinding;
@@ -80,9 +97,9 @@ export const readCloudflareRuntime = (env: CloudflareWorkerEnv): CloudflareRunti
 
   return {
     bindings: {
-      ai: Option.fromNullishOr(env.AI),
-      assets: Option.fromNullishOr(env.ASSETS),
-      db: env.DB,
+      ai: Option.fromNullishOr(env[cloudflareBindingNames.ai]),
+      assets: Option.fromNullishOr(env[cloudflareBindingNames.assets]),
+      db: env[cloudflareBindingNames.db],
     },
     config: {
       aiGatewayId: Option.flatMap(decodedConfig.aiGatewayId, optionalTrimmedString),

@@ -1,3 +1,8 @@
+/**
+ * Tests Cloudflare runtime binding and configuration decoding.
+ *
+ * @module
+ */
 import type {
   AiTextGenerationInput,
   AiTextGenerationOutput,

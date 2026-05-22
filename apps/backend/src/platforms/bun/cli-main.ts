@@ -1,3 +1,8 @@
+/**
+ * Starts the Coffee command-line interface on the Bun runtime.
+ *
+ * @module
+ */
 import * as BunServices from "@effect/platform-bun/BunServices";
 import * as BunRuntime from "@effect/platform-bun/BunRuntime";
 import * as Effect from "effect/Effect";

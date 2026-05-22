@@ -1,3 +1,8 @@
+/**
+ * Provides Miniflare helpers for exercising the MCP worker in tests.
+ *
+ * @module
+ */
 import { build } from "esbuild";
 import * as Option from "effect/Option";
 import { Miniflare } from "miniflare";
@@ -71,7 +76,7 @@ const resolveMcpWorkerEntrypoint = Effect.fnUntraced(function* () {
   const path = yield* Path.Path;
 
   return yield* path.fromFileUrl(
-    new URL("../../src/cloudflare/mcp-miniflare-worker.ts", import.meta.url),
+    new URL("../../src/platforms/cloudflare/mcp-miniflare-worker.ts", import.meta.url),
   );
 });
 

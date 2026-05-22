@@ -1,3 +1,8 @@
+/**
+ * Serves static asset requests from the Cloudflare assets binding.
+ *
+ * @module
+ */
 import * as Option from "effect/Option";
 import { readCloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
 import { cloudflareResponse, type CloudflareMount } from "@effect-coffee-shop/backend-host/mount";

@@ -1,27 +1,28 @@
+/**
+ * Mounts Better Auth and agent discovery routes on the Cloudflare Worker.
+ *
+ * @module
+ */
 import * as Option from "effect/Option";
+import { getCloudflareRuntimeBackend } from "../coffee-backend.ts";
 import { readCloudflareRuntime, revealSecret, type CloudflareWorkerEnv } from "../env.ts";
 import {
-  cloudflarePathname,
+  cloudflarePathEquals,
+  cloudflarePathIsOrStartsWith,
   cloudflareResponse,
   rewriteRequestPath,
   type CloudflareMount,
 } from "@effect-coffee-shop/backend-host/mount";
-import {
-  createCloudflareAuth,
-  ensureCloudflareAuthPersistence,
-} from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
-import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
+import { createCloudflareAuth } from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
 
 const betterAuthUnavailableResponse = () =>
   new Response("Better Auth is unavailable. Configure BETTER_AUTH_SECRET.", { status: 503 });
 
 const isAgentDiscoveryRequest = (request: Request): boolean =>
-  cloudflarePathname(request) === "/.well-known/agent-configuration";
+  cloudflarePathEquals(request, "/.well-known/agent-configuration");
 
-const isAuthRequest = (request: Request): boolean => {
-  const pathname = cloudflarePathname(request);
-  return pathname === "/api/auth" || pathname.startsWith("/api/auth/");
-};
+const isAuthRequest = (request: Request): boolean =>
+  cloudflarePathIsOrStartsWith(request, "/api/auth");
 
 const handleAuthRequest = async (request: Request, env: CloudflareWorkerEnv): Promise<Response> => {
   const runtime = readCloudflareRuntime(env);
@@ -29,13 +30,13 @@ const handleAuthRequest = async (request: Request, env: CloudflareWorkerEnv): Pr
   return Option.match(runtime.config.betterAuthSecret, {
     onNone: async () => betterAuthUnavailableResponse(),
     onSome: async (secret) => {
-      await ensureCloudflareAuthPersistence({
-        db: runtime.bindings.db,
-      });
+      const backend = getCloudflareRuntimeBackend(runtime);
+
+      await backend.ensureAuthPersistence();
 
       return createCloudflareAuth({
-        appLayer: makeCloudflareCoffeeAppLive(runtime.bindings.db),
-        db: runtime.bindings.db,
+        appLayer: backend.appLayer,
+        db: backend.db,
         request,
         secret: revealSecret(secret),
       }).handler(request);

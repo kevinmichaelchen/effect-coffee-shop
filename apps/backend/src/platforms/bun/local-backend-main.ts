@@ -1,3 +1,8 @@
+/**
+ * Starts a local in-memory backend that serves both HTTP API and MCP routes.
+ *
+ * @module
+ */
 import * as Layer from "effect/Layer";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";

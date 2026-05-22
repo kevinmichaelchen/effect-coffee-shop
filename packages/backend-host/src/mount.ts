@@ -1,3 +1,8 @@
+/**
+ * Defines Cloudflare Worker mount contracts and request path helpers.
+ *
+ * @module
+ */
 import type { ExecutionContext } from "@cloudflare/workers-types";
 import type { StructuredLogRecord } from "./logging.ts";
 
@@ -20,6 +25,14 @@ export interface CloudflareMount<TEnv> {
 
 export const cloudflarePathname = (request: Request): string => new URL(request.url).pathname;
 
+export const cloudflarePathEquals = (request: Request, pathname: string): boolean =>
+  cloudflarePathname(request) === pathname;
+
+export const cloudflarePathIsOrStartsWith = (request: Request, pathname: string): boolean => {
+  const requestPathname = cloudflarePathname(request);
+  return requestPathname === pathname || requestPathname.startsWith(`${pathname}/`);
+};
+
 export const cloudflareResponse = (
   response: Response,
   logFields?: StructuredLogRecord,
@@ -29,4 +42,10 @@ export const rewriteRequestPath = (request: Request, pathname: string): Request 
   const url = new URL(request.url);
   url.pathname = pathname;
   return new Request(url, request);
+};
+
+export const rewriteRequestPathPrefix = (request: Request, prefix: string): Request => {
+  const pathname = cloudflarePathname(request);
+  const rewrittenPathname = pathname === prefix ? "/" : pathname.slice(prefix.length);
+  return rewriteRequestPath(request, rewrittenPathname);
 };

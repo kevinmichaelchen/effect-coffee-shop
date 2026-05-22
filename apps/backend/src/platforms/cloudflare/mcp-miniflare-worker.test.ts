@@ -1,3 +1,8 @@
+/**
+ * Tests the Miniflare-backed MCP worker surface.
+ *
+ * @module
+ */
 import { assert } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -6,7 +11,7 @@ import {
   createMcpMiniflareClient,
   type McpMiniflareClient,
   type McpRequest,
-} from "../../test/support/McpMiniflare.ts";
+} from "../../../test/support/McpMiniflare.ts";
 
 const StringIdResponseSchema = Schema.Struct({
   id: Schema.String,

@@ -1,8 +1,17 @@
+/**
+ * Defines the Alchemy stack that deploys the Coffee Shop UI and Cloudflare Worker.
+ *
+ * @module
+ */
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Redacted from "effect/Redacted";
+import {
+  cloudflareBindingNames,
+  cloudflareEnvNames,
+} from "./apps/backend/src/platforms/cloudflare/env.ts";
 
 const optionalSecret = (value: string | undefined) =>
   value === undefined || value.trim().length === 0
@@ -57,7 +66,7 @@ export default Alchemy.Stack(
       compatibility: {
         flags: ["nodejs_compat"],
       },
-      main: "./apps/backend/src/cloudflare/worker.ts",
+      main: "./apps/backend/src/platforms/cloudflare/worker.ts",
       observability: {
         enabled: true,
         headSamplingRate: observabilitySamplingRate,
@@ -100,17 +109,18 @@ export default Alchemy.Stack(
         ],
       },
       bindings: {
-        DB: coffeeDb,
+        [cloudflareBindingNames.db]: coffeeDb,
       },
       env: {
-        AI_GATEWAY_ID: assistantGateway?.gatewayId ?? "",
-        BETTER_AUTH_SECRET: yield* betterAuthSecret,
-        COFFEE_STAFF_USER_IDS: process.env.COFFEE_STAFF_USER_IDS ?? "",
+        [cloudflareEnvNames.aiGatewayId]: assistantGateway?.gatewayId ?? "",
+        [cloudflareEnvNames.betterAuthSecret]: yield* betterAuthSecret,
+        [cloudflareEnvNames.coffeeStaffUserIds]:
+          process.env[cloudflareEnvNames.coffeeStaffUserIds] ?? "",
       },
     });
 
-    yield* website.bind("AI", {
-      bindings: [{ type: "ai", name: "AI" }],
+    yield* website.bind(cloudflareBindingNames.ai, {
+      bindings: [{ type: "ai", name: cloudflareBindingNames.ai }],
     });
 
     return {
