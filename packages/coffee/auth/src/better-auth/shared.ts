@@ -42,7 +42,7 @@ export interface CoffeeActorResolutionInput {
   readonly staffUserIds: ReadonlySet<string>;
 }
 
-function buildCoffeeAuthOptions(input: CoffeeAuthInput) {
+function buildCoffeeAuthOptions(input: CoffeeAuthInput): BetterAuthOptions {
   const requestUrl = new URL(input.request.url);
 
   return {
@@ -110,7 +110,6 @@ export function createCoffeeAuth(input: CoffeeAuthInput) {
     secret,
   });
 
-  // @ts-expect-error third-party Better Auth typing bug
   return betterAuth(authOptions);
 }
 

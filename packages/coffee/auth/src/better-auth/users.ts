@@ -7,19 +7,17 @@ export const provisionalUserPrefix = "passkey-signup-";
 const PasskeyRegistrationContextSchema = Schema.Struct({
   displayName: Schema.String,
 });
+const DisplayNameSchema = Schema.Trim.check(
+  Schema.isNonEmpty({ message: "displayName must not be blank" }),
+);
 
 const decodeJsonString = Schema.decodeUnknownSync(Schema.UnknownFromJsonString);
 const decodePasskeyRegistrationShape = Schema.decodeUnknownSync(PasskeyRegistrationContextSchema);
+const decodeDisplayName = Schema.decodeUnknownSync(DisplayNameSchema);
 
 export function getDisplayName(context: string | null | undefined): string {
   const parsed = decodePasskeyRegistrationShape(decodeJsonString(context ?? '{"displayName":""}'));
-  const displayName = parsed.displayName.trim();
-
-  if (displayName.length === 0) {
-    throw new Error("displayName must not be blank");
-  }
-
-  return displayName;
+  return decodeDisplayName(parsed.displayName);
 }
 
 function createSyntheticEmail(userId: string): string {

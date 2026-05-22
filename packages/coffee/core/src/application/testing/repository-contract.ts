@@ -39,7 +39,7 @@ type CheckoutSessionOverrides = {
   readonly updatedAt?: CheckoutSession["updatedAt"];
 };
 
-const utc = (iso: string) => Option.getOrThrow(DateTime.make(iso));
+const utc = DateTime.makeUnsafe;
 const initialTime = utc("2026-01-01T10:00:00.000Z");
 const laterTime = utc("2026-01-01T10:05:00.000Z");
 const latestTime = utc("2026-01-01T10:10:00.000Z");

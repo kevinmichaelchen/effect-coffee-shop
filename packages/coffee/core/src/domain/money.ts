@@ -3,7 +3,7 @@
  *
  * @module
  */
-import * as Equal from "effect/Equal";
+import * as Eq from "effect/Equal";
 import * as Hash from "effect/Hash";
 import * as Schema from "effect/Schema";
 import * as SchemaTransformation from "effect/SchemaTransformation";
@@ -19,9 +19,9 @@ export class Money
     currency: CurrencySchema,
     minorUnits: MinorUnitsSchema,
   })
-  implements Equal.Equal
+  implements Eq.Equal
 {
-  [Equal.symbol](that: Equal.Equal): boolean {
+  [Eq.symbol](that: Eq.Equal): boolean {
     return (
       Schema.is(Money)(that) &&
       this.currency === that.currency &&

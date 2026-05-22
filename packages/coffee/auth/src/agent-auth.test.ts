@@ -26,11 +26,7 @@ async function withTestDatabase<A>(effect: (db: D1Database) => Promise<A>): Prom
   });
   const db: D1Database = await miniflare.getD1Database("DB");
 
-  try {
-    return await effect(db);
-  } finally {
-    await miniflare.dispose();
-  }
+  return effect(db).finally(() => miniflare.dispose());
 }
 
 function createAgentSession(input: {

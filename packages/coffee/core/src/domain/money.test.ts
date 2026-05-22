@@ -1,5 +1,5 @@
 import { assert, describe, it } from "@effect/vitest";
-import * as Equal from "effect/Equal";
+import * as Eq from "effect/Equal";
 import {
   addMoney,
   moneyFromCents,
@@ -18,8 +18,8 @@ describe("money domain", () => {
   });
 
   it("uses Effect equality for value comparisons", () => {
-    assert.ok(Equal.equals(moneyFromCents(450), moneyFromCents(450)));
-    assert.strictEqual(Equal.equals(moneyFromCents(450), moneyFromCents(451)), false);
+    assert.ok(Eq.equals(moneyFromCents(450), moneyFromCents(450)));
+    assert.strictEqual(Eq.equals(moneyFromCents(450), moneyFromCents(451)), false);
   });
 
   it("adds, sums, multiplies, and scales money values", () => {

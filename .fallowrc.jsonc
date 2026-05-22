@@ -3,9 +3,9 @@
 
   "entry": [
     "alchemy.run.ts",
-    "apps/backend/src/cloudflare/worker.ts",
-    "apps/backend/src/cloudflare/mcp-miniflare-worker.ts",
-    "apps/backend/src/bun/*.ts",
+    "apps/backend/src/platforms/cloudflare/worker.ts",
+    "apps/backend/src/platforms/cloudflare/mcp-miniflare-worker.ts",
+    "apps/backend/src/platforms/bun/*.ts",
     "apps/backend/scripts/*.ts",
     "apps/backend/src/**/*.test.ts",
     "apps/backend/test/**/*.ts",
@@ -64,12 +64,17 @@
   },
 
   "duplicates": {
-    "mode": "semantic",
+    "mode": "mild",
     "minTokens": 50,
     "minLines": 5,
     "minOccurrences": 3,
     "threshold": 14.5,
-    "ignoreImports": true
+    "ignoreImports": true,
+    "ignore": [
+      "apps/ui/src/**/*.stories.tsx",
+      "packages/coffee/external/drizzle-postgres/src/db/auth-schema.ts",
+      "packages/coffee/external/drizzle-postgres/src/db/schema.ts"
+    ]
   },
 
   "health": {
@@ -162,7 +167,7 @@
       },
       {
         "from": "backend-host",
-        "allow": ["domain", "application"]
+        "allow": []
       },
       {
         "from": "domain",
@@ -190,7 +195,7 @@
       },
       {
         "from": "presentation",
-        "allow": ["backend-host", "domain", "application", "actions", "assistant"]
+        "allow": ["backend-host", "domain", "application", "actions"]
       }
     ]
   }

@@ -6,6 +6,7 @@
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import {
   createAssistantModelRunnerLayer,
   getAssistantModel,
@@ -22,6 +23,13 @@ import { createCoffeeWebHandler } from "@effect-coffee-shop/coffee-http/web-hand
 type CoffeeWebHandlerInput = Parameters<typeof createCoffeeWebHandler>;
 type CoffeeRoutesLayer = CoffeeWebHandlerInput[0];
 type CoffeeAppLayer = CoffeeWebHandlerInput[1];
+
+class InvalidBunServerPortError extends Schema.TaggedErrorClass<InvalidBunServerPortError>()(
+  "InvalidBunServerPortError",
+  {
+    message: Schema.String,
+  },
+) {}
 
 export async function startCoffeeBunServer(input: {
   readonly appLayer: CoffeeAppLayer;
@@ -73,7 +81,9 @@ async function readPort(envName: string): Promise<number> {
 
   const parsedPort = Number(configuredPort);
   if (!Number.isInteger(parsedPort) || parsedPort <= 0) {
-    throw new Error(`Invalid ${envName} value: ${configuredPort}`);
+    throw new InvalidBunServerPortError({
+      message: `Invalid ${envName} value: ${configuredPort}`,
+    });
   }
 
   return parsedPort;

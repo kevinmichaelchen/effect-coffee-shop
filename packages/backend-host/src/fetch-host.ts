@@ -32,39 +32,10 @@ export const createFetchHost =
     const routeKind = mount?.name ?? "unmatched";
     const startedAt = performance.now();
 
-    try {
-      if (mount === undefined) {
-        const response = notFoundResponse();
-        const durationMs = performance.now() - startedAt;
-
-        await runHostEffect(
-          Effect.gen(function* () {
-            yield* recordFetchHostRequestCompleted({
-              durationMs,
-              method: request.method,
-              routeKind,
-              status: response.status,
-            });
-            yield* logRequestCompleted({
-              durationMs,
-              request,
-              response,
-              routeKind,
-            });
-          }).pipe(
-            Effect.withSpan("fetch_host.request"),
-            Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
-          ),
-        );
-
-        return response;
-      }
-
-      return await runHostEffect(
-        Effect.gen(function* () {
-          const { logFields, response } = yield* Effect.promise(() =>
-            mount.handle(createRequestContext(request, env, runtime)),
-          );
+    return runHostEffect(
+      Effect.gen(function* () {
+        if (mount === undefined) {
+          const response = notFoundResponse();
           const durationMs = performance.now() - startedAt;
 
           yield* recordFetchHostRequestCompleted({
@@ -73,52 +44,68 @@ export const createFetchHost =
             routeKind,
             status: response.status,
           });
-
-          if (logFields === undefined) {
-            yield* logRequestCompleted({
-              durationMs,
-              request,
-              response,
-              routeKind,
-            });
-          } else {
-            yield* logRequestCompleted({
-              durationMs,
-              extraFields: logFields,
-              request,
-              response,
-              routeKind,
-            });
-          }
+          yield* logRequestCompleted({
+            durationMs,
+            request,
+            response,
+            routeKind,
+          });
 
           return response;
-        }).pipe(
-          Effect.withSpan("fetch_host.request"),
-          Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
-        ),
-      );
-    } catch (error) {
-      const durationMs = performance.now() - startedAt;
+        }
 
-      await runHostEffect(
-        Effect.gen(function* () {
-          yield* recordFetchHostRequestFailed({
+        const { logFields, response } = yield* Effect.tryPromise({
+          try: () => mount.handle(createRequestContext(request, env, runtime)),
+          catch: (error) => error,
+        });
+        const durationMs = performance.now() - startedAt;
+
+        yield* recordFetchHostRequestCompleted({
+          durationMs,
+          method: request.method,
+          routeKind,
+          status: response.status,
+        });
+
+        if (logFields === undefined) {
+          yield* logRequestCompleted({
+            durationMs,
+            request,
+            response,
+            routeKind,
+          });
+        } else {
+          yield* logRequestCompleted({
+            durationMs,
+            extraFields: logFields,
+            request,
+            response,
+            routeKind,
+          });
+        }
+
+        return response;
+      }).pipe(
+        Effect.tapError((error: unknown) => {
+          const durationMs = performance.now() - startedAt;
+
+          return recordFetchHostRequestFailed({
             durationMs,
             method: request.method,
             routeKind,
-          });
-          yield* logRequestFailed({
-            durationMs,
-            error,
-            request,
-            routeKind,
-          });
-        }).pipe(
-          Effect.withSpan("fetch_host.request"),
-          Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
-        ),
-      );
-
-      throw error;
-    }
+          }).pipe(
+            Effect.andThen(
+              logRequestFailed({
+                durationMs,
+                error,
+                request,
+                routeKind,
+              }),
+            ),
+          );
+        }),
+        Effect.withSpan("fetch_host.request"),
+        Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
+      ),
+    );
   };

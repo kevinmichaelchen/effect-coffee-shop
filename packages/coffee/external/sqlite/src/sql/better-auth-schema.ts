@@ -6,10 +6,20 @@
 import { agentAuth } from "@better-auth/agent-auth";
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
+import * as Schema from "effect/Schema";
 import { sqlfuBetterAuthAdapter } from "sqlfu/better-auth";
 
+class UnavailableCapabilityExecutorError extends Schema.TaggedErrorClass<UnavailableCapabilityExecutorError>()(
+  "UnavailableCapabilityExecutorError",
+  {
+    message: Schema.String,
+  },
+) {}
+
 const unavailableCapabilityExecutor = async () => {
-  throw new Error("This Better Auth config is only for SQLFu schema generation.");
+  throw new UnavailableCapabilityExecutorError({
+    message: "This Better Auth config is only for SQLFu schema generation.",
+  });
 };
 
 const auth = betterAuth({

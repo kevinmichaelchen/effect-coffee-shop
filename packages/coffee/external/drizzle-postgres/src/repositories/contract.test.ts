@@ -2,7 +2,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import { sql } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, assert, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
 import { CartRepository } from "@effect-coffee-shop/coffee-core/application/ports/CartRepository";
 import { CheckoutSessionIdGenerator } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionIdGenerator";
@@ -38,7 +38,7 @@ let runtime: ContractRuntime | undefined;
 
 const getRuntime = () => {
   if (runtime === undefined) {
-    throw new Error("Drizzle Postgres test runtime is not initialized");
+    assert.fail("Drizzle Postgres test runtime is not initialized");
   }
 
   return runtime;
