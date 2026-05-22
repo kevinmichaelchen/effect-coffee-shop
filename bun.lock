@@ -139,6 +139,7 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@copilotkit/aimock": "1.26.1",
         "@effect-coffee-shop/coffee-external-in-memory": "workspace:*",
         "@types/bun": "catalog:",
         "lintcn": "catalog:",
@@ -539,6 +540,8 @@
     "@cloudflare/workerd-windows-64": ["@cloudflare/workerd-windows-64@1.20260515.1", "", { "os": "win32", "cpu": "x64" }, "sha512-WmV/iv+MHjYsvkcMVzpM2B5/mf06UUkdpVhZrtMfV9graWjBGPYFvE/eab8748RPVGKh1Xe1vXofLzDSwc08lA=="],
 
     "@cloudflare/workers-types": ["@cloudflare/workers-types@4.20260518.1", "", {}, "sha512-xXzGrbRi8RHRBNQFgXYkzrB4DgF0RXvmp8E1vCxoBmINpeitM/ZjVDd1CNC+N3uXjgcNjacoz4OgTa0rxgig1A=="],
+
+    "@copilotkit/aimock": ["@copilotkit/aimock@1.26.1", "", { "peerDependencies": { "jest": ">=29", "vitest": ">=3" }, "optionalPeers": ["jest", "vitest"], "bin": { "aimock": "dist/aimock-cli.js", "llmock": "dist/cli.js" } }, "sha512-bxnXdd4yFVKdbLvXmlcrgXQprimtXeg5SrmZMYvw2BFhfhAwGJmaVhCSv/9gSHUn+m3mxgrRlwJeok7o9Z2Bsw=="],
 
     "@cspotcode/source-map-support": ["@cspotcode/source-map-support@0.8.1", "", { "dependencies": { "@jridgewell/trace-mapping": "0.3.9" } }, "sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw=="],
 

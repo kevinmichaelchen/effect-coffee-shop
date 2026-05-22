@@ -4,18 +4,23 @@
  * @module
  */
 import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
+import { LLMock, type JournalEntry } from "@copilotkit/aimock";
 import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { handleAssistantRequest } from "./presentation/http/handler.ts";
+import { AssistantModelRunner } from "./application/model.ts";
 import {
   createAssistantModelRunnerLayer,
   getAssistantAiConfigFromEnv,
   type AssistantAiConfig,
   type AssistantGatewayOptions,
 } from "./external/providers/index.ts";
+import { makeOllamaRunner } from "./external/providers/ollama-runtime.ts";
 
 const assistantModel = "@cf/meta/llama-3.1-8b-instruct-fast";
 const localAssistantModel = "qwen3-beanline";
@@ -105,32 +110,26 @@ const verifyToolRun = async () => {
 };
 
 const verifyOllamaToolRun = async () => {
-  const fetchMock = vi
-    .fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>()
-    .mockResolvedValueOnce(
-      Response.json({
-        message: {
-          content: "",
-          tool_calls: [
-            {
-              function: {
-                arguments: {},
-                name: "list_menu",
-              },
-            },
-          ],
-        },
-      }),
-    )
-    .mockResolvedValueOnce(
-      Response.json({
-        message: {
-          content: "We have espresso drinks, cold brew, and tea available right now.",
-        },
-      }),
-    );
+  const mock = new LLMock({ port: 0, strict: true });
+  const requests: JournalEntry[] = [];
 
-  vi.stubGlobal("fetch", fetchMock);
+  mock.on(
+    { hasToolResult: false, userMessage: "List the menu briefly." },
+    {
+      toolCalls: [
+        {
+          arguments: {},
+          name: "list_menu",
+        },
+      ],
+    },
+  );
+  mock.on(
+    { hasToolResult: true, userMessage: "List the menu briefly." },
+    {
+      content: "We have espresso drinks, cold brew, and tea available right now.",
+    },
+  );
 
   const response = await handleAssistantRequest(
     createAssistantRequest([{ role: "user", content: "List the menu briefly." }]),
@@ -138,28 +137,48 @@ const verifyOllamaToolRun = async () => {
       actor: systemActor,
       appLayer: InMemoryCoffeeAppLive,
       model: localAssistantModel,
-      modelLayer: createAssistantModelRunnerLayer({
-        kind: "ollama",
-        endpoint: "http://localhost:11434/",
-        model: localAssistantModel,
-      }),
+      modelLayer: createAimockOllamaModelLayer(mock, requests),
     },
   );
   const body = await response.text();
-  const requests = fetchMock.mock.calls.map(([input, init]) => new Request(input, init));
-  const requestBodies = await Promise.all(requests.map((request) => request.text()));
+  const requestBodies = jsonString(requests.map((request) => request.body));
 
   expect(response.status).toBe(200);
-  expect(fetchMock).toHaveBeenCalledTimes(2);
-  expect(requests.at(0)?.url).toBe("http://localhost:11434/api/chat");
+  expect(requests).toHaveLength(2);
+  expect(requests.at(0)?.path).toBe("/api/chat");
   expect(requests.at(0)?.method).toBe("POST");
-  expect(requestBodies.join("\n")).toContain(`"model":"${localAssistantModel}"`);
-  expect(requestBodies.join("\n")).toContain('"tools"');
-  expect(requestBodies.join("\n")).toContain('"tool_name":"list_menu"');
+  expect(requestBodies).toContain(`"model":"${localAssistantModel}"`);
+  expect(requestBodies).toContain('"tools"');
+  expect(requestBodies).toContain('"role":"tool"');
+  expect(requestBodies).toContain('"name":"list_menu"');
   expect(body).toContain('"label":"list_menu"');
   expect(body).toContain("espresso drinks, cold brew, and tea");
   expect(body).toContain('"type":"RUN_FINISHED"');
 };
+
+const createAimockOllamaModelLayer = (
+  mock: LLMock,
+  requests: JournalEntry[],
+): Layer.Layer<AssistantModelRunner> =>
+  Layer.effect(
+    AssistantModelRunner,
+    Effect.acquireRelease(
+      Effect.promise(async () => {
+        await mock.start();
+
+        return makeOllamaRunner({
+          endpoint: mock.url,
+          kind: "ollama",
+          model: localAssistantModel,
+        });
+      }),
+      () =>
+        Effect.gen(function* () {
+          requests.push(...mock.getRequests());
+          yield* Effect.promise(() => mock.stop());
+        }),
+    ),
+  );
 
 const verifyWorkersAiRestEnvWinsOverAmbientOllama = () => {
   const config = getAssistantAiConfigFromEnv({
