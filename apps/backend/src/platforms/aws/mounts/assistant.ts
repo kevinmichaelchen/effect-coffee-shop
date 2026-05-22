@@ -10,10 +10,8 @@ import {
   rewriteRequestPathPrefix,
   type FetchMount,
 } from "@effect-coffee-shop/backend-host/mount";
-import {
-  createAssistantModelRunnerLayer,
-  handleAssistantRequest,
-} from "@effect-coffee-shop/coffee-assistant/handler";
+import { handleAssistantRequest } from "@effect-coffee-shop/coffee-assistant/handler";
+import { createAssistantModelRunnerLayer } from "@effect-coffee-shop/coffee-assistant/providers";
 import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-core/application/observability";
 import type { AwsRuntime } from "../env.ts";
 import { handleDirectHttpRequest } from "../../../host/direct-http-auth.ts";

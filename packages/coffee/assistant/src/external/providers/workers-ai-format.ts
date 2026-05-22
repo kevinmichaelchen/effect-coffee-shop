@@ -14,8 +14,8 @@ import type {
   AssistantRequestMetadata,
   AssistantToolCall,
   AssistantToolDefinition,
-} from "./model.ts";
-import { getAssistantToolDescription, getAssistantToolName } from "./model.ts";
+} from "../../application/model.ts";
+import { getAssistantToolDescription, getAssistantToolName } from "../../application/model.ts";
 
 export type AssistantGatewayOptions = Readonly<{
   gateway: Readonly<{

@@ -3,35 +3,13 @@
  *
  * @module
  */
-import type { CoffeeActionName } from "@effect-coffee-shop/coffee-actions/specs";
+import { type CoffeeActionName, coffeeActionSpecs } from "@effect-coffee-shop/coffee-actions/specs";
 import {
   executeCoffeeAction,
   type CoffeeAppRunner,
 } from "@effect-coffee-shop/coffee-actions/execute";
-import {
-  AddCartItemTool,
-  CancelOrderTool,
-  CheckoutCartTool,
-  ClearCartTool,
-  GetCheckoutSessionTool,
-  GetOrderTool,
-  GetCartTool,
-  GetItemOptionsTool,
-  ListMenuTool,
-  ListOrdersTool,
-  MarkReadyTool,
-  PickUpOrderTool,
-  PlaceOrderTool,
-  PrepareCartCheckoutTool,
-  QuoteOrderTool,
-  RemoveCartItemTool,
-  StartBrewingTool,
-  UpdateCartItemTool,
-  ValidateOrderTool,
-} from "@effect-coffee-shop/coffee-actions/toolkit";
 import * as Effect from "effect/Effect";
-import * as Tool from "effect/unstable/ai/Tool";
-import type { AssistantToolActivity, AssistantToolDefinition } from "../model.ts";
+import type { AssistantToolActivity, AssistantToolDefinition } from "../application/model.ts";
 import {
   formatToolFailure,
   formatToolPayload,
@@ -58,43 +36,37 @@ export function getAssistantToolActivityEvent(): string {
 
 type AssistantToolEmitter = (activity: AssistantToolActivity) => void;
 
+const assistantToolInput = (
+  action: CoffeeActionName,
+  parameters: AssistantToolDefinition["parameters"],
+) => ({
+  action,
+  description: coffeeActionSpecs[action].description,
+  name: action,
+  parameters,
+});
+
 const assistantToolInputs = [
-  { action: "place_order", parameters: placeOrderToolParameters, tool: PlaceOrderTool },
-  { action: "add_cart_item", parameters: orderItemToolParameters, tool: AddCartItemTool },
-  {
-    action: "prepare_cart_checkout",
-    parameters: prepareCartCheckoutToolParameters,
-    tool: PrepareCartCheckoutTool,
-  },
-  {
-    action: "get_checkout_session",
-    parameters: getCheckoutSessionToolParameters,
-    tool: GetCheckoutSessionTool,
-  },
-  { action: "checkout_cart", parameters: checkoutCartToolParameters, tool: CheckoutCartTool },
-  { action: "get_cart", parameters: emptyToolParameters, tool: GetCartTool },
-  {
-    action: "update_cart_item",
-    parameters: updateCartItemToolParameters,
-    tool: UpdateCartItemTool,
-  },
-  { action: "remove_cart_item", parameters: cartItemIdToolParameters, tool: RemoveCartItemTool },
-  { action: "clear_cart", parameters: emptyToolParameters, tool: ClearCartTool },
-  { action: "list_menu", parameters: emptyToolParameters, tool: ListMenuTool },
-  { action: "get_item_options", parameters: itemOptionsToolParameters, tool: GetItemOptionsTool },
-  { action: "validate_order", parameters: quoteOrderToolParameters, tool: ValidateOrderTool },
-  { action: "quote_order", parameters: quoteOrderToolParameters, tool: QuoteOrderTool },
-  { action: "get_order", parameters: orderIdToolParameters, tool: GetOrderTool },
-  { action: "list_orders", parameters: listOrdersToolParameters, tool: ListOrdersTool },
-  { action: "start_brewing", parameters: orderIdToolParameters, tool: StartBrewingTool },
-  { action: "mark_ready", parameters: orderIdToolParameters, tool: MarkReadyTool },
-  { action: "pick_up_order", parameters: orderIdToolParameters, tool: PickUpOrderTool },
-  { action: "cancel_order", parameters: orderIdToolParameters, tool: CancelOrderTool },
-] as const satisfies readonly {
-  readonly action: CoffeeActionName;
-  readonly parameters: AssistantToolDefinition["parameters"];
-  readonly tool: Tool.Any;
-}[];
+  assistantToolInput("place_order", placeOrderToolParameters),
+  assistantToolInput("add_cart_item", orderItemToolParameters),
+  assistantToolInput("prepare_cart_checkout", prepareCartCheckoutToolParameters),
+  assistantToolInput("get_checkout_session", getCheckoutSessionToolParameters),
+  assistantToolInput("checkout_cart", checkoutCartToolParameters),
+  assistantToolInput("get_cart", emptyToolParameters),
+  assistantToolInput("update_cart_item", updateCartItemToolParameters),
+  assistantToolInput("remove_cart_item", cartItemIdToolParameters),
+  assistantToolInput("clear_cart", emptyToolParameters),
+  assistantToolInput("list_menu", emptyToolParameters),
+  assistantToolInput("get_item_options", itemOptionsToolParameters),
+  assistantToolInput("validate_order", quoteOrderToolParameters),
+  assistantToolInput("quote_order", quoteOrderToolParameters),
+  assistantToolInput("get_order", orderIdToolParameters),
+  assistantToolInput("list_orders", listOrdersToolParameters),
+  assistantToolInput("start_brewing", orderIdToolParameters),
+  assistantToolInput("mark_ready", orderIdToolParameters),
+  assistantToolInput("pick_up_order", orderIdToolParameters),
+  assistantToolInput("cancel_order", orderIdToolParameters),
+];
 
 export function createCoffeeAssistantTools(
   runApp: CoffeeAppRunner,
@@ -111,15 +83,16 @@ export function createCoffeeAssistantTools(
 
 function createAppTool(input: {
   readonly action: CoffeeActionName;
+  readonly description: string;
   readonly emitActivity: AssistantToolEmitter;
+  readonly name: string;
   readonly parameters: AssistantToolDefinition["parameters"];
   readonly runApp: CoffeeAppRunner;
-  readonly tool: Tool.Any;
 }): AssistantToolDefinition {
-  const { action, emitActivity, parameters, runApp, tool } = input;
-  const name = tool.name;
+  const { action, description, emitActivity, name, parameters, runApp } = input;
 
   return {
+    description,
     execute: (toolInput) =>
       Effect.gen(function* () {
         emitActivity({
@@ -163,7 +136,7 @@ function createAppTool(input: {
           }),
         );
       }),
+    name,
     parameters,
-    tool,
   };
 }

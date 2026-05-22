@@ -4,12 +4,12 @@
  * @module
  */
 import * as Option from "effect/Option";
+import { handleAssistantRequest } from "@effect-coffee-shop/coffee-assistant/handler";
 import {
   createAssistantModelRunnerLayer,
   getAssistantModel,
-  handleAssistantRequest,
-} from "@effect-coffee-shop/coffee-assistant/handler";
-import type { AssistantAiConfig } from "@effect-coffee-shop/coffee-assistant/runtime";
+  type AssistantAiConfig,
+} from "@effect-coffee-shop/coffee-assistant/providers";
 import { type CloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
 import { handleDirectHttpRequest } from "../../../host/direct-http-auth.ts";
 import {

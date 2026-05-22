@@ -5,13 +5,14 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./handler": "./src/handler.ts",
-    "./runtime": "./src/runtime.ts"
+    "./handler": "./src/presentation/http/handler.ts",
+    "./providers": "./src/external/providers/index.ts",
+    "./runtime": "./src/application/runtime.ts"
   },
   "scripts": {
     "typecheck": "tsgo --noEmit",
-    "lint": "bun --bun oxlint -c ../../.oxlintrc.json --disable-nested-config .",
-    "lint:fix": "bun --bun oxlint -c ../../.oxlintrc.json --disable-nested-config --fix .",
+    "lint": "bun --bun oxlint -c .oxlintrc.json --disable-nested-config .",
+    "lint:fix": "bun --bun oxlint -c .oxlintrc.json --disable-nested-config --fix .",
     "lint:custom": "cd ../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/assistant/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",

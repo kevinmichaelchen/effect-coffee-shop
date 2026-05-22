@@ -3,12 +3,9 @@
  *
  * @module
  */
-import type { ModelMessage } from "@tanstack/ai";
-import type { CoffeeActionJsonSchema } from "@effect-coffee-shop/coffee-actions/json-schema";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
-import * as Tool from "effect/unstable/ai/Tool";
 
 export interface AssistantToolActivity {
   readonly detail: string;
@@ -35,10 +32,25 @@ export type AssistantConversationMessage =
     };
 
 export interface AssistantToolDefinition {
+  readonly description: string;
   readonly execute: (input: unknown) => Effect.Effect<string>;
-  readonly parameters: CoffeeActionJsonSchema;
-  readonly tool: Tool.Any;
+  readonly name: string;
+  readonly parameters: AssistantToolParameters;
 }
+
+export type AssistantToolParameters = Readonly<{
+  properties: Readonly<
+    Record<
+      string,
+      Readonly<{
+        description?: string;
+        type: string;
+      }>
+    >
+  >;
+  required: readonly string[];
+  type: "object";
+}>;
 
 export interface AssistantModelRequest {
   readonly conversation: readonly AssistantConversationMessage[];
@@ -90,21 +102,6 @@ export type AssistantRequestMetadata = Readonly<
 
 const assistantFallbackMessage = "I couldn't generate a final response.";
 
-function extractMessageText(content: ModelMessage["content"]): string {
-  if (content === null) {
-    return "";
-  }
-
-  if (typeof content === "string") {
-    return content;
-  }
-
-  return content
-    .filter((part) => part.type === "text")
-    .map((part) => part.content)
-    .join("");
-}
-
 export function extractResponseText(text: string | undefined): string {
   const trimmedText = text?.trim();
 
@@ -116,50 +113,9 @@ export function extractResponseText(text: string | undefined): string {
 }
 
 export function getAssistantToolDescription(tool: AssistantToolDefinition): string {
-  return tool.tool.description ?? "";
+  return tool.description;
 }
 
 export function getAssistantToolName(tool: AssistantToolDefinition): string {
-  return tool.tool.name;
-}
-
-export function toAssistantConversationMessages(
-  messages: readonly ModelMessage[],
-  systemPrompt: string,
-): AssistantConversationMessage[] {
-  return messages.reduce<AssistantConversationMessage[]>(
-    (conversation, message) => {
-      const converted = toAssistantConversationMessage(message);
-
-      if (converted === null) {
-        return conversation;
-      }
-
-      return conversation.concat(converted);
-    },
-    [{ role: "system", content: systemPrompt }],
-  );
-}
-
-function toAssistantConversationMessage(
-  message: ModelMessage,
-): AssistantConversationMessage | null {
-  const content = extractMessageText(message.content);
-
-  if (content === "") {
-    return null;
-  }
-
-  if (message.role === "tool") {
-    return {
-      content,
-      name: "tool",
-      role: "tool",
-    };
-  }
-
-  return {
-    role: message.role,
-    content,
-  };
+  return tool.name;
 }

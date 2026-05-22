@@ -3,7 +3,7 @@
  *
  * @module
  */
-import type { ModelMessage } from "@tanstack/ai";
+import type { AssistantConversationMessage } from "../../application/model.ts";
 import * as Schema from "effect/Schema";
 
 const AssistantContentTextPartSchema = Schema.Struct({
@@ -48,36 +48,61 @@ export async function parseAssistantRequestBody(
     .catch(() => null);
 }
 
-export function toAssistantModelMessages(
+export function toAssistantConversationMessages(
   messages: readonly AssistantRequestMessage[],
-): readonly ModelMessage[] {
+): readonly AssistantConversationMessage[] {
   return messages.flatMap((message) =>
     isAssistantUiMessage(message)
-      ? toAssistantModelMessagesFromUiMessage(message)
-      : [toAssistantModelMessage(message)],
+      ? toAssistantConversationMessagesFromUiMessage(message)
+      : toAssistantConversationMessage(message),
   );
 }
 
-function toAssistantModelMessage(message: AssistantModelMessageInput): ModelMessage {
-  if (typeof message.content === "string" || message.content === null) {
-    return {
-      role: message.role,
-      content: message.content,
-    };
+function extractModelMessageText(content: AssistantModelMessageInput["content"]): string {
+  if (content === null) {
+    return "";
   }
 
-  return {
-    role: message.role,
-    content: message.content.map((part) => ({
-      type: part.type,
-      content: part.content,
-    })),
-  };
+  if (typeof content === "string") {
+    return content;
+  }
+
+  return content
+    .filter((part) => part.type === "text")
+    .map((part) => part.content)
+    .join("");
 }
 
-function toAssistantModelMessagesFromUiMessage(
+function toAssistantConversationMessage(
+  message: AssistantModelMessageInput,
+): readonly AssistantConversationMessage[] {
+  const content = extractModelMessageText(message.content);
+
+  if (content === "") {
+    return [];
+  }
+
+  if (message.role === "tool") {
+    return [
+      {
+        content,
+        name: "tool",
+        role: "tool",
+      },
+    ];
+  }
+
+  return [
+    {
+      role: message.role,
+      content,
+    },
+  ];
+}
+
+function toAssistantConversationMessagesFromUiMessage(
   message: AssistantUiMessageInput,
-): readonly ModelMessage[] {
+): readonly AssistantConversationMessage[] {
   if (message.role === "system") {
     return [];
   }
@@ -95,6 +120,6 @@ function toAssistantModelMessagesFromUiMessage(
     {
       role: message.role,
       content,
-    } satisfies AssistantModelMessageInput,
+    },
   ];
 }

@@ -9,10 +9,13 @@ import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coff
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import * as Redacted from "effect/Redacted";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createAssistantModelRunnerLayer, handleAssistantRequest } from "./handler.ts";
-import { getAssistantAiConfigFromEnv } from "./runtime.ts";
-import type { AssistantAiConfig } from "./runtime.ts";
-import type { AssistantGatewayOptions } from "./workers-ai-format.ts";
+import { handleAssistantRequest } from "./presentation/http/handler.ts";
+import {
+  createAssistantModelRunnerLayer,
+  getAssistantAiConfigFromEnv,
+  type AssistantAiConfig,
+  type AssistantGatewayOptions,
+} from "./external/providers/index.ts";
 
 const assistantModel = "@cf/meta/llama-3.1-8b-instruct-fast";
 const localAssistantModel = "qwen3-beanline";

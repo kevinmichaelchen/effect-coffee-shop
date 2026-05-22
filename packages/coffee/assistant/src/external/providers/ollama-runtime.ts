@@ -13,14 +13,14 @@ import type {
   AssistantModelRunnerService,
   AssistantToolCall,
   AssistantToolDefinition,
-} from "./model.ts";
+} from "../../application/model.ts";
 import {
   AssistantModelRequestError,
   AssistantModelResponseDecodeError,
   extractResponseText,
   getAssistantToolDescription,
   getAssistantToolName,
-} from "./model.ts";
+} from "../../application/model.ts";
 import {
   createProviderStatusMessage,
   decodeJsonTextEffect,

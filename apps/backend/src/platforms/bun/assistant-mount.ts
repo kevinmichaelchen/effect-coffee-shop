@@ -4,12 +4,12 @@
  * @module
  */
 import * as Option from "effect/Option";
+import { handleAssistantRequest } from "@effect-coffee-shop/coffee-assistant/handler";
 import {
   createAssistantModelRunnerLayer,
   getAssistantModel,
   getBunAssistantAiConfig,
-  handleAssistantRequest,
-} from "@effect-coffee-shop/coffee-assistant/handler";
+} from "@effect-coffee-shop/coffee-assistant/providers";
 import { fetchResponse, requestPathEquals } from "@effect-coffee-shop/backend-host/mount";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import type { CoffeeBunMount } from "./coffee-bun-server.ts";

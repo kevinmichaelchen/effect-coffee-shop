@@ -9,8 +9,8 @@ import * as Schema from "effect/Schema";
 import {
   getAssistantAiConfigFromEnv,
   getAssistantModel,
-} from "@effect-coffee-shop/coffee-assistant/handler";
-import type { AssistantAiConfig } from "@effect-coffee-shop/coffee-assistant/runtime";
+  type AssistantAiConfig,
+} from "@effect-coffee-shop/coffee-assistant/providers";
 import { optionalTrimmedRedactedString, parseCsvSet } from "../env.ts";
 export { revealOptionalSecret, revealSecret } from "../env.ts";
 

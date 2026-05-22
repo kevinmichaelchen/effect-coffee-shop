@@ -13,7 +13,7 @@ import {
   type AssistantRequestMetadata,
   type AssistantModelRunnerService,
   extractResponseText,
-} from "./model.ts";
+} from "../../application/model.ts";
 import { runWorkersAiOverRest } from "./workers-ai-rest.ts";
 import {
   createGatewayOptions,
