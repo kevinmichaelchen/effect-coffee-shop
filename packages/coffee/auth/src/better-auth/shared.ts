@@ -42,33 +42,14 @@ export interface CoffeeActorResolutionInput {
   readonly staffUserIds: ReadonlySet<string>;
 }
 
-const optionalRequestUrl = (request: Request | undefined): Option.Option<URL> =>
-  Option.map(Option.fromUndefinedOr(request), (request) => new URL(request.url));
-
-const getRequestOrigin = (request: Request | undefined): Option.Option<string> =>
-  Option.map(optionalRequestUrl(request), (url) => url.origin);
-
-const getRequestHost = (request: Request | undefined): Option.Option<string> =>
-  Option.map(optionalRequestUrl(request), (url) => url.hostname);
-
-const whenSome = <A, B extends object>(
-  option: Option.Option<A>,
-  onSome: (value: A) => B,
-): B | object =>
-  Option.match(option, {
-    onNone: () => ({}),
-    onSome,
-  });
-
 function buildCoffeeAuthOptions(input: CoffeeAuthInput) {
-  const origin = getRequestOrigin(input.request);
-  const host = getRequestHost(input.request);
+  const requestUrl = new URL(input.request.url);
 
   return {
     appName: "Effect Coffee Shop",
+    baseURL: requestUrl.origin,
     basePath: "/api/auth",
     database: input.database,
-    ...whenSome(origin, (baseURL) => ({ baseURL })),
     logger: {
       level: "warn",
       log: (
@@ -108,9 +89,9 @@ function buildCoffeeAuthOptions(input: CoffeeAuthInput) {
           requireSession: false,
           resolveUser: async ({ context }) => createProvisionalUser(getDisplayName(context)),
         },
+        origin: requestUrl.origin,
         rpName: "Effect Coffee Shop",
-        ...whenSome(origin, (origin) => ({ origin })),
-        ...whenSome(host, (rpID) => ({ rpID })),
+        rpID: requestUrl.hostname,
       }),
     ],
     secret: input.secret,

@@ -11,6 +11,8 @@ import {
   getAssistantModel,
 } from "@effect-coffee-shop/coffee-assistant/handler";
 import type { AssistantAiConfig } from "@effect-coffee-shop/coffee-assistant/runtime";
+import { optionalTrimmedRedactedString, parseCsvSet } from "../env.ts";
+export { revealOptionalSecret, revealSecret } from "../env.ts";
 
 export const awsEnvNames = {
   betterAuthSecret: "BETTER_AUTH_SECRET",
@@ -48,28 +50,6 @@ export interface AwsRuntime {
 }
 
 const decodeAwsLambdaEnv = Schema.decodeUnknownSync(AwsLambdaEnvSchema);
-const decodeTrimmedString = (value: string): string => Schema.decodeUnknownSync(Schema.Trim)(value);
-
-const optionalTrimmedString = (value: string | undefined): Option.Option<string> => {
-  const trimmed = decodeTrimmedString(value ?? "");
-  return Option.liftPredicate(trimmed, (input) => input !== "");
-};
-
-const optionalTrimmedRedactedString = (
-  value: string | undefined,
-  label: string,
-): Option.Option<Redacted.Redacted<string>> =>
-  Option.map(optionalTrimmedString(value), (trimmedSecret) =>
-    Redacted.make(trimmedSecret, { label }),
-  );
-
-const parseStaffUserIds = (value: string | undefined): ReadonlySet<string> =>
-  new Set(
-    (value ?? "")
-      .split(",")
-      .map(decodeTrimmedString)
-      .filter((entry) => entry !== ""),
-  );
 
 const toAssistantEnv = (env: AwsLambdaEnv): Record<string, string | undefined> => ({
   [awsEnvNames.cloudflareAccountId]: env.CLOUDFLARE_ACCOUNT_ID,
@@ -93,13 +73,7 @@ export const readAwsRuntime = (env: unknown): AwsRuntime => {
         decodedEnv.BETTER_AUTH_SECRET,
         awsEnvNames.betterAuthSecret,
       ),
-      staffUserIds: parseStaffUserIds(decodedEnv.COFFEE_STAFF_USER_IDS),
+      staffUserIds: parseCsvSet(decodedEnv.COFFEE_STAFF_USER_IDS),
     },
   };
 };
-
-export const revealOptionalSecret = (
-  secret: Option.Option<Redacted.Redacted<string>>,
-): string | undefined => Option.getOrUndefined(Option.map(secret, Redacted.value));
-
-export const revealSecret = (secret: Redacted.Redacted<string>): string => Redacted.value(secret);

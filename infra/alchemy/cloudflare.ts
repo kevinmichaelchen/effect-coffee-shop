@@ -5,25 +5,26 @@
  */
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
-import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
-import * as Redacted from "effect/Redacted";
 import {
   cloudflareBindingNames,
   cloudflareEnvNames,
 } from "../../apps/backend/src/platforms/cloudflare/env.ts";
-import { clampSamplingRate, coffeeStackName, uiBuild } from "./shared.ts";
-
-const optionalSecret = (value: string | undefined) =>
-  value === undefined || value.trim().length === 0 ? "" : Redacted.make(value);
+import {
+  booleanWithDefault,
+  numberBetweenWithDefault,
+  optionalTrimmedRedacted,
+  stringWithDefault,
+} from "./config.ts";
+import { coffeeStackName, uiBuild } from "./shared.ts";
 
 const state = () =>
   process.env.ALCHEMY_LOCAL_STATE === "1" ? Alchemy.localState() : Cloudflare.state();
 
 const betterAuthSecret = Effect.gen(function* () {
-  const provided = optionalSecret(process.env.BETTER_AUTH_SECRET);
+  const provided = yield* optionalTrimmedRedacted(cloudflareEnvNames.betterAuthSecret);
 
-  if (provided !== "") {
+  if (provided !== undefined) {
     return provided;
   }
 
@@ -40,13 +41,13 @@ export default Alchemy.Stack(
     state: state(),
   },
   Effect.gen(function* () {
-    const aiGatewayEnabled = process.env.COFFEE_ASSISTANT_AI_GATEWAY === "1";
-    const observabilitySamplingRate = clampSamplingRate(
-      yield* Config.number("COFFEE_OBSERVABILITY_SAMPLING_RATE").pipe(
-        Config.withDefault(1),
-        Effect.orDie,
-      ),
-    );
+    const aiGatewayEnabled = yield* booleanWithDefault("COFFEE_ASSISTANT_AI_GATEWAY", false);
+    const observabilitySamplingRate = yield* numberBetweenWithDefault({
+      defaultValue: 1,
+      maximum: 1,
+      minimum: 0,
+      name: "COFFEE_OBSERVABILITY_SAMPLING_RATE",
+    });
 
     const coffeeDb = yield* Cloudflare.D1Database("coffee-db", {
       migrationsDir: "./packages/coffee/external/sqlite/src/sql/migrations",
@@ -99,8 +100,10 @@ export default Alchemy.Stack(
       env: {
         [cloudflareEnvNames.aiGatewayId]: assistantGateway?.gatewayId ?? "",
         [cloudflareEnvNames.betterAuthSecret]: yield* betterAuthSecret,
-        [cloudflareEnvNames.coffeeStaffUserIds]:
-          process.env[cloudflareEnvNames.coffeeStaffUserIds] ?? "",
+        [cloudflareEnvNames.coffeeStaffUserIds]: yield* stringWithDefault(
+          cloudflareEnvNames.coffeeStaffUserIds,
+          "",
+        ),
       },
     });
 

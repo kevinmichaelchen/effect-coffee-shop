@@ -13,7 +13,8 @@ import * as ConfigProvider from "effect/ConfigProvider";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
-import * as Schema from "effect/Schema";
+import { optionalTrimmedString, parseCsvSet, trimOptionalRedactedString } from "../env.ts";
+export { revealOptionalSecret, revealSecret } from "../env.ts";
 
 export type AssetFetcher = { fetch(request: Request): Promise<Response> };
 
@@ -65,31 +66,6 @@ const cloudflareConfig = Config.all({
   coffeeStaffUserIds: Config.string("coffeeStaffUserIds").pipe(Config.withDefault("")),
 });
 
-const decodeTrimmedString = (value: string): string => Schema.decodeUnknownSync(Schema.Trim)(value);
-
-const optionalTrimmedString = (value: string): Option.Option<string> => {
-  const trimmed = decodeTrimmedString(value);
-  return Option.liftPredicate(trimmed, (input) => input !== "");
-};
-
-const optionalTrimmedRedactedString = (
-  value: Option.Option<Redacted.Redacted<string>>,
-  label: string,
-): Option.Option<Redacted.Redacted<string>> =>
-  Option.flatMap(value, (secret) =>
-    Option.map(optionalTrimmedString(Redacted.value(secret)), (trimmedSecret) =>
-      Redacted.make(trimmedSecret, { label }),
-    ),
-  );
-
-const parseStaffUserIds = (value: string): ReadonlySet<string> =>
-  new Set(
-    value
-      .split(",")
-      .map(decodeTrimmedString)
-      .filter((entry) => entry !== ""),
-  );
-
 export const readCloudflareRuntime = (env: CloudflareWorkerEnv): CloudflareRuntime => {
   const decodedConfig = Effect.runSync(
     cloudflareConfig.parse(ConfigProvider.fromUnknown(env).pipe(ConfigProvider.constantCase)),
@@ -103,17 +79,11 @@ export const readCloudflareRuntime = (env: CloudflareWorkerEnv): CloudflareRunti
     },
     config: {
       aiGatewayId: Option.flatMap(decodedConfig.aiGatewayId, optionalTrimmedString),
-      betterAuthSecret: optionalTrimmedRedactedString(
+      betterAuthSecret: trimOptionalRedactedString(
         decodedConfig.betterAuthSecret,
         "BETTER_AUTH_SECRET",
       ),
-      staffUserIds: parseStaffUserIds(decodedConfig.coffeeStaffUserIds),
+      staffUserIds: parseCsvSet(decodedConfig.coffeeStaffUserIds),
     },
   };
 };
-
-export const revealOptionalSecret = (
-  secret: Option.Option<Redacted.Redacted<string>>,
-): string | undefined => Option.getOrUndefined(Option.map(secret, Redacted.value));
-
-export const revealSecret = (secret: Redacted.Redacted<string>): string => Redacted.value(secret);

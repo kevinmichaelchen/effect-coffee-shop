@@ -2,8 +2,10 @@ import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/
 import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import * as Redacted from "effect/Redacted";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAssistantModelRunnerLayer, handleAssistantRequest } from "./handler.ts";
+import { getAssistantAiConfigFromEnv } from "./runtime.ts";
 import type { AssistantAiConfig } from "./runtime.ts";
 import type { AssistantGatewayOptions } from "./workers-ai-format.ts";
 
@@ -133,26 +135,58 @@ const verifyOllamaToolRun = async () => {
     },
   );
   const body = await response.text();
-  const requestBodies = fetchMock.mock.calls.flatMap((call) => {
-    const requestBody = call[1]?.body;
-
-    return typeof requestBody === "string" ? [requestBody] : [];
-  });
+  const requests = fetchMock.mock.calls.map(([input, init]) => new Request(input, init));
+  const requestBodies = await Promise.all(requests.map((request) => request.text()));
 
   expect(response.status).toBe(200);
   expect(fetchMock).toHaveBeenCalledTimes(2);
-  expect(fetchMock).toHaveBeenCalledWith(
-    "http://localhost:11434/api/chat",
-    expect.objectContaining({
-      method: "POST",
-    }),
-  );
+  expect(requests.at(0)?.url).toBe("http://localhost:11434/api/chat");
+  expect(requests.at(0)?.method).toBe("POST");
   expect(requestBodies.join("\n")).toContain(`"model":"${localAssistantModel}"`);
   expect(requestBodies.join("\n")).toContain('"tools"');
   expect(requestBodies.join("\n")).toContain('"tool_name":"list_menu"');
   expect(body).toContain('"label":"list_menu"');
   expect(body).toContain("espresso drinks, cold brew, and tea");
   expect(body).toContain('"type":"RUN_FINISHED"');
+};
+
+const verifyWorkersAiRestEnvWinsOverAmbientOllama = () => {
+  const config = getAssistantAiConfigFromEnv({
+    CLOUDFLARE_ACCOUNT_ID: "account-id",
+    CLOUDFLARE_API_TOKEN: "token",
+    OLLAMA_HOST: "http://localhost:11434",
+  });
+
+  expect(config?.kind).toBe("workers-ai-rest");
+
+  if (config?.kind !== "workers-ai-rest") {
+    return;
+  }
+
+  expect(config.accountId).toBe("account-id");
+  expect(Redacted.value(config.apiKey)).toBe("token");
+};
+
+const verifyExplicitOllamaEnv = () => {
+  const config = getAssistantAiConfigFromEnv({
+    CLOUDFLARE_ACCOUNT_ID: "account-id",
+    CLOUDFLARE_API_TOKEN: "token",
+    COFFEE_ASSISTANT_PROVIDER: "ollama",
+  });
+
+  expect(config).toEqual({
+    endpoint: "http://localhost:11434",
+    kind: "ollama",
+  });
+};
+
+const verifyExplicitWorkersAiRequiresCredentials = () => {
+  const config = getAssistantAiConfigFromEnv({
+    COFFEE_ASSISTANT_PROVIDER: "workers-ai",
+    OLLAMA_HOST: "http://localhost:11434",
+  });
+
+  expect(config).toBeUndefined();
 };
 
 const verifyUiMessages = async () => {
@@ -262,6 +296,15 @@ afterEach(() => {
 describe("assistant handler", () => {
   it("runs coffee tools before streaming the final assistant reply", verifyToolRun);
   it("runs coffee tools through a local Ollama-compatible assistant provider", verifyOllamaToolRun);
+  it(
+    "prefers configured Workers AI credentials over an ambient Ollama host",
+    verifyWorkersAiRestEnvWinsOverAmbientOllama,
+  );
+  it("uses Ollama only when explicitly selected without an endpoint", verifyExplicitOllamaEnv);
+  it(
+    "does not fall back to Ollama when Workers AI is explicitly selected without credentials",
+    verifyExplicitWorkersAiRequiresCredentials,
+  );
   it("accepts TanStack UI messages from the browser client", verifyUiMessages);
   it(
     "routes Cloudflare Worker assistant traffic through the configured AI Gateway",

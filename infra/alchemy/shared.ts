@@ -6,5 +6,3 @@ export const uiBuild = {
   lockfile: true,
   output: "dist",
 } as const;
-
-export const clampSamplingRate = (rate: number): number => Math.min(1, Math.max(0, rate));

@@ -14,13 +14,12 @@ import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import { routeAwsRequest } from "./router.ts";
 import { awsEnvNames, type AwsLambdaEnv } from "./env.ts";
 
-const optionalVariableConfig = (name: string) =>
-  Config.string(name).pipe(Config.withDefault(""), Effect.orDie);
+const optionalVariableConfig = (name: string) => Config.string(name).pipe(Config.withDefault(""));
 
 const optionalSecretConfig = (name: string) =>
-  Config.redacted(name).pipe(Config.withDefault(Redacted.make("", { label: name })), Effect.orDie);
+  Config.redacted(name).pipe(Config.withDefault(Redacted.make("", { label: name })));
 
-const requiredSecretConfig = (name: string) => Config.redacted(name).pipe(Effect.orDie);
+const requiredSecretConfig = (name: string) => Config.redacted(name);
 
 const configuredBetterAuthSecret = Config.redacted(awsEnvNames.betterAuthSecret).pipe(
   Config.option,
@@ -28,21 +27,18 @@ const configuredBetterAuthSecret = Config.redacted(awsEnvNames.betterAuthSecret)
   Effect.orDie,
 );
 
-const runtimeEnv = Effect.all(
-  {
-    betterAuthSecret: optionalSecretConfig(awsEnvNames.betterAuthSecret),
-    cloudflareAccountId: optionalVariableConfig(awsEnvNames.cloudflareAccountId),
-    cloudflareApiToken: optionalSecretConfig(awsEnvNames.cloudflareApiToken),
-    coffeeAssistantModel: optionalVariableConfig(awsEnvNames.coffeeAssistantModel),
-    coffeeAssistantOllamaUrl: optionalVariableConfig(awsEnvNames.coffeeAssistantOllamaUrl),
-    coffeeAssistantProvider: optionalVariableConfig(awsEnvNames.coffeeAssistantProvider),
-    coffeePostgresUrl: requiredSecretConfig(awsEnvNames.coffeePostgresUrl),
-    coffeeStaffUserIds: optionalVariableConfig(awsEnvNames.coffeeStaffUserIds),
-    ollamaHost: optionalVariableConfig(awsEnvNames.ollamaHost),
-  },
-  { concurrency: 1 },
-).pipe(
-  Effect.map(
+const runtimeEnvConfig = Config.all({
+  betterAuthSecret: optionalSecretConfig(awsEnvNames.betterAuthSecret),
+  cloudflareAccountId: optionalVariableConfig(awsEnvNames.cloudflareAccountId),
+  cloudflareApiToken: optionalSecretConfig(awsEnvNames.cloudflareApiToken),
+  coffeeAssistantModel: optionalVariableConfig(awsEnvNames.coffeeAssistantModel),
+  coffeeAssistantOllamaUrl: optionalVariableConfig(awsEnvNames.coffeeAssistantOllamaUrl),
+  coffeeAssistantProvider: optionalVariableConfig(awsEnvNames.coffeeAssistantProvider),
+  coffeePostgresUrl: requiredSecretConfig(awsEnvNames.coffeePostgresUrl),
+  coffeeStaffUserIds: optionalVariableConfig(awsEnvNames.coffeeStaffUserIds),
+  ollamaHost: optionalVariableConfig(awsEnvNames.ollamaHost),
+}).pipe(
+  Config.map(
     (env): AwsLambdaEnv => ({
       BETTER_AUTH_SECRET: Redacted.value(env.betterAuthSecret),
       CLOUDFLARE_ACCOUNT_ID: env.cloudflareAccountId,
@@ -55,8 +51,9 @@ const runtimeEnv = Effect.all(
       OLLAMA_HOST: env.ollamaHost,
     }),
   ),
-  Effect.orDie,
 );
+
+const runtimeEnv = runtimeEnvConfig.pipe(Effect.orDie);
 
 export default class CoffeeApi extends AWS.Lambda.Function<CoffeeApi>()(
   "CoffeeApi",
@@ -71,24 +68,28 @@ export default class CoffeeApi extends AWS.Lambda.Function<CoffeeApi>()(
         [awsEnvNames.betterAuthSecret]: betterAuthSecret,
         [awsEnvNames.cloudflareAccountId]: yield* optionalVariableConfig(
           awsEnvNames.cloudflareAccountId,
-        ),
+        ).pipe(Effect.orDie),
         [awsEnvNames.cloudflareApiToken]: yield* optionalSecretConfig(
           awsEnvNames.cloudflareApiToken,
-        ),
+        ).pipe(Effect.orDie),
         [awsEnvNames.coffeeAssistantModel]: yield* optionalVariableConfig(
           awsEnvNames.coffeeAssistantModel,
-        ),
+        ).pipe(Effect.orDie),
         [awsEnvNames.coffeeAssistantOllamaUrl]: yield* optionalVariableConfig(
           awsEnvNames.coffeeAssistantOllamaUrl,
-        ),
+        ).pipe(Effect.orDie),
         [awsEnvNames.coffeeAssistantProvider]: yield* optionalVariableConfig(
           awsEnvNames.coffeeAssistantProvider,
-        ),
-        [awsEnvNames.coffeePostgresUrl]: yield* requiredSecretConfig(awsEnvNames.coffeePostgresUrl),
+        ).pipe(Effect.orDie),
+        [awsEnvNames.coffeePostgresUrl]: yield* requiredSecretConfig(
+          awsEnvNames.coffeePostgresUrl,
+        ).pipe(Effect.orDie),
         [awsEnvNames.coffeeStaffUserIds]: yield* optionalVariableConfig(
           awsEnvNames.coffeeStaffUserIds,
+        ).pipe(Effect.orDie),
+        [awsEnvNames.ollamaHost]: yield* optionalVariableConfig(awsEnvNames.ollamaHost).pipe(
+          Effect.orDie,
         ),
-        [awsEnvNames.ollamaHost]: yield* optionalVariableConfig(awsEnvNames.ollamaHost),
       },
       main: import.meta.filename,
       runtime: "nodejs24.x",

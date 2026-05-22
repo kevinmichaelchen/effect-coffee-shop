@@ -5,24 +5,10 @@
  */
 import * as Alchemy from "alchemy";
 import * as AWS from "alchemy/AWS";
-import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
 import CoffeeApi from "../../apps/backend/src/platforms/aws/lambda.ts";
+import { optionalCsv, optionalTrimmedString } from "./config.ts";
 import { coffeeStackName, uiBuild } from "./shared.ts";
-
-const optionalString = (name: string) =>
-  Config.string(name).pipe(Config.option, Config.map(Option.getOrUndefined), Effect.orDie);
-
-const optionalCsv = (name: string) =>
-  optionalString(name).pipe(
-    Effect.map((value) =>
-      value
-        ?.split(",")
-        .map((part) => part.trim())
-        .filter(Boolean),
-    ),
-  );
 
 export default Alchemy.Stack(
   coffeeStackName,
@@ -31,8 +17,8 @@ export default Alchemy.Stack(
     state: Alchemy.localState(),
   },
   Effect.gen(function* () {
-    const websiteDomainName = yield* optionalString("WEBSITE_DOMAIN");
-    const websiteZoneId = yield* optionalString("WEBSITE_ZONE_ID");
+    const websiteDomainName = yield* optionalTrimmedString("WEBSITE_DOMAIN");
+    const websiteZoneId = yield* optionalTrimmedString("WEBSITE_ZONE_ID");
     const websiteAliases = yield* optionalCsv("WEBSITE_ALIASES");
     const websiteDomain =
       websiteDomainName && websiteZoneId

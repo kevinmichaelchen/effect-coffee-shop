@@ -1,5 +1,6 @@
 import * as Schema from "effect/Schema";
 import * as Effect from "effect/Effect";
+import * as HttpClientResponse from "effect/unstable/http/HttpClientResponse";
 import type {
   AssistantConversationMessage,
   AssistantModelRequest,
@@ -103,7 +104,9 @@ function runOllamaChat(
   });
 }
 
-function rejectOllamaRequest(response: Response): Effect.Effect<never, AssistantModelRequestError> {
+function rejectOllamaRequest(
+  response: HttpClientResponse.HttpClientResponse,
+): Effect.Effect<never, AssistantModelRequestError> {
   return Effect.gen(function* () {
     const rawBody = yield* readResponseText({
       provider: "Ollama",
@@ -124,7 +127,7 @@ function rejectOllamaRequest(response: Response): Effect.Effect<never, Assistant
 }
 
 function readOllamaResponse(
-  response: Response,
+  response: HttpClientResponse.HttpClientResponse,
 ): Effect.Effect<
   AssistantModelResponse,
   AssistantModelRequestError | AssistantModelResponseDecodeError

@@ -1,8 +1,10 @@
-import { jsonString } from "@effect-coffee-shop/backend-host/json";
 import * as Effect from "effect/Effect";
 import * as Match from "effect/Match";
 import * as Option from "effect/Option";
+import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
+import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/unstable/http";
+import * as HttpClientResponse from "effect/unstable/http/HttpClientResponse";
 import { AssistantModelRequestError, AssistantModelResponseDecodeError } from "./model.ts";
 
 export function decodeJsonTextEffect<SchemaType extends Schema.Decoder<unknown>>(input: {
@@ -40,54 +42,59 @@ export function createProviderStatusMessage(input: {
 }
 
 function postJson(input: {
+  readonly bearerToken: Redacted.Redacted<string> | undefined;
   readonly body: unknown;
-  readonly headers?: HeadersInit;
   readonly provider: string;
-  readonly url: string;
+  readonly url: string | URL;
 }) {
-  const headers = new Headers(input.headers);
-  headers.set("content-type", "application/json");
+  const request = Option.match(Option.fromUndefinedOr(input.bearerToken), {
+    onNone: () => HttpClientRequest.post(input.url),
+    onSome: (bearerToken) =>
+      HttpClientRequest.post(input.url).pipe(HttpClientRequest.bearerToken(bearerToken)),
+  }).pipe(HttpClientRequest.acceptJson);
 
-  return Effect.tryPromise({
-    try: () =>
-      fetch(input.url, {
-        body: jsonString(input.body),
-        headers,
-        method: "POST",
-      }),
-    catch: () =>
-      new AssistantModelRequestError({
-        message: `${input.provider} request failed before receiving a response.`,
-        provider: input.provider,
-      }),
-  });
+  return HttpClientRequest.bodyJson(request, input.body).pipe(
+    Effect.mapError(
+      () =>
+        new AssistantModelRequestError({
+          message: `${input.provider} request body could not be encoded as JSON.`,
+          provider: input.provider,
+        }),
+    ),
+    Effect.flatMap((requestWithBody) =>
+      HttpClient.execute(requestWithBody).pipe(
+        Effect.provide(FetchHttpClient.layer),
+        Effect.mapError(
+          () =>
+            new AssistantModelRequestError({
+              message: `${input.provider} request failed before receiving a response.`,
+              provider: input.provider,
+            }),
+        ),
+      ),
+    ),
+  );
 }
 
 export function postJsonResponse<A, E>(input: {
+  readonly bearerToken?: Redacted.Redacted<string>;
   readonly body: unknown;
-  readonly headers?: HeadersInit;
-  readonly onResponse: (response: Response) => Effect.Effect<A, E>;
-  readonly onStatusError: (response: Response) => Effect.Effect<never, AssistantModelRequestError>;
+  readonly onResponse: (response: HttpClientResponse.HttpClientResponse) => Effect.Effect<A, E>;
+  readonly onStatusError: (
+    response: HttpClientResponse.HttpClientResponse,
+  ) => Effect.Effect<never, AssistantModelRequestError>;
   readonly provider: string;
-  readonly url: string;
+  readonly url: string | URL;
 }) {
   return Effect.gen(function* () {
-    const request = Option.match(Option.fromNullishOr(input.headers), {
-      onNone: () => ({
-        body: input.body,
-        provider: input.provider,
-        url: input.url,
-      }),
-      onSome: (headers) => ({
-        body: input.body,
-        headers,
-        provider: input.provider,
-        url: input.url,
-      }),
+    const response = yield* postJson({
+      bearerToken: input.bearerToken,
+      body: input.body,
+      provider: input.provider,
+      url: input.url,
     });
-    const response = yield* postJson(request);
 
-    return yield* Match.value(response.ok).pipe(
+    return yield* Match.value(response.status >= 200 && response.status < 300).pipe(
       Match.when(true, () => input.onResponse(response)),
       Match.orElse(() => input.onStatusError(response)),
     );
@@ -96,15 +103,16 @@ export function postJsonResponse<A, E>(input: {
 
 export function readResponseText(input: {
   readonly provider: string;
-  readonly response: Response;
+  readonly response: HttpClientResponse.HttpClientResponse;
 }) {
-  return Effect.tryPromise({
-    try: () => input.response.text(),
-    catch: () =>
-      new AssistantModelRequestError({
-        message: `${input.provider} response body could not be read.`,
-        provider: input.provider,
-        status: input.response.status,
-      }),
-  });
+  return input.response.text.pipe(
+    Effect.mapError(
+      () =>
+        new AssistantModelRequestError({
+          message: `${input.provider} response body could not be read.`,
+          provider: input.provider,
+          status: input.response.status,
+        }),
+    ),
+  );
 }
