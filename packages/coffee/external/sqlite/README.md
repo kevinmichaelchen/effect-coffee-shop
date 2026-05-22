@@ -11,12 +11,12 @@ See [`coffee-core`](../../core) for the ports implemented by this package.
 
 ## Exports
 
-| Name                                | Description                                        |
-| ----------------------------------- | -------------------------------------------------- |
-| [`SqlCoffeeAppLive`](./src/bun/live.ts) | Bun SQLite Coffee application layer. |
-| [`SqlCoffeeRepositoriesLive`](./src/sql/live.ts) | Shared SQL-backed Coffee repositories and cart. |
-| [`makeCloudflareCoffeeAppLive`](./src/cloudflare/live.ts) | Builds the Cloudflare D1 Coffee application layer. |
-| [`makeCloudflareSqlCoffeeSchemaLive`](./src/cloudflare/live.ts) | Builds the Cloudflare D1 schema readiness layer. |
+| Name                                                            | Description                                        |
+| --------------------------------------------------------------- | -------------------------------------------------- |
+| [`SqlCoffeeAppLive`](./src/bun/live.ts)                         | Bun SQLite Coffee application layer.               |
+| [`SqlCoffeeRepositoriesLive`](./src/sql/live.ts)                | Shared SQL-backed Coffee repositories and cart.    |
+| [`makeCloudflareCoffeeAppLive`](./src/cloudflare/live.ts)       | Builds the Cloudflare D1 Coffee application layer. |
+| [`makeCloudflareSqlCoffeeSchemaLive`](./src/cloudflare/live.ts) | Builds the Cloudflare D1 schema readiness layer.   |
 
 ## Commands
 

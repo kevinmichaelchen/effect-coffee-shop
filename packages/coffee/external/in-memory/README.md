@@ -11,15 +11,15 @@ See [`coffee-core`](../../core) for the ports implemented by this package.
 
 ## Exports
 
-| Name                              | Description                                      |
-| --------------------------------- | ------------------------------------------------ |
-| [`CoffeeAppLive`](./src/index.ts) | Complete in-memory Coffee application layer. |
-| [`InMemoryCoffeeRepositoriesLive`](./src/index.ts) | Combined in-memory Coffee repositories. |
-| [`InMemoryCartRepositoryLive`](./src/in-memory/InMemoryCartRepository.ts) | In-memory cart repository implementation. |
+| Name                                                                                | Description                                      |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------ |
+| [`CoffeeAppLive`](./src/index.ts)                                                   | Complete in-memory Coffee application layer.     |
+| [`InMemoryCoffeeRepositoriesLive`](./src/index.ts)                                  | Combined in-memory Coffee repositories.          |
+| [`InMemoryCartRepositoryLive`](./src/in-memory/InMemoryCartRepository.ts)           | In-memory cart repository implementation.        |
 | [`InMemoryCartItemIdGeneratorLive`](./src/in-memory/InMemoryCartItemIdGenerator.ts) | In-memory cart item ID generator implementation. |
-| [`InMemoryMenuRepositoryLive`](./src/in-memory/InMemoryMenuRepository.ts) | In-memory menu repository implementation. |
-| [`InMemoryOrderRepositoryLive`](./src/in-memory/InMemoryOrderRepository.ts) | In-memory order repository implementation. |
-| [`InMemoryOrderIdGeneratorLive`](./src/in-memory/InMemoryOrderIdGenerator.ts) | In-memory order ID generator implementation. |
+| [`InMemoryMenuRepositoryLive`](./src/in-memory/InMemoryMenuRepository.ts)           | In-memory menu repository implementation.        |
+| [`InMemoryOrderRepositoryLive`](./src/in-memory/InMemoryOrderRepository.ts)         | In-memory order repository implementation.       |
+| [`InMemoryOrderIdGeneratorLive`](./src/in-memory/InMemoryOrderIdGenerator.ts)       | In-memory order ID generator implementation.     |
 
 ## Commands
 

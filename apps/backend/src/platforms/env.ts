@@ -29,7 +29,11 @@ export const trimOptionalRedactedString = (
   );
 
 export const parseCsvSet = (value: string | undefined): ReadonlySet<string> =>
-  new Set(String.split(value ?? "", ",").map(String.trim).filter(String.isNonEmpty));
+  new Set(
+    String.split(value ?? "", ",")
+      .map(String.trim)
+      .filter(String.isNonEmpty),
+  );
 
 export const revealOptionalSecret = (
   secret: Option.Option<Redacted.Redacted<string>>,
