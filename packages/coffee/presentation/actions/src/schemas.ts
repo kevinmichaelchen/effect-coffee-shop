@@ -45,13 +45,13 @@ export const OrderIdActionInputSchema = Schema.Struct({
   }),
 });
 
-export const decodeEmptyActionInput = Schema.decodeUnknownPromise(EmptyActionInputSchema);
-export const decodeOrderIdInput = Schema.decodeUnknownPromise(OrderIdActionInputSchema);
-export const decodeCartItemIdInput = Schema.decodeUnknownPromise(CartItemIdRequestSchema);
-export const decodeCheckoutCartInput = Schema.decodeUnknownPromise(CheckoutCartRequestSchema);
-export const decodeItemOptionsInput = Schema.decodeUnknownPromise(ItemOptionsRequestSchema);
-export const decodeListOrdersInput = Schema.decodeUnknownPromise(ListOrdersRequestSchema);
-export const decodeOrderItemInput = Schema.decodeUnknownPromise(OrderItemInputSchema);
-export const decodePlaceOrderInput = Schema.decodeUnknownPromise(PlaceOrderRequestSchema);
-export const decodeQuoteOrderInput = Schema.decodeUnknownPromise(QuoteOrderRequestSchema);
-export const decodeUpdateCartItemInput = Schema.decodeUnknownPromise(UpdateCartItemRequestSchema);
+export const decodeEmptyActionInput = Schema.decodeUnknownEffect(EmptyActionInputSchema);
+export const decodeOrderIdInput = Schema.decodeUnknownEffect(OrderIdActionInputSchema);
+export const decodeCartItemIdInput = Schema.decodeUnknownEffect(CartItemIdRequestSchema);
+export const decodeCheckoutCartInput = Schema.decodeUnknownEffect(CheckoutCartRequestSchema);
+export const decodeItemOptionsInput = Schema.decodeUnknownEffect(ItemOptionsRequestSchema);
+export const decodeListOrdersInput = Schema.decodeUnknownEffect(ListOrdersRequestSchema);
+export const decodeOrderItemInput = Schema.decodeUnknownEffect(OrderItemInputSchema);
+export const decodePlaceOrderInput = Schema.decodeUnknownEffect(PlaceOrderRequestSchema);
+export const decodeQuoteOrderInput = Schema.decodeUnknownEffect(QuoteOrderRequestSchema);
+export const decodeUpdateCartItemInput = Schema.decodeUnknownEffect(UpdateCartItemRequestSchema);

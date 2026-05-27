@@ -216,9 +216,11 @@ function createCoffeeAppRunner(
   const liveLayer = CoffeeOrderApp.layer.pipe(Layer.provide(appLayer));
   const services = emptyWebHandlerServices().pipe(Context.add(CurrentActor, actor));
 
-  return async (effect) =>
-    Effect.runPromiseWith(services)(
-      effect.pipe(Effect.provide(liveLayer), Effect.provide(HostObservabilityLive)),
+  return (effect) =>
+    effect.pipe(
+      Effect.provide(liveLayer),
+      Effect.provide(HostObservabilityLive),
+      Effect.provide(services),
     );
 }
 

@@ -28,9 +28,9 @@ const configuredBetterAuthSecret = Config.redacted(awsEnvNames.betterAuthSecret)
 );
 
 const runtimeEnvConfig = Config.all({
+  assistantWorkersAiAccountId: optionalVariableConfig(awsEnvNames.assistantWorkersAiAccountId),
+  assistantWorkersAiApiToken: optionalSecretConfig(awsEnvNames.assistantWorkersAiApiToken),
   betterAuthSecret: optionalSecretConfig(awsEnvNames.betterAuthSecret),
-  cloudflareAccountId: optionalVariableConfig(awsEnvNames.cloudflareAccountId),
-  cloudflareApiToken: optionalSecretConfig(awsEnvNames.cloudflareApiToken),
   coffeeAssistantModel: optionalVariableConfig(awsEnvNames.coffeeAssistantModel),
   coffeeAssistantOllamaUrl: optionalVariableConfig(awsEnvNames.coffeeAssistantOllamaUrl),
   coffeeAssistantProvider: optionalVariableConfig(awsEnvNames.coffeeAssistantProvider),
@@ -41,8 +41,8 @@ const runtimeEnvConfig = Config.all({
   Config.map(
     (env): AwsLambdaEnv => ({
       BETTER_AUTH_SECRET: Redacted.value(env.betterAuthSecret),
-      CLOUDFLARE_ACCOUNT_ID: env.cloudflareAccountId,
-      CLOUDFLARE_API_TOKEN: Redacted.value(env.cloudflareApiToken),
+      CLOUDFLARE_ACCOUNT_ID: env.assistantWorkersAiAccountId,
+      CLOUDFLARE_API_TOKEN: Redacted.value(env.assistantWorkersAiApiToken),
       COFFEE_ASSISTANT_MODEL: env.coffeeAssistantModel,
       COFFEE_ASSISTANT_OLLAMA_URL: env.coffeeAssistantOllamaUrl,
       COFFEE_ASSISTANT_PROVIDER: env.coffeeAssistantProvider,
@@ -65,13 +65,13 @@ export default class CoffeeApi extends AWS.Lambda.Function<CoffeeApi>()(
 
     return {
       env: {
+        [awsEnvNames.assistantWorkersAiAccountId]: yield* optionalVariableConfig(
+          awsEnvNames.assistantWorkersAiAccountId,
+        ).pipe(Effect.orDie),
+        [awsEnvNames.assistantWorkersAiApiToken]: yield* optionalSecretConfig(
+          awsEnvNames.assistantWorkersAiApiToken,
+        ).pipe(Effect.orDie),
         [awsEnvNames.betterAuthSecret]: betterAuthSecret,
-        [awsEnvNames.cloudflareAccountId]: yield* optionalVariableConfig(
-          awsEnvNames.cloudflareAccountId,
-        ).pipe(Effect.orDie),
-        [awsEnvNames.cloudflareApiToken]: yield* optionalSecretConfig(
-          awsEnvNames.cloudflareApiToken,
-        ).pipe(Effect.orDie),
         [awsEnvNames.coffeeAssistantModel]: yield* optionalVariableConfig(
           awsEnvNames.coffeeAssistantModel,
         ).pipe(Effect.orDie),

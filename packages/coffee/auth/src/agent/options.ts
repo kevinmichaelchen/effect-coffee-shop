@@ -17,7 +17,10 @@ import {
   decodeQuoteOrderInput,
   decodeUpdateCartItemInput,
 } from "@effect-coffee-shop/coffee-actions/schemas";
-import { executeCoffeeAction } from "@effect-coffee-shop/coffee-actions/execute";
+import {
+  executeCoffeeActionEffect,
+  type CoffeeAppRunner,
+} from "@effect-coffee-shop/coffee-actions/execute";
 import type { CoffeeActionName } from "@effect-coffee-shop/coffee-actions/specs";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
 import { coffeeAgentCapabilities } from "./capabilities.ts";
@@ -25,11 +28,11 @@ import { formatToolFailure } from "@effect-coffee-shop/coffee-actions/format";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import { CurrentActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
-type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;
+type AgentInputDecoder<A> = (value: unknown) => Effect.Effect<A, unknown>;
 
 interface AgentActionInput {
   readonly action: CoffeeActionName;
-  readonly decode: (value: unknown) => Promise<unknown>;
+  readonly decode: AgentInputDecoder<unknown>;
   readonly failureMessage: string;
 }
 
@@ -69,8 +72,8 @@ export function createCoffeeAgentAppRunner(input: {
     Context.add(CurrentActor, toAgentActor(input.session)),
   );
 
-  return async <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) =>
-    Effect.runPromiseWith(services)(effect.pipe(Effect.provide(liveLayer)));
+  return <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) =>
+    effect.pipe(Effect.provide(liveLayer), Effect.provide(services));
 }
 
 function toExecutionError(error: unknown): AgentCapabilityExecutionError {
@@ -79,52 +82,48 @@ function toExecutionError(error: unknown): AgentCapabilityExecutionError {
   });
 }
 
-async function decodeAgentInput<A>(input: {
-  readonly decode: (value: unknown) => Promise<A>;
+function decodeAgentInput<A>(input: {
+  readonly decode: AgentInputDecoder<A>;
   readonly failureMessage: string;
   readonly value: unknown;
-}): Promise<A> {
-  const result = await input
-    .decode(input.value)
-    .then((value) => ({ success: true as const, value }))
-    .catch(() => ({ success: false as const }));
-
-  if (!result.success) {
-    return Promise.reject(
-      new AgentCapabilityInputError({
-        message: input.failureMessage,
-      }),
-    );
-  }
-
-  return result.value;
+}): Effect.Effect<A, AgentCapabilityInputError> {
+  return input.decode(input.value).pipe(
+    Effect.mapError(
+      () =>
+        new AgentCapabilityInputError({
+          message: input.failureMessage,
+        }),
+    ),
+  );
 }
 
-async function runAgentAction<A>(input: {
+function runAgentAction<A>(input: {
   readonly action: CoffeeActionName;
-  readonly decode: (value: unknown) => Promise<A>;
+  readonly decode: AgentInputDecoder<A>;
   readonly failureMessage: string;
   readonly arguments: unknown;
   readonly runApp: CoffeeAppRunner;
-}) {
+}): Effect.Effect<unknown, AgentCapabilityExecutionError | AgentCapabilityInputError> {
   const payload = input.arguments ?? {};
 
-  await decodeAgentInput({
+  return decodeAgentInput({
     decode: input.decode,
     failureMessage: input.failureMessage,
     value: payload,
-  });
-
-  return executeCoffeeAction({
-    action: input.action,
-    payload,
-    runApp: input.runApp,
-  }).catch((error) => Promise.reject(toExecutionError(error)));
+  }).pipe(
+    Effect.flatMap(() =>
+      executeCoffeeActionEffect({
+        action: input.action,
+        payload,
+        runApp: input.runApp,
+      }).pipe(Effect.mapError(toExecutionError)),
+    ),
+  );
 }
 
 const agentActionInput = (
   action: CoffeeActionName,
-  decode: (value: unknown) => Promise<unknown>,
+  decode: AgentInputDecoder<unknown>,
 ): AgentActionInput => ({
   action,
   decode,
@@ -177,19 +176,30 @@ const agentActionInputFor = (capability: string): Option.Option<AgentActionInput
     Match.orElse(() => Option.none()),
   );
 
-export async function executeCoffeeAgentCapability(input: {
+export function executeCoffeeAgentCapabilityEffect(input: {
   readonly arguments: unknown;
   readonly capability: string;
   readonly runApp: CoffeeAppRunner;
-}) {
+}): Effect.Effect<
+  unknown,
+  AgentCapabilityExecutionError | AgentCapabilityInputError | UnsupportedAgentCapabilityError
+> {
   return Option.match(agentActionInputFor(input.capability), {
-    onNone: () =>
-      Promise.reject(
+    onNone: (): Effect.Effect<
+      unknown,
+      AgentCapabilityExecutionError | AgentCapabilityInputError | UnsupportedAgentCapabilityError
+    > =>
+      Effect.fail(
         new UnsupportedAgentCapabilityError({
           capability: input.capability,
         }),
       ),
-    onSome: (actionInput) =>
+    onSome: (
+      actionInput,
+    ): Effect.Effect<
+      unknown,
+      AgentCapabilityExecutionError | AgentCapabilityInputError | UnsupportedAgentCapabilityError
+    > =>
       runAgentAction({
         ...actionInput,
         arguments: input.arguments,
@@ -221,11 +231,13 @@ export function createCoffeeAgentAuthOptions(input: {
         session: agentSession,
       });
 
-      return executeCoffeeAgentCapability({
-        arguments: args,
-        capability,
-        runApp,
-      });
+      return Effect.runPromise(
+        executeCoffeeAgentCapabilityEffect({
+          arguments: args,
+          capability,
+          runApp,
+        }),
+      );
     },
     providerDescription:
       "Coffee ordering capabilities for delegated AI agents acting on behalf of a signed-in customer.",

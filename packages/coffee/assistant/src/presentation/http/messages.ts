@@ -4,6 +4,7 @@
  * @module
  */
 import type { AssistantConversationMessage } from "../../application/model.ts";
+import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 const AssistantContentTextPartSchema = Schema.Struct({
@@ -36,16 +37,29 @@ export type AssistantRequestBody = typeof AssistantRequestBodySchema.Type;
 type AssistantRequestMessage = (typeof AssistantRequestBodySchema.Type.messages)[number];
 type AssistantUiMessageInput = typeof AssistantUiMessageSchema.Type;
 
-const decodeAssistantRequestBody = Schema.decodeUnknownPromise(AssistantRequestBodySchema);
+const decodeAssistantRequestBody = Schema.decodeUnknownEffect(AssistantRequestBodySchema);
 const isAssistantUiMessage = Schema.is(AssistantUiMessageSchema);
 
 export async function parseAssistantRequestBody(
   request: Request,
 ): Promise<AssistantRequestBody | null> {
-  return request
-    .json()
-    .then(decodeAssistantRequestBody)
-    .catch(() => null);
+  return Effect.runPromise(
+    Effect.tryPromise({
+      try: async () => request.json(),
+      catch: () => null,
+    }).pipe(
+      Effect.matchEffect({
+        onFailure: () => Effect.succeed(null),
+        onSuccess: (body) =>
+          decodeAssistantRequestBody(body).pipe(
+            Effect.matchEffect({
+              onFailure: () => Effect.succeed(null),
+              onSuccess: Effect.succeed,
+            }),
+          ),
+      }),
+    ),
+  );
 }
 
 export function toAssistantConversationMessages(

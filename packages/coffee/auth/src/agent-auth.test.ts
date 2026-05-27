@@ -1,5 +1,6 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import type { AgentSession } from "@better-auth/agent-auth";
+import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { Miniflare } from "miniflare";
 import { describe, expect, it } from "vitest";
@@ -12,7 +13,7 @@ import {
 import {
   createCoffeeAgentAppRunner,
   createCoffeeAgentAuthOptions,
-  executeCoffeeAgentCapability,
+  executeCoffeeAgentCapabilityEffect,
 } from "@effect-coffee-shop/coffee-auth/agent/options";
 import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
 
@@ -60,15 +61,17 @@ async function placeLatteOrder(db: D1Database, session: AgentSession) {
     appLayer: makeCloudflareCoffeeAppLive(db),
     session,
   });
-  const result = await executeCoffeeAgentCapability({
-    arguments: {
-      items: [{ drinkId: "latte", size: "medium" }],
-    },
-    capability: "place_order",
-    runApp,
-  });
+  const result = await Effect.runPromise(
+    executeCoffeeAgentCapabilityEffect({
+      arguments: {
+        items: [{ drinkId: "latte", size: "medium" }],
+      },
+      capability: "place_order",
+      runApp,
+    }),
+  );
 
-  return Schema.decodeUnknownPromise(CoffeeOrderViewSchema)(result);
+  return Effect.runPromise(Schema.decodeUnknownEffect(CoffeeOrderViewSchema)(result));
 }
 
 async function listOrders(db: D1Database, session: AgentSession): Promise<CoffeeOrdersView> {
@@ -76,13 +79,15 @@ async function listOrders(db: D1Database, session: AgentSession): Promise<Coffee
     appLayer: makeCloudflareCoffeeAppLive(db),
     session,
   });
-  const result = await executeCoffeeAgentCapability({
-    arguments: {},
-    capability: "list_orders",
-    runApp,
-  });
+  const result = await Effect.runPromise(
+    executeCoffeeAgentCapabilityEffect({
+      arguments: {},
+      capability: "list_orders",
+      runApp,
+    }),
+  );
 
-  return Schema.decodeUnknownPromise(CoffeeOrdersViewSchema)(result);
+  return Effect.runPromise(Schema.decodeUnknownEffect(CoffeeOrdersViewSchema)(result));
 }
 
 async function getOrder(
@@ -94,13 +99,15 @@ async function getOrder(
     appLayer: makeCloudflareCoffeeAppLive(db),
     session,
   });
-  const result = await executeCoffeeAgentCapability({
-    arguments: { orderId },
-    capability: "get_order",
-    runApp,
-  });
+  const result = await Effect.runPromise(
+    executeCoffeeAgentCapabilityEffect({
+      arguments: { orderId },
+      capability: "get_order",
+      runApp,
+    }),
+  );
 
-  return Schema.decodeUnknownPromise(CoffeeOrderViewSchema)(result);
+  return Effect.runPromise(Schema.decodeUnknownEffect(CoffeeOrderViewSchema)(result));
 }
 
 describe("coffee agent auth", () => {
@@ -165,14 +172,16 @@ describe("coffee agent auth", () => {
       });
 
       await expect(
-        executeCoffeeAgentCapability({
-          arguments: {},
-          capability: "place_order",
-          runApp: createCoffeeAgentAppRunner({
-            appLayer: makeCloudflareCoffeeAppLive(db),
-            session,
+        Effect.runPromise(
+          executeCoffeeAgentCapabilityEffect({
+            arguments: {},
+            capability: "place_order",
+            runApp: createCoffeeAgentAppRunner({
+              appLayer: makeCloudflareCoffeeAppLive(db),
+              session,
+            }),
           }),
-        }),
+        ),
       ).rejects.toThrowError("Invalid place_order arguments.");
     });
   });
