@@ -5,7 +5,7 @@
  */
 import { type CoffeeActionName, coffeeActionSpecs } from "@effect-coffee-shop/coffee-actions/specs";
 import {
-  executeCoffeeAction,
+  executeCoffeeActionEffect,
   type CoffeeAppRunner,
 } from "@effect-coffee-shop/coffee-actions/execute";
 import * as Effect from "effect/Effect";
@@ -101,14 +101,10 @@ function createAppTool(input: {
           label: name,
         });
 
-        return yield* Effect.tryPromise({
-          try: () =>
-            executeCoffeeAction({
-              action,
-              payload: toolInput,
-              runApp,
-            }),
-          catch: (error) => error,
+        return yield* executeCoffeeActionEffect({
+          action,
+          payload: toolInput,
+          runApp,
         }).pipe(
           Effect.match({
             onFailure: (error) => {

@@ -17,7 +17,7 @@ import {
   decodeQuoteOrderInput,
   decodeUpdateCartItemInput,
 } from "@effect-coffee-shop/coffee-actions/schemas";
-import { executeCoffeeAction } from "@effect-coffee-shop/coffee-actions/execute";
+import { executeCoffeeActionEffect } from "@effect-coffee-shop/coffee-actions/execute";
 import type { CoffeeActionName } from "@effect-coffee-shop/coffee-actions/specs";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
 import { coffeeAgentCapabilities } from "./capabilities.ts";
@@ -110,15 +110,11 @@ function runAgentAction<A>(input: {
     value: payload,
   }).pipe(
     Effect.flatMap(() =>
-      Effect.tryPromise({
-        try: () =>
-          executeCoffeeAction({
-            action: input.action,
-            payload,
-            runApp: input.runApp,
-          }),
-        catch: toExecutionError,
-      }),
+      executeCoffeeActionEffect({
+        action: input.action,
+        payload,
+        runApp: input.runApp,
+      }).pipe(Effect.mapError(toExecutionError)),
     ),
   );
 }

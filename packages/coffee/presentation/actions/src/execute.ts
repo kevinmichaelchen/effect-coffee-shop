@@ -42,6 +42,12 @@ interface ActionContext {
   readonly runApp: CoffeeAppRunner;
 }
 
+export interface CoffeeActionExecutionInput {
+  readonly action: CoffeeActionName;
+  readonly payload: unknown;
+  readonly runApp: CoffeeAppRunner;
+}
+
 type ActionHandler = (input: ActionContext) => Effect.Effect<unknown, unknown>;
 
 const noCheckoutSessionView: NoCheckoutSessionView = {
@@ -139,10 +145,12 @@ const actionHandlers = {
   ),
 } satisfies Record<CoffeeActionName, ActionHandler>;
 
-export async function executeCoffeeAction(input: {
-  readonly action: CoffeeActionName;
-  readonly payload: unknown;
-  readonly runApp: CoffeeAppRunner;
-}): Promise<unknown> {
-  return Effect.runPromise(actionHandlers[input.action](input));
+export function executeCoffeeActionEffect(
+  input: CoffeeActionExecutionInput,
+): Effect.Effect<unknown, unknown> {
+  return actionHandlers[input.action](input);
+}
+
+export async function executeCoffeeAction(input: CoffeeActionExecutionInput): Promise<unknown> {
+  return Effect.runPromise(executeCoffeeActionEffect(input));
 }
