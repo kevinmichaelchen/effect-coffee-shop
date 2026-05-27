@@ -33,7 +33,9 @@ import {
 } from "./schemas.ts";
 import type { CoffeeActionName } from "./specs.ts";
 
-export type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;
+export type CoffeeAppRunner = <A, E>(
+  effect: Effect.Effect<A, E, CoffeeOrderApp>,
+) => Effect.Effect<A, E>;
 type CoffeeOrderAppService = Context.Service.Shape<typeof CoffeeOrderApp>;
 type ActionInputDecoder<A> = (payload: unknown) => Effect.Effect<A, unknown>;
 
@@ -56,20 +58,11 @@ const noCheckoutSessionView: NoCheckoutSessionView = {
 
 const payloadOrEmpty = (payload: unknown): unknown => payload ?? {};
 
-const runAppEffect = <A, E>(
-  input: ActionContext,
-  effect: Effect.Effect<A, E, CoffeeOrderApp>,
-): Effect.Effect<A, unknown> =>
-  Effect.tryPromise({
-    try: () => input.runApp(effect),
-    catch: (error) => error,
-  });
-
 const runEmptyAction =
   <A, E>(runEffect: (app: CoffeeOrderAppService) => Effect.Effect<A, E>): ActionHandler =>
   (input) =>
     decodeEmptyActionInput(payloadOrEmpty(input.payload)).pipe(
-      Effect.flatMap(() => runAppEffect(input, CoffeeOrderApp.use(runEffect))),
+      Effect.flatMap(() => input.runApp(CoffeeOrderApp.use(runEffect))),
     );
 
 const runDecodedAction =
@@ -80,10 +73,7 @@ const runDecodedAction =
   (input) =>
     decode(payloadOrEmpty(input.payload)).pipe(
       Effect.flatMap((payload) =>
-        runAppEffect(
-          input,
-          CoffeeOrderApp.use((app) => runEffect(app, payload)),
-        ),
+        input.runApp(CoffeeOrderApp.use((app) => runEffect(app, payload))),
       ),
     );
 
@@ -149,8 +139,4 @@ export function executeCoffeeActionEffect(
   input: CoffeeActionExecutionInput,
 ): Effect.Effect<unknown, unknown> {
   return actionHandlers[input.action](input);
-}
-
-export async function executeCoffeeAction(input: CoffeeActionExecutionInput): Promise<unknown> {
-  return Effect.runPromise(executeCoffeeActionEffect(input));
 }

@@ -17,7 +17,10 @@ import {
   decodeQuoteOrderInput,
   decodeUpdateCartItemInput,
 } from "@effect-coffee-shop/coffee-actions/schemas";
-import { executeCoffeeActionEffect } from "@effect-coffee-shop/coffee-actions/execute";
+import {
+  executeCoffeeActionEffect,
+  type CoffeeAppRunner,
+} from "@effect-coffee-shop/coffee-actions/execute";
 import type { CoffeeActionName } from "@effect-coffee-shop/coffee-actions/specs";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
 import { coffeeAgentCapabilities } from "./capabilities.ts";
@@ -25,7 +28,6 @@ import { formatToolFailure } from "@effect-coffee-shop/coffee-actions/format";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import { CurrentActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
-type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;
 type AgentInputDecoder<A> = (value: unknown) => Effect.Effect<A, unknown>;
 
 interface AgentActionInput {
@@ -70,8 +72,8 @@ export function createCoffeeAgentAppRunner(input: {
     Context.add(CurrentActor, toAgentActor(input.session)),
   );
 
-  return async <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) =>
-    Effect.runPromiseWith(services)(effect.pipe(Effect.provide(liveLayer)));
+  return <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) =>
+    effect.pipe(Effect.provide(liveLayer), Effect.provide(services));
 }
 
 function toExecutionError(error: unknown): AgentCapabilityExecutionError {
@@ -174,35 +176,36 @@ const agentActionInputFor = (capability: string): Option.Option<AgentActionInput
     Match.orElse(() => Option.none()),
   );
 
-export async function executeCoffeeAgentCapability(input: {
+export function executeCoffeeAgentCapabilityEffect(input: {
   readonly arguments: unknown;
   readonly capability: string;
   readonly runApp: CoffeeAppRunner;
-}): Promise<unknown> {
-  return Effect.runPromise(
-    Option.match(agentActionInputFor(input.capability), {
-      onNone: (): Effect.Effect<
-        unknown,
-        AgentCapabilityExecutionError | AgentCapabilityInputError | UnsupportedAgentCapabilityError
-      > =>
-        Effect.fail(
-          new UnsupportedAgentCapabilityError({
-            capability: input.capability,
-          }),
-        ),
-      onSome: (
-        actionInput,
-      ): Effect.Effect<
-        unknown,
-        AgentCapabilityExecutionError | AgentCapabilityInputError | UnsupportedAgentCapabilityError
-      > =>
-        runAgentAction({
-          ...actionInput,
-          arguments: input.arguments,
-          runApp: input.runApp,
+}): Effect.Effect<
+  unknown,
+  AgentCapabilityExecutionError | AgentCapabilityInputError | UnsupportedAgentCapabilityError
+> {
+  return Option.match(agentActionInputFor(input.capability), {
+    onNone: (): Effect.Effect<
+      unknown,
+      AgentCapabilityExecutionError | AgentCapabilityInputError | UnsupportedAgentCapabilityError
+    > =>
+      Effect.fail(
+        new UnsupportedAgentCapabilityError({
+          capability: input.capability,
         }),
-    }),
-  );
+      ),
+    onSome: (
+      actionInput,
+    ): Effect.Effect<
+      unknown,
+      AgentCapabilityExecutionError | AgentCapabilityInputError | UnsupportedAgentCapabilityError
+    > =>
+      runAgentAction({
+        ...actionInput,
+        arguments: input.arguments,
+        runApp: input.runApp,
+      }),
+  });
 }
 
 export function createCoffeeAgentAuthOptions(input: {
@@ -228,11 +231,13 @@ export function createCoffeeAgentAuthOptions(input: {
         session: agentSession,
       });
 
-      return executeCoffeeAgentCapability({
-        arguments: args,
-        capability,
-        runApp,
-      });
+      return Effect.runPromise(
+        executeCoffeeAgentCapabilityEffect({
+          arguments: args,
+          capability,
+          runApp,
+        }),
+      );
     },
     providerDescription:
       "Coffee ordering capabilities for delegated AI agents acting on behalf of a signed-in customer.",
