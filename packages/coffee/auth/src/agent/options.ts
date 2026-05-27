@@ -79,47 +79,46 @@ function toExecutionError(error: unknown): AgentCapabilityExecutionError {
   });
 }
 
-async function decodeAgentInput<A>(input: {
+function decodeAgentInput<A>(input: {
   readonly decode: (value: unknown) => Promise<A>;
   readonly failureMessage: string;
   readonly value: unknown;
-}): Promise<A> {
-  const result = await input
-    .decode(input.value)
-    .then((value) => ({ success: true as const, value }))
-    .catch(() => ({ success: false as const }));
-
-  if (!result.success) {
-    return Promise.reject(
+}): Effect.Effect<A, AgentCapabilityInputError> {
+  return Effect.tryPromise({
+    try: () => input.decode(input.value),
+    catch: () =>
       new AgentCapabilityInputError({
         message: input.failureMessage,
       }),
-    );
-  }
-
-  return result.value;
+  });
 }
 
-async function runAgentAction<A>(input: {
+function runAgentAction<A>(input: {
   readonly action: CoffeeActionName;
   readonly decode: (value: unknown) => Promise<A>;
   readonly failureMessage: string;
   readonly arguments: unknown;
   readonly runApp: CoffeeAppRunner;
-}) {
+}): Effect.Effect<unknown, AgentCapabilityExecutionError | AgentCapabilityInputError> {
   const payload = input.arguments ?? {};
 
-  await decodeAgentInput({
+  return decodeAgentInput({
     decode: input.decode,
     failureMessage: input.failureMessage,
     value: payload,
-  });
-
-  return executeCoffeeAction({
-    action: input.action,
-    payload,
-    runApp: input.runApp,
-  }).catch((error) => Promise.reject(toExecutionError(error)));
+  }).pipe(
+    Effect.flatMap(() =>
+      Effect.tryPromise({
+        try: () =>
+          executeCoffeeAction({
+            action: input.action,
+            payload,
+            runApp: input.runApp,
+          }),
+        catch: toExecutionError,
+      }),
+    ),
+  );
 }
 
 const agentActionInput = (
@@ -181,21 +180,31 @@ export async function executeCoffeeAgentCapability(input: {
   readonly arguments: unknown;
   readonly capability: string;
   readonly runApp: CoffeeAppRunner;
-}) {
-  return Option.match(agentActionInputFor(input.capability), {
-    onNone: () =>
-      Promise.reject(
-        new UnsupportedAgentCapabilityError({
-          capability: input.capability,
+}): Promise<unknown> {
+  return Effect.runPromise(
+    Option.match(agentActionInputFor(input.capability), {
+      onNone: (): Effect.Effect<
+        unknown,
+        AgentCapabilityExecutionError | AgentCapabilityInputError | UnsupportedAgentCapabilityError
+      > =>
+        Effect.fail(
+          new UnsupportedAgentCapabilityError({
+            capability: input.capability,
+          }),
+        ),
+      onSome: (
+        actionInput,
+      ): Effect.Effect<
+        unknown,
+        AgentCapabilityExecutionError | AgentCapabilityInputError | UnsupportedAgentCapabilityError
+      > =>
+        runAgentAction({
+          ...actionInput,
+          arguments: input.arguments,
+          runApp: input.runApp,
         }),
-      ),
-    onSome: (actionInput) =>
-      runAgentAction({
-        ...actionInput,
-        arguments: input.arguments,
-        runApp: input.runApp,
-      }),
-  });
+    }),
+  );
 }
 
 export function createCoffeeAgentAuthOptions(input: {

@@ -1,3 +1,4 @@
+import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 class HttpRequestError extends Schema.TaggedErrorClass<HttpRequestError>()("HttpRequestError", {
@@ -13,94 +14,162 @@ class HttpResponseDecodeError extends Schema.TaggedErrorClass<HttpResponseDecode
   },
 ) {}
 
-interface JsonRequestInput<
-  SuccessSchema extends Schema.Decoder<unknown>,
-  ErrorSchema extends Schema.Decoder<unknown> | undefined = undefined,
-> {
+interface JsonRequestInputBase<SuccessSchema extends Schema.Decoder<unknown>> {
   readonly errorMessage?: string;
-  readonly errorSchema?: ErrorSchema;
   readonly init?: RequestInit;
   readonly path: string;
-  readonly readErrorMessage?: ErrorSchema extends Schema.Decoder<unknown>
-    ? (error: ErrorSchema["Type"]) => string
-    : undefined;
   readonly schema: SuccessSchema;
 }
 
-export async function requestJson<
+interface JsonRequestInputWithError<
   SuccessSchema extends Schema.Decoder<unknown>,
-  ErrorSchema extends Schema.Decoder<unknown> | undefined = undefined,
->(input: JsonRequestInput<SuccessSchema, ErrorSchema>): Promise<SuccessSchema["Type"]> {
-  const response = await fetch(input.path, input.init);
-
-  if (!response.ok) {
-    return rejectRequestError(
-      response,
-      input.errorMessage,
-      input.errorSchema,
-      input.readErrorMessage,
-    );
-  }
-
-  const decodedResponse = await readResponseJson(response, input.schema)
-    .then((value) => ({ success: true as const, value }))
-    .catch(() => ({ success: false as const }));
-
-  if (!decodedResponse.success) {
-    return Promise.reject(
-      new HttpResponseDecodeError({
-        message: `Unexpected response body from ${input.path}.`,
-        status: response.status,
-      }),
-    );
-  }
-
-  return decodedResponse.value;
+  ErrorSchema extends Schema.Decoder<unknown>,
+> extends JsonRequestInputBase<SuccessSchema> {
+  readonly errorSchema: ErrorSchema;
+  readonly readErrorMessage: (error: ErrorSchema["Type"]) => string;
 }
 
-async function rejectRequestError(
-  response: Response,
-  fallbackMessage: string | undefined,
-  errorSchema: Schema.Decoder<unknown> | undefined,
-  readErrorMessage: ((error: unknown) => string) | undefined,
-): Promise<never> {
-  const fallback = fallbackMessage ?? `${response.status} ${response.statusText}`;
+interface JsonRequestInputWithoutError<
+  SuccessSchema extends Schema.Decoder<unknown>,
+> extends JsonRequestInputBase<SuccessSchema> {
+  readonly errorSchema?: undefined;
+  readonly readErrorMessage?: undefined;
+}
 
-  if (errorSchema === undefined || readErrorMessage === undefined) {
-    return Promise.reject(
-      new HttpRequestError({
-        message: fallback,
-        status: response.status,
-      }),
-    );
-  }
+type JsonRequestInput<
+  SuccessSchema extends Schema.Decoder<unknown>,
+  ErrorSchema extends Schema.Decoder<unknown>,
+> =
+  | JsonRequestInputWithError<SuccessSchema, ErrorSchema>
+  | JsonRequestInputWithoutError<SuccessSchema>;
 
-  const rawBody = await response.text();
-  const message = await decodeJsonText(rawBody, errorSchema)
-    .then(readErrorMessage)
-    .catch(() => fallback);
+export function requestJson<SuccessSchema extends Schema.Decoder<unknown>>(
+  input: JsonRequestInputWithoutError<SuccessSchema>,
+): Promise<SuccessSchema["Type"]>;
+export function requestJson<
+  SuccessSchema extends Schema.Decoder<unknown>,
+  ErrorSchema extends Schema.Decoder<unknown>,
+>(input: JsonRequestInputWithError<SuccessSchema, ErrorSchema>): Promise<SuccessSchema["Type"]>;
+export async function requestJson<
+  SuccessSchema extends Schema.Decoder<unknown>,
+  ErrorSchema extends Schema.Decoder<unknown>,
+>(input: JsonRequestInput<SuccessSchema, ErrorSchema>): Promise<SuccessSchema["Type"]> {
+  return Effect.runPromise(requestJsonEffect(input));
+}
 
-  return Promise.reject(
-    new HttpRequestError({
-      message,
-      status: response.status,
-    }),
+function requestJsonEffect<
+  SuccessSchema extends Schema.Decoder<unknown>,
+  ErrorSchema extends Schema.Decoder<unknown>,
+>(
+  input: JsonRequestInput<SuccessSchema, ErrorSchema>,
+): Effect.Effect<SuccessSchema["Type"], HttpRequestError | HttpResponseDecodeError> {
+  return fetchResponse(input).pipe(
+    Effect.flatMap(
+      (
+        response,
+      ): Effect.Effect<SuccessSchema["Type"], HttpRequestError | HttpResponseDecodeError> =>
+        response.ok
+          ? readResponseJson(response, input.path, input.schema)
+          : rejectRequestError(response, input),
+    ),
   );
 }
 
-async function readResponseJson<SuccessSchema extends Schema.Decoder<unknown>>(
-  response: Response,
-  schema: SuccessSchema,
-): Promise<SuccessSchema["Type"]> {
-  const rawBody = await response.text();
-  return decodeJsonText(rawBody, schema);
+function fetchResponse(input: {
+  readonly errorMessage?: string;
+  readonly init?: RequestInit;
+  readonly path: string;
+}): Effect.Effect<Response, HttpRequestError> {
+  return Effect.tryPromise({
+    try: async () => fetch(input.path, input.init),
+    catch: () =>
+      new HttpRequestError({
+        message: input.errorMessage ?? `Unable to request ${input.path}.`,
+        status: 0,
+      }),
+  });
 }
 
-async function decodeJsonText<SchemaType extends Schema.Decoder<unknown>>(
+function rejectRequestError<
+  SuccessSchema extends Schema.Decoder<unknown>,
+  ErrorSchema extends Schema.Decoder<unknown>,
+>(
+  response: Response,
+  input: JsonRequestInput<SuccessSchema, ErrorSchema>,
+): Effect.Effect<never, HttpRequestError> {
+  const fallbackMessage = input.errorMessage ?? `${response.status} ${response.statusText}`;
+  const errorSchema = input.errorSchema;
+  const readErrorMessage = input.readErrorMessage;
+
+  if (errorSchema === undefined || readErrorMessage === undefined) {
+    return Effect.fail(
+      new HttpRequestError({
+        message: fallbackMessage,
+        status: response.status,
+      }),
+    );
+  }
+
+  return readResponseText(response, input.path).pipe(
+    Effect.matchEffect({
+      onFailure: () => Effect.succeed(fallbackMessage),
+      onSuccess: (rawBody) =>
+        decodeJsonText(rawBody, response.status, input.path, errorSchema).pipe(
+          Effect.matchEffect({
+            onFailure: () => Effect.succeed(fallbackMessage),
+            onSuccess: (error) => Effect.succeed(readErrorMessage(error)),
+          }),
+        ),
+    }),
+    Effect.flatMap((message) =>
+      Effect.fail(
+        new HttpRequestError({
+          message,
+          status: response.status,
+        }),
+      ),
+    ),
+  );
+}
+
+function readResponseJson<SuccessSchema extends Schema.Decoder<unknown>>(
+  response: Response,
+  path: string,
+  schema: SuccessSchema,
+): Effect.Effect<SuccessSchema["Type"], HttpResponseDecodeError> {
+  return readResponseText(response, path).pipe(
+    Effect.flatMap((rawBody) => decodeJsonText(rawBody, response.status, path, schema)),
+  );
+}
+
+function readResponseText(
+  response: Response,
+  path: string,
+): Effect.Effect<string, HttpResponseDecodeError> {
+  return Effect.tryPromise({
+    try: async () => response.text(),
+    catch: () =>
+      new HttpResponseDecodeError({
+        message: `Unable to read response body from ${path}.`,
+        status: response.status,
+      }),
+  });
+}
+
+function decodeJsonText<SchemaType extends Schema.Decoder<unknown>>(
   rawBody: string,
+  status: number,
+  path: string,
   schema: SchemaType,
-): Promise<SchemaType["Type"]> {
-  return Schema.decodeUnknownPromise(schema)(
-    Schema.decodeUnknownSync(Schema.UnknownFromJsonString)(rawBody),
+): Effect.Effect<SchemaType["Type"], HttpResponseDecodeError> {
+  return Schema.decodeUnknownEffect(Schema.UnknownFromJsonString)(rawBody).pipe(
+    Effect.flatMap(Schema.decodeUnknownEffect(schema)),
+    Effect.mapError(
+      () =>
+        new HttpResponseDecodeError({
+          message: `Unexpected response body from ${path}.`,
+          status,
+        }),
+    ),
   );
 }
