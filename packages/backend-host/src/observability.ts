@@ -2,6 +2,7 @@ import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Logger from "effect/Logger";
+import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Metric from "effect/Metric";
 import * as Option from "effect/Option";
 import { FetchHttpClient } from "effect/unstable/http";
@@ -63,6 +64,8 @@ export const HostObservabilityLive = Layer.mergeAll(
   OtlpObservabilityLive,
 );
 
+const HostObservabilityRuntime = ManagedRuntime.make(HostObservabilityLive);
+
 const requestTotal = Metric.counter("fetch_host_requests_total", {
   description: "Total Fetch host requests handled by route, method, and outcome.",
   incremental: true,
@@ -81,7 +84,7 @@ const requestDurationMs = Metric.histogram("fetch_host_request_duration_ms", {
 type MetricAttributes = Readonly<Record<string, string>>;
 
 export function runHostEffect<A, E>(effect: Effect.Effect<A, E>): Promise<A> {
-  return Effect.runPromise(effect.pipe(Effect.provide(HostObservabilityLive)));
+  return HostObservabilityRuntime.runPromise(effect);
 }
 
 export function recordFetchHostRequestCompleted(input: {
