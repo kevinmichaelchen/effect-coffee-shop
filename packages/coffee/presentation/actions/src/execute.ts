@@ -35,13 +35,14 @@ import type { CoffeeActionName } from "./specs.ts";
 
 export type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;
 type CoffeeOrderAppService = Context.Service.Shape<typeof CoffeeOrderApp>;
+type ActionInputDecoder<A> = (payload: unknown) => Effect.Effect<A, unknown>;
 
 interface ActionContext {
   readonly payload: unknown;
   readonly runApp: CoffeeAppRunner;
 }
 
-type ActionHandler = (input: ActionContext) => Promise<unknown>;
+type ActionHandler = (input: ActionContext) => Effect.Effect<unknown, unknown>;
 
 const noCheckoutSessionView: NoCheckoutSessionView = {
   status: "no_checkout_session",
@@ -49,22 +50,36 @@ const noCheckoutSessionView: NoCheckoutSessionView = {
 
 const payloadOrEmpty = (payload: unknown): unknown => payload ?? {};
 
+const runAppEffect = <A, E>(
+  input: ActionContext,
+  effect: Effect.Effect<A, E, CoffeeOrderApp>,
+): Effect.Effect<A, unknown> =>
+  Effect.tryPromise({
+    try: () => input.runApp(effect),
+    catch: (error) => error,
+  });
+
 const runEmptyAction =
   <A, E>(runEffect: (app: CoffeeOrderAppService) => Effect.Effect<A, E>): ActionHandler =>
-  async (input) => {
-    await decodeEmptyActionInput(payloadOrEmpty(input.payload));
-    return input.runApp(CoffeeOrderApp.use(runEffect));
-  };
+  (input) =>
+    decodeEmptyActionInput(payloadOrEmpty(input.payload)).pipe(
+      Effect.flatMap(() => runAppEffect(input, CoffeeOrderApp.use(runEffect))),
+    );
 
 const runDecodedAction =
   <Payload, A, E>(
-    decode: (payload: unknown) => Promise<Payload>,
+    decode: ActionInputDecoder<Payload>,
     runEffect: (app: CoffeeOrderAppService, payload: Payload) => Effect.Effect<A, E>,
   ): ActionHandler =>
-  async (input) => {
-    const payload = await decode(payloadOrEmpty(input.payload));
-    return input.runApp(CoffeeOrderApp.use((app) => runEffect(app, payload)));
-  };
+  (input) =>
+    decode(payloadOrEmpty(input.payload)).pipe(
+      Effect.flatMap((payload) =>
+        runAppEffect(
+          input,
+          CoffeeOrderApp.use((app) => runEffect(app, payload)),
+        ),
+      ),
+    );
 
 const runOrderIdAction = <E>(
   runEffect: (app: CoffeeOrderAppService, orderId: OrderId) => Effect.Effect<CoffeeOrder, E>,
@@ -129,5 +144,5 @@ export async function executeCoffeeAction(input: {
   readonly payload: unknown;
   readonly runApp: CoffeeAppRunner;
 }): Promise<unknown> {
-  return actionHandlers[input.action](input);
+  return Effect.runPromise(actionHandlers[input.action](input));
 }

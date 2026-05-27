@@ -26,10 +26,11 @@ import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/Coff
 import { CurrentActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;
+type AgentInputDecoder<A> = (value: unknown) => Effect.Effect<A, unknown>;
 
 interface AgentActionInput {
   readonly action: CoffeeActionName;
-  readonly decode: (value: unknown) => Promise<unknown>;
+  readonly decode: AgentInputDecoder<unknown>;
   readonly failureMessage: string;
 }
 
@@ -80,22 +81,23 @@ function toExecutionError(error: unknown): AgentCapabilityExecutionError {
 }
 
 function decodeAgentInput<A>(input: {
-  readonly decode: (value: unknown) => Promise<A>;
+  readonly decode: AgentInputDecoder<A>;
   readonly failureMessage: string;
   readonly value: unknown;
 }): Effect.Effect<A, AgentCapabilityInputError> {
-  return Effect.tryPromise({
-    try: () => input.decode(input.value),
-    catch: () =>
-      new AgentCapabilityInputError({
-        message: input.failureMessage,
-      }),
-  });
+  return input.decode(input.value).pipe(
+    Effect.mapError(
+      () =>
+        new AgentCapabilityInputError({
+          message: input.failureMessage,
+        }),
+    ),
+  );
 }
 
 function runAgentAction<A>(input: {
   readonly action: CoffeeActionName;
-  readonly decode: (value: unknown) => Promise<A>;
+  readonly decode: AgentInputDecoder<A>;
   readonly failureMessage: string;
   readonly arguments: unknown;
   readonly runApp: CoffeeAppRunner;
@@ -123,7 +125,7 @@ function runAgentAction<A>(input: {
 
 const agentActionInput = (
   action: CoffeeActionName,
-  decode: (value: unknown) => Promise<unknown>,
+  decode: AgentInputDecoder<unknown>,
 ): AgentActionInput => ({
   action,
   decode,
