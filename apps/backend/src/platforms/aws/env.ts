@@ -16,9 +16,9 @@ import { parseCsvSet, trimOptionalRedactedString } from "../env.ts";
 export { revealOptionalSecret, revealSecret } from "../env.ts";
 
 export const awsEnvNames = {
+  assistantWorkersAiAccountId: "CLOUDFLARE_ACCOUNT_ID",
+  assistantWorkersAiApiToken: "CLOUDFLARE_API_TOKEN",
   betterAuthSecret: "BETTER_AUTH_SECRET",
-  cloudflareAccountId: "CLOUDFLARE_ACCOUNT_ID",
-  cloudflareApiToken: "CLOUDFLARE_API_TOKEN",
   coffeeAssistantModel: "COFFEE_ASSISTANT_MODEL",
   coffeeAssistantOllamaUrl: "COFFEE_ASSISTANT_OLLAMA_URL",
   coffeeAssistantProvider: "COFFEE_ASSISTANT_PROVIDER",
@@ -48,9 +48,9 @@ export interface AwsRuntime {
 }
 
 const awsRuntimeConfig = Config.all({
+  assistantWorkersAiAccountId: Config.option(Config.string("cloudflareAccountId")),
+  assistantWorkersAiApiToken: Config.option(Config.redacted("cloudflareApiToken")),
   betterAuthSecret: Config.option(Config.redacted("betterAuthSecret")),
-  cloudflareAccountId: Config.option(Config.string("cloudflareAccountId")),
-  cloudflareApiToken: Config.option(Config.redacted("cloudflareApiToken")),
   coffeeAssistantModel: Config.option(Config.string("coffeeAssistantModel")),
   coffeeAssistantOllamaUrl: Config.option(Config.string("coffeeAssistantOllamaUrl")),
   coffeeAssistantProvider: Config.option(Config.string("coffeeAssistantProvider")),
@@ -59,9 +59,9 @@ const awsRuntimeConfig = Config.all({
 });
 
 interface AwsRuntimeConfig {
+  readonly assistantWorkersAiAccountId: Option.Option<string>;
+  readonly assistantWorkersAiApiToken: Option.Option<Redacted.Redacted<string>>;
   readonly betterAuthSecret: Option.Option<Redacted.Redacted<string>>;
-  readonly cloudflareAccountId: Option.Option<string>;
-  readonly cloudflareApiToken: Option.Option<Redacted.Redacted<string>>;
   readonly coffeeAssistantModel: Option.Option<string>;
   readonly coffeeAssistantOllamaUrl: Option.Option<string>;
   readonly coffeeAssistantProvider: Option.Option<string>;
@@ -77,8 +77,8 @@ const optionalRedactedValue = (
 ): string | undefined => Option.getOrUndefined(Option.map(value, Redacted.value));
 
 const toAssistantEnv = (env: AwsRuntimeConfig): Record<string, string | undefined> => ({
-  [awsEnvNames.cloudflareAccountId]: optionalStringValue(env.cloudflareAccountId),
-  [awsEnvNames.cloudflareApiToken]: optionalRedactedValue(env.cloudflareApiToken),
+  [awsEnvNames.assistantWorkersAiAccountId]: optionalStringValue(env.assistantWorkersAiAccountId),
+  [awsEnvNames.assistantWorkersAiApiToken]: optionalRedactedValue(env.assistantWorkersAiApiToken),
   [awsEnvNames.coffeeAssistantModel]: optionalStringValue(env.coffeeAssistantModel),
   [awsEnvNames.coffeeAssistantOllamaUrl]: optionalStringValue(env.coffeeAssistantOllamaUrl),
   [awsEnvNames.coffeeAssistantProvider]: optionalStringValue(env.coffeeAssistantProvider),
