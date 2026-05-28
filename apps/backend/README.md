@@ -2,7 +2,7 @@
 
 `@effect-coffee-shop/backend` is the composition root for backend runtimes.
 
-It chooses concrete persistence, auth, host, and presentation layers for deployable entrypoints. The
+It chooses concrete persistence, auth, HTTP, and presentation layers for deployable entrypoints. The
 library packages define reusable Coffee behavior and adapters; this app decides how those pieces are
 assembled for Bun, Cloudflare Workers, and AWS Lambda.
 
@@ -10,13 +10,14 @@ See [`../../packages`](../../packages) for the package map this app composes.
 
 ## Runtime Surfaces
 
+- [`src/platforms`](./src/platforms): runtime adapters for Bun, Cloudflare Workers, and AWS Lambda.
 - [`src/platforms/bun`](./src/platforms/bun): local HTTP, CLI, MCP stdio, MCP HTTP, and local
   development entrypoints.
 - [`src/platforms/cloudflare`](./src/platforms/cloudflare): Worker runtime composition, Cloudflare
   environment decoding, static asset routing, D1 persistence, auth, assistant, HTTP API, and MCP
   routes.
 - [`src/platforms/aws`](./src/platforms/aws): Lambda and router composition for AWS deployments.
-- [`src/http`](./src/http): shared HTTP route wiring used by platform-specific shells.
+- [`src/http`](./src/http): app-specific HTTP route wiring used by platform-specific shells.
 - [`src/app-layer.ts`](./src/app-layer.ts): default persistent Coffee application layer for local
   backend entrypoints.
 

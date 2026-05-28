@@ -4,7 +4,7 @@
 
 It is not a Coffee business package. It owns the reusable HTTP plumbing needed by Bun, Cloudflare,
 AWS, and tests: route dispatch, request logging, observability, JSON encoding helpers, and
-request-scoped services over standard Web `Request` and `Response` objects.
+request-scoped services over standard Web [`Request` and `Response`][mdn-fetch] objects.
 
 ## Directory Map
 
@@ -25,6 +25,13 @@ a Coffee persistence layer, parse deployment-specific bindings, adapt MCP protoc
 define Coffee domain/application behavior. Runtime composition belongs in
 [`apps/backend`](../../apps/backend).
 
+## Nomenclature
+
+`http-routing` is deliberately narrower than "backend" and broader than any one runtime. It routes
+Web HTTP requests, while platform adapters decide how those requests arrive. The exported
+`HttpRoute` contract is an Effect-based route branch; `createHttpRouter` turns a route list into the
+single request handler used by Bun, Cloudflare, AWS, and tests.
+
 ## Commands
 
 ```bash
@@ -34,3 +41,5 @@ bun run --cwd packages/http-routing lint:custom
 bun run --cwd packages/http-routing fmt:check
 bun run --cwd packages/http-routing test
 ```
+
+[mdn-fetch]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
