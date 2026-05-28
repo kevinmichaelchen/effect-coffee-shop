@@ -101,7 +101,7 @@ export default class CoffeeApi extends AWS.Lambda.Function<CoffeeApi>()(
       const request = yield* HttpServerRequest.HttpServerRequest;
       const webRequest = yield* HttpServerRequest.toWeb(request).pipe(Effect.orDie);
       const env = yield* runtimeEnv;
-      const response = yield* Effect.promise(async () => routeAwsRequest(webRequest, env));
+      const response = yield* routeAwsRequest(webRequest, env).pipe(Effect.orDie);
 
       return HttpServerResponse.fromWeb(response);
     }),

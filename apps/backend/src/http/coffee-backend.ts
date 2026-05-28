@@ -4,7 +4,7 @@
  * @module
  */
 import * as Context from "effect/Context";
-import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
+import { emptyWebHandlerServices } from "@effect-coffee-shop/fetch-host/request-services";
 import {
   CurrentActor,
   type AppActor,

@@ -8,7 +8,7 @@ import * as Option from "effect/Option";
 import { FetchHttpClient } from "effect/unstable/http";
 import { Otlp } from "effect/unstable/observability";
 
-const defaultServiceName = "backend-host";
+const defaultServiceName = "fetch-host";
 const nonBlankString = Option.filter((value: string) => value.trim().length > 0);
 
 const ConsoleObservabilityLive = Layer.mergeAll(
@@ -83,16 +83,14 @@ const requestDurationMs = Metric.histogram("fetch_host_request_duration_ms", {
 
 type MetricAttributes = Readonly<Record<string, string>>;
 
-export function runHostEffect<A, E>(effect: Effect.Effect<A, E>): Promise<A> {
-  return HostObservabilityRuntime.runPromise(effect);
-}
+export const runHostEffect = HostObservabilityRuntime.runPromise;
 
-export function recordFetchHostRequestCompleted(input: {
+export const recordFetchHostRequestCompleted = (input: {
   readonly durationMs: number;
   readonly method: string;
   readonly routeKind: string;
   readonly status: number;
-}) {
+}) => {
   const attributes: MetricAttributes = {
     http_method: input.method,
     http_status: String(input.status),
@@ -104,13 +102,13 @@ export function recordFetchHostRequestCompleted(input: {
     yield* Metric.update(Metric.withAttributes(requestTotal, attributes), 1);
     yield* Metric.update(Metric.withAttributes(requestDurationMs, attributes), input.durationMs);
   });
-}
+};
 
-export function recordFetchHostRequestFailed(input: {
+export const recordFetchHostRequestFailed = (input: {
   readonly durationMs: number;
   readonly method: string;
   readonly routeKind: string;
-}) {
+}) => {
   const attributes: MetricAttributes = {
     http_method: input.method,
     outcome: "error",
@@ -122,7 +120,7 @@ export function recordFetchHostRequestFailed(input: {
     yield* Metric.update(Metric.withAttributes(requestFailureTotal, attributes), 1);
     yield* Metric.update(Metric.withAttributes(requestDurationMs, attributes), input.durationMs);
   });
-}
+};
 
 export function requestSpanAttributes(input: {
   readonly request: Request;

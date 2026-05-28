@@ -5,7 +5,7 @@
  */
 import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
 import { LLMock, type JournalEntry } from "@copilotkit/aimock";
-import { jsonString } from "@effect-coffee-shop/backend-host/json";
+import { jsonString } from "@effect-coffee-shop/fetch-host/json";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import * as Effect from "effect/Effect";

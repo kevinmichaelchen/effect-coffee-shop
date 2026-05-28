@@ -4,8 +4,8 @@ import { betterAuth } from "better-auth";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { createCoffeeAgentAuthOptions } from "../agent/options.ts";
-import { logStructuredEvent } from "@effect-coffee-shop/backend-host/logging";
-import { runHostEffect } from "@effect-coffee-shop/backend-host/observability";
+import { logStructuredEvent } from "@effect-coffee-shop/fetch-host/logging";
+import { runHostEffect } from "@effect-coffee-shop/fetch-host/observability";
 import {
   AppActorSchema,
   anonymousActor,

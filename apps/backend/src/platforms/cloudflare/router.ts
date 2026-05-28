@@ -1,33 +1,33 @@
 /**
- * Routes Cloudflare Worker requests across auth, assistant, API, MCP, and assets mounts.
+ * Routes Cloudflare Worker requests across auth, assistant, API, MCP, and assets routes.
  *
  * @module
  */
 import type { ExecutionContext } from "@cloudflare/workers-types";
-import { cloudflareAssistantMount } from "./mounts/assistant.ts";
-import { cloudflareAgentDiscoveryMount, cloudflareAuthMount } from "./mounts/auth.ts";
+import { cloudflareAssistantRoute } from "./routes/assistant.ts";
+import { cloudflareAgentDiscoveryRoute, cloudflareAuthRoute } from "./routes/auth.ts";
 import type { CloudflareWorkerEnv } from "./env.ts";
-import { cloudflareAssetsMount } from "./mounts/assets.ts";
-import { createFetchHost } from "@effect-coffee-shop/backend-host/fetch-host";
-import { cloudflareHttpApiMount } from "./mounts/http-api.ts";
-import { cloudflareMcpMount } from "./mounts/mcp.ts";
+import { cloudflareAssetsRoute } from "./routes/assets.ts";
+import { createFetchHost } from "@effect-coffee-shop/fetch-host/fetch-host";
+import { cloudflareHttpApiRoute } from "./routes/http-api.ts";
+import { cloudflareMcpRoute } from "./routes/mcp.ts";
 
 const routeRequest = createFetchHost<CloudflareWorkerEnv>([
-  cloudflareAgentDiscoveryMount,
-  cloudflareAuthMount,
-  cloudflareAssistantMount,
-  cloudflareHttpApiMount,
-  cloudflareMcpMount,
-  cloudflareAssetsMount,
+  cloudflareAgentDiscoveryRoute,
+  cloudflareAuthRoute,
+  cloudflareAssistantRoute,
+  cloudflareHttpApiRoute,
+  cloudflareMcpRoute,
+  cloudflareAssetsRoute,
 ]);
 
 export { type CloudflareWorkerEnv } from "./env.ts";
 
-export const routeCloudflareRequest = async (
+export const routeCloudflareRequest = (
   request: Request,
   env: CloudflareWorkerEnv,
   executionContext: ExecutionContext,
-): Promise<Response> =>
+) =>
   routeRequest(request, env, {
     waitUntil: (promise) => executionContext.waitUntil(promise),
   });

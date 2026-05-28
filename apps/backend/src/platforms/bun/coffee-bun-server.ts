@@ -6,10 +6,11 @@
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { createFetchHost } from "@effect-coffee-shop/backend-host/fetch-host";
-import { fetchResponse, type FetchMount } from "@effect-coffee-shop/backend-host/mount";
+import { createFetchHost } from "@effect-coffee-shop/fetch-host/fetch-host";
+import { fetchResponse, type FetchRoute } from "@effect-coffee-shop/fetch-host/route";
+import { runHostEffect } from "@effect-coffee-shop/fetch-host/observability";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import { createCoffeeRequestServices } from "../../host/coffee-backend.ts";
+import { createCoffeeRequestServices } from "../../http/coffee-backend.ts";
 import { createCoffeeWebHandler } from "@effect-coffee-shop/coffee-http/web-handler";
 
 type CoffeeWebHandlerInput = Parameters<typeof createCoffeeWebHandler>;
@@ -17,7 +18,7 @@ type CoffeeRoutesLayer = CoffeeWebHandlerInput[0];
 type CoffeeAppLayer = CoffeeWebHandlerInput[1];
 type CoffeeBunEnv = Record<string, string | undefined>;
 
-export type CoffeeBunMount = FetchMount<CoffeeBunEnv>;
+export type CoffeeBunRoute = FetchRoute<CoffeeBunEnv>;
 
 class InvalidBunServerPortError extends Schema.TaggedErrorClass<InvalidBunServerPortError>()(
   "InvalidBunServerPortError",
@@ -28,24 +29,26 @@ class InvalidBunServerPortError extends Schema.TaggedErrorClass<InvalidBunServer
 
 export async function startCoffeeBunServer(input: {
   readonly appLayer: CoffeeAppLayer;
-  readonly mounts?: ReadonlyArray<CoffeeBunMount>;
+  readonly extraRoutes?: ReadonlyArray<CoffeeBunRoute>;
   readonly portEnv?: string;
   readonly routes: CoffeeRoutesLayer;
 }): Promise<void> {
   const port = await Effect.runPromise(readPort(input.portEnv ?? "COFFEE_HTTP_PORT"));
   const { dispose, handler } = createCoffeeWebHandler(input.routes, input.appLayer);
   const routeRequest = createFetchHost<CoffeeBunEnv>([
-    ...(input.mounts ?? []),
+    ...(input.extraRoutes ?? []),
     {
       name: "routes",
       matches: () => true,
-      handle: async ({ request }) =>
-        fetchResponse(await handler(request, createCoffeeRequestServices(systemActor))),
+      handle: ({ request }) =>
+        Effect.promise(async () => handler(request, createCoffeeRequestServices(systemActor))).pipe(
+          Effect.map(fetchResponse),
+        ),
     },
   ]);
   const server = Bun.serve({
     port,
-    fetch: async (request) => routeRequest(request, Bun.env),
+    fetch: async (request) => runHostEffect(routeRequest(request, Bun.env)),
   });
 
   registerShutdown(dispose, server);

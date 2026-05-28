@@ -14,9 +14,9 @@ See [`../../packages`](../../packages) for the package map this app composes.
   development entrypoints.
 - [`src/platforms/cloudflare`](./src/platforms/cloudflare): Worker runtime composition, Cloudflare
   environment decoding, static asset routing, D1 persistence, auth, assistant, HTTP API, and MCP
-  mounts.
+  routes.
 - [`src/platforms/aws`](./src/platforms/aws): Lambda and router composition for AWS deployments.
-- [`src/host`](./src/host): shared Fetch-runtime mount wiring used by platform-specific shells.
+- [`src/http`](./src/http): shared Fetch-runtime route wiring used by platform-specific shells.
 - [`src/app-layer.ts`](./src/app-layer.ts): default persistent Coffee application layer for local
   backend entrypoints.
 

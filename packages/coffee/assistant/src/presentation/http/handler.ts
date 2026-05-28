@@ -11,11 +11,8 @@ import * as FiberSet from "effect/FiberSet";
 import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";
 import * as Scope from "effect/Scope";
-import {
-  HostObservabilityLive,
-  runHostEffect,
-} from "@effect-coffee-shop/backend-host/observability";
-import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
+import { HostObservabilityLive, runHostEffect } from "@effect-coffee-shop/fetch-host/observability";
+import { emptyWebHandlerServices } from "@effect-coffee-shop/fetch-host/request-services";
 import type { CoffeeAppRunner } from "@effect-coffee-shop/coffee-actions/execute";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import {

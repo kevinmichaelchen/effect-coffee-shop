@@ -11,12 +11,16 @@ import type {
 import * as Config from "effect/Config";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as Effect from "effect/Effect";
+import * as Match from "effect/Match";
 import * as Option from "effect/Option";
+import * as P from "effect/Predicate";
 import * as Redacted from "effect/Redacted";
+import * as Schema from "effect/Schema";
 import { optionalTrimmedString, parseCsvSet, trimOptionalRedactedString } from "../env.ts";
 export { revealOptionalSecret, revealSecret } from "../env.ts";
 
 export type AssetFetcher = { fetch(request: Request): Promise<Response> };
+export type SecretValueBinding = { get(): Promise<string> };
 
 export interface WorkersAiBinding {
   run(
@@ -39,15 +43,25 @@ export const cloudflareEnvNames = {
   coffeeStaffUserIds: "COFFEE_STAFF_USER_IDS",
 } as const;
 
+export const cloudflareAssistantGatewayId = "effect-v4-onion-assistant";
+
 export interface CloudflareWorkerEnv {
   AI?: WorkersAiBinding;
   AI_GATEWAY_ID?: string;
-  BETTER_AUTH_SECRET?: string;
+  BETTER_AUTH_SECRET?: SecretValueBinding | string;
   COFFEE_ASSISTANT_MODEL?: string;
   COFFEE_STAFF_USER_IDS?: string;
   DB: D1Database;
   ASSETS?: AssetFetcher;
 }
+
+class CloudflareSecretBindingError extends Schema.TaggedErrorClass<CloudflareSecretBindingError>()(
+  "CloudflareSecretBindingError",
+  {
+    message: Schema.String,
+    cause: Schema.optional(Schema.Defect),
+  },
+) {}
 
 export interface CloudflareRuntime {
   readonly bindings: {
@@ -66,13 +80,40 @@ export interface CloudflareRuntime {
 const cloudflareConfig = Config.all({
   aiGatewayId: Config.option(Config.string("aiGatewayId")),
   coffeeAssistantModel: Config.option(Config.string("coffeeAssistantModel")),
-  betterAuthSecret: Config.option(Config.redacted("betterAuthSecret")),
   coffeeStaffUserIds: Config.string("coffeeStaffUserIds").pipe(Config.withDefault("")),
 });
 
-export const readCloudflareRuntime = (env: CloudflareWorkerEnv): CloudflareRuntime => {
-  const decodedConfig = Effect.runSync(
-    cloudflareConfig.parse(ConfigProvider.fromUnknown(env).pipe(ConfigProvider.constantCase)),
+const trimBetterAuthSecret = (secret: string): Option.Option<Redacted.Redacted<string>> =>
+  trimOptionalRedactedString(
+    Option.some(Redacted.make(secret, { label: cloudflareEnvNames.betterAuthSecret })),
+    cloudflareEnvNames.betterAuthSecret,
+  );
+
+export const readCloudflareRuntime = Effect.fn("Cloudflare.readRuntime")(function* (
+  env: CloudflareWorkerEnv,
+) {
+  const decodedConfig = yield* cloudflareConfig.parse(
+    ConfigProvider.fromUnknown(env).pipe(ConfigProvider.constantCase),
+  );
+  const betterAuthSecret = yield* Option.match(
+    Option.fromNullishOr(env[cloudflareEnvNames.betterAuthSecret]),
+    {
+      onNone: () => Effect.succeed(Option.none()),
+      onSome: (binding) =>
+        Match.value(binding).pipe(
+          Match.when(P.isString, (secret) => Effect.succeed(trimBetterAuthSecret(secret))),
+          Match.orElse((secretBinding) =>
+            Effect.tryPromise({
+              try: async () => secretBinding.get(),
+              catch: (cause) =>
+                new CloudflareSecretBindingError({
+                  message: "Unable to read BETTER_AUTH_SECRET from Cloudflare Secrets Store.",
+                  cause,
+                }),
+            }).pipe(Effect.map(trimBetterAuthSecret)),
+          ),
+        ),
+    },
   );
 
   return {
@@ -84,11 +125,8 @@ export const readCloudflareRuntime = (env: CloudflareWorkerEnv): CloudflareRunti
     config: {
       aiGatewayId: Option.flatMap(decodedConfig.aiGatewayId, optionalTrimmedString),
       assistantModel: Option.flatMap(decodedConfig.coffeeAssistantModel, optionalTrimmedString),
-      betterAuthSecret: trimOptionalRedactedString(
-        decodedConfig.betterAuthSecret,
-        "BETTER_AUTH_SECRET",
-      ),
+      betterAuthSecret,
       staffUserIds: parseCsvSet(decodedConfig.coffeeStaffUserIds),
     },
-  };
-};
+  } satisfies CloudflareRuntime;
+});

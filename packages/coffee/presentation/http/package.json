@@ -18,8 +18,8 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@effect-coffee-shop/backend-host": "workspace:*",
     "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect-coffee-shop/fetch-host": "workspace:*",
     "effect": "catalog:"
   },
   "devDependencies": {

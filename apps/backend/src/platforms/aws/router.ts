@@ -1,22 +1,22 @@
 /**
- * Routes AWS Lambda Function URL requests across auth, assistant, API, and MCP mounts.
+ * Routes AWS Lambda Function URL requests across auth, assistant, API, and MCP routes.
  *
  * @module
  */
-import { createFetchHost } from "@effect-coffee-shop/backend-host/fetch-host";
-import { awsAssistantMount } from "./mounts/assistant.ts";
-import { awsAgentDiscoveryMount, awsAuthMount } from "./mounts/auth.ts";
-import { awsHttpApiMount } from "./mounts/http-api.ts";
-import { awsMcpMount } from "./mounts/mcp.ts";
+import { createFetchHost } from "@effect-coffee-shop/fetch-host/fetch-host";
+import { awsAssistantRoute } from "./routes/assistant.ts";
+import { awsAgentDiscoveryRoute, awsAuthRoute } from "./routes/auth.ts";
+import { awsHttpApiRoute } from "./routes/http-api.ts";
+import { awsMcpRoute } from "./routes/mcp.ts";
 import { readAwsRuntime } from "./env.ts";
 
 const routeRequest = createFetchHost([
-  awsAgentDiscoveryMount,
-  awsAuthMount,
-  awsAssistantMount,
-  awsHttpApiMount,
-  awsMcpMount,
+  awsAgentDiscoveryRoute,
+  awsAuthRoute,
+  awsAssistantRoute,
+  awsHttpApiRoute,
+  awsMcpRoute,
 ]);
 
-export const routeAwsRequest = async (request: Request, env: unknown): Promise<Response> =>
+export const routeAwsRequest = (request: Request, env: unknown) =>
   routeRequest(request, readAwsRuntime(env));

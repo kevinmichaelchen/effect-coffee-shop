@@ -1,8 +1,10 @@
 /**
- * Defines Fetch host mount contracts and request path helpers.
+ * Defines Fetch host route contracts and request path helpers.
  *
  * @module
  */
+import type * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import type { StructuredLogRecord } from "./logging.ts";
 
 export interface HostRuntimeContext {
@@ -15,15 +17,17 @@ export interface FetchRequestContext<TEnv> {
   readonly runtime: HostRuntimeContext;
 }
 
-export interface FetchMountResult {
+export interface FetchRouteResult {
   readonly response: Response;
   readonly logFields?: StructuredLogRecord;
 }
 
-export interface FetchMount<TEnv> {
+export type FetchRouteEffect = ReturnType<typeof Effect.suspend<FetchRouteResult, unknown, never>>;
+
+export interface FetchRoute<TEnv> {
   readonly name: string;
   readonly matches: (request: Request) => boolean;
-  readonly handle: (context: FetchRequestContext<TEnv>) => Promise<FetchMountResult>;
+  readonly handle: (context: FetchRequestContext<TEnv>) => FetchRouteEffect;
 }
 
 export const requestPathname = (request: Request): string => new URL(request.url).pathname;
@@ -39,7 +43,11 @@ export const requestPathIsOrStartsWith = (request: Request, pathname: string): b
 export const fetchResponse = (
   response: Response,
   logFields?: StructuredLogRecord,
-): FetchMountResult => (logFields === undefined ? { response } : { logFields, response });
+): FetchRouteResult =>
+  Option.match(Option.fromUndefinedOr(logFields), {
+    onNone: () => ({ response }),
+    onSome: (extraFields) => ({ logFields: extraFields, response }),
+  });
 
 export const rewriteRequestPath = (request: Request, pathname: string): Request => {
   const url = new URL(request.url);
@@ -49,6 +57,12 @@ export const rewriteRequestPath = (request: Request, pathname: string): Request 
 
 export const rewriteRequestPathPrefix = (request: Request, prefix: string): Request => {
   const pathname = requestPathname(request);
-  const rewrittenPathname = pathname === prefix ? "/" : pathname.slice(prefix.length);
+  const rewrittenPathname = Option.match(
+    Option.liftPredicate(pathname, (requestPathname) => requestPathname === prefix),
+    {
+      onNone: () => pathname.slice(prefix.length),
+      onSome: () => "/",
+    },
+  );
   return rewriteRequestPath(request, rewrittenPathname);
 };

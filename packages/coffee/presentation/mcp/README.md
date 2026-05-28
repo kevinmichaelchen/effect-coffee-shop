@@ -31,7 +31,7 @@ order status.
 ### What Does Not Belong Here?
 
 Canonical Coffee action contracts, business rules, database clients, auth session setup, and host
-mount routing belong in their owning packages.
+route routing belong in their owning packages.
 
 ## Directory Map
 

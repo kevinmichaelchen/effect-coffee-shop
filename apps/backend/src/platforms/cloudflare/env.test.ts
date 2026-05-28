@@ -10,12 +10,14 @@ import type {
 } from "@cloudflare/workers-types";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
+import * as Effect from "effect/Effect";
 import { Miniflare } from "miniflare";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   readCloudflareRuntime,
   type AssetFetcher,
   type CloudflareWorkerEnv,
+  type SecretValueBinding,
   type WorkersAiBinding,
 } from "./env.ts";
 
@@ -26,6 +28,10 @@ const makeAiBinding = (): WorkersAiBinding => ({
 
 const makeAssetFetcher = (): AssetFetcher => ({
   fetch: async () => new Response("ok"),
+});
+
+const makeSecretBinding = (value: string): SecretValueBinding => ({
+  get: async () => value,
 });
 
 let database: D1Database;
@@ -49,16 +55,18 @@ describe("cloudflare runtime config", () => {
     await disposeMiniflare();
   });
 
-  it("normalizes optional strings and staff ids", () => {
-    const runtime = readCloudflareRuntime({
-      AI: makeAiBinding(),
-      AI_GATEWAY_ID: " gateway-123 ",
-      ASSETS: makeAssetFetcher(),
-      BETTER_AUTH_SECRET: " secret-123 ",
-      COFFEE_ASSISTANT_MODEL: " @cf/example/model ",
-      COFFEE_STAFF_USER_IDS: " staff-a, staff-b , , staff-a ",
-      DB: database,
-    });
+  it("normalizes optional strings and staff ids", async () => {
+    const runtime = await Effect.runPromise(
+      readCloudflareRuntime({
+        AI: makeAiBinding(),
+        AI_GATEWAY_ID: " gateway-123 ",
+        ASSETS: makeAssetFetcher(),
+        BETTER_AUTH_SECRET: makeSecretBinding(" secret-123 "),
+        COFFEE_ASSISTANT_MODEL: " @cf/example/model ",
+        COFFEE_STAFF_USER_IDS: " staff-a, staff-b , , staff-a ",
+        DB: database,
+      }),
+    );
 
     expect(Option.isSome(runtime.bindings.ai)).toBe(true);
     expect(Option.isSome(runtime.bindings.assets)).toBe(true);
@@ -70,14 +78,16 @@ describe("cloudflare runtime config", () => {
     expect([...runtime.config.staffUserIds]).toEqual(["staff-a", "staff-b"]);
   });
 
-  it("treats missing or blank optional values as absent", () => {
-    const runtime = readCloudflareRuntime({
-      AI_GATEWAY_ID: "   ",
-      BETTER_AUTH_SECRET: "",
-      COFFEE_ASSISTANT_MODEL: " ",
-      COFFEE_STAFF_USER_IDS: " ,  , ",
-      DB: database,
-    } satisfies CloudflareWorkerEnv);
+  it("treats missing or blank optional values as absent", async () => {
+    const runtime = await Effect.runPromise(
+      readCloudflareRuntime({
+        AI_GATEWAY_ID: "   ",
+        BETTER_AUTH_SECRET: "",
+        COFFEE_ASSISTANT_MODEL: " ",
+        COFFEE_STAFF_USER_IDS: " ,  , ",
+        DB: database,
+      } satisfies CloudflareWorkerEnv),
+    );
 
     expect(Option.isNone(runtime.bindings.ai)).toBe(true);
     expect(Option.isNone(runtime.bindings.assets)).toBe(true);

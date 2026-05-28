@@ -5,7 +5,7 @@
  */
 import type { D1Database } from "@cloudflare/workers-types";
 import * as Layer from "effect/Layer";
-import { createCoffeeRequestServices, makeCoffeeBackend } from "../../host/coffee-backend.ts";
+import { createCoffeeRequestServices, makeCoffeeBackend } from "../../http/coffee-backend.ts";
 import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
 import { ensureCloudflareAuthPersistence } from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
 import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";

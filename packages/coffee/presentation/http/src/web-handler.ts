@@ -7,8 +7,8 @@ import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";
 import * as HttpServer from "effect/unstable/http/HttpServer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
-import { HostObservabilityLive } from "@effect-coffee-shop/backend-host/observability";
+import { emptyWebHandlerServices } from "@effect-coffee-shop/fetch-host/request-services";
+import { HostObservabilityLive } from "@effect-coffee-shop/fetch-host/observability";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import { normalizeMcpHttpRequestIds, restoreMcpHttpResponseIds } from "./mcp-jsonrpc-ids.ts";
 

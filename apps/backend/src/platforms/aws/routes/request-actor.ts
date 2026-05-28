@@ -3,30 +3,34 @@
  *
  * @module
  */
+import * as Effect from "effect/Effect";
 import { resolveCoffeeActor } from "@effect-coffee-shop/coffee-auth/better-auth/shared";
 import { getAwsRuntimeBackend } from "../coffee-backend.ts";
 import { revealOptionalSecret, type AwsRuntime } from "../env.ts";
 
-export const resolveAwsRequestActor = async (input: {
+export const resolveAwsRequestActor = Effect.fn("Aws.resolveRequestActor")(function* (input: {
   readonly runtime: AwsRuntime;
   readonly request: Request;
-}) => {
+}) {
   const backend = getAwsRuntimeBackend();
   const secret = revealOptionalSecret(input.runtime.config.betterAuthSecret);
 
-  await backend.ensureAuthPersistence();
+  yield* Effect.promise(async () => backend.ensureAuthPersistence());
 
-  const actor = await resolveCoffeeActor({
-    appLayer: backend.appLayer,
-    database: await backend.persistence.authDatabase(),
-    request: input.request,
-    secret,
-    staffUserIds: input.runtime.config.staffUserIds,
-  });
+  const database = yield* Effect.promise(async () => backend.persistence.authDatabase());
+  const actor = yield* Effect.promise(async () =>
+    resolveCoffeeActor({
+      appLayer: backend.appLayer,
+      database,
+      request: input.request,
+      secret,
+      staffUserIds: input.runtime.config.staffUserIds,
+    }),
+  );
 
   return {
     actor,
     backend,
     runtime: input.runtime,
   };
-};
+});

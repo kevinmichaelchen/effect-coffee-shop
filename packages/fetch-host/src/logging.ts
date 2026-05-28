@@ -3,13 +3,11 @@ import * as Effect from "effect/Effect";
 type StructuredLogValue = boolean | number | string | null;
 export type StructuredLogRecord = Readonly<Record<string, StructuredLogValue>>;
 
-export function logStructuredEvent(record: StructuredLogRecord) {
-  return Effect.logInfo("structured event").pipe(Effect.annotateLogs(record));
-}
+export const logStructuredEvent = (record: StructuredLogRecord) =>
+  Effect.logInfo("structured event").pipe(Effect.annotateLogs(record));
 
-export function logStructuredError(record: StructuredLogRecord) {
-  return Effect.logError("structured event").pipe(Effect.annotateLogs(record));
-}
+export const logStructuredError = (record: StructuredLogRecord) =>
+  Effect.logError("structured event").pipe(Effect.annotateLogs(record));
 
 export function logRequestCompleted(input: {
   readonly durationMs: number;

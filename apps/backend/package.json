@@ -32,7 +32,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@effect-coffee-shop/backend-host": "workspace:*",
     "@effect-coffee-shop/coffee-assistant": "workspace:*",
     "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-cli": "workspace:*",
@@ -42,6 +41,7 @@
     "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
     "@effect-coffee-shop/coffee-http": "workspace:*",
     "@effect-coffee-shop/coffee-mcp": "workspace:*",
+    "@effect-coffee-shop/fetch-host": "workspace:*",
     "@effect/platform-bun": "catalog:",
     "alchemy": "catalog:",
     "better-auth": "catalog:",
