@@ -1,33 +1,27 @@
 # Backend App
 
-`@effect-coffee-shop/backend` is the composition root for backend runtimes.
+`@effect-coffee-shop/backend` is the thin backend app workspace.
 
-It chooses concrete persistence, auth, host, and presentation layers for deployable entrypoints. The
-library packages define reusable Coffee behavior and adapters; this app decides how those pieces are
-assembled for Bun, Cloudflare Workers, and AWS Lambda.
+It keeps deployable entrypoints, local backend scripts, and backend integration tests. Runtime and
+backend composition live in packages so deployment shape can be changed by swapping the entrypoint or
+Alchemy stack wiring rather than editing route internals.
 
 See [`../../packages`](../../packages) for the package map this app composes.
 
 ## Runtime Surfaces
 
-- [`src/platforms/bun`](./src/platforms/bun): local HTTP, CLI, MCP stdio, MCP HTTP, and local
-  development entrypoints.
-- [`src/platforms/cloudflare`](./src/platforms/cloudflare): Worker runtime composition, Cloudflare
-  environment decoding, static asset routing, D1 persistence, auth, assistant, HTTP API, and MCP
-  mounts.
-- [`src/platforms/aws`](./src/platforms/aws): Lambda and router composition for AWS deployments.
-- [`src/host`](./src/host): shared Fetch-runtime mount wiring used by platform-specific shells.
-- [`src/app-layer.ts`](./src/app-layer.ts): default persistent Coffee application layer for local
-  backend entrypoints.
+- [`src/bun`](./src/bun): one-line local Bun entrypoints.
+- [`src/cloudflare`](./src/cloudflare): one-line Cloudflare Worker entrypoints.
+- [`src/aws`](./src/aws): one-line AWS Lambda entrypoints.
+- [`test`](./test): backend integration and deployment-surface contract tests.
+- [`scripts`](./scripts): local measurement and maintenance scripts.
 
 ## Boundary Rule
 
-Runtime-specific binding decoding and layer composition belong here. Domain rules and application use
-cases stay in [`coffee-core`](../../packages/coffee/core), action contracts stay in
-[`coffee-actions`](../../packages/coffee/presentation/actions), and presentation protocol definitions stay in the
-[`coffee-http`](../../packages/coffee/presentation/http),
-[`coffee-mcp`](../../packages/coffee/presentation/mcp), and
-[`coffee-cli`](../../packages/coffee/presentation/cli).
+Keep this workspace small. Reusable backend composition belongs in
+[`coffee/backend`](../../packages/coffee/backend), runtime adapters belong in
+[`coffee/runtime`](../../packages/coffee/runtime), and Coffee behavior stays in the domain,
+application, presentation, and infrastructure packages under [`packages/coffee`](../../packages/coffee).
 
 ## Commands
 

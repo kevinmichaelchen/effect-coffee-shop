@@ -4,10 +4,10 @@
  * @module
  */
 import type { D1Database, ExecutionContext } from "@cloudflare/workers-types";
-import { jsonString } from "@effect-coffee-shop/backend-host/json";
+import { jsonString } from "@effect-coffee-shop/http-routing/json";
 import { Miniflare } from "miniflare";
 import { describe, expect, it, vi } from "vitest";
-import worker, { type CloudflareWorkerEnv } from "../../../src/platforms/cloudflare/worker.ts";
+import worker, { type CloudflareWorkerEnv } from "../../../src/cloudflare/worker.ts";
 
 const makeTestEnv = async (): Promise<{
   assetsFetch: ReturnType<typeof vi.fn<(request: Request) => Promise<Response>>>;
@@ -206,7 +206,9 @@ describe("cloudflare worker", () => {
         new Request("http://example.com/.well-known/agent-configuration"),
         {
           ...env,
-          BETTER_AUTH_SECRET: "test-secret-please-change-me-0001",
+          BETTER_AUTH_SECRET: {
+            get: async () => "test-secret-please-change-me-0001",
+          },
         },
       );
 

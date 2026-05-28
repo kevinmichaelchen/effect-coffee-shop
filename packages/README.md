@@ -1,14 +1,16 @@
 # Packages
 
 Library workspaces live under `packages/`. Coffee-specific libraries are nested
-under `packages/coffee`, while shared host utilities stay directly under
+under `packages/coffee`, while shared HTTP routing utilities stay directly under
 `packages`.
 
 ## Packages
 
-- [`backend-host`](./backend-host): runtime-agnostic fetch host primitives, mount
-  dispatch, request logging, request-scoped services, and JSON encoding helpers.
+- [`http-routing`](./http-routing): runtime-agnostic HTTP route dispatch,
+  request logging, request-scoped services, and JSON encoding helpers.
 - [`coffee/core`](./coffee/core): Coffee bounded-context Onion Core.
+- [`coffee/backend`](./coffee/backend): Coffee-specific backend composition that adapts
+  presentation layers, auth context, and application layers to Web HTTP handlers.
 - [`coffee/external/in-memory`](./coffee/external/in-memory): in-memory Coffee
   External Layer.
 - [`coffee/external/sqlite`](./coffee/external/sqlite): SQLFU-backed SQLite/D1
@@ -29,6 +31,8 @@ under `packages/coffee`, while shared host utilities stay directly under
   chunks, and assistant tool projection.
 - [`coffee/auth`](./coffee/auth): Better Auth runtime setup and delegated Agent
   Auth capability execution.
+- [`coffee/runtime`](./coffee/runtime): runtime adapters for Bun, Cloudflare Workers, and AWS
+  Lambda.
 
 ## Layer Placement
 
@@ -37,8 +41,7 @@ assemble pure application services from ports. External implementation Layers
 stay with their owning External package, such as
 [`coffee/external/sqlite`](./coffee/external/sqlite).
 
-Presentation packages may export route, tool, server, or handler Layers. They
-do not choose the concrete database or runtime implementation.
-[`apps/backend`](../apps/backend) is the shell that provides concrete Layers,
-decodes deployment-specific runtime bindings, and composes Cloudflare or Bun
-entrypoints.
+Presentation packages may export route, tool, server, or handler Layers. They do not choose the
+concrete database or runtime implementation. [`coffee/backend`](./coffee/backend) composes Coffee
+backend handlers, [`coffee/runtime`](./coffee/runtime) adapts those handlers to host runtimes, and
+[`apps/backend`](../apps/backend) keeps only deployable entrypoint selection plus tests/scripts.

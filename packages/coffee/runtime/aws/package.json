@@ -1,0 +1,45 @@
+{
+  "name": "@effect-coffee-shop/coffee-runtime-aws",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/lambda.ts",
+    "./env": "./src/env.ts",
+    "./lambda": "./src/lambda.ts",
+    "./router": "./src/router.ts"
+  },
+  "scripts": {
+    "typecheck": "tsgo --noEmit",
+    "lint": "bun --bun oxlint -c ../../../.oxlintrc.json --disable-nested-config .",
+    "lint:fix": "bun --bun oxlint -c ../../../.oxlintrc.json --disable-nested-config --fix .",
+    "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/runtime/aws/tsconfig.json",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@effect-coffee-shop/coffee-assistant": "workspace:*",
+    "@effect-coffee-shop/coffee-auth": "workspace:*",
+    "@effect-coffee-shop/coffee-backend": "workspace:*",
+    "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect-coffee-shop/coffee-external-drizzle-postgres": "workspace:*",
+    "@effect-coffee-shop/coffee-http": "workspace:*",
+    "@effect-coffee-shop/coffee-mcp": "workspace:*",
+    "@effect-coffee-shop/coffee-runtime-shared": "workspace:*",
+    "@effect-coffee-shop/http-routing": "workspace:*",
+    "alchemy": "catalog:",
+    "better-auth": "catalog:",
+    "drizzle-orm": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "lintcn": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "packageManager": "bun@1.3.11"
+}

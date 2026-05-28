@@ -1,0 +1,46 @@
+{
+  "name": "@effect-coffee-shop/coffee-runtime-bun",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./assistant": "./src/assistant.ts",
+    "./cli-main": "./src/cli-main.ts",
+    "./http-main": "./src/http-main.ts",
+    "./local-backend-main": "./src/local-backend-main.ts",
+    "./mcp-http-main": "./src/mcp-http-main.ts",
+    "./mcp-stdio-main": "./src/mcp-stdio-main.ts",
+    "./server": "./src/coffee-bun-server.ts"
+  },
+  "scripts": {
+    "typecheck": "tsgo --noEmit",
+    "lint": "bun --bun oxlint -c ../../../.oxlintrc.json --disable-nested-config .",
+    "lint:fix": "bun --bun oxlint -c ../../../.oxlintrc.json --disable-nested-config --fix .",
+    "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/runtime/bun/tsconfig.json",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@effect-coffee-shop/coffee-assistant": "workspace:*",
+    "@effect-coffee-shop/coffee-backend": "workspace:*",
+    "@effect-coffee-shop/coffee-cli": "workspace:*",
+    "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect-coffee-shop/coffee-external-in-memory": "workspace:*",
+    "@effect-coffee-shop/coffee-http": "workspace:*",
+    "@effect-coffee-shop/coffee-mcp": "workspace:*",
+    "@effect-coffee-shop/http-routing": "workspace:*",
+    "@effect/platform-bun": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "lintcn": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "packageManager": "bun@1.3.11"
+}

@@ -22,7 +22,7 @@ import {
   type CoffeeAppRunner,
 } from "@effect-coffee-shop/coffee-actions/execute";
 import type { CoffeeActionName } from "@effect-coffee-shop/coffee-actions/specs";
-import { emptyWebHandlerServices } from "@effect-coffee-shop/backend-host/request-services";
+import { emptyWebHandlerServices } from "@effect-coffee-shop/http-routing/request-services";
 import { coffeeAgentCapabilities } from "./capabilities.ts";
 import { formatToolFailure } from "@effect-coffee-shop/coffee-actions/format";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";

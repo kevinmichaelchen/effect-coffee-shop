@@ -9,7 +9,7 @@ import {
   logStructuredEvent,
   logStructuredError,
   roundDurationMs,
-} from "@effect-coffee-shop/backend-host/logging";
+} from "@effect-coffee-shop/http-routing/logging";
 import type { AssistantToolActivity } from "../../application/model.ts";
 import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-core/application/observability";

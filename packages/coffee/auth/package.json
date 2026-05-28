@@ -24,9 +24,9 @@
     "@better-auth/agent-auth": "catalog:",
     "@better-auth/passkey": "catalog:",
     "@cloudflare/workers-types": "catalog:",
-    "@effect-coffee-shop/backend-host": "workspace:*",
     "@effect-coffee-shop/coffee-actions": "workspace:*",
     "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect-coffee-shop/http-routing": "workspace:*",
     "better-auth": "catalog:",
     "effect": "catalog:"
   },

@@ -20,9 +20,9 @@
   },
   "dependencies": {
     "@cloudflare/workers-types": "catalog:",
-    "@effect-coffee-shop/backend-host": "workspace:*",
     "@effect-coffee-shop/coffee-actions": "workspace:*",
     "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect-coffee-shop/http-routing": "workspace:*",
     "@tanstack/ai": "catalog:",
     "effect": "catalog:"
   },
