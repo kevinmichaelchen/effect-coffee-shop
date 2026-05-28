@@ -15,7 +15,7 @@
     "apps/ui/vite.config.ts",
     "apps/ui/vite.shared.ts",
     "apps/ui/vitest.config.ts",
-    "packages/fetch-host/src/index.ts",
+    "packages/http-routing/src/index.ts",
     "packages/coffee/core/src/index.ts",
     "packages/coffee/core/src/**/*.test.ts",
     "packages/coffee/presentation/actions/src/index.ts",
@@ -114,8 +114,8 @@
         "patterns": ["apps/backend/**"]
       },
       {
-        "name": "fetch-host",
-        "patterns": ["packages/fetch-host/**"]
+        "name": "http-routing",
+        "patterns": ["packages/http-routing/**"]
       },
       {
         "name": "domain",
@@ -158,7 +158,7 @@
       {
         "from": "backend-app",
         "allow": [
-          "fetch-host",
+          "http-routing",
           "domain",
           "application",
           "actions",
@@ -169,7 +169,7 @@
         ]
       },
       {
-        "from": "fetch-host",
+        "from": "http-routing",
         "allow": []
       },
       {
@@ -186,11 +186,11 @@
       },
       {
         "from": "assistant",
-        "allow": ["fetch-host", "domain", "application", "actions"]
+        "allow": ["http-routing", "domain", "application", "actions"]
       },
       {
         "from": "auth",
-        "allow": ["fetch-host", "domain", "application", "actions"]
+        "allow": ["http-routing", "domain", "application", "actions"]
       },
       {
         "from": "external",
@@ -198,7 +198,7 @@
       },
       {
         "from": "presentation",
-        "allow": ["fetch-host", "domain", "application", "actions"]
+        "allow": ["http-routing", "domain", "application", "actions"]
       }
     ]
   }

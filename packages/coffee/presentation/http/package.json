@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@effect-coffee-shop/coffee-core": "workspace:*",
-    "@effect-coffee-shop/fetch-host": "workspace:*",
+    "@effect-coffee-shop/http-routing": "workspace:*",
     "effect": "catalog:"
   },
   "devDependencies": {

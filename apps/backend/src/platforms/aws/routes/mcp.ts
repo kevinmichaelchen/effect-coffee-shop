@@ -6,16 +6,16 @@
 import * as Effect from "effect/Effect";
 import {
   requestPathIsOrStartsWith,
-  fetchResponse,
-  type FetchRoute,
-} from "@effect-coffee-shop/fetch-host/route";
+  routeResponse,
+  type HttpRoute,
+} from "@effect-coffee-shop/http-routing/route";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import { createAwsRequestServices, getAwsRuntimeBackend } from "../coffee-backend.ts";
+import { createAwsRequestServices, getAwsRuntimeBackend } from "../backend.ts";
 import type { AwsRuntime } from "../env.ts";
 
 const isMcpRequest = (request: Request): boolean => requestPathIsOrStartsWith(request, "/mcp");
 
-export const awsMcpRoute: FetchRoute<AwsRuntime> = {
+export const mcpRoute: HttpRoute<AwsRuntime> = {
   name: "mcp",
   matches: isMcpRequest,
   handle: ({ request }) =>
@@ -24,7 +24,7 @@ export const awsMcpRoute: FetchRoute<AwsRuntime> = {
 
       yield* Effect.promise(async () => backend.ensureAuthPersistence());
 
-      return fetchResponse(
+      return routeResponse(
         yield* Effect.promise(async () =>
           backend.handler(request, createAwsRequestServices(systemActor)),
         ),

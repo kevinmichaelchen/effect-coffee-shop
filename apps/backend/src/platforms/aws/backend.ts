@@ -14,7 +14,7 @@ import {
   DrizzlePostgresSchemaLive,
   DrizzlePostgresSchemaReady,
 } from "@effect-coffee-shop/coffee-external-drizzle-postgres";
-import { createCoffeeRequestServices, makeCoffeeBackend } from "../../http/coffee-backend.ts";
+import { createCoffeeRequestServices, makeCoffeeBackend } from "../../http/backend.ts";
 import type { CoffeeAuthDatabase } from "@effect-coffee-shop/coffee-auth/better-auth/shared";
 import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";

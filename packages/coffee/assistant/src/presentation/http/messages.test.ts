@@ -3,7 +3,7 @@
  *
  * @module
  */
-import { jsonString } from "@effect-coffee-shop/fetch-host/json";
+import { jsonString } from "@effect-coffee-shop/http-routing/json";
 import { describe, expect, it } from "vitest";
 import { parseAssistantRequestBody } from "./messages.ts";
 

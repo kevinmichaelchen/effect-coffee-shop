@@ -33,7 +33,7 @@
         "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
         "@effect-coffee-shop/coffee-http": "workspace:*",
         "@effect-coffee-shop/coffee-mcp": "workspace:*",
-        "@effect-coffee-shop/fetch-host": "workspace:*",
+        "@effect-coffee-shop/http-routing": "workspace:*",
         "@effect/platform-bun": "catalog:",
         "alchemy": "catalog:",
         "better-auth": "catalog:",
@@ -118,7 +118,7 @@
         "@cloudflare/workers-types": "catalog:",
         "@effect-coffee-shop/coffee-actions": "workspace:*",
         "@effect-coffee-shop/coffee-core": "workspace:*",
-        "@effect-coffee-shop/fetch-host": "workspace:*",
+        "@effect-coffee-shop/http-routing": "workspace:*",
         "@tanstack/ai": "catalog:",
         "effect": "catalog:",
       },
@@ -143,7 +143,7 @@
         "@cloudflare/workers-types": "catalog:",
         "@effect-coffee-shop/coffee-actions": "workspace:*",
         "@effect-coffee-shop/coffee-core": "workspace:*",
-        "@effect-coffee-shop/fetch-host": "workspace:*",
+        "@effect-coffee-shop/http-routing": "workspace:*",
         "better-auth": "catalog:",
         "effect": "catalog:",
       },
@@ -277,7 +277,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@effect-coffee-shop/coffee-core": "workspace:*",
-        "@effect-coffee-shop/fetch-host": "workspace:*",
+        "@effect-coffee-shop/http-routing": "workspace:*",
         "effect": "catalog:",
       },
       "devDependencies": {
@@ -311,8 +311,8 @@
         "vitest": "catalog:",
       },
     },
-    "packages/fetch-host": {
-      "name": "@effect-coffee-shop/fetch-host",
+    "packages/http-routing": {
+      "name": "@effect-coffee-shop/http-routing",
       "version": "0.1.0",
       "dependencies": {
         "effect": "catalog:",
@@ -587,7 +587,7 @@
 
     "@effect-coffee-shop/coffee-mcp": ["@effect-coffee-shop/coffee-mcp@workspace:packages/coffee/presentation/mcp"],
 
-    "@effect-coffee-shop/fetch-host": ["@effect-coffee-shop/fetch-host@workspace:packages/fetch-host"],
+    "@effect-coffee-shop/http-routing": ["@effect-coffee-shop/http-routing@workspace:packages/http-routing"],
 
     "@effect-coffee-shop/web": ["@effect-coffee-shop/web@workspace:apps/ui"],
 

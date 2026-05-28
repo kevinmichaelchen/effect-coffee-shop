@@ -1,7 +1,7 @@
 import * as Context from "effect/Context";
 
 const UnusedWebHandlerService = Context.Service<unknown>(
-  "packages/fetch-host/UnusedWebHandlerService",
+  "packages/http-routing/UnusedWebHandlerService",
 );
 
 export const emptyWebHandlerServices = (): Context.Context<unknown> =>

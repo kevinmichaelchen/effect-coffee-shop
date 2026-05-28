@@ -11,8 +11,11 @@ import * as FiberSet from "effect/FiberSet";
 import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";
 import * as Scope from "effect/Scope";
-import { HostObservabilityLive, runHostEffect } from "@effect-coffee-shop/fetch-host/observability";
-import { emptyWebHandlerServices } from "@effect-coffee-shop/fetch-host/request-services";
+import {
+  HttpObservabilityLive,
+  runHttpEffect,
+} from "@effect-coffee-shop/http-routing/observability";
+import { emptyWebHandlerServices } from "@effect-coffee-shop/http-routing/request-services";
 import type { CoffeeAppRunner } from "@effect-coffee-shop/coffee-actions/execute";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import {
@@ -116,7 +119,7 @@ export async function handleAssistantRequest(
       queue,
     }).pipe(
       Effect.provide(options.modelLayer),
-      Effect.provide(HostObservabilityLive),
+      Effect.provide(HttpObservabilityLive),
       Effect.matchCauseEffect({
         onFailure: (cause) => Effect.sync(() => queue.fail(Cause.squash(cause))),
         onSuccess: () => Effect.void,
@@ -142,7 +145,7 @@ function streamAssistantResponse(input: PreparedAssistantRequest) {
     const emitActivity = (activity: AssistantToolActivity) => {
       toolCallCount += Number(activity.kind === "tool-call");
 
-      void runHostEffect(
+      void runHttpEffect(
         logAssistantToolActivity({
           activity,
           actor: input.actor,
@@ -216,7 +219,7 @@ function createCoffeeAppRunner(
   return (effect) =>
     effect.pipe(
       Effect.provide(liveLayer),
-      Effect.provide(HostObservabilityLive),
+      Effect.provide(HttpObservabilityLive),
       Effect.provide(services),
     );
 }

@@ -1,9 +1,9 @@
 /**
- * Public exports for Fetch host request, logging, and observability helpers.
+ * Public exports for HTTP routing request, logging, and observability helpers.
  *
  * @module
  */
-export * from "./fetch-host.ts";
+export * from "./router.ts";
 export * from "./json.ts";
 export * from "./logging.ts";
 export * from "./route.ts";

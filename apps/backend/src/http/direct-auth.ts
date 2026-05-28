@@ -5,7 +5,7 @@
  */
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
-import { fetchResponse, type FetchRouteEffect } from "@effect-coffee-shop/fetch-host/route";
+import { routeResponse, type HttpRouteEffect } from "@effect-coffee-shop/http-routing/route";
 
 const hasBearerAuthorization = (request: Request): boolean => {
   return Option.fromNullishOr(request.headers.get("authorization")).pipe(
@@ -32,9 +32,9 @@ const rejectDirectHttpBearerRequest = (request: Request): Option.Option<Response
 
 export const handleDirectHttpRequest = (
   request: Request,
-  handleAcceptedRequest: () => FetchRouteEffect,
-): FetchRouteEffect =>
+  handleAcceptedRequest: () => HttpRouteEffect,
+): HttpRouteEffect =>
   Option.match(rejectDirectHttpBearerRequest(request), {
     onNone: handleAcceptedRequest,
-    onSome: (response) => Effect.succeed(fetchResponse(response)),
+    onSome: (response) => Effect.succeed(routeResponse(response)),
   });

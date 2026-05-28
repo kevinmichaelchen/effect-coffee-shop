@@ -1,11 +1,11 @@
 {
-  "name": "@effect-coffee-shop/fetch-host",
+  "name": "@effect-coffee-shop/http-routing",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./fetch-host": "./src/fetch-host.ts",
+    "./router": "./src/router.ts",
     "./json": "./src/json.ts",
     "./logging": "./src/logging.ts",
     "./route": "./src/route.ts",
@@ -16,7 +16,7 @@
     "typecheck": "tsgo --noEmit",
     "lint": "bun --bun oxlint -c ../.oxlintrc.json --disable-nested-config .",
     "lint:fix": "bun --bun oxlint -c ../.oxlintrc.json --disable-nested-config --fix .",
-    "lint:custom": "cd ../../apps/backend && lintcn lint --tsconfig ../../packages/fetch-host/tsconfig.json",
+    "lint:custom": "cd ../../apps/backend && lintcn lint --tsconfig ../../packages/http-routing/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run --passWithNoTests"

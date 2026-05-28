@@ -4,8 +4,8 @@ import { betterAuth } from "better-auth";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { createCoffeeAgentAuthOptions } from "../agent/options.ts";
-import { logStructuredEvent } from "@effect-coffee-shop/fetch-host/logging";
-import { runHostEffect } from "@effect-coffee-shop/fetch-host/observability";
+import { logStructuredEvent } from "@effect-coffee-shop/http-routing/logging";
+import { runHttpEffect } from "@effect-coffee-shop/http-routing/observability";
 import {
   AppActorSchema,
   anonymousActor,
@@ -57,7 +57,7 @@ function buildCoffeeAuthOptions(input: CoffeeAuthInput): BetterAuthOptions {
         message: string,
         ...args: readonly unknown[]
       ) =>
-        void runHostEffect(
+        void runHttpEffect(
           logStructuredEvent({
             event: "auth.better_auth.log",
             auth_log_arity: args.length,

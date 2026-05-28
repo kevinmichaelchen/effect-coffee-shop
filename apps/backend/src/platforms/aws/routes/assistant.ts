@@ -7,10 +7,10 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import {
   requestPathEquals,
-  fetchResponse,
+  routeResponse,
   rewriteRequestPathPrefix,
-  type FetchRoute,
-} from "@effect-coffee-shop/fetch-host/route";
+  type HttpRoute,
+} from "@effect-coffee-shop/http-routing/route";
 import { handleAssistantRequest } from "@effect-coffee-shop/coffee-assistant/handler";
 import {
   createAssistantModelRunnerLayer,
@@ -18,7 +18,7 @@ import {
 } from "@effect-coffee-shop/coffee-assistant/providers";
 import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-core/application/observability";
 import type { AwsRuntime } from "../env.ts";
-import { handleDirectHttpRequest } from "../../../http/direct-http-auth.ts";
+import { handleDirectHttpRequest } from "../../../http/direct-auth.ts";
 import { resolveAwsRequestActor } from "./request-actor.ts";
 
 const isAssistantRequest = (request: Request): boolean =>
@@ -26,7 +26,7 @@ const isAssistantRequest = (request: Request): boolean =>
 
 const rewriteApiRequest = (request: Request): Request => rewriteRequestPathPrefix(request, "/api");
 
-export const awsAssistantRoute: FetchRoute<AwsRuntime> = {
+export const assistantRoute: HttpRoute<AwsRuntime> = {
   name: "assistant",
   matches: isAssistantRequest,
   handle: ({ env, request }) =>
@@ -43,7 +43,7 @@ export const awsAssistantRoute: FetchRoute<AwsRuntime> = {
           onSome: createAssistantModelRunnerLayer,
         });
 
-        return fetchResponse(
+        return routeResponse(
           yield* Effect.promise(async () =>
             handleAssistantRequest(rewriteApiRequest(request), {
               actor,

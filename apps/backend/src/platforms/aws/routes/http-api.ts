@@ -3,12 +3,12 @@
  *
  * @module
  */
-import { createAwsRequestServices } from "../coffee-backend.ts";
+import { createAwsRequestServices } from "../backend.ts";
 import type { AwsRuntime } from "../env.ts";
-import { makeCoffeeHttpApiRoute } from "../../../http/http-api-route.ts";
+import { makeCoffeeApiRoute } from "../../../http/api-route.ts";
 import { resolveAwsRequestActor } from "./request-actor.ts";
 
-export const awsHttpApiRoute = makeCoffeeHttpApiRoute<AwsRuntime>({
+export const httpApiRoute = makeCoffeeApiRoute<AwsRuntime>({
   createRequestServices: createAwsRequestServices,
   resolveRequestActor: ({ env, request }) => resolveAwsRequestActor({ runtime: env, request }),
 });

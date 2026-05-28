@@ -1,10 +1,10 @@
 /**
- * Builds a Coffee web handler for Fetch-based runtimes.
+ * Builds a Coffee web handler for Web Request/Response HTTP runtimes.
  *
  * @module
  */
 import * as Context from "effect/Context";
-import { emptyWebHandlerServices } from "@effect-coffee-shop/fetch-host/request-services";
+import { emptyWebHandlerServices } from "@effect-coffee-shop/http-routing/request-services";
 import {
   CurrentActor,
   type AppActor,

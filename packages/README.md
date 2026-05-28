@@ -1,13 +1,13 @@
 # Packages
 
 Library workspaces live under `packages/`. Coffee-specific libraries are nested
-under `packages/coffee`, while shared host utilities stay directly under
+under `packages/coffee`, while shared HTTP routing utilities stay directly under
 `packages`.
 
 ## Packages
 
-- [`fetch-host`](./fetch-host): runtime-agnostic fetch host primitives, route
-  dispatch, request logging, request-scoped services, and JSON encoding helpers.
+- [`http-routing`](./http-routing): runtime-agnostic HTTP route dispatch,
+  request logging, request-scoped services, and JSON encoding helpers.
 - [`coffee/core`](./coffee/core): Coffee bounded-context Onion Core.
 - [`coffee/external/in-memory`](./coffee/external/in-memory): in-memory Coffee
   External Layer.

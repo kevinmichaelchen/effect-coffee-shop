@@ -4,7 +4,7 @@
  * @module
  */
 import type { D1Database, ExecutionContext } from "@cloudflare/workers-types";
-import { jsonString } from "@effect-coffee-shop/fetch-host/json";
+import { jsonString } from "@effect-coffee-shop/http-routing/json";
 import { Miniflare } from "miniflare";
 import { describe, expect, it, vi } from "vitest";
 import worker, { type CloudflareWorkerEnv } from "../../../src/platforms/cloudflare/worker.ts";

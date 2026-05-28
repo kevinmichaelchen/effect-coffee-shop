@@ -1,5 +1,5 @@
 /**
- * Defines Fetch host route contracts and request path helpers.
+ * Defines HTTP routing route contracts and request path helpers.
  *
  * @module
  */
@@ -7,27 +7,27 @@ import type * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import type { StructuredLogRecord } from "./logging.ts";
 
-export interface HostRuntimeContext {
+export interface HttpRuntimeContext {
   readonly waitUntil?: (promise: Promise<unknown>) => void;
 }
 
-export interface FetchRequestContext<TEnv> {
+export interface HttpRequestContext<TEnv> {
   readonly env: TEnv;
   readonly request: Request;
-  readonly runtime: HostRuntimeContext;
+  readonly runtime: HttpRuntimeContext;
 }
 
-export interface FetchRouteResult {
+export interface HttpRouteResult {
   readonly response: Response;
   readonly logFields?: StructuredLogRecord;
 }
 
-export type FetchRouteEffect = ReturnType<typeof Effect.suspend<FetchRouteResult, unknown, never>>;
+export type HttpRouteEffect = ReturnType<typeof Effect.suspend<HttpRouteResult, unknown, never>>;
 
-export interface FetchRoute<TEnv> {
+export interface HttpRoute<TEnv> {
   readonly name: string;
   readonly matches: (request: Request) => boolean;
-  readonly handle: (context: FetchRequestContext<TEnv>) => FetchRouteEffect;
+  readonly handle: (context: HttpRequestContext<TEnv>) => HttpRouteEffect;
 }
 
 export const requestPathname = (request: Request): string => new URL(request.url).pathname;
@@ -40,10 +40,10 @@ export const requestPathIsOrStartsWith = (request: Request, pathname: string): b
   return pathnameFromRequest === pathname || pathnameFromRequest.startsWith(`${pathname}/`);
 };
 
-export const fetchResponse = (
+export const routeResponse = (
   response: Response,
   logFields?: StructuredLogRecord,
-): FetchRouteResult =>
+): HttpRouteResult =>
   Option.match(Option.fromUndefinedOr(logFields), {
     onNone: () => ({ response }),
     onSome: (extraFields) => ({ logFields: extraFields, response }),

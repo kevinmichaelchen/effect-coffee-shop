@@ -5,7 +5,7 @@
  */
 import * as Effect from "effect/Effect";
 import { resolveCoffeeActor } from "@effect-coffee-shop/coffee-auth/better-auth/shared";
-import { getAwsRuntimeBackend } from "../coffee-backend.ts";
+import { getAwsRuntimeBackend } from "../backend.ts";
 import { revealOptionalSecret, type AwsRuntime } from "../env.ts";
 
 export const resolveAwsRequestActor = Effect.fn("Aws.resolveRequestActor")(function* (input: {

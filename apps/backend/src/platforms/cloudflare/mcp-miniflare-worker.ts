@@ -4,7 +4,7 @@
  * @module
  */
 import * as Context from "effect/Context";
-import { emptyWebHandlerServices } from "@effect-coffee-shop/fetch-host/request-services";
+import { emptyWebHandlerServices } from "@effect-coffee-shop/http-routing/request-services";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import { createCoffeeWebHandler } from "@effect-coffee-shop/coffee-http/web-handler";
 import {

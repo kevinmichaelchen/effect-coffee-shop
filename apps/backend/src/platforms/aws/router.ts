@@ -3,20 +3,20 @@
  *
  * @module
  */
-import { createFetchHost } from "@effect-coffee-shop/fetch-host/fetch-host";
-import { awsAssistantRoute } from "./routes/assistant.ts";
-import { awsAgentDiscoveryRoute, awsAuthRoute } from "./routes/auth.ts";
-import { awsHttpApiRoute } from "./routes/http-api.ts";
-import { awsMcpRoute } from "./routes/mcp.ts";
+import { createHttpRouter } from "@effect-coffee-shop/http-routing/router";
+import { assistantRoute } from "./routes/assistant.ts";
+import { agentDiscoveryRoute, authRoute } from "./routes/auth.ts";
+import { httpApiRoute } from "./routes/http-api.ts";
+import { mcpRoute } from "./routes/mcp.ts";
 import { readAwsRuntime } from "./env.ts";
 
-const routeRequest = createFetchHost([
-  awsAgentDiscoveryRoute,
-  awsAuthRoute,
-  awsAssistantRoute,
-  awsHttpApiRoute,
-  awsMcpRoute,
+const handleHttpRequest = createHttpRouter([
+  agentDiscoveryRoute,
+  authRoute,
+  assistantRoute,
+  httpApiRoute,
+  mcpRoute,
 ]);
 
 export const routeAwsRequest = (request: Request, env: unknown) =>
-  routeRequest(request, readAwsRuntime(env));
+  handleHttpRequest(request, readAwsRuntime(env));

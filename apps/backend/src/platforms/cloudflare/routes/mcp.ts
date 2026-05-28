@@ -7,15 +7,15 @@ import * as Effect from "effect/Effect";
 import { cloudflareBindingNames, type CloudflareWorkerEnv } from "../env.ts";
 import {
   requestPathIsOrStartsWith,
-  fetchResponse,
-  type FetchRoute,
-} from "@effect-coffee-shop/fetch-host/route";
-import { createCloudflareRequestServices, getCloudflareRuntimeBackend } from "../coffee-backend.ts";
+  routeResponse,
+  type HttpRoute,
+} from "@effect-coffee-shop/http-routing/route";
+import { createCloudflareRequestServices, getCloudflareRuntimeBackend } from "../backend.ts";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
 const isMcpRequest = (request: Request): boolean => requestPathIsOrStartsWith(request, "/mcp");
 
-export const cloudflareMcpRoute: FetchRoute<CloudflareWorkerEnv> = {
+export const mcpRoute: HttpRoute<CloudflareWorkerEnv> = {
   name: "mcp",
   matches: isMcpRequest,
   handle: ({ env, request }) =>
@@ -31,6 +31,6 @@ export const cloudflareMcpRoute: FetchRoute<CloudflareWorkerEnv> = {
         backend.handler(request, createCloudflareRequestServices(systemActor)),
       );
 
-      return fetchResponse(response);
+      return routeResponse(response);
     }),
 };

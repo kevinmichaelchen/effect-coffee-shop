@@ -13,13 +13,13 @@ import {
   type AssistantAiConfig,
 } from "@effect-coffee-shop/coffee-assistant/providers";
 import { type CloudflareRuntime, type CloudflareWorkerEnv } from "../env.ts";
-import { handleDirectHttpRequest } from "../../../http/direct-http-auth.ts";
+import { handleDirectHttpRequest } from "../../../http/direct-auth.ts";
 import {
   requestPathEquals,
-  fetchResponse,
+  routeResponse,
   rewriteRequestPathPrefix,
-  type FetchRoute,
-} from "@effect-coffee-shop/fetch-host/route";
+  type HttpRoute,
+} from "@effect-coffee-shop/http-routing/route";
 import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-core/application/observability";
 import { resolveCloudflareRequestActor } from "./request-actor.ts";
 
@@ -41,7 +41,7 @@ const getAssistantAiConfig = (runtime: CloudflareRuntime): Option.Option<Assista
       ),
   });
 
-export const cloudflareAssistantRoute: FetchRoute<CloudflareWorkerEnv> = {
+export const assistantRoute: HttpRoute<CloudflareWorkerEnv> = {
   name: "assistant",
   matches: isAssistantRequest,
   handle: ({ env, request }) =>
@@ -69,7 +69,7 @@ export const cloudflareAssistantRoute: FetchRoute<CloudflareWorkerEnv> = {
           }),
         );
 
-        return fetchResponse(response, actorObservabilityAttributes(actor));
+        return routeResponse(response, actorObservabilityAttributes(actor));
       }),
     ),
 };

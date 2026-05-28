@@ -11,17 +11,15 @@ import {
   getAssistantModelLabel,
   getBunAssistantAiConfig,
 } from "@effect-coffee-shop/coffee-assistant/providers";
-import { fetchResponse, requestPathEquals } from "@effect-coffee-shop/fetch-host/route";
+import { routeResponse, requestPathEquals } from "@effect-coffee-shop/http-routing/route";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import type { CoffeeBunRoute } from "./coffee-bun-server.ts";
-import type { CoffeeAppLayer } from "../../http/coffee-backend.ts";
+import type { BunHttpRoute } from "./coffee-bun-server.ts";
+import type { CoffeeAppLayer } from "../../http/backend.ts";
 
 const isAssistantRequest = (request: Request): boolean =>
   requestPathEquals(request, "/assistant") || requestPathEquals(request, "/assistant/");
 
-export const makeBunAssistantRoute = (input: {
-  readonly appLayer: CoffeeAppLayer;
-}): CoffeeBunRoute => ({
+export const makeAssistantRoute = (input: { readonly appLayer: CoffeeAppLayer }): BunHttpRoute => ({
   name: "assistant",
   matches: isAssistantRequest,
   handle: ({ env, request }) =>
@@ -33,7 +31,7 @@ export const makeBunAssistantRoute = (input: {
         onSome: createAssistantModelRunnerLayer,
       });
 
-      return fetchResponse(
+      return routeResponse(
         yield* Effect.promise(async () =>
           handleAssistantRequest(request, {
             actor: systemActor,

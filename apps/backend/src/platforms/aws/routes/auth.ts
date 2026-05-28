@@ -8,12 +8,12 @@ import * as Option from "effect/Option";
 import {
   requestPathEquals,
   requestPathIsOrStartsWith,
-  fetchResponse,
+  routeResponse,
   rewriteRequestPath,
-  type FetchRoute,
-} from "@effect-coffee-shop/fetch-host/route";
+  type HttpRoute,
+} from "@effect-coffee-shop/http-routing/route";
 import { createCoffeeAuth } from "@effect-coffee-shop/coffee-auth/better-auth/shared";
-import { getAwsRuntimeBackend } from "../coffee-backend.ts";
+import { getAwsRuntimeBackend } from "../backend.ts";
 import { revealSecret, type AwsRuntime } from "../env.ts";
 
 const betterAuthUnavailableResponse = () =>
@@ -52,17 +52,17 @@ const handleAuthRequest = Effect.fn("Aws.handleAuthRequest")(function* (
   });
 });
 
-export const awsAgentDiscoveryRoute: FetchRoute<AwsRuntime> = {
+export const agentDiscoveryRoute: HttpRoute<AwsRuntime> = {
   name: "agent-discovery",
   matches: isAgentDiscoveryRequest,
   handle: ({ env, request }) =>
     handleAuthRequest(rewriteRequestPath(request, "/api/auth/agent-configuration"), env).pipe(
-      Effect.map(fetchResponse),
+      Effect.map(routeResponse),
     ),
 };
 
-export const awsAuthRoute: FetchRoute<AwsRuntime> = {
+export const authRoute: HttpRoute<AwsRuntime> = {
   name: "auth",
   matches: isAuthRequest,
-  handle: ({ env, request }) => handleAuthRequest(request, env).pipe(Effect.map(fetchResponse)),
+  handle: ({ env, request }) => handleAuthRequest(request, env).pipe(Effect.map(routeResponse)),
 };

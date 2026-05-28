@@ -2,14 +2,14 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import { logRequestCompleted, logRequestFailed } from "./logging.ts";
 import type {
-  FetchRoute,
-  FetchRouteResult,
-  FetchRequestContext,
-  HostRuntimeContext,
+  HttpRoute,
+  HttpRouteResult,
+  HttpRequestContext,
+  HttpRuntimeContext,
 } from "./route.ts";
 import {
-  recordFetchHostRequestCompleted,
-  recordFetchHostRequestFailed,
+  recordHttpRequestCompleted,
+  recordHttpRequestFailed,
   requestSpanAttributes,
 } from "./observability.ts";
 
@@ -18,21 +18,21 @@ const notFoundResponse = () => new Response("Not Found", { status: 404 });
 const createRequestContext = <TEnv>(
   request: Request,
   env: TEnv,
-  runtime: HostRuntimeContext,
-): FetchRequestContext<TEnv> => ({
+  runtime: HttpRuntimeContext,
+): HttpRequestContext<TEnv> => ({
   env,
   request,
   runtime,
 });
 
 const findMatchingRoute = <TEnv>(
-  routes: ReadonlyArray<FetchRoute<TEnv>>,
+  routes: ReadonlyArray<HttpRoute<TEnv>>,
   request: Request,
-): FetchRoute<TEnv> | undefined => routes.find((route) => route.matches(request));
+): HttpRoute<TEnv> | undefined => routes.find((route) => route.matches(request));
 
-export const createFetchHost =
-  <TEnv>(routes: ReadonlyArray<FetchRoute<TEnv>>) =>
-  (request: Request, env: TEnv, runtime: HostRuntimeContext = {}) => {
+export const createHttpRouter =
+  <TEnv>(routes: ReadonlyArray<HttpRoute<TEnv>>) =>
+  (request: Request, env: TEnv, runtime: HttpRuntimeContext = {}) => {
     const route = findMatchingRoute(routes, request);
     const routeKind = route?.name ?? "unmatched";
     const startedAt = performance.now();
@@ -40,15 +40,15 @@ export const createFetchHost =
     return Effect.gen(function* () {
       const { logFields, response } = yield* Option.match(Option.fromUndefinedOr(route), {
         onNone: () => {
-          const result: FetchRouteResult = { response: notFoundResponse() };
+          const result: HttpRouteResult = { response: notFoundResponse() };
           return Effect.succeed(result);
         },
         onSome: (matchingRoute) =>
           matchingRoute.handle(createRequestContext(request, env, runtime)),
-      }).pipe(Effect.mapError((error: unknown) => error));
+      });
       const durationMs = performance.now() - startedAt;
 
-      yield* recordFetchHostRequestCompleted({
+      yield* recordHttpRequestCompleted({
         durationMs,
         method: request.method,
         routeKind,
@@ -75,11 +75,10 @@ export const createFetchHost =
 
       return response;
     }).pipe(
-      Effect.mapError((error: unknown) => error),
       Effect.tapError((error: unknown) => {
         const durationMs = performance.now() - startedAt;
 
-        return recordFetchHostRequestFailed({
+        return recordHttpRequestFailed({
           durationMs,
           method: request.method,
           routeKind,
@@ -94,7 +93,7 @@ export const createFetchHost =
           ),
         );
       }),
-      Effect.withSpan("fetch_host.request"),
+      Effect.withSpan("http_routing.request"),
       Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
     );
   };

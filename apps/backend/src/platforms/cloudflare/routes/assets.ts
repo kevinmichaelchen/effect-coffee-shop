@@ -6,11 +6,11 @@
 import * as Option from "effect/Option";
 import * as Effect from "effect/Effect";
 import { cloudflareBindingNames, type CloudflareWorkerEnv } from "../env.ts";
-import { fetchResponse, type FetchRoute } from "@effect-coffee-shop/fetch-host/route";
+import { routeResponse, type HttpRoute } from "@effect-coffee-shop/http-routing/route";
 
 const notFoundResponse = () => new Response("Not Found", { status: 404 });
 
-export const cloudflareAssetsRoute: FetchRoute<CloudflareWorkerEnv> = {
+export const assetsRoute: HttpRoute<CloudflareWorkerEnv> = {
   name: "assets",
   matches: () => true,
   handle: ({ env, request }) =>
@@ -21,6 +21,6 @@ export const cloudflareAssetsRoute: FetchRoute<CloudflareWorkerEnv> = {
         onSome: (assets) => Effect.promise(async () => assets.fetch(request)),
       });
 
-      return fetchResponse(response);
+      return routeResponse(response);
     }),
 };

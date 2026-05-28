@@ -4,21 +4,21 @@
  * @module
  */
 import type { ExecutionContext } from "@cloudflare/workers-types";
-import { cloudflareAssistantRoute } from "./routes/assistant.ts";
-import { cloudflareAgentDiscoveryRoute, cloudflareAuthRoute } from "./routes/auth.ts";
+import { assistantRoute } from "./routes/assistant.ts";
+import { agentDiscoveryRoute, authRoute } from "./routes/auth.ts";
 import type { CloudflareWorkerEnv } from "./env.ts";
-import { cloudflareAssetsRoute } from "./routes/assets.ts";
-import { createFetchHost } from "@effect-coffee-shop/fetch-host/fetch-host";
-import { cloudflareHttpApiRoute } from "./routes/http-api.ts";
-import { cloudflareMcpRoute } from "./routes/mcp.ts";
+import { assetsRoute } from "./routes/assets.ts";
+import { createHttpRouter } from "@effect-coffee-shop/http-routing/router";
+import { httpApiRoute } from "./routes/http-api.ts";
+import { mcpRoute } from "./routes/mcp.ts";
 
-const routeRequest = createFetchHost<CloudflareWorkerEnv>([
-  cloudflareAgentDiscoveryRoute,
-  cloudflareAuthRoute,
-  cloudflareAssistantRoute,
-  cloudflareHttpApiRoute,
-  cloudflareMcpRoute,
-  cloudflareAssetsRoute,
+const handleHttpRequest = createHttpRouter<CloudflareWorkerEnv>([
+  agentDiscoveryRoute,
+  authRoute,
+  assistantRoute,
+  httpApiRoute,
+  mcpRoute,
+  assetsRoute,
 ]);
 
 export { type CloudflareWorkerEnv } from "./env.ts";
@@ -28,6 +28,6 @@ export const routeCloudflareRequest = (
   env: CloudflareWorkerEnv,
   executionContext: ExecutionContext,
 ) =>
-  routeRequest(request, env, {
+  handleHttpRequest(request, env, {
     waitUntil: (promise) => executionContext.waitUntil(promise),
   });

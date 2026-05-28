@@ -8,7 +8,7 @@ import * as Option from "effect/Option";
 import { FetchHttpClient } from "effect/unstable/http";
 import { Otlp } from "effect/unstable/observability";
 
-const defaultServiceName = "fetch-host";
+const defaultServiceName = "http-routing";
 const nonBlankString = Option.filter((value: string) => value.trim().length > 0);
 
 const ConsoleObservabilityLive = Layer.mergeAll(
@@ -59,33 +59,33 @@ const OtlpObservabilityLive = Layer.unwrap(
   }),
 );
 
-export const HostObservabilityLive = Layer.mergeAll(
+export const HttpObservabilityLive = Layer.mergeAll(
   ConsoleObservabilityLive,
   OtlpObservabilityLive,
 );
 
-const HostObservabilityRuntime = ManagedRuntime.make(HostObservabilityLive);
+const HttpObservabilityRuntime = ManagedRuntime.make(HttpObservabilityLive);
 
-const requestTotal = Metric.counter("fetch_host_requests_total", {
-  description: "Total Fetch host requests handled by route, method, and outcome.",
+const requestTotal = Metric.counter("http_routing_requests_total", {
+  description: "Total HTTP routing requests handled by route, method, and outcome.",
   incremental: true,
 });
 
-const requestFailureTotal = Metric.counter("fetch_host_request_failures_total", {
-  description: "Total Fetch host request failures by route and method.",
+const requestFailureTotal = Metric.counter("http_routing_request_failures_total", {
+  description: "Total HTTP routing request failures by route and method.",
   incremental: true,
 });
 
-const requestDurationMs = Metric.histogram("fetch_host_request_duration_ms", {
-  description: "Fetch host request duration in milliseconds.",
+const requestDurationMs = Metric.histogram("http_routing_request_duration_ms", {
+  description: "HTTP routing request duration in milliseconds.",
   boundaries: Metric.exponentialBoundaries({ start: 1, factor: 2, count: 16 }),
 });
 
 type MetricAttributes = Readonly<Record<string, string>>;
 
-export const runHostEffect = HostObservabilityRuntime.runPromise;
+export const runHttpEffect = HttpObservabilityRuntime.runPromise;
 
-export const recordFetchHostRequestCompleted = (input: {
+export const recordHttpRequestCompleted = (input: {
   readonly durationMs: number;
   readonly method: string;
   readonly routeKind: string;
@@ -104,7 +104,7 @@ export const recordFetchHostRequestCompleted = (input: {
   });
 };
 
-export const recordFetchHostRequestFailed = (input: {
+export const recordHttpRequestFailed = (input: {
   readonly durationMs: number;
   readonly method: string;
   readonly routeKind: string;

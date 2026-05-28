@@ -60,8 +60,8 @@
           {
             "patterns": [
               "@cloudflare/*",
-              "@effect-coffee-shop/fetch-host",
-              "@effect-coffee-shop/fetch-host/*",
+              "@effect-coffee-shop/http-routing",
+              "@effect-coffee-shop/http-routing/*",
               "@effect-coffee-shop/coffee-actions",
               "@effect-coffee-shop/coffee-actions/*",
               "@tanstack/*",
@@ -88,8 +88,8 @@
           {
             "patterns": [
               "@cloudflare/*",
-              "@effect-coffee-shop/fetch-host",
-              "@effect-coffee-shop/fetch-host/*",
+              "@effect-coffee-shop/http-routing",
+              "@effect-coffee-shop/http-routing/*",
               "@tanstack/*",
               "../external/*",
               "../external/**",
@@ -109,8 +109,8 @@
           "error",
           {
             "patterns": [
-              "@effect-coffee-shop/fetch-host",
-              "@effect-coffee-shop/fetch-host/*",
+              "@effect-coffee-shop/http-routing",
+              "@effect-coffee-shop/http-routing/*",
               "@effect-coffee-shop/coffee-actions",
               "@effect-coffee-shop/coffee-actions/*",
               "@effect-coffee-shop/coffee-core",

@@ -17,7 +17,7 @@ export function logRequestCompleted(input: {
   readonly routeKind: string;
 }) {
   return logStructuredEvent({
-    event: "fetch_host.request.complete",
+    event: "http_routing.request.complete",
     ...requestLogFields(input.request, input.routeKind),
     ...input.extraFields,
     duration_ms: roundDurationMs(input.durationMs),
@@ -33,7 +33,7 @@ export function logRequestFailed(input: {
   readonly routeKind: string;
 }) {
   return logStructuredError({
-    event: "fetch_host.request.error",
+    event: "http_routing.request.error",
     ...requestLogFields(input.request, input.routeKind),
     ...input.extraFields,
     duration_ms: roundDurationMs(input.durationMs),

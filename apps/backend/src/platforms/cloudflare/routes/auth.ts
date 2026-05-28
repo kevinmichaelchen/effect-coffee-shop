@@ -5,15 +5,15 @@
  */
 import * as Option from "effect/Option";
 import * as Effect from "effect/Effect";
-import { getCloudflareRuntimeBackend } from "../coffee-backend.ts";
+import { getCloudflareRuntimeBackend } from "../backend.ts";
 import { readCloudflareRuntime, revealSecret, type CloudflareWorkerEnv } from "../env.ts";
 import {
   requestPathEquals,
   requestPathIsOrStartsWith,
-  fetchResponse,
+  routeResponse,
   rewriteRequestPath,
-  type FetchRoute,
-} from "@effect-coffee-shop/fetch-host/route";
+  type HttpRoute,
+} from "@effect-coffee-shop/http-routing/route";
 import { createCloudflareAuth } from "@effect-coffee-shop/coffee-auth/better-auth/cloudflare";
 
 const betterAuthUnavailableResponse = () =>
@@ -50,17 +50,17 @@ const handleAuthRequest = Effect.fn("Cloudflare.handleAuthRequest")(function* (
   });
 });
 
-export const cloudflareAgentDiscoveryRoute: FetchRoute<CloudflareWorkerEnv> = {
+export const agentDiscoveryRoute: HttpRoute<CloudflareWorkerEnv> = {
   name: "agent-discovery",
   matches: isAgentDiscoveryRequest,
   handle: ({ env, request }) =>
     handleAuthRequest(rewriteRequestPath(request, "/api/auth/agent-configuration"), env).pipe(
-      Effect.map(fetchResponse),
+      Effect.map(routeResponse),
     ),
 };
 
-export const cloudflareAuthRoute: FetchRoute<CloudflareWorkerEnv> = {
+export const authRoute: HttpRoute<CloudflareWorkerEnv> = {
   name: "auth",
   matches: isAuthRequest,
-  handle: ({ env, request }) => handleAuthRequest(request, env).pipe(Effect.map(fetchResponse)),
+  handle: ({ env, request }) => handleAuthRequest(request, env).pipe(Effect.map(routeResponse)),
 };
