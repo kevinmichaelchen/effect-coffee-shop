@@ -12,7 +12,7 @@ import {
   cloudflareAssistantGatewayId,
   cloudflareBindingNames,
   cloudflareEnvNames,
-} from "../../apps/backend/src/platforms/cloudflare/env.ts";
+} from "@effect-coffee-shop/coffee-runtime-cloudflare/env";
 import {
   booleanWithDefault,
   numberBetweenWithDefault,
@@ -183,7 +183,7 @@ export default Alchemy.Stack(
       compatibility: {
         flags: ["nodejs_compat"],
       },
-      main: "./apps/backend/src/platforms/cloudflare/worker.ts",
+      main: "./apps/backend/src/cloudflare/worker.ts",
       observability: {
         enabled: true,
         headSamplingRate: observabilitySamplingRate,

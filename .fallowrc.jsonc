@@ -3,9 +3,9 @@
 
   "entry": [
     "alchemy.run.ts",
-    "apps/backend/src/platforms/cloudflare/worker.ts",
-    "apps/backend/src/platforms/cloudflare/mcp-miniflare-worker.ts",
-    "apps/backend/src/platforms/bun/*.ts",
+    "apps/backend/src/cloudflare/worker.ts",
+    "apps/backend/src/cloudflare/mcp-miniflare-worker.ts",
+    "apps/backend/src/bun/*.ts",
     "apps/backend/scripts/*.ts",
     "apps/backend/src/**/*.test.ts",
     "apps/backend/test/**/*.ts",
@@ -18,12 +18,15 @@
     "packages/http-routing/src/index.ts",
     "packages/coffee/core/src/index.ts",
     "packages/coffee/core/src/**/*.test.ts",
+    "packages/coffee/backend/src/index.ts",
     "packages/coffee/presentation/actions/src/index.ts",
     "packages/coffee/presentation/actions/src/**/*.test.ts",
     "packages/coffee/external/in-memory/src/index.ts",
     "packages/coffee/external/sqlite/src/index.ts",
     "packages/coffee/external/sqlite/src/bun/live.ts",
-    "packages/coffee/external/sqlite/src/cloudflare/live.ts"
+    "packages/coffee/external/sqlite/src/cloudflare/live.ts",
+    "packages/coffee/runtime/aws/src/**/*.test.ts",
+    "packages/coffee/runtime/cloudflare/src/**/*.test.ts"
   ],
 
   "ignorePatterns": [
@@ -118,6 +121,14 @@
         "patterns": ["packages/http-routing/**"]
       },
       {
+        "name": "backend-composition",
+        "patterns": ["packages/coffee/backend/**"]
+      },
+      {
+        "name": "runtime",
+        "patterns": ["packages/coffee/runtime/**"]
+      },
+      {
         "name": "domain",
         "patterns": ["packages/coffee/core/src/domain/**"]
       },
@@ -149,7 +160,7 @@
     "rules": [
       {
         "from": "infra",
-        "allow": ["backend-app", "ui", "external"]
+        "allow": ["backend-app", "ui", "external", "runtime"]
       },
       {
         "from": "ui",
@@ -159,6 +170,8 @@
         "from": "backend-app",
         "allow": [
           "http-routing",
+          "backend-composition",
+          "runtime",
           "domain",
           "application",
           "actions",
@@ -171,6 +184,24 @@
       {
         "from": "http-routing",
         "allow": []
+      },
+      {
+        "from": "backend-composition",
+        "allow": ["http-routing", "domain", "application", "external", "presentation"]
+      },
+      {
+        "from": "runtime",
+        "allow": [
+          "http-routing",
+          "backend-composition",
+          "domain",
+          "application",
+          "actions",
+          "assistant",
+          "auth",
+          "external",
+          "presentation"
+        ]
       },
       {
         "from": "domain",

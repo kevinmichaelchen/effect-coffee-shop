@@ -1,0 +1,38 @@
+{
+  "name": "@effect-coffee-shop/coffee-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./app-layer": "./src/app-layer.ts",
+    "./http/api-route": "./src/http/api-route.ts",
+    "./http/backend": "./src/http/backend.ts",
+    "./http/direct-auth": "./src/http/direct-auth.ts"
+  },
+  "scripts": {
+    "typecheck": "tsgo --noEmit",
+    "lint": "bun --bun oxlint -c ../../.oxlintrc.json --disable-nested-config .",
+    "lint:fix": "bun --bun oxlint -c ../../.oxlintrc.json --disable-nested-config --fix .",
+    "lint:custom": "cd ../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/backend/tsconfig.json",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
+    "@effect-coffee-shop/coffee-http": "workspace:*",
+    "@effect-coffee-shop/http-routing": "workspace:*",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "lintcn": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "packageManager": "bun@1.3.11"
+}

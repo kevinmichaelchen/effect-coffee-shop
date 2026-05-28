@@ -65,54 +65,6 @@
       }
     },
     {
-      "files": ["src/platforms/cloudflare/**/*.ts"],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": [
-              "@effect/platform-bun",
-              "@effect/platform-bun/*",
-              "@effect/platform-node",
-              "@effect/platform-node/*",
-              "bun:*",
-              "node:*",
-              "#application/use-cases/*",
-              "#application/ports/*"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["src/platforms/bun/**/*.ts"],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": ["#application/use-cases/*", "#application/ports/*"]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["src/runtime/**/*.ts"],
-      "rules": {
-        "no-restricted-imports": "off"
-      }
-    },
-    {
-      "files": ["src/platforms/bun/**/main.ts", "src/platforms/bun/**/*-main.ts"],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": ["#application/use-cases/*", "#application/ports/*"]
-          }
-        ]
-      }
-    },
-    {
       "files": ["test/**/*.ts"],
       "rules": {
         "no-restricted-imports": ["error", { "patterns": ["../../src/*", "../src/*", "node:*"] }]

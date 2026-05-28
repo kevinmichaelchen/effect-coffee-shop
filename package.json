@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "workspaces": {
-    "packages": ["apps/*", "packages/http-routing", "packages/coffee/core", "packages/coffee/assistant", "packages/coffee/auth", "packages/coffee/external/*", "packages/coffee/presentation/*"],
+    "packages": ["apps/*", "packages/http-routing", "packages/coffee/core", "packages/coffee/assistant", "packages/coffee/auth", "packages/coffee/backend", "packages/coffee/external/*", "packages/coffee/presentation/*", "packages/coffee/runtime/*"],
     "catalog": {
       "@better-auth/agent-auth": "0.4.5",
       "@better-auth/passkey": "^1.6.11",
@@ -136,6 +136,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20260518.1",
+    "@effect-coffee-shop/coffee-runtime-cloudflare": "workspace:*",
     "@effect/platform-bun": "4.0.0-beta.67",
     "@effect/platform-node": "4.0.0-beta.67",
     "@effect/tsgo": "0.7.3",
