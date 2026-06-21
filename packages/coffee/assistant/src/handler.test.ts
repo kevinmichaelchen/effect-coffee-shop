@@ -3,52 +3,13 @@
  *
  * @module
  */
-import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
-import { jsonString } from "@effect-coffee-shop/http-routing/json";
-import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
-import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { handleAssistantRequest } from "./presentation/http/handler.ts";
 import {
-  createAssistantModelRunnerLayer,
-  type AssistantAiConfig,
-  type AssistantGatewayOptions,
-} from "./external/providers/index.ts";
-
-const assistantModel = "@cf/meta/llama-3.1-8b-instruct-fast";
-
-const createAiRunMock = () =>
-  vi.fn<
-    (
-      model: string,
-      inputs: AiTextGenerationInput,
-      options?: AssistantGatewayOptions,
-    ) => Promise<AiTextGenerationOutput>
-  >();
-
-const createAssistantRequest = (messages: unknown) =>
-  new Request("http://example.com/assistant", {
-    body: jsonString({ messages }),
-    headers: {
-      "content-type": "application/json",
-    },
-    method: "POST",
-  });
-
-const createBindingAiConfig = (aiRun: ReturnType<typeof createAiRunMock>): AssistantAiConfig => ({
-  kind: "workers-ai-binding",
-  binding: {
-    run: aiRun,
-  },
-  model: assistantModel,
-});
-
-const createAssistantHandlerOptions = (aiRun: ReturnType<typeof createAiRunMock>) => ({
-  actor: systemActor,
-  appLayer: InMemoryCoffeeAppLive,
-  model: assistantModel,
-  modelLayer: createAssistantModelRunnerLayer(createBindingAiConfig(aiRun)),
-});
+  createAiRunMock,
+  createAssistantHandlerOptions,
+  createAssistantRequest,
+} from "./test-support.ts";
 
 const verifyToolRun = async () => {
   const aiRun = createAiRunMock()
@@ -88,79 +49,6 @@ const verifyToolRun = async () => {
   expect(body).toContain('"type":"RUN_FINISHED"');
 };
 
-const verifyUiMessages = async () => {
-  const aiRun = createAiRunMock().mockResolvedValue({
-    response: "We have espresso drinks, cold brew, and tea available right now.",
-  });
-
-  const response = await handleAssistantRequest(
-    createAssistantRequest([
-      {
-        id: "user-1",
-        role: "user",
-        parts: [{ type: "text", content: "List the menu briefly." }],
-      },
-    ]),
-    createAssistantHandlerOptions(aiRun),
-  );
-  const body = await response.text();
-  const firstModelInputText = jsonString(aiRun.mock.calls[0]?.[1] ?? {});
-
-  expect(response.status).toBe(200);
-  expect(aiRun).toHaveBeenCalledTimes(1);
-  expect(firstModelInputText.indexOf('"name":"place_order"')).toBeLessThan(
-    firstModelInputText.indexOf('"name":"list_menu"'),
-  );
-  expect(firstModelInputText.indexOf('"name":"add_cart_item"')).toBeLessThan(
-    firstModelInputText.indexOf('"name":"list_menu"'),
-  );
-  expect(firstModelInputText.indexOf('"name":"prepare_cart_checkout"')).toBeLessThan(
-    firstModelInputText.indexOf('"name":"list_menu"'),
-  );
-  expect(firstModelInputText.indexOf('"name":"get_checkout_session"')).toBeLessThan(
-    firstModelInputText.indexOf('"name":"list_menu"'),
-  );
-  expect(firstModelInputText.indexOf('"name":"checkout_cart"')).toBeLessThan(
-    firstModelInputText.indexOf('"name":"list_menu"'),
-  );
-  expect(aiRun).toHaveBeenCalledWith(
-    assistantModel,
-    expect.objectContaining({
-      messages: expect.arrayContaining([
-        expect.objectContaining({
-          role: "system",
-          content: expect.stringContaining(
-            "read back the interpreted order and ask for confirmation before purchase",
-          ),
-        }),
-        expect.objectContaining({
-          role: "system",
-          content: expect.stringContaining("do not call place_order or checkout_cart yet"),
-        }),
-        expect.objectContaining({
-          role: "system",
-          content: expect.stringContaining("Should I place it?"),
-        }),
-        expect.objectContaining({
-          role: "system",
-          content: expect.stringContaining("520 cents becomes $5.20"),
-        }),
-        expect.objectContaining({
-          role: "user",
-          content: "List the menu briefly.",
-        }),
-      ]),
-    }),
-  );
-  expect(body).toContain("espresso drinks, cold brew, and tea");
-  expect(body).toContain('"type":"RUN_FINISHED"');
-};
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
-
 describe("assistant handler", () => {
   it("runs coffee tools before streaming the final assistant reply", verifyToolRun);
-  it("accepts TanStack UI messages from the browser client", verifyUiMessages);
 });

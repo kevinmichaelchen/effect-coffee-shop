@@ -3,49 +3,17 @@
  *
  * @module
  */
-import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
-import { jsonString } from "@effect-coffee-shop/http-routing/json";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { handleAssistantRequest } from "../../presentation/http/handler.ts";
 import {
-  createAssistantModelRunnerLayer,
-  type AssistantAiConfig,
-  type AssistantGatewayOptions,
-} from "./index.ts";
-
-const assistantModel = "@cf/meta/llama-3.1-8b-instruct-fast";
-
-const createAiRunMock = () =>
-  vi.fn<
-    (
-      model: string,
-      inputs: AiTextGenerationInput,
-      options?: AssistantGatewayOptions,
-    ) => Promise<AiTextGenerationOutput>
-  >();
-
-const createAssistantRequest = (messages: unknown) =>
-  new Request("http://example.com/assistant", {
-    body: jsonString({ messages }),
-    headers: {
-      "content-type": "application/json",
-    },
-    method: "POST",
-  });
-
-const createBindingAiConfig = (
-  aiRun: ReturnType<typeof createAiRunMock>,
-  gatewayId: string,
-): AssistantAiConfig => ({
-  kind: "workers-ai-binding",
-  binding: {
-    run: aiRun,
-  },
-  gatewayId,
-  model: assistantModel,
-});
+  assistantModel,
+  createAiRunMock,
+  createAssistantRequest,
+  createBindingAiConfig,
+} from "../../test-support.ts";
+import { createAssistantModelRunnerLayer } from "./index.ts";
 
 const verifyAiGatewayRouting = async () => {
   const aiRun = createAiRunMock().mockResolvedValue({
