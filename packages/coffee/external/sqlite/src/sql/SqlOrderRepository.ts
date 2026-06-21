@@ -25,10 +25,7 @@ import {
 import { deleteOrderItemsByOrderId } from "./queries/.generated/delete-order-items-by-order-id.sql.ts";
 import { findOrderById } from "./queries/.generated/find-order-by-id.sql.ts";
 import { listOrderItems } from "./queries/.generated/list-order-items.sql.ts";
-import { listOrders } from "./queries/.generated/list-orders.sql.ts";
-import { listOrdersByOwner } from "./queries/.generated/list-orders-by-owner.sql.ts";
-import { listOrdersByOwnerAndStatus } from "./queries/.generated/list-orders-by-owner-and-status.sql.ts";
-import { listOrdersByStatus } from "./queries/.generated/list-orders-by-status.sql.ts";
+import { listSqlOrderRows } from "./order-list-queries.ts";
 import { saveOrder } from "./queries/.generated/save-order.sql.ts";
 import { saveOrderItem } from "./queries/.generated/save-order-item.sql.ts";
 
@@ -77,22 +74,9 @@ const makeSqlOrderQueries = Effect.gen(function* () {
   });
 
   const list = Effect.fn("SqlOrderRepository.list")(function* (filters: ListOrdersFilters = {}) {
-    const rows = yield* Option.match(Option.fromUndefinedOr(filters.ownerUserId), {
-      onNone: () =>
-        Option.match(Option.fromUndefinedOr(filters.status), {
-          onNone: () => listOrders(),
-          onSome: (status) => listOrdersByStatus({ status }),
-        }),
-      onSome: (ownerUserId) =>
-        Option.match(Option.fromUndefinedOr(filters.status), {
-          onNone: () => listOrdersByOwner({ ownerUserId }),
-          onSome: (status) =>
-            listOrdersByOwnerAndStatus({
-              ownerUserId,
-              status,
-            }),
-        }),
-    }).pipe(Effect.provideService(SqlClient.SqlClient, sqlClient), Effect.flatMap(decodeSqlOrders));
+    const rows = yield* listSqlOrderRows(filters).pipe(
+      Effect.provideService(SqlClient.SqlClient, sqlClient),
+    );
     return yield* Effect.forEach(rows, (row) => hydrateOrder(sqlClient, row), { concurrency: 1 });
   });
 
