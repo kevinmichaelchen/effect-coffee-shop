@@ -15,12 +15,8 @@ import { CartItemQuoteSchema } from "../contracts.ts";
 import { InternalAppError, internalAppErrorFromPersistence } from "../errors.ts";
 import { CartRepository } from "../ports/CartRepository.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
-import {
-  invalidOrderInput,
-  resolveOrderItem,
-  resolveOrderItems,
-  toOrderItemInput,
-} from "./orderItems.ts";
+import { invalidOrderInput, resolveOrderItem, resolveOrderItems } from "./orderItems.ts";
+import { toOrderItemInput } from "./toOrderItemInput.ts";
 
 const emptyCart = (ownerUserId: string): Cart => ({
   ownerUserId,

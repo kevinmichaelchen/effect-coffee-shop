@@ -17,7 +17,8 @@ import { CartRepository } from "../ports/CartRepository.ts";
 import { CheckoutSessionIdGenerator } from "../ports/CheckoutSessionIdGenerator.ts";
 import { CheckoutSessionRepository } from "../ports/CheckoutSessionRepository.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
-import { invalidOrderInput, resolveOrderQuote, toOrderItemInput } from "./orderItems.ts";
+import { invalidOrderInput, resolveOrderQuote } from "./orderItems.ts";
+import { toOrderItemInput } from "./toOrderItemInput.ts";
 
 const checkoutSessionTtlMinutes = 15;
 const decodeOrderItemsInput = Schema.decodeUnknownEffect(OrderItemsInputSchema);

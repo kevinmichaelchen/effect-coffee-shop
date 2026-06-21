@@ -14,7 +14,8 @@ import { InternalAppError } from "../errors.ts";
 import { CartRepository } from "../ports/CartRepository.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { normalizeCartItem, readActorCart, saveSnapshot } from "./cartState.ts";
-import { invalidOrderInput, toOrderItemInput } from "./orderItems.ts";
+import { invalidOrderInput } from "./orderItems.ts";
+import { toOrderItemInput } from "./toOrderItemInput.ts";
 
 export const updateCartItem = Effect.fn("CoffeeOrders.updateCartItem")(function* (
   input: UpdateCartItemRequest,
