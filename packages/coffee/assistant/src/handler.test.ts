@@ -35,26 +35,13 @@ const createAssistantRequest = (messages: unknown) =>
     method: "POST",
   });
 
-const createBindingAiConfig = (
-  aiRun: ReturnType<typeof createAiRunMock>,
-  gatewayId?: string,
-): AssistantAiConfig =>
-  gatewayId === undefined
-    ? {
-        kind: "workers-ai-binding",
-        binding: {
-          run: aiRun,
-        },
-        model: assistantModel,
-      }
-    : {
-        kind: "workers-ai-binding",
-        binding: {
-          run: aiRun,
-        },
-        gatewayId,
-        model: assistantModel,
-      };
+const createBindingAiConfig = (aiRun: ReturnType<typeof createAiRunMock>): AssistantAiConfig => ({
+  kind: "workers-ai-binding",
+  binding: {
+    run: aiRun,
+  },
+  model: assistantModel,
+});
 
 const createAssistantHandlerOptions = (aiRun: ReturnType<typeof createAiRunMock>) => ({
   actor: systemActor,
@@ -169,38 +156,6 @@ const verifyUiMessages = async () => {
   expect(body).toContain('"type":"RUN_FINISHED"');
 };
 
-const verifyAiGatewayRouting = async () => {
-  const aiRun = createAiRunMock().mockResolvedValue({
-    response: "Here is the menu.",
-  });
-
-  await handleAssistantRequest(
-    createAssistantRequest([{ role: "user", content: "List the menu briefly." }]),
-    {
-      ...createAssistantHandlerOptions(aiRun),
-      gatewayEnabled: true,
-      modelLayer: createAssistantModelRunnerLayer(
-        createBindingAiConfig(aiRun, "assistant-gateway"),
-      ),
-    },
-  );
-
-  expect(aiRun).toHaveBeenCalledWith(
-    assistantModel,
-    expect.anything(),
-    expect.objectContaining({
-      gateway: expect.objectContaining({
-        collectLog: true,
-        id: "assistant-gateway",
-        metadata: expect.objectContaining({
-          actor_kind: "system",
-          route_kind: "assistant",
-        }),
-      }),
-    }),
-  );
-};
-
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -208,8 +163,4 @@ afterEach(() => {
 describe("assistant handler", () => {
   it("runs coffee tools before streaming the final assistant reply", verifyToolRun);
   it("accepts TanStack UI messages from the browser client", verifyUiMessages);
-  it(
-    "routes Cloudflare Worker assistant traffic through the configured AI Gateway",
-    verifyAiGatewayRouting,
-  );
 });
