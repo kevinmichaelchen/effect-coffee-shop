@@ -3,14 +3,8 @@
  *
  * @module
  */
-export {
-  addCartItem,
-  checkoutCart,
-  clearCart,
-  getCart,
-  removeCartItem,
-  updateCartItem,
-} from "./cart.ts";
+export { addCartItem, clearCart, getCart, removeCartItem, updateCartItem } from "./cart.ts";
+export { checkoutCart } from "./checkoutCart.ts";
 export { markReady, cancelOrder, pickUpOrder, startBrewing } from "./changeOrderStatus.ts";
 export { getCurrentCheckoutSession, prepareCartCheckout } from "./checkoutSession.ts";
 export { getItemOptions } from "./getItemOptions.ts";
