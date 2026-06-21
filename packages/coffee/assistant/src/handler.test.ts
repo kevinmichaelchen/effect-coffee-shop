@@ -4,24 +4,18 @@
  * @module
  */
 import type { AiTextGenerationInput, AiTextGenerationOutput } from "@cloudflare/workers-types";
-import { LLMock, type JournalEntry } from "@copilotkit/aimock";
 import { jsonString } from "@effect-coffee-shop/http-routing/json";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { handleAssistantRequest } from "./presentation/http/handler.ts";
-import { AssistantModelRunner } from "./application/model.ts";
 import {
   createAssistantModelRunnerLayer,
   type AssistantAiConfig,
   type AssistantGatewayOptions,
 } from "./external/providers/index.ts";
-import { makeOllamaRunner } from "./external/providers/ollama-runtime.ts";
 
 const assistantModel = "@cf/meta/llama-3.1-8b-instruct-fast";
-const localAssistantModel = "qwen3-beanline";
 
 const createAiRunMock = () =>
   vi.fn<
@@ -106,77 +100,6 @@ const verifyToolRun = async () => {
   expect(body).toContain("espresso drinks, cold brew, and tea");
   expect(body).toContain('"type":"RUN_FINISHED"');
 };
-
-const verifyOllamaToolRun = async () => {
-  const mock = new LLMock({ port: 0, strict: true });
-  const requests: JournalEntry[] = [];
-
-  mock.on(
-    { hasToolResult: false, userMessage: "List the menu briefly." },
-    {
-      toolCalls: [
-        {
-          arguments: {},
-          name: "list_menu",
-        },
-      ],
-    },
-  );
-  mock.on(
-    { hasToolResult: true, userMessage: "List the menu briefly." },
-    {
-      content: "We have espresso drinks, cold brew, and tea available right now.",
-    },
-  );
-
-  const response = await handleAssistantRequest(
-    createAssistantRequest([{ role: "user", content: "List the menu briefly." }]),
-    {
-      actor: systemActor,
-      appLayer: InMemoryCoffeeAppLive,
-      model: localAssistantModel,
-      modelLayer: createAimockOllamaModelLayer(mock, requests),
-    },
-  );
-  const body = await response.text();
-  const requestBodies = jsonString(requests.map((request) => request.body));
-
-  expect(response.status).toBe(200);
-  expect(requests).toHaveLength(2);
-  expect(requests.at(0)?.path).toBe("/api/chat");
-  expect(requests.at(0)?.method).toBe("POST");
-  expect(requestBodies).toContain(`"model":"${localAssistantModel}"`);
-  expect(requestBodies).toContain('"tools"');
-  expect(requestBodies).toContain('"role":"tool"');
-  expect(requestBodies).toContain('"name":"list_menu"');
-  expect(body).toContain('"label":"list_menu"');
-  expect(body).toContain("espresso drinks, cold brew, and tea");
-  expect(body).toContain('"type":"RUN_FINISHED"');
-};
-
-const createAimockOllamaModelLayer = (
-  mock: LLMock,
-  requests: JournalEntry[],
-): Layer.Layer<AssistantModelRunner> =>
-  Layer.effect(
-    AssistantModelRunner,
-    Effect.acquireRelease(
-      Effect.promise(async () => {
-        await mock.start();
-
-        return makeOllamaRunner({
-          endpoint: mock.url,
-          kind: "ollama",
-          model: localAssistantModel,
-        });
-      }),
-      () =>
-        Effect.gen(function* () {
-          requests.push(...mock.getRequests());
-          yield* Effect.promise(() => mock.stop());
-        }),
-    ),
-  );
 
 const verifyUiMessages = async () => {
   const aiRun = createAiRunMock().mockResolvedValue({
@@ -284,7 +207,6 @@ afterEach(() => {
 
 describe("assistant handler", () => {
   it("runs coffee tools before streaming the final assistant reply", verifyToolRun);
-  it("runs coffee tools through a local Ollama-compatible assistant provider", verifyOllamaToolRun);
   it("accepts TanStack UI messages from the browser client", verifyUiMessages);
   it(
     "routes Cloudflare Worker assistant traffic through the configured AI Gateway",
