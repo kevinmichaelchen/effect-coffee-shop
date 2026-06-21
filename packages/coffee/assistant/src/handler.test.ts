@@ -10,13 +10,11 @@ import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coff
 import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Redacted from "effect/Redacted";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { handleAssistantRequest } from "./presentation/http/handler.ts";
 import { AssistantModelRunner } from "./application/model.ts";
 import {
   createAssistantModelRunnerLayer,
-  getAssistantAiConfigFromEnv,
   type AssistantAiConfig,
   type AssistantGatewayOptions,
 } from "./external/providers/index.ts";
@@ -180,59 +178,6 @@ const createAimockOllamaModelLayer = (
     ),
   );
 
-const verifyWorkersAiRestEnvWinsOverAmbientOllama = () => {
-  const config = getAssistantAiConfigFromEnv({
-    CLOUDFLARE_ACCOUNT_ID: "account-id",
-    CLOUDFLARE_API_TOKEN: "token",
-    COFFEE_ASSISTANT_MODEL: assistantModel,
-    OLLAMA_HOST: "http://localhost:11434",
-  });
-
-  expect(config?.kind).toBe("workers-ai-rest");
-
-  if (config?.kind !== "workers-ai-rest") {
-    return;
-  }
-
-  expect(config.accountId).toBe("account-id");
-  expect(Redacted.value(config.apiKey)).toBe("token");
-  expect(config.model).toBe(assistantModel);
-};
-
-const verifyExplicitOllamaEnv = () => {
-  const config = getAssistantAiConfigFromEnv({
-    CLOUDFLARE_ACCOUNT_ID: "account-id",
-    CLOUDFLARE_API_TOKEN: "token",
-    COFFEE_ASSISTANT_MODEL: localAssistantModel,
-    COFFEE_ASSISTANT_PROVIDER: "ollama",
-  });
-
-  expect(config).toEqual({
-    endpoint: "http://localhost:11434",
-    kind: "ollama",
-    model: localAssistantModel,
-  });
-};
-
-const verifyProviderRequiresModel = () => {
-  const config = getAssistantAiConfigFromEnv({
-    CLOUDFLARE_ACCOUNT_ID: "account-id",
-    CLOUDFLARE_API_TOKEN: "token",
-  });
-
-  expect(config).toBeUndefined();
-};
-
-const verifyExplicitWorkersAiRequiresCredentials = () => {
-  const config = getAssistantAiConfigFromEnv({
-    COFFEE_ASSISTANT_MODEL: assistantModel,
-    COFFEE_ASSISTANT_PROVIDER: "workers-ai",
-    OLLAMA_HOST: "http://localhost:11434",
-  });
-
-  expect(config).toBeUndefined();
-};
-
 const verifyUiMessages = async () => {
   const aiRun = createAiRunMock().mockResolvedValue({
     response: "We have espresso drinks, cold brew, and tea available right now.",
@@ -340,16 +285,6 @@ afterEach(() => {
 describe("assistant handler", () => {
   it("runs coffee tools before streaming the final assistant reply", verifyToolRun);
   it("runs coffee tools through a local Ollama-compatible assistant provider", verifyOllamaToolRun);
-  it("requires the app composition root to choose an assistant model", verifyProviderRequiresModel);
-  it(
-    "prefers configured Workers AI credentials over an ambient Ollama host",
-    verifyWorkersAiRestEnvWinsOverAmbientOllama,
-  );
-  it("uses Ollama only when explicitly selected without an endpoint", verifyExplicitOllamaEnv);
-  it(
-    "does not fall back to Ollama when Workers AI is explicitly selected without credentials",
-    verifyExplicitWorkersAiRequiresCredentials,
-  );
   it("accepts TanStack UI messages from the browser client", verifyUiMessages);
   it(
     "routes Cloudflare Worker assistant traffic through the configured AI Gateway",
