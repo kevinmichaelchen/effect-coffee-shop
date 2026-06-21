@@ -14,6 +14,7 @@ import {
   toMenuView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
 import { prettyJson } from "./json.ts";
+import { listOpenOrders } from "./orders.ts";
 
 export const MenuResource = McpServer.resource({
   uri: "coffee://menu",
@@ -31,10 +32,7 @@ export const OpenOrdersResource = McpServer.resource({
   name: "Open Orders",
   description: "Orders that have not been picked up or cancelled",
   mimeType: "application/json",
-  content: CoffeeOrderApp.use((app) => app.listOrders({})).pipe(
-    Effect.map((orders) =>
-      orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
-    ),
+  content: CoffeeOrderApp.use(listOpenOrders).pipe(
     Effect.map(toCoffeeOrdersView),
     Effect.map(prettyJson),
   ),

@@ -12,6 +12,7 @@ import {
   toMenuView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
 import { prettyJson } from "./json.ts";
+import { listOpenOrders } from "./orders.ts";
 
 export const RecommendDrinkPrompt = McpServer.prompt({
   name: "recommend-drink",
@@ -40,12 +41,7 @@ export const SummarizeOpenOrdersPrompt = McpServer.prompt({
   },
   content: Effect.fn("CoffeeMcp.summarizeOpenOrdersPrompt")(function* ({ focus }) {
     const app = yield* CoffeeOrderApp;
-    const openOrders = yield* app.listOrders({}).pipe(
-      Effect.map((orders) =>
-        orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
-      ),
-      Effect.map(toCoffeeOrdersView),
-    );
+    const openOrders = yield* listOpenOrders(app).pipe(Effect.map(toCoffeeOrdersView));
     return `Summarize the open order queue for ${focus}:\n${prettyJson(openOrders)}`;
   }),
 });
