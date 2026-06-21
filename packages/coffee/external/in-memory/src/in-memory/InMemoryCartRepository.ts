@@ -26,12 +26,7 @@ export const InMemoryCartRepositoryLive = Layer.effect(
       getByOwnerUserId: (ownerUserId) => Ref.get(carts).pipe(Effect.map(HashMap.get(ownerUserId))),
       save: (cart) => Ref.update(carts, HashMap.set(cart.ownerUserId, cart)).pipe(Effect.as(cart)),
       clear: (ownerUserId) =>
-        Ref.update(carts, HashMap.remove(ownerUserId)).pipe(
-          Effect.map(() => {
-            const cart = emptyCart(ownerUserId);
-            return cart;
-          }),
-        ),
+        Ref.update(carts, HashMap.remove(ownerUserId)).pipe(Effect.as(emptyCart(ownerUserId))),
     });
   }),
 );
