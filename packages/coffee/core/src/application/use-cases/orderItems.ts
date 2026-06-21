@@ -12,30 +12,8 @@ import {
   DrinkNotFoundError,
   InvalidOrderInputError,
 } from "@effect-coffee-shop/coffee-core/domain/errors";
-import {
-  availableValues,
-  calculatePrice,
-  defaultMilkFor,
-  defaultShotsFor,
-  defaultTemperatureFor,
-  drinkSizes,
-  milks,
-  temperatures,
-  DrinkSizeSchema,
-  MilkSchema,
-  TemperatureSchema,
-  type DrinkSize,
-  type MenuItem,
-  type Milk,
-  type Temperature,
-} from "@effect-coffee-shop/coffee-core/domain/menu";
+import { calculatePrice, type MenuItem } from "@effect-coffee-shop/coffee-core/domain/menu";
 import { multiplyMoney, sumMoney } from "@effect-coffee-shop/coffee-core/domain/money";
-import {
-  QuantitySchema,
-  ShotCountSchema,
-  type Quantity,
-  type ShotCount,
-} from "@effect-coffee-shop/coffee-core/domain/order-primitives";
 import {
   CoffeeOrderItemSchema,
   type CoffeeOrderItem,
@@ -43,14 +21,16 @@ import {
 import type { OrderItemInput, OrderQuote } from "../contracts.ts";
 import { InternalAppError, internalAppErrorFromPersistence } from "../errors.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
+import {
+  invalidOrderInput,
+  resolveMilk,
+  resolveQuantity,
+  resolveShots,
+  resolveTemperature,
+  validateSize,
+} from "./orderItemOptions.ts";
 
-const defaultQuantity = 1;
 const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
-const decodeDrinkSize = Schema.decodeUnknownEffect(DrinkSizeSchema);
-const decodeMilk = Schema.decodeUnknownEffect(MilkSchema);
-const decodeQuantity = Schema.decodeUnknownEffect(QuantitySchema);
-const decodeShotCount = Schema.decodeUnknownEffect(ShotCountSchema);
-const decodeTemperature = Schema.decodeUnknownEffect(TemperatureSchema);
 const decodeResolvedItems = Schema.decodeUnknownEffect(
   Schema.NonEmptyArray(Schema.toType(CoffeeOrderItemSchema)),
 );
@@ -70,107 +50,7 @@ const trimmedOption = (value: string | undefined): Option.Option<string> =>
     Option.filter((input) => input.length > 0),
   );
 
-export const invalidOrderInput = (message: string) => new InvalidOrderInputError({ message });
-
-const validateSize = Effect.fnUntraced(function* (
-  size: string,
-): Effect.fn.Return<DrinkSize, InvalidOrderInputError> {
-  return yield* decodeDrinkSize(size).pipe(
-    Effect.catchTag("SchemaError", () =>
-      Effect.fail(invalidOrderInput(`size must be one of: ${availableValues(drinkSizes)}`)),
-    ),
-  );
-});
-
-const resolveMilk = Effect.fnUntraced(function* (
-  menuItem: MenuItem,
-  milk: string | undefined,
-): Effect.fn.Return<Milk, InvalidOrderInputError> {
-  const selectedMilk = yield* Option.fromNullishOr(milk).pipe(
-    Option.match({
-      onNone: () => Effect.succeed(defaultMilkFor(menuItem)),
-      onSome: (m) =>
-        decodeMilk(m).pipe(
-          Effect.catchTag("SchemaError", () =>
-            Effect.fail(invalidOrderInput(`milk must be one of: ${availableValues(milks)}`)),
-          ),
-        ),
-    }),
-  );
-
-  return yield* Effect.succeed(selectedMilk).pipe(
-    Effect.filterOrFail(
-      (milk) => menuItem.availableMilks.some((availableMilk) => availableMilk === milk),
-      (milk) => invalidOrderInput(`${menuItem.name} does not support milk option "${milk}"`),
-    ),
-  );
-});
-
-const resolveTemperature = Effect.fnUntraced(function* (
-  menuItem: MenuItem,
-  temperature: string | undefined,
-): Effect.fn.Return<Temperature, InvalidOrderInputError> {
-  const selectedTemperature = yield* Option.fromNullishOr(temperature).pipe(
-    Option.match({
-      onNone: () => Effect.succeed(defaultTemperatureFor(menuItem)),
-      onSome: (t) =>
-        decodeTemperature(t).pipe(
-          Effect.catchTag("SchemaError", () =>
-            Effect.fail(
-              invalidOrderInput(`temperature must be one of: ${availableValues(temperatures)}`),
-            ),
-          ),
-        ),
-    }),
-  );
-
-  return yield* Effect.succeed(selectedTemperature).pipe(
-    Effect.filterOrFail(
-      (temperature) =>
-        menuItem.availableTemperatures.some(
-          (availableTemperature) => availableTemperature === temperature,
-        ),
-      (temperature) =>
-        invalidOrderInput(`${menuItem.name} does not support temperature "${temperature}"`),
-    ),
-  );
-});
-
-const resolveShots = Effect.fnUntraced(function* (
-  menuItem: MenuItem,
-  shots: number | undefined,
-): Effect.fn.Return<ShotCount, InvalidOrderInputError> {
-  const selectedShots = shots ?? defaultShotsFor(menuItem);
-
-  const shotCount = yield* decodeShotCount(selectedShots).pipe(
-    Effect.catchTag("SchemaError", () =>
-      Effect.fail(invalidOrderInput("shots must be a non-negative integer")),
-    ),
-  );
-
-  return yield* Effect.succeed(shotCount).pipe(
-    Effect.filterOrFail(
-      (shotCount) => menuItem.kind !== "tea" || shotCount === 0,
-      () => invalidOrderInput("Tea drinks do not support extra shots"),
-    ),
-    Effect.filterOrFail(
-      (shotCount) => shotCount <= menuItem.maxShots,
-      () => invalidOrderInput(`${menuItem.name} supports at most ${menuItem.maxShots} shot(s)`),
-    ),
-  );
-});
-
-const resolveQuantity = Effect.fnUntraced(function* (
-  quantity: number | undefined,
-): Effect.fn.Return<Quantity, InvalidOrderInputError> {
-  const selectedQuantity = quantity ?? defaultQuantity;
-
-  return yield* decodeQuantity(selectedQuantity).pipe(
-    Effect.catchTag("SchemaError", () =>
-      Effect.fail(invalidOrderInput("quantity must be a positive integer")),
-    ),
-  );
-});
+export { invalidOrderInput } from "./orderItemOptions.ts";
 
 const findMenuItem = Effect.fnUntraced(function* (
   drinkId: string,
