@@ -144,7 +144,7 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
       Effect.gen(function* () {
         const orderRepository = yield* OrderRepository;
         const order = makeOrder({
-          id: "order-0001",
+          id: "order_00000000000000000000000001",
           items: [
             {
               drinkId: "latte",
@@ -177,7 +177,7 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
           ownerUserId: "user-avery",
           items: [
             {
-              id: "cart-item-0001",
+              id: "cart_item_00000000000000000000000001",
               drinkId: "latte",
               size: "medium",
               milk: "oat",
@@ -206,11 +206,11 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
       Effect.gen(function* () {
         const checkoutSessionRepository = yield* CheckoutSessionRepository;
         const earlierAverySession = makeCheckoutSession({
-          id: "checkout-session-0001",
+          id: "checkout_session_00000000000000000000000001",
           updatedAt: initialTime,
         });
         const laterAverySession = makeCheckoutSession({
-          id: "checkout-session-0002",
+          id: "checkout_session_00000000000000000000000002",
           updatedAt: laterTime,
           totalPrice: moneyFromCents(575),
           items: [
@@ -228,7 +228,7 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
           ],
         });
         const blakeSession = makeCheckoutSession({
-          id: "checkout-session-0003",
+          id: "checkout_session_00000000000000000000000003",
           ownerUserId: "user-blake",
           updatedAt: latestTime,
         });
@@ -256,9 +256,9 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
       "replaces existing orders when saving the same id again",
       Effect.gen(function* () {
         const orderRepository = yield* OrderRepository;
-        const original = makeOrder({ id: "order-0001" });
+        const original = makeOrder({ id: "order_00000000000000000000000001" });
         const updated = makeOrder({
-          id: "order-0001",
+          id: "order_00000000000000000000000001",
           status: "ready",
           items: [
             {
@@ -292,8 +292,8 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
       "lists orders in createdAt order and filters by status",
       Effect.gen(function* () {
         const orderRepository = yield* OrderRepository;
-        const laterReady = makeReadyOrder({ id: "order-0002" });
-        const earlierPending = makeOrder({ id: "order-0001" });
+        const laterReady = makeReadyOrder({ id: "order_00000000000000000000000002" });
+        const earlierPending = makeOrder({ id: "order_00000000000000000000000001" });
 
         yield* orderRepository.save(laterReady);
         yield* orderRepository.save(earlierPending);
@@ -310,10 +310,10 @@ export const defineRepositoryContract = (name: string, run: RunTest) => {
       "filters orders by owner and by owner plus status",
       Effect.gen(function* () {
         const orderRepository = yield* OrderRepository;
-        const averyPending = makeOrder({ id: "order-0001" });
-        const averyReady = makeReadyOrder({ id: "order-0002" });
+        const averyPending = makeOrder({ id: "order_00000000000000000000000001" });
+        const averyReady = makeReadyOrder({ id: "order_00000000000000000000000002" });
         const blakeReady = makeReadyOrder({
-          id: "order-0003",
+          id: "order_00000000000000000000000003",
           createdAt: latestTime,
           ownerUserId: "user-blake",
         });

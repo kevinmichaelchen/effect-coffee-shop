@@ -85,7 +85,7 @@ describe("MCP tools with persistence verification", () => {
           `Expected success but got success=${String(result.success)} orderId=${result.orderId}`,
         );
         assert.ok(result.orderId, `Expected order ID to be set`);
-        assert.match(result.orderId, /^order-\d{4}$/);
+        assert.match(result.orderId, /^order_[0123456789abcdefghjkmnpqrstvwxyz]{26}$/);
         assert.strictEqual(result.getOrderResult.structuredContent.id, result.orderId);
       }),
     90000, // Vitest timeout

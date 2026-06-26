@@ -90,14 +90,6 @@ export const DrizzleCheckoutSessionItemRowSchema = createSelectSchema(checkoutSe
   temperature: TemperatureSchema,
 });
 
-export const OrderIdSequenceRowSchema = Schema.Struct({
-  value: Schema.Int,
-});
-
-export const CheckoutSessionIdSequenceRowSchema = Schema.Struct({
-  value: Schema.Int,
-});
-
 type DrizzleMenuItemRow = typeof DrizzleMenuItemRowSchema.Type;
 type DrizzleOrderRow = typeof DrizzleOrderRowSchema.Type;
 type DrizzleOrderItemRow = typeof DrizzleOrderItemRowSchema.Type;

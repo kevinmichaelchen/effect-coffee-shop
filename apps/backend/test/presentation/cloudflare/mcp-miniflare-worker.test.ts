@@ -145,7 +145,7 @@ const verifyOrderResource = (request: McpRequest) =>
     const orderContent = order.contents[0];
 
     assert.isFalse(created.isError === true);
-    assert.match(orderId, /^order-\d{4}$/);
+    assert.match(orderId, /^order_[0123456789abcdefghjkmnpqrstvwxyz]{26}$/);
     assert.strictEqual(order.contents.length, 1);
     assert.strictEqual(orderContent?.uri, `coffee://orders/${orderId}`);
     assert.ok(orderContent?.text !== undefined);

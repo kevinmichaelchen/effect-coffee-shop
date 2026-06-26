@@ -3,18 +3,19 @@
  *
  * @module
  */
+import { makeTypeId, type TypeIdFrom } from "@just-be/effect-typed-id";
 import * as Schema from "effect/Schema";
 import { MoneySchema } from "./money.ts";
 import { CoffeeOrderItemSchema } from "./order.ts";
+import { makeTypeIdSchema } from "./typed-id.ts";
 
-const checkoutSessionIdPattern = /^checkout-session-\d+$/;
-
-export const CheckoutSessionIdSchema = Schema.String.check(
-  Schema.isPattern(checkoutSessionIdPattern),
-)
-  .pipe(Schema.brand("CheckoutSessionId"))
-  .annotate({ identifier: "CheckoutSessionId" });
-export type CheckoutSessionId = typeof CheckoutSessionIdSchema.Type;
+export const CheckoutSessionIdFactory = makeTypeId("checkout_session", {
+  brand: "CheckoutSessionId",
+});
+export type CheckoutSessionId = TypeIdFrom<typeof CheckoutSessionIdFactory>;
+export const CheckoutSessionIdSchema = makeTypeIdSchema(CheckoutSessionIdFactory).annotate({
+  identifier: "CheckoutSessionId",
+});
 export const checkoutSessionIdFromString = Schema.decodeUnknownSync(CheckoutSessionIdSchema);
 
 export const checkoutSessionStatuses = ["awaiting_confirmation"] as const;

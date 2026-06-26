@@ -19,6 +19,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "catalog:",
     "@effect-coffee-shop/coffee-assistant": "workspace:*",
     "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-backend": "workspace:*",
@@ -29,7 +30,6 @@
     "@effect-coffee-shop/coffee-runtime-shared": "workspace:*",
     "@effect-coffee-shop/http-routing": "workspace:*",
     "alchemy": "catalog:",
-    "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "effect": "catalog:"
   },

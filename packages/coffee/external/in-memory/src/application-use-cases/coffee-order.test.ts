@@ -17,6 +17,7 @@ import {
 } from "@effect-coffee-shop/coffee-core/application/use-cases/index";
 
 const provideSystemActor = Effect.provideService(CurrentActor, systemActor);
+const orderIdPattern = /^order_[0123456789abcdefghjkmnpqrstvwxyz]{26}$/;
 
 describe("coffee order workflow", () => {
   it.effect("runs a full happy-path lifecycle in memory", () =>
@@ -63,7 +64,7 @@ describe("coffee order workflow", () => {
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),
   );
 
-  it.effect("generates human-readable ids while keeping createdAt serializable", () =>
+  it.effect("generates TypeIDs while keeping createdAt serializable", () =>
     Effect.gen(function* () {
       const first = yield* placeOrder({
         customerName: "Avery",
@@ -75,8 +76,9 @@ describe("coffee order workflow", () => {
       });
       const encodedFirst = yield* Schema.encodeUnknownEffect(Schema.UnknownFromJsonString)(first);
 
-      assert.strictEqual(first.id, "order-0001");
-      assert.strictEqual(second.id, "order-0002");
+      assert.match(first.id, orderIdPattern);
+      assert.match(second.id, orderIdPattern);
+      assert.notStrictEqual(first.id, second.id);
       assert.isTrue(DateTime.isUtc(first.createdAt));
       assert.match(encodedFirst, /"createdAt":"\d{4}-\d{2}-\d{2}T/);
     }).pipe(provideSystemActor, Effect.provide(InMemoryCoffeeAppLive)),

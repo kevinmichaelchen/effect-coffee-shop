@@ -41,7 +41,7 @@ export const EmptyActionInputSchema = Schema.Struct({});
 
 export const OrderIdActionInputSchema = Schema.Struct({
   orderId: OrderIdSchema.annotate({
-    description: "Coffee shop ticket id, such as order-0001.",
+    description: "Coffee shop ticket id, such as order_00000000000000000000000001.",
   }),
 });
 

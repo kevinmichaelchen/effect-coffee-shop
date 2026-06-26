@@ -52,7 +52,7 @@ describe("sqlite row models", () => {
 
   it("decodes order rows from snake_case storage keys into camelCase models", () => {
     const order = decodeSqlOrder({
-      id: "order-0001",
+      id: "order_00000000000000000000000001",
       customer_name: "Avery",
       owner_user_id: "user-avery",
       status: "pending",
@@ -60,7 +60,7 @@ describe("sqlite row models", () => {
       created_at: "2026-01-01T10:00:00.000Z",
     });
     const item = decodeSqlOrderItem({
-      order_id: "order-0001",
+      order_id: "order_00000000000000000000000001",
       position: 0,
       drink_id: "latte",
       drink_name: "Latte",
@@ -78,7 +78,7 @@ describe("sqlite row models", () => {
     expect(order.customerName).toBe("Avery");
     expect(order.ownerUserId).toBe("user-avery");
     expect(moneyToCents(order.totalPrice)).toBe(1050);
-    expect(item.orderId).toBe("order-0001");
+    expect(item.orderId).toBe("order_00000000000000000000000001");
     expect(item.drinkId).toBe("latte");
     expect(item.drinkName).toBe("Latte");
     expect(moneyToCents(item.unitPrice)).toBe(525);
@@ -87,7 +87,7 @@ describe("sqlite row models", () => {
     expect(coffeeOrder.items[0]?.drinkId).toBe("latte");
     expect(moneyToCents(coffeeOrder.totalPrice)).toBe(1050);
     expect(encodeSqlOrder(order)).toEqual({
-      id: "order-0001",
+      id: "order_00000000000000000000000001",
       customer_name: "Avery",
       owner_user_id: "user-avery",
       status: "pending",
@@ -95,7 +95,7 @@ describe("sqlite row models", () => {
       created_at: "2026-01-01T10:00:00.000Z",
     });
     expect(encodeSqlOrderItem(item)).toEqual({
-      order_id: "order-0001",
+      order_id: "order_00000000000000000000000001",
       position: 0,
       drink_id: "latte",
       drink_name: "Latte",
@@ -113,7 +113,7 @@ describe("sqlite row models", () => {
   it("decodes cart rows from snake_case storage keys into camelCase models", () => {
     const decoded = decodeSqlCartItem({
       owner_user_id: "user-avery",
-      id: "cart-item-0001",
+      id: "cart_item_00000000000000000000000001",
       position: 0,
       drink_id: "latte",
       size: "medium",
@@ -131,7 +131,7 @@ describe("sqlite row models", () => {
     expect(Option.getOrElse(cartItem.milk, () => "missing")).toBe("oat");
     expect(encodeSqlCartItem(decoded)).toEqual({
       owner_user_id: "user-avery",
-      id: "cart-item-0001",
+      id: "cart_item_00000000000000000000000001",
       position: 0,
       drink_id: "latte",
       size: "medium",

@@ -3,19 +3,9 @@
  *
  * @module
  */
-import { index, integer, jsonb, pgSequence, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+import { index, integer, jsonb, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
 import type { Milk, Temperature } from "@effect-coffee-shop/coffee-core/domain/menu";
 import { authSchema } from "./auth-schema.ts";
-
-export const orderIdSequence = pgSequence("coffee_order_id_seq", {
-  startWith: 1,
-  increment: 1,
-});
-
-export const checkoutSessionIdSequence = pgSequence("coffee_checkout_session_id_seq", {
-  startWith: 1,
-  increment: 1,
-});
 
 export const menuItemsTable = pgTable(
   "menu_items",
@@ -154,13 +144,11 @@ export const checkoutSessionItemsTable = pgTable(
 );
 
 export const coffeeSchema = {
-  checkoutSessionIdSequence,
   checkoutSessionItemsTable,
   checkoutSessionsTable,
   cartItemsTable,
   cartsTable,
   menuItemsTable,
-  orderIdSequence,
   orderItemsTable,
   ordersTable,
 };
