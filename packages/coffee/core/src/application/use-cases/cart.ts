@@ -162,12 +162,7 @@ export const updateCartItem = Effect.fn("CoffeeOrders.updateCartItem")(function*
   const cart = yield* readActorCart();
   const currentItem = yield* Option.fromUndefinedOr(
     cart.items.find((item) => item.id === input.cartItemId),
-  ).pipe(
-    Option.match({
-      onNone: () => Effect.fail(invalidOrderInput(`cart item ${input.cartItemId} was not found`)),
-      onSome: Effect.succeed,
-    }),
-  );
+  ).pipe(Effect.fromOption(() => invalidOrderInput(`cart item ${input.cartItemId} was not found`)));
   const milk = Option.fromUndefinedOr(input.milk).pipe(Option.orElse(() => currentItem.milk));
   const temperature = Option.fromUndefinedOr(input.temperature).pipe(
     Option.orElse(() => currentItem.temperature),
@@ -261,11 +256,9 @@ export const checkoutCart = Effect.fn("CoffeeOrders.checkoutCart")(function* (
       Effect.mapError(internalAppErrorFromPersistence("Unable to load checkout session right now")),
     );
   const session = yield* sessionOption.pipe(
-    Option.match({
-      onNone: () =>
-        Effect.fail(invalidOrderInput(`checkout session ${input.checkoutSessionId} was not found`)),
-      onSome: Effect.succeed,
-    }),
+    Effect.fromOption(() =>
+      invalidOrderInput(`checkout session ${input.checkoutSessionId} was not found`),
+    ),
   );
 
   yield* Effect.succeed(session).pipe(

@@ -179,12 +179,7 @@ const findMenuItem = Effect.fnUntraced(function* (
 
   return yield* menuRepository.findById(drinkId).pipe(
     Effect.mapError(internalAppErrorFromPersistence("Unable to load menu item right now")),
-    Effect.flatMap(
-      Option.match({
-        onNone: () => Effect.fail(new DrinkNotFoundError({ drinkId })),
-        onSome: Effect.succeed,
-      }),
-    ),
+    Effect.flatMap((item) => Effect.fromOption(item, () => new DrinkNotFoundError({ drinkId }))),
   );
 });
 

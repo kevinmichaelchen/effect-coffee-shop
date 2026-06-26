@@ -4,7 +4,6 @@
  * @module
  */
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
 import {
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
@@ -56,12 +55,7 @@ const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* 
 
   const order = yield* orderRepository.getById(orderId).pipe(
     Effect.mapError(internalAppErrorFromPersistence("Unable to update order status right now")),
-    Effect.flatMap(
-      Option.match({
-        onNone: () => Effect.fail(new OrderNotFoundError({ orderId })),
-        onSome: Effect.succeed,
-      }),
-    ),
+    Effect.flatMap((order) => Effect.fromOption(order, () => new OrderNotFoundError({ orderId }))),
   );
 
   if (!canTransitionTo(order.status, to)) {
