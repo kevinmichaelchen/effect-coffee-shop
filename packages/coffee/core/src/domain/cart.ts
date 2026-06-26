@@ -3,18 +3,17 @@
  *
  * @module
  */
+import { makeTypeId, type TypeIdFrom } from "@just-be/effect-typed-id";
 import * as Schema from "effect/Schema";
 import { DrinkIdSchema, DrinkSizeSchema, MilkSchema, TemperatureSchema } from "./menu.ts";
 import { QuantitySchema, ShotCountSchema } from "./order-primitives.ts";
+import { makeTypeIdSchema } from "./typed-id.ts";
 
-const cartItemIdPattern = /^cart-item-\d+$/;
-
-export const CartItemIdSchema = Schema.String.check(Schema.isPattern(cartItemIdPattern))
-  .pipe(Schema.brand("CartItemId"))
-  .annotate({
-    identifier: "CartItemId",
-  });
-export type CartItemId = typeof CartItemIdSchema.Type;
+export const CartItemIdFactory = makeTypeId("cart_item", { brand: "CartItemId" });
+export type CartItemId = TypeIdFrom<typeof CartItemIdFactory>;
+export const CartItemIdSchema = makeTypeIdSchema(CartItemIdFactory).annotate({
+  identifier: "CartItemId",
+});
 export const cartItemIdFromString = Schema.decodeUnknownSync(CartItemIdSchema);
 
 export const CartItemSchema = Schema.Struct({

@@ -22,6 +22,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@just-be/effect-typed-id": "0.3.0",
     "effect": "catalog:"
   },
   "devDependencies": {

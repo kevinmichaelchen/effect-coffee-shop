@@ -3,23 +3,20 @@
  *
  * @module
  */
+import { makeTypeId, type TypeIdFrom } from "@just-be/effect-typed-id";
 import * as Schema from "effect/Schema";
 import { DrinkIdSchema, DrinkSizeSchema, MilkSchema, TemperatureSchema } from "./menu.ts";
 import { MoneySchema } from "./money.ts";
 import { CustomerNameSchema, QuantitySchema, ShotCountSchema } from "./order-primitives.ts";
+import { makeTypeIdSchema } from "./typed-id.ts";
 
 export const orderStatuses = ["pending", "brewing", "ready", "picked-up", "cancelled"] as const;
 export type OrderStatus = (typeof orderStatuses)[number];
 export const OrderStatusSchema = Schema.Literals(orderStatuses);
 
-const orderIdPattern = /^order-\d+$/;
-
-export const OrderIdSchema = Schema.String.check(Schema.isPattern(orderIdPattern))
-  .pipe(Schema.brand("OrderId"))
-  .annotate({
-    identifier: "OrderId",
-  });
-export type OrderId = typeof OrderIdSchema.Type;
+export const OrderIdFactory = makeTypeId("order", { brand: "OrderId" });
+export type OrderId = TypeIdFrom<typeof OrderIdFactory>;
+export const OrderIdSchema = makeTypeIdSchema(OrderIdFactory).annotate({ identifier: "OrderId" });
 export const orderIdFromString = Schema.decodeUnknownSync(OrderIdSchema);
 
 const OptionalStringSchema = Schema.OptionFromOptionalKey(Schema.String);

@@ -59,9 +59,10 @@ const resetDatabase = Effect.gen(function* () {
   yield* db.execute(sql`delete from carts`);
   yield* db.execute(sql`delete from order_items`);
   yield* db.execute(sql`delete from orders`);
-  yield* db.execute(sql`alter sequence coffee_checkout_session_id_seq restart with 1`);
-  yield* db.execute(sql`alter sequence coffee_order_id_seq restart with 1`);
 });
+
+const orderIdPattern = /^order_[0123456789abcdefghjkmnpqrstvwxyz]{26}$/;
+const checkoutSessionIdPattern = /^checkout_session_[0123456789abcdefghjkmnpqrstvwxyz]{26}$/;
 
 describeWithPostgres("Drizzle Postgres coffee repositories", () => {
   beforeAll(async () => {
@@ -88,7 +89,7 @@ describeWithPostgres("Drizzle Postgres coffee repositories", () => {
     );
   });
 
-  it("generates sequence-backed order ids", async () => {
+  it("generates TypeID-backed order ids", async () => {
     await run(
       Effect.gen(function* () {
         const orderIdGenerator = yield* OrderIdGenerator;
@@ -96,13 +97,14 @@ describeWithPostgres("Drizzle Postgres coffee repositories", () => {
         const first = yield* orderIdGenerator.next;
         const second = yield* orderIdGenerator.next;
 
-        expect(first).toBe("order-0001");
-        expect(second).toBe("order-0002");
+        expect(first).toMatch(orderIdPattern);
+        expect(second).toMatch(orderIdPattern);
+        expect(first).not.toBe(second);
       }),
     );
   });
 
-  it("generates sequence-backed checkout session ids", async () => {
+  it("generates TypeID-backed checkout session ids", async () => {
     await run(
       Effect.gen(function* () {
         const checkoutSessionIdGenerator = yield* CheckoutSessionIdGenerator;
@@ -110,8 +112,9 @@ describeWithPostgres("Drizzle Postgres coffee repositories", () => {
         const first = yield* checkoutSessionIdGenerator.next;
         const second = yield* checkoutSessionIdGenerator.next;
 
-        expect(first).toBe("checkout-session-0001");
-        expect(second).toBe("checkout-session-0002");
+        expect(first).toMatch(checkoutSessionIdPattern);
+        expect(second).toMatch(checkoutSessionIdPattern);
+        expect(first).not.toBe(second);
       }),
     );
   });

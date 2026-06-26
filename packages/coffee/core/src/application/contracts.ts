@@ -35,7 +35,7 @@ import {
 // domain-specific errors instead of boundary SchemaError failures.
 const BoundaryStringSchema = Schema.Trim;
 const CartItemIdInputSchema = CartItemIdSchema.annotate({
-  description: "Cart line id, such as cart-item-0001.",
+  description: "Cart line id, such as cart_item_00000000000000000000000001.",
 });
 const CheckoutSessionIdInputSchema = CheckoutSessionIdSchema.annotate({
   description: "Checkout session id returned by prepare_cart_checkout.",

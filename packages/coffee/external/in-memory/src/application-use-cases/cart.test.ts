@@ -29,6 +29,7 @@ import {
 
 const provideSystemActor = Effect.provideService(CurrentActor, systemActor);
 const decodeQuoteOrderRequest = Schema.decodeUnknownSync(QuoteOrderRequestSchema);
+const checkoutSessionIdPattern = /^checkout_session_[0123456789abcdefghjkmnpqrstvwxyz]{26}$/;
 const averyActor: AppActor = {
   displayName: "Avery",
   kind: "customer",
@@ -134,7 +135,7 @@ describe("cart and order planning", () => {
       const cart = yield* getCart();
       const orders = yield* listOrders({});
 
-      assert.strictEqual(session.id, "checkout-session-0001");
+      assert.match(session.id, checkoutSessionIdPattern);
       assert.strictEqual(session.status, "awaiting_confirmation");
       assert.strictEqual(session.ownerUserId, "system");
       assert.strictEqual(session.items.length, 1);
@@ -152,7 +153,9 @@ describe("cart and order planning", () => {
       yield* addCartItem({ drinkId: "latte", size: "medium" });
 
       const exit = yield* checkoutCart({
-        checkoutSessionId: checkoutSessionIdFromString("checkout-session-9999"),
+        checkoutSessionId: checkoutSessionIdFromString(
+          "checkout_session_0000000000000000000000000z",
+        ),
       }).pipe(Effect.exit);
 
       assert.isTrue(Exit.isFailure(exit));

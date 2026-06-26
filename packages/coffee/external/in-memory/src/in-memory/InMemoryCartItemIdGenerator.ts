@@ -3,18 +3,12 @@
  *
  * @module
  */
-import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { cartItemIdFromString } from "@effect-coffee-shop/coffee-core/domain/cart";
+import { CartItemIdFactory } from "@effect-coffee-shop/coffee-core/domain/cart";
 import { CartItemIdGenerator } from "@effect-coffee-shop/coffee-core/application/ports/CartItemIdGenerator";
-import {
-  makeMonotonicIdGenerator,
-  makePaddedIdFormatter,
-} from "@effect-coffee-shop/coffee-core/application/ports/monotonic-id-generator";
+import { makeTypeIdGenerator } from "@effect-coffee-shop/coffee-core/application/ports/type-id-generator";
 
-const formatCartItemId = makePaddedIdFormatter("cart-item", cartItemIdFromString);
-
-export const InMemoryCartItemIdGeneratorLive = Layer.effect(
+export const InMemoryCartItemIdGeneratorLive = Layer.succeed(
   CartItemIdGenerator,
-  makeMonotonicIdGenerator(formatCartItemId).pipe(Effect.map(CartItemIdGenerator.of)),
+  CartItemIdGenerator.of(makeTypeIdGenerator(CartItemIdFactory)),
 );

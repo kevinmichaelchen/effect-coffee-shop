@@ -158,8 +158,8 @@ describe("coffee agent auth", () => {
       const bobOrders = await listOrders(db, bob);
       expect(aliceOrders).toHaveLength(1);
       expect(bobOrders).toEqual([]);
-      await expect(getOrder(db, "order-0001", bob)).rejects.toThrowError(
-        "Order order-0001 was not found.",
+      await expect(getOrder(db, "order_00000000000000000000000001", bob)).rejects.toThrowError(
+        "Order order_00000000000000000000000001 was not found.",
       );
     });
   });

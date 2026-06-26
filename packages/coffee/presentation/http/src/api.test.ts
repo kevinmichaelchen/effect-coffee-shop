@@ -26,6 +26,7 @@ const orderPayload = {
   customerName: "Avery",
   items: [{ drinkId: "latte", size: "medium" }],
 } as const;
+const orderIdPattern = /^order_[0123456789abcdefghjkmnpqrstvwxyz]{26}$/;
 
 describe("http api success responses", () => {
   it.effect("creates orders through the typed client", () =>
@@ -37,7 +38,7 @@ describe("http api success responses", () => {
       });
 
       assert.strictEqual(response.status, 200);
-      assert.strictEqual(order.id, "order-0001");
+      assert.match(order.id, orderIdPattern);
       assert.strictEqual(order.status, "pending");
       assert.isTrue(DateTime.isUtc(order.createdAt));
     }).pipe(Effect.provide(HttpApiTestLive)),
@@ -53,7 +54,7 @@ describe("http api success responses", () => {
       );
 
       assert.strictEqual(response.status, 200);
-      assert.strictEqual(body.id, "order-0001");
+      assert.match(body.id, orderIdPattern);
       assert.strictEqual(body.status, "pending");
       assert.match(body.createdAt, /^\d{4}-\d{2}-\d{2}T/);
     }).pipe(Effect.provide(HttpApiTestLive)),
@@ -79,12 +80,12 @@ describe("http api error responses", () => {
 
   it.effect("maps missing orders to 404", () =>
     Effect.gen(function* () {
-      const response = yield* HttpClient.get("/orders/order-9999");
+      const response = yield* HttpClient.get("/orders/order_0000000000000000000000000z");
       const body = yield* Schema.decodeUnknownEffect(OrderNotFoundError)(yield* response.json);
 
       assert.strictEqual(response.status, 404);
       assert.strictEqual(body._tag, "OrderNotFoundError");
-      assert.strictEqual(body.orderId, "order-9999");
+      assert.strictEqual(body.orderId, "order_0000000000000000000000000z");
     }).pipe(Effect.provide(HttpApiTestLive)),
   );
 

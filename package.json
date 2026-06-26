@@ -7,6 +7,7 @@
     "packages": ["apps/*", "packages/http-routing", "packages/coffee/core", "packages/coffee/assistant", "packages/coffee/auth", "packages/coffee/backend", "packages/coffee/external/*", "packages/coffee/presentation/*", "packages/coffee/runtime/*"],
     "catalog": {
       "@better-auth/agent-auth": "0.4.5",
+      "@better-auth/drizzle-adapter": "1.6.11",
       "@better-auth/passkey": "^1.6.11",
       "@cloudflare/workers-types": "^4.20260518.1",
       "@effect/platform-bun": "4.0.0-beta.90",

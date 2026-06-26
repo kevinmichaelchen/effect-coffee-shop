@@ -173,6 +173,7 @@
       "name": "@effect-coffee-shop/coffee-core",
       "version": "0.1.0",
       "dependencies": {
+        "@just-be/effect-typed-id": "0.3.0",
         "effect": "catalog:",
       },
       "devDependencies": {
@@ -327,6 +328,7 @@
       "name": "@effect-coffee-shop/coffee-runtime-aws",
       "version": "0.1.0",
       "dependencies": {
+        "@better-auth/drizzle-adapter": "catalog:",
         "@effect-coffee-shop/coffee-assistant": "workspace:*",
         "@effect-coffee-shop/coffee-auth": "workspace:*",
         "@effect-coffee-shop/coffee-backend": "workspace:*",
@@ -337,7 +339,6 @@
         "@effect-coffee-shop/coffee-runtime-shared": "workspace:*",
         "@effect-coffee-shop/http-routing": "workspace:*",
         "alchemy": "catalog:",
-        "better-auth": "catalog:",
         "drizzle-orm": "catalog:",
         "effect": "catalog:",
       },
@@ -436,6 +437,7 @@
   },
   "catalog": {
     "@better-auth/agent-auth": "0.4.5",
+    "@better-auth/drizzle-adapter": "1.6.11",
     "@better-auth/passkey": "^1.6.11",
     "@cloudflare/workers-types": "^4.20260518.1",
     "@effect/platform-bun": "4.0.0-beta.90",
@@ -948,6 +950,8 @@
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.9", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.0.3", "@jridgewell/sourcemap-codec": "^1.4.10" } }, "sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ=="],
 
     "@js-temporal/polyfill": ["@js-temporal/polyfill@0.5.1", "", { "dependencies": { "jsbi": "^4.3.0" } }, "sha512-hloP58zRVCRSpgDxmqCWJNlizAlUgJFqG2ypq79DCvyv9tHjRYMDOcPFjzfl/A1/YxDvRCZz8wvZvmapQnKwFQ=="],
+
+    "@just-be/effect-typed-id": ["@just-be/effect-typed-id@0.3.0", "", { "peerDependencies": { "effect": "^4.0.0-beta.90" } }, "sha512-PPln6xFurEUaF9KogKPxunpdmbBM6ce4re791AWZGvtOpspJoy6lQAOsA41FppxUhLnf1XOLlU8/UpXHPWiomg=="],
 
     "@levischuck/tiny-cbor": ["@levischuck/tiny-cbor@0.2.11", "", {}, "sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow=="],
 
