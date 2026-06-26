@@ -14,7 +14,7 @@ class HttpResponseDecodeError extends Schema.TaggedErrorClass<HttpResponseDecode
   },
 ) {}
 
-interface JsonRequestInputBase<SuccessSchema extends Schema.Decoder<unknown>> {
+interface JsonRequestInputBase<SuccessSchema extends Schema.ConstraintDecoder<unknown, never>> {
   readonly errorMessage?: string;
   readonly init?: RequestInit;
   readonly path: string;
@@ -22,44 +22,44 @@ interface JsonRequestInputBase<SuccessSchema extends Schema.Decoder<unknown>> {
 }
 
 interface JsonRequestInputWithError<
-  SuccessSchema extends Schema.Decoder<unknown>,
-  ErrorSchema extends Schema.Decoder<unknown>,
+  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
+  ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
 > extends JsonRequestInputBase<SuccessSchema> {
   readonly errorSchema: ErrorSchema;
   readonly readErrorMessage: (error: ErrorSchema["Type"]) => string;
 }
 
 interface JsonRequestInputWithoutError<
-  SuccessSchema extends Schema.Decoder<unknown>,
+  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
 > extends JsonRequestInputBase<SuccessSchema> {
   readonly errorSchema?: undefined;
   readonly readErrorMessage?: undefined;
 }
 
 type JsonRequestInput<
-  SuccessSchema extends Schema.Decoder<unknown>,
-  ErrorSchema extends Schema.Decoder<unknown>,
+  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
+  ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
 > =
   | JsonRequestInputWithError<SuccessSchema, ErrorSchema>
   | JsonRequestInputWithoutError<SuccessSchema>;
 
-export function requestJson<SuccessSchema extends Schema.Decoder<unknown>>(
+export function requestJson<SuccessSchema extends Schema.ConstraintDecoder<unknown, never>>(
   input: JsonRequestInputWithoutError<SuccessSchema>,
 ): Promise<SuccessSchema["Type"]>;
 export function requestJson<
-  SuccessSchema extends Schema.Decoder<unknown>,
-  ErrorSchema extends Schema.Decoder<unknown>,
+  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
+  ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
 >(input: JsonRequestInputWithError<SuccessSchema, ErrorSchema>): Promise<SuccessSchema["Type"]>;
 export async function requestJson<
-  SuccessSchema extends Schema.Decoder<unknown>,
-  ErrorSchema extends Schema.Decoder<unknown>,
+  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
+  ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
 >(input: JsonRequestInput<SuccessSchema, ErrorSchema>): Promise<SuccessSchema["Type"]> {
   return Effect.runPromise(requestJsonEffect(input));
 }
 
 function requestJsonEffect<
-  SuccessSchema extends Schema.Decoder<unknown>,
-  ErrorSchema extends Schema.Decoder<unknown>,
+  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
+  ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
 >(
   input: JsonRequestInput<SuccessSchema, ErrorSchema>,
 ): Effect.Effect<SuccessSchema["Type"], HttpRequestError | HttpResponseDecodeError> {
@@ -91,8 +91,8 @@ function fetchResponse(input: {
 }
 
 function rejectRequestError<
-  SuccessSchema extends Schema.Decoder<unknown>,
-  ErrorSchema extends Schema.Decoder<unknown>,
+  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
+  ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
 >(
   response: Response,
   input: JsonRequestInput<SuccessSchema, ErrorSchema>,
@@ -132,7 +132,7 @@ function rejectRequestError<
   );
 }
 
-function readResponseJson<SuccessSchema extends Schema.Decoder<unknown>>(
+function readResponseJson<SuccessSchema extends Schema.ConstraintDecoder<unknown, never>>(
   response: Response,
   path: string,
   schema: SuccessSchema,
@@ -156,7 +156,7 @@ function readResponseText(
   });
 }
 
-function decodeJsonText<SchemaType extends Schema.Decoder<unknown>>(
+function decodeJsonText<SchemaType extends Schema.ConstraintDecoder<unknown, never>>(
   rawBody: string,
   status: number,
   path: string,

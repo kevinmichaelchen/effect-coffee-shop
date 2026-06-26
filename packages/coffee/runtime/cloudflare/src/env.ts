@@ -63,7 +63,7 @@ class CloudflareSecretBindingError extends Schema.TaggedErrorClass<CloudflareSec
   "CloudflareSecretBindingError",
   {
     message: Schema.String,
-    cause: Schema.optional(Schema.Defect),
+    cause: Schema.optional(Schema.Defect()),
   },
 ) {}
 

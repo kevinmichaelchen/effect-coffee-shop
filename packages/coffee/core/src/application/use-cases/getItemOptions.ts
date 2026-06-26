@@ -4,7 +4,6 @@
  * @module
  */
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { DrinkNotFoundError } from "../../domain/errors.ts";
 import {
@@ -26,11 +25,8 @@ export const getItemOptions = Effect.fn("CoffeeOrders.getItemOptions")(function*
   const menuRepository = yield* MenuRepository;
   const item = yield* menuRepository.findById(request.drinkId).pipe(
     Effect.mapError(internalAppErrorFromPersistence("Unable to load menu item right now")),
-    Effect.flatMap(
-      Option.match({
-        onNone: () => Effect.fail(new DrinkNotFoundError({ drinkId: request.drinkId })),
-        onSome: Effect.succeed,
-      }),
+    Effect.flatMap((item) =>
+      Effect.fromOption(item, () => new DrinkNotFoundError({ drinkId: request.drinkId })),
     ),
   );
 

@@ -11,7 +11,7 @@ export class PersistenceError extends Schema.TaggedErrorClass<PersistenceError>(
   "PersistenceError",
   {
     message: Schema.String,
-    cause: Schema.optional(Schema.Defect),
+    cause: Schema.optional(Schema.Defect()),
   },
   { httpApiStatus: 500 },
 ) {
@@ -32,7 +32,7 @@ export class InternalAppError extends Schema.TaggedErrorClass<InternalAppError>(
   "InternalAppError",
   {
     message: Schema.String,
-    cause: Schema.optional(Schema.Defect),
+    cause: Schema.optional(Schema.Defect()),
   },
   { httpApiStatus: 500 },
 ) {}

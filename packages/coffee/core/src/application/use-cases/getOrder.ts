@@ -4,7 +4,6 @@
  * @module
  */
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
 import { OrderNotFoundError } from "@effect-coffee-shop/coffee-core/domain/errors";
 import type { CoffeeOrder, OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
 import {
@@ -41,12 +40,7 @@ export const getOrder = Effect.fn("CoffeeOrders.getOrder")(function* (
 
   const order = yield* orderRepository.getById(orderId).pipe(
     Effect.mapError(internalAppErrorFromPersistence("Unable to load order right now")),
-    Effect.flatMap(
-      Option.match({
-        onNone: () => Effect.fail(new OrderNotFoundError({ orderId })),
-        onSome: Effect.succeed,
-      }),
-    ),
+    Effect.flatMap((order) => Effect.fromOption(order, () => new OrderNotFoundError({ orderId }))),
   );
 
   if (actor.kind === "customer" && order.ownerUserId !== actor.userId) {
