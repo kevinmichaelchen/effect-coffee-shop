@@ -161,36 +161,30 @@ const SessionApiLive = HttpApiBuilder.group(CoffeeHttpApi, "session", (handlers)
 );
 
 const OrdersApiLive = HttpApiBuilder.group(CoffeeHttpApi, "orders", (handlers) =>
-  handlers
-    .handle("create", ({ payload }) =>
+  handlers.handleAll({
+    create: ({ payload }) =>
       CoffeeOrderApp.use((app) => app.placeOrder(payload).pipe(Effect.map(toCoffeeOrderView))),
-    )
-    .handle("list", ({ query }) =>
+    list: ({ query }) =>
       CoffeeOrderApp.use((app) => app.listOrders(query).pipe(Effect.map(toCoffeeOrdersView))),
-    )
-    .handle("getById", ({ params }) =>
+    getById: ({ params }) =>
       CoffeeOrderApp.use((app) => app.getOrder(params.orderId).pipe(Effect.map(toCoffeeOrderView))),
-    )
-    .handle("startBrewing", ({ params }) =>
+    startBrewing: ({ params }) =>
       CoffeeOrderApp.use((app) =>
         app.startBrewing(params.orderId).pipe(Effect.map(toCoffeeOrderView)),
       ),
-    )
-    .handle("markReady", ({ params }) =>
+    markReady: ({ params }) =>
       CoffeeOrderApp.use((app) =>
         app.markReady(params.orderId).pipe(Effect.map(toCoffeeOrderView)),
       ),
-    )
-    .handle("pickUp", ({ params }) =>
+    pickUp: ({ params }) =>
       CoffeeOrderApp.use((app) =>
         app.pickUpOrder(params.orderId).pipe(Effect.map(toCoffeeOrderView)),
       ),
-    )
-    .handle("cancel", ({ params }) =>
+    cancel: ({ params }) =>
       CoffeeOrderApp.use((app) =>
         app.cancelOrder(params.orderId).pipe(Effect.map(toCoffeeOrderView)),
       ),
-    ),
+  }),
 );
 
 export const CoffeeHttpApiLive = Layer.provide(
