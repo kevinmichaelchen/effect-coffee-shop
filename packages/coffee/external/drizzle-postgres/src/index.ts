@@ -5,10 +5,15 @@
  */
 export { CoffeeDb, PgCoffeeClientLive } from "./db/Db.ts";
 export { DrizzlePostgresSchemaLive } from "./db/migrate.ts";
+export { DrizzlePgliteSchemaLive, makePgliteCoffeeDbLayer } from "./db/pglite.ts";
 export { DrizzlePostgresSchemaReady } from "./db/schema-ready.ts";
 export { authSchema } from "./db/auth-schema.ts";
 export { coffeeSchema, schema } from "./db/schema.ts";
-export { DrizzlePostgresCoffeeAppLive, DrizzlePostgresCoffeeRepositoriesLive } from "./live.ts";
+export {
+  DrizzleCoffeeAppLayer,
+  DrizzlePostgresCoffeeAppLive,
+  DrizzlePostgresCoffeeRepositoriesLive,
+} from "./live.ts";
 export { DrizzleCartItemIdGeneratorLive } from "./repositories/DrizzleCartItemIdGenerator.ts";
 export { DrizzleCartRepositoryLive } from "./repositories/DrizzleCartRepository.ts";
 export { DrizzleCheckoutSessionIdGeneratorLive } from "./repositories/DrizzleCheckoutSessionIdGenerator.ts";

@@ -26,12 +26,15 @@
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@effect/sql-pglite": "catalog:",
+    "@electric-sql/pglite": "catalog:",
     "@types/bun": "catalog:",
     "drizzle-kit": "catalog:",
     "lintcn": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
+    "pglite-test": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
