@@ -39,7 +39,7 @@ Useful APIs:
 - `HttpClient.filterStatusOk` / `HttpClientResponse.filterStatusOk` before decoding when non-2xx responses are failures.
 - `HttpClientResponse.schemaBodyJson(...)` for body-only decoding, `schemaJson(...)` for status/headers/body decoding, and `schemaNoBody(...)` for status/headers decoding.
 - `HttpClient.retryTransient(...)` for common transient HTTP failures.
-- `HttpClient.withRateLimiter(...)` for proactive pacing and learning from rate-limit headers. It requires a `RateLimiter` plus initial window, limit, and key options; it adds `RateLimiterError` to the error channel and retries `429` responses by default.
+- `HttpClient.withRateLimiter(...)` for proactive pacing and learning from rate-limit headers. It requires a shared `RateLimiter` plus initial window, limit, and key options; it adds `RateLimiterError` to the error channel. Always set a finite `times` value because `429` retries are unlimited by default.
 
 ## Retry And Rate Limits
 
@@ -54,7 +54,7 @@ Use `HttpClient.retryTransient(...)` for common transient HTTP failures:
 - `503`
 - `504`
 
-Use `HttpClient.withRateLimiter(...)` when the client should proactively pace requests and learn from rate-limit / `Retry-After` headers.
+Use `HttpClient.withRateLimiter(...)` when the client should proactively pace requests and learn from rate-limit / `Retry-After` headers. Acquire and transform the client once in a layer so concurrent and sequential requests share limiter state; constructing the limiter or transformed client per request defeats cross-request pacing and adaptive learning. Set `times` explicitly to bound automatic `429` retries.
 
 Use operation-level `Effect.retry(...)` when retry depends on domain-specific typed errors, provider payloads, or idempotency rules. Read `SCHEDULING.md` for custom schedules and `retryAfterMs` typed-provider patterns.
 
