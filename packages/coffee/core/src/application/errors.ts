@@ -3,7 +3,6 @@
  *
  * @module
  */
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
@@ -18,13 +17,13 @@ export class PersistenceError extends Schema.TaggedError<PersistenceError>()(
   static refail =
     (message: string) =>
     <A, E, R>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, PersistenceError, R> =>
-      Effect.catchCause(effect, (cause) =>
-        Effect.fail(
+      Effect.mapError(
+        effect,
+        (cause) =>
           new PersistenceError({
             message,
-            cause: Cause.squash(cause),
+            cause,
           }),
-        ),
       );
 }
 

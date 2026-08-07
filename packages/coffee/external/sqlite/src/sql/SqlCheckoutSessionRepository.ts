@@ -84,10 +84,12 @@ const decodeCheckoutSessionItemRows = Schema.decodeUnknownEffect(
   Schema.Array(CheckoutSessionItemRowSchema),
 );
 const decodeCheckoutSession = Schema.decodeUnknownEffect(Schema.toType(CheckoutSessionSchema));
-const decodeCoffeeOrderItem = Schema.decodeUnknownSync(CoffeeOrderItemSchema);
+const decodeCoffeeOrderItem = Schema.decodeUnknownEffect(CoffeeOrderItemSchema);
 const encodeDateTime = Schema.encodeSync(Schema.DateTimeUtcFromString);
 
-const toCoffeeOrderItem = (row: CheckoutSessionItemRow): CoffeeOrderItem =>
+const toCoffeeOrderItem = (
+  row: CheckoutSessionItemRow,
+): Effect.Effect<CoffeeOrderItem, Schema.SchemaError> =>
   decodeCoffeeOrderItem({
     drinkId: row.drinkId,
     drinkName: row.drinkName,
@@ -104,8 +106,12 @@ const toCoffeeOrderItem = (row: CheckoutSessionItemRow): CoffeeOrderItem =>
     }),
   });
 
-const toCheckoutSession = (row: CheckoutSessionRow, itemRows: readonly CheckoutSessionItemRow[]) =>
-  decodeCheckoutSession({
+const toCheckoutSession = Effect.fn("SqlCheckoutSessionRepository.toCheckoutSession")(function* (
+  row: CheckoutSessionRow,
+  itemRows: readonly CheckoutSessionItemRow[],
+) {
+  const items = yield* Effect.forEach(itemRows, toCoffeeOrderItem, { concurrency: 1 });
+  return yield* decodeCheckoutSession({
     id: row.id,
     ownerUserId: row.ownerUserId,
     status: row.status,
@@ -113,8 +119,9 @@ const toCheckoutSession = (row: CheckoutSessionRow, itemRows: readonly CheckoutS
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     expiresAt: row.expiresAt,
-    items: itemRows.map(toCoffeeOrderItem),
+    items,
   });
+});
 
 const decodeOptionalCheckoutSessionRow = (row: unknown) =>
   Option.match(Option.fromNullishOr(row), {
