@@ -21,7 +21,7 @@ const maxAssistantToolRounds = 4;
 const assistantMaxTokens = 256;
 const assistantToolLoopExhaustedMessage =
   "I couldn't finish the request because the tool loop did not converge.";
-const encodeJsonString = Schema.encodeUnknownSync(Schema.UnknownFromJsonString);
+const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
 
 interface AssistantConversationRoundInput {
   readonly conversation: readonly AssistantConversationMessage[];

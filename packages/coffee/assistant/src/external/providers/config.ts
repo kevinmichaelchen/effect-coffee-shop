@@ -43,15 +43,13 @@ export function getAssistantAiConfigFromEnv(
   const explicitProviderConfig: Option.Option<Option.Option<AssistantAiConfig>> = Match.value(
     provider,
   ).pipe(
-    Match.when(
-      assistantProviderOllama,
-      (): Option.Option<Option.Option<OllamaConfig>> =>
-        Option.some(
-          getOllamaConfig({
-            endpoint: ollamaEndpoint ?? defaultOllamaEndpoint,
-            model,
-          }),
-        ),
+    Match.when(assistantProviderOllama, (): Option.Option<Option.Option<OllamaConfig>> =>
+      Option.some(
+        getOllamaConfig({
+          endpoint: ollamaEndpoint ?? defaultOllamaEndpoint,
+          model,
+        }),
+      ),
     ),
     Match.when(assistantProviderWorkersAi, () => Option.some(workersAiRestConfig)),
     Match.when(assistantProviderWorkersAiRest, () => Option.some(workersAiRestConfig)),

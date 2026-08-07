@@ -18,7 +18,7 @@ import {
 export function decodeJsonTextEffect<
   SchemaType extends Schema.ConstraintDecoder<unknown, never>,
 >(input: { readonly provider: string; readonly rawBody: string; readonly schema: SchemaType }) {
-  return Schema.decodeUnknownEffect(Schema.UnknownFromJsonString)(input.rawBody).pipe(
+  return Schema.decodeUnknownEffect(Schema.fromJsonString(Schema.Unknown))(input.rawBody).pipe(
     Effect.flatMap(Schema.decodeUnknownEffect(input.schema)),
     Effect.catchTag("SchemaError", () =>
       Effect.fail(

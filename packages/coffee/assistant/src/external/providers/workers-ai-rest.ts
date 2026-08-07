@@ -54,7 +54,7 @@ const WorkersAiEnvelopeSchema = Schema.Struct({
 });
 
 type WorkersAiDecodedOutput = Schema.Schema.Type<typeof WorkersAiOutputSchema>;
-const encodeJsonString = Schema.encodeUnknownSync(Schema.UnknownFromJsonString);
+const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
 
 export function runWorkersAiOverRest(input: {
   readonly accountId: string;
