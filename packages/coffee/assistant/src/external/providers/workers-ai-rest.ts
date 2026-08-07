@@ -92,6 +92,7 @@ function rejectWorkersAiRequest(
     const envelope = yield* decodeJsonTextEffect({
       provider: "Workers AI",
       rawBody,
+      reportInput: true,
       schema: WorkersAiEnvelopeSchema,
     }).pipe(Effect.option);
     const message = envelope.pipe(

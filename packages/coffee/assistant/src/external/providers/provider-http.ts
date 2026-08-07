@@ -4,11 +4,13 @@
  * @module
  */
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/unstable/http";
+import * as RateLimiter from "effect/unstable/persistence/RateLimiter";
 import * as HttpClientResponse from "effect/unstable/http/HttpClientResponse";
 import {
   AssistantModelRequestError,
@@ -17,9 +19,19 @@ import {
 
 export function decodeJsonTextEffect<
   SchemaType extends Schema.ConstraintDecoder<unknown, never>,
->(input: { readonly provider: string; readonly rawBody: string; readonly schema: SchemaType }) {
+>(input: {
+  readonly provider: string;
+  readonly rawBody: string;
+  readonly reportInput?: boolean;
+  readonly schema: SchemaType;
+}) {
+  const decodeResponse =
+    input.reportInput === true
+      ? Schema.decodeUnknownEffect(input.schema, { reportInput: true })
+      : Schema.decodeUnknownEffect(input.schema);
+
   return Schema.decodeUnknownEffect(Schema.fromJsonString(Schema.Unknown))(input.rawBody).pipe(
-    Effect.flatMap(Schema.decodeUnknownEffect(input.schema)),
+    Effect.flatMap(decodeResponse),
     Effect.catchTag("SchemaError", () =>
       Effect.fail(
         new AssistantModelResponseDecodeError({
@@ -47,6 +59,11 @@ export function createProviderStatusMessage(input: {
   );
 }
 
+const ProviderHttpLive = Layer.merge(
+  FetchHttpClient.layer,
+  RateLimiter.layer.pipe(Layer.provide(RateLimiter.layerStoreMemory)),
+);
+
 function postJson(input: {
   readonly bearerToken: Redacted.Redacted<string> | undefined;
   readonly body: unknown;
@@ -68,8 +85,22 @@ function postJson(input: {
         }),
     ),
     Effect.flatMap((requestWithBody) =>
-      HttpClient.execute(requestWithBody).pipe(
-        Effect.provide(FetchHttpClient.layer),
+      Effect.gen(function* () {
+        const client = yield* HttpClient.HttpClient;
+        const limiter = yield* RateLimiter.RateLimiter;
+        const rateLimitedClient = client.pipe(
+          HttpClient.withRateLimiter({
+            key: input.provider,
+            limit: 50,
+            limiter,
+            times: 2,
+            window: "1 second",
+          }),
+        );
+
+        return yield* rateLimitedClient.execute(requestWithBody);
+      }).pipe(
+        Effect.provide(ProviderHttpLive),
         Effect.mapError(
           () =>
             new AssistantModelRequestError({
