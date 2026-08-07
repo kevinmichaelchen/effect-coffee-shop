@@ -18,7 +18,7 @@
     "typecheck": "tsgo --noEmit -p tsconfig.app.json && tsgo --noEmit -p tsconfig.node.json",
     "build": "vite build",
     "check": "bun run typecheck && bun run lint && bun run lint:custom && bun run fmt:check && bun run test && bun run build",
-    "lint": "oxlint -c .oxlintrc.json . && eslint .",
+    "lint": "oxlint -c .oxlintrc.json .",
     "lint:custom": "lintcn lint --tsconfig tsconfig.app.json",
     "lint:custom:build": "lintcn build",
     "lint:custom:list": "lintcn list",
