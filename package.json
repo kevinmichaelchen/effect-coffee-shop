@@ -143,7 +143,8 @@
     "fallow:dupes": "fallow dupes",
     "fallow:health": "fallow health",
     "fallow:audit": "fallow audit --changed-since origin/main",
-    "fallow:ci": "fallow --ci"
+    "fallow:ci": "fallow --ci",
+    "fallow:health:baseline": "fallow health --save-baseline .fallow/health-baseline.json --baseline-mode identity"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",

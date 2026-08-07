@@ -86,11 +86,20 @@
   "health": {
     "maxCyclomatic": 20,
     "maxCognitive": 15,
-    "maxCrap": 500
+    "maxCrap": 500,
+    "maxUnitSize": 60
+  },
+
+  "typeAware": {
+    "enabled": true,
+    "projects": ["packages/coffee/core/tsconfig.json"],
+    "require": "best-effort"
   },
 
   "audit": {
-    "gate": "new-only"
+    "gate": "new-only",
+    "healthBaseline": ".fallow/health-baseline.json",
+    "typeAware": false
   },
 
   "boundaries": {
