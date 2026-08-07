@@ -29,6 +29,11 @@ const ToolListResponseSchema = Schema.Struct({
   tools: Schema.Array(
     Schema.Struct({
       name: Schema.String,
+      outputSchema: Schema.optionalKey(
+        Schema.Struct({
+          type: Schema.Literal("object"),
+        }),
+      ),
     }),
   ),
 });
@@ -104,11 +109,15 @@ const verifyCatalogSurface = (request: McpRequest) =>
     const prompts = yield* request(PromptListResponseSchema, "prompts/list");
 
     const toolNames = tools.tools.map((tool) => tool.name).sort();
+    const listMenu = tools.tools.find((tool) => tool.name === "list_menu");
+    const listOrders = tools.tools.find((tool) => tool.name === "list_orders");
     const resourceUris = resources.resources.map((resource) => resource.uri).sort();
     const promptNames = prompts.prompts.map((prompt) => prompt.name).sort();
 
     assert.strictEqual(initialize.protocolVersion, "2025-06-18");
     assert.strictEqual(initialize.serverInfo.name, "Coffee Orders MCP");
+    assert.strictEqual(listMenu?.outputSchema?.type, "object");
+    assert.strictEqual(listOrders?.outputSchema?.type, "object");
     assert.deepStrictEqual(toolNames, [
       "add_cart_item",
       "cancel_order",

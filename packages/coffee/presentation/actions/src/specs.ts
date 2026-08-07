@@ -22,7 +22,7 @@ import {
   QuoteOrderRequestSchema,
   UpdateCartItemRequestSchema,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
-import type * as Schema from "effect/Schema";
+import * as Schema from "effect/Schema";
 import { AppErrorSchema, EmptyActionInputSchema, OrderIdActionInputSchema } from "./schemas.ts";
 
 const actionSpec = <Parameters extends Schema.Top, Success extends Schema.Top>(input: {
@@ -55,7 +55,7 @@ export const coffeeActionSpecs = {
   list_menu: actionSpec({
     description: "List the current coffee menu",
     parameters: EmptyActionInputSchema,
-    success: MenuViewSchema,
+    success: Schema.Struct({ menu: MenuViewSchema }),
   }),
   get_item_options: actionSpec({
     description: "Get valid options and defaults for one menu item",
@@ -85,7 +85,7 @@ export const coffeeActionSpecs = {
   list_orders: actionSpec({
     description: "List orders, optionally filtered by status",
     parameters: ListOrdersRequestSchema,
-    success: CoffeeOrdersViewSchema,
+    success: Schema.Struct({ orders: CoffeeOrdersViewSchema }),
   }),
   start_brewing: orderStatusActionSpec("Move an order from pending to brewing"),
   mark_ready: orderStatusActionSpec("Move an order from brewing to ready"),
