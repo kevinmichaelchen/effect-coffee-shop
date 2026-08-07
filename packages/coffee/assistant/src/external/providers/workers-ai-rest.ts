@@ -22,6 +22,7 @@ import {
   createProviderStatusMessage,
   decodeJsonTextEffect,
   postJsonResponse,
+  type ProviderHttpClient,
   readResponseText,
 } from "./provider-http.ts";
 
@@ -59,6 +60,7 @@ const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.U
 export function runWorkersAiOverRest(input: {
   readonly accountId: string;
   readonly apiKey: Redacted.Redacted<string>;
+  readonly client: ProviderHttpClient;
   readonly model: string;
   readonly request: AiTextGenerationInput;
 }): Effect.Effect<
@@ -68,6 +70,7 @@ export function runWorkersAiOverRest(input: {
   return postJsonResponse({
     bearerToken: input.apiKey,
     body: input.request,
+    client: input.client,
     onResponse: readWorkersAiOutput,
     onStatusError: rejectWorkersAiRequest,
     provider: "Workers AI",

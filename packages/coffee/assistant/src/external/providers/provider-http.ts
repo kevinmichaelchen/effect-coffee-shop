@@ -59,12 +59,30 @@ export function createProviderStatusMessage(input: {
   );
 }
 
-const ProviderHttpLive = Layer.merge(
+export const ProviderHttpLive = Layer.merge(
   FetchHttpClient.layer,
   RateLimiter.layer.pipe(Layer.provide(RateLimiter.layerStoreMemory)),
 );
 
+export const makeProviderHttpClient = Effect.fn("ProviderHttpClient.make")(function* () {
+  const client = yield* HttpClient.HttpClient;
+  const limiter = yield* RateLimiter.RateLimiter;
+
+  return client.pipe(
+    HttpClient.withRateLimiter({
+      key: (request) => request.url,
+      limit: 50,
+      limiter,
+      times: 2,
+      window: "1 second",
+    }),
+  );
+});
+
+export type ProviderHttpClient = Effect.Success<ReturnType<typeof makeProviderHttpClient>>;
+
 function postJson(input: {
+  readonly client: ProviderHttpClient;
   readonly bearerToken: Redacted.Redacted<string> | undefined;
   readonly body: unknown;
   readonly provider: string;
@@ -85,22 +103,7 @@ function postJson(input: {
         }),
     ),
     Effect.flatMap((requestWithBody) =>
-      Effect.gen(function* () {
-        const client = yield* HttpClient.HttpClient;
-        const limiter = yield* RateLimiter.RateLimiter;
-        const rateLimitedClient = client.pipe(
-          HttpClient.withRateLimiter({
-            key: input.provider,
-            limit: 50,
-            limiter,
-            times: 2,
-            window: "1 second",
-          }),
-        );
-
-        return yield* rateLimitedClient.execute(requestWithBody);
-      }).pipe(
-        Effect.provide(ProviderHttpLive),
+      input.client.execute(requestWithBody).pipe(
         Effect.mapError(
           () =>
             new AssistantModelRequestError({
@@ -116,6 +119,7 @@ function postJson(input: {
 export function postJsonResponse<A, E>(input: {
   readonly bearerToken?: Redacted.Redacted<string>;
   readonly body: unknown;
+  readonly client: ProviderHttpClient;
   readonly onResponse: (response: HttpClientResponse.HttpClientResponse) => Effect.Effect<A, E>;
   readonly onStatusError: (
     response: HttpClientResponse.HttpClientResponse,
@@ -127,6 +131,7 @@ export function postJsonResponse<A, E>(input: {
     const response = yield* postJson({
       bearerToken: input.bearerToken,
       body: input.body,
+      client: input.client,
       provider: input.provider,
       url: input.url,
     });

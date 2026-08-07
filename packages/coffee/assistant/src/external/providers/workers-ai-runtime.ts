@@ -14,6 +14,7 @@ import {
   type AssistantModelRunnerService,
   extractResponseText,
 } from "../../application/model.ts";
+import type { ProviderHttpClient } from "./provider-http.ts";
 import { runWorkersAiOverRest } from "./workers-ai-rest.ts";
 import {
   createGatewayOptions,
@@ -46,8 +47,11 @@ export type WorkersAiConfig =
       readonly model: string;
     };
 
-export function makeWorkersAiRunner(config: WorkersAiConfig): AssistantModelRunnerService {
-  const runner = createWorkersAiRunner(config);
+export function makeWorkersAiRunner(
+  config: WorkersAiConfig,
+  client: ProviderHttpClient,
+): AssistantModelRunnerService {
+  const runner = createWorkersAiRunner(config, client);
 
   return {
     run: (request) =>
@@ -88,7 +92,10 @@ interface WorkersAiRunner {
   >;
 }
 
-function createWorkersAiRunner(config: WorkersAiConfig): WorkersAiRunner {
+function createWorkersAiRunner(
+  config: WorkersAiConfig,
+  client: ProviderHttpClient,
+): WorkersAiRunner {
   if (config.kind === "workers-ai-binding") {
     return {
       run: (model, inputs, metadata, eventId) => {
@@ -108,6 +115,7 @@ function createWorkersAiRunner(config: WorkersAiConfig): WorkersAiRunner {
       runWorkersAiOverRest({
         accountId: config.accountId,
         apiKey: config.apiKey,
+        client,
         model,
         request: inputs,
       }),

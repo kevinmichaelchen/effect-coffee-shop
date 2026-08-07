@@ -12,6 +12,7 @@ import * as Schema from "effect/Schema";
 import * as ScopedCache from "effect/ScopedCache";
 import { AssistantModelRunner, type AssistantModelRunnerService } from "../../application/model.ts";
 import { type OllamaConfig, makeOllamaRunner } from "./ollama-runtime.ts";
+import { makeProviderHttpClient, ProviderHttpLive } from "./provider-http.ts";
 import {
   type WorkersAiBinding,
   type WorkersAiConfig,
@@ -120,10 +121,13 @@ export function getAssistantModelLabel(config: AssistantAiConfig): string {
   return config.model;
 }
 
-export function createAssistantModelRunner(config: AssistantAiConfig): AssistantModelRunnerService {
+export function createAssistantModelRunner(
+  config: AssistantAiConfig,
+  client: Parameters<typeof makeWorkersAiRunner>[1],
+): AssistantModelRunnerService {
   return Match.value(config).pipe(
-    Match.when({ kind: "ollama" }, makeOllamaRunner),
-    Match.orElse(makeWorkersAiRunner),
+    Match.when({ kind: "ollama" }, (ollamaConfig) => makeOllamaRunner(ollamaConfig, client)),
+    Match.orElse((workersAiConfig) => makeWorkersAiRunner(workersAiConfig, client)),
   );
 }
 
@@ -133,14 +137,15 @@ export function createAssistantModelRunnerLayer(
   return Layer.effect(
     AssistantModelRunner,
     Effect.gen(function* () {
+      const client = yield* makeProviderHttpClient();
       const runnerCache = yield* ScopedCache.make({
         capacity: 1,
-        lookup: (_model: string) => Effect.succeed(createAssistantModelRunner(config)),
+        lookup: (_model: string) => Effect.succeed(createAssistantModelRunner(config, client)),
         timeToLive: "1 hour",
       });
 
       return yield* ScopedCache.get(runnerCache, getAssistantModelLabel(config));
-    }),
+    }).pipe(Effect.provide(ProviderHttpLive)),
   );
 }
 

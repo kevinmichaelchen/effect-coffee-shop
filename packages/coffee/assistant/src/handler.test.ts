@@ -21,6 +21,7 @@ import {
   type AssistantGatewayOptions,
 } from "./external/providers/index.ts";
 import { makeOllamaRunner } from "./external/providers/ollama-runtime.ts";
+import { makeProviderHttpClient, ProviderHttpLive } from "./external/providers/provider-http.ts";
 
 const assistantModel = "@cf/meta/llama-3.1-8b-instruct-fast";
 const localAssistantModel = "qwen3-beanline";
@@ -162,22 +163,29 @@ const createAimockOllamaModelLayer = (
 ): Layer.Layer<AssistantModelRunner> =>
   Layer.effect(
     AssistantModelRunner,
-    Effect.acquireRelease(
-      Effect.promise(async () => {
-        await mock.start();
+    Effect.gen(function* () {
+      const client = yield* makeProviderHttpClient();
 
-        return makeOllamaRunner({
-          endpoint: mock.url,
-          kind: "ollama",
-          model: localAssistantModel,
-        });
-      }),
-      () =>
-        Effect.gen(function* () {
-          requests.push(...mock.getRequests());
-          yield* Effect.promise(() => mock.stop());
+      return yield* Effect.acquireRelease(
+        Effect.promise(async () => {
+          await mock.start();
+
+          return makeOllamaRunner(
+            {
+              endpoint: mock.url,
+              kind: "ollama",
+              model: localAssistantModel,
+            },
+            client,
+          );
         }),
-    ),
+        () =>
+          Effect.gen(function* () {
+            requests.push(...mock.getRequests());
+            yield* Effect.promise(() => mock.stop());
+          }),
+      );
+    }).pipe(Effect.provide(ProviderHttpLive)),
   );
 
 const verifyWorkersAiRestEnvWinsOverAmbientOllama = () => {
