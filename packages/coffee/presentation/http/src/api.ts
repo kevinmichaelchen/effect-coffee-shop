@@ -10,6 +10,7 @@ import * as HttpApi from "effect/unstable/httpapi/HttpApi";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
+import * as HttpApiSchema from "effect/unstable/httpapi/HttpApiSchema";
 import {
   DrinkNotFoundError,
   InvalidOrderInputError,
@@ -84,7 +85,9 @@ const orderStatusEndpoint = <Name extends string, Path extends `/${string}`>(
 
 class HealthApi extends HttpApiGroup.make("health", { topLevel: true }).add(
   HttpApiEndpoint.get("check", "/health", {
-    success: HealthStatusSchema,
+    success: HttpApiSchema.WithHeaders(HealthStatusSchema, {
+      "cache-control": Schema.Literal("no-store"),
+    }),
   }),
 ) {}
 
@@ -143,7 +146,14 @@ export class CoffeeHttpApi extends HttpApi.make("coffee-order-api")
   .add(OrdersApi) {}
 
 const HealthApiLive = HttpApiBuilder.group(CoffeeHttpApi, "health", (handlers) =>
-  handlers.handle("check", () => Effect.succeed(HEALTH_STATUS)),
+  handlers.handle("check", () =>
+    Effect.succeed(
+      HttpApiSchema.withHeaders({
+        body: HEALTH_STATUS,
+        headers: { "cache-control": "no-store" },
+      }),
+    ),
+  ),
 );
 
 const MenuApiLive = HttpApiBuilder.group(CoffeeHttpApi, "menu", (handlers) =>

@@ -29,6 +29,18 @@ const orderPayload = {
 const orderIdPattern = /^order_[0123456789abcdefghjkmnpqrstvwxyz]{26}$/;
 
 describe("http api success responses", () => {
+  it.effect("returns typed health response headers", () =>
+    Effect.gen(function* () {
+      const client = yield* HttpApiClient.make(CoffeeHttpApi);
+      const health = yield* client.check();
+      const response = yield* HttpClient.get("/health");
+
+      assert.strictEqual(health.body.status, "ok");
+      assert.strictEqual(health.headers["cache-control"], "no-store");
+      assert.strictEqual(response.headers["cache-control"], "no-store");
+    }).pipe(Effect.provide(HttpApiTestLive)),
+  );
+
   it.effect("creates orders through the typed client", () =>
     Effect.gen(function* () {
       const client = yield* HttpApiClient.make(CoffeeHttpApi);
