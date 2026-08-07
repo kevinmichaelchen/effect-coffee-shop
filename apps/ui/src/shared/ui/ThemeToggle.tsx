@@ -10,6 +10,7 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ compact = false, theme, onToggle }: ThemeToggleProps) {
   const isDark = theme === "dark";
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- oxlint cannot resolve Lucide component types
   const Icon = isDark ? SunMedium : MoonStar;
   const label = isDark ? "Switch to light" : "Switch to dark";
 
