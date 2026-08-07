@@ -72,7 +72,7 @@ const trimmedOption = (value: string | undefined): Option.Option<string> =>
 
 export const invalidOrderInput = (message: string) => new InvalidOrderInputError({ message });
 
-const validateSize = Effect.fnUntraced(function* (
+const validateSize = Effect.fn("orderItems.validateSize")(function* (
   size: string,
 ): Effect.fn.Return<DrinkSize, InvalidOrderInputError> {
   return yield* decodeDrinkSize(size).pipe(
@@ -82,7 +82,7 @@ const validateSize = Effect.fnUntraced(function* (
   );
 });
 
-const resolveMilk = Effect.fnUntraced(function* (
+const resolveMilk = Effect.fn("orderItems.resolveMilk")(function* (
   menuItem: MenuItem,
   milk: string | undefined,
 ): Effect.fn.Return<Milk, InvalidOrderInputError> {
@@ -106,7 +106,7 @@ const resolveMilk = Effect.fnUntraced(function* (
   );
 });
 
-const resolveTemperature = Effect.fnUntraced(function* (
+const resolveTemperature = Effect.fn("orderItems.resolveTemperature")(function* (
   menuItem: MenuItem,
   temperature: string | undefined,
 ): Effect.fn.Return<Temperature, InvalidOrderInputError> {
@@ -136,7 +136,7 @@ const resolveTemperature = Effect.fnUntraced(function* (
   );
 });
 
-const resolveShots = Effect.fnUntraced(function* (
+const resolveShots = Effect.fn("orderItems.resolveShots")(function* (
   menuItem: MenuItem,
   shots: number | undefined,
 ): Effect.fn.Return<ShotCount, InvalidOrderInputError> {
@@ -160,7 +160,7 @@ const resolveShots = Effect.fnUntraced(function* (
   );
 });
 
-const resolveQuantity = Effect.fnUntraced(function* (
+const resolveQuantity = Effect.fn("orderItems.resolveQuantity")(function* (
   quantity: number | undefined,
 ): Effect.fn.Return<Quantity, InvalidOrderInputError> {
   const selectedQuantity = quantity ?? defaultQuantity;
@@ -172,7 +172,7 @@ const resolveQuantity = Effect.fnUntraced(function* (
   );
 });
 
-const findMenuItem = Effect.fnUntraced(function* (
+const findMenuItem = Effect.fn("orderItems.findMenuItem")(function* (
   drinkId: string,
 ): Effect.fn.Return<MenuItem, DrinkNotFoundError | InternalAppError, MenuRepository> {
   const menuRepository = yield* MenuRepository;
@@ -183,7 +183,7 @@ const findMenuItem = Effect.fnUntraced(function* (
   );
 });
 
-export const resolveOrderItem = Effect.fnUntraced(function* (
+export const resolveOrderItem = Effect.fn("orderItems.resolveOrderItem")(function* (
   request: OrderItemInput,
 ): Effect.fn.Return<
   CoffeeOrderItem,
@@ -214,7 +214,7 @@ export const resolveOrderItem = Effect.fnUntraced(function* (
   };
 });
 
-export const resolveOrderItems = Effect.fnUntraced(function* (
+export const resolveOrderItems = Effect.fn("orderItems.resolveOrderItems")(function* (
   items: readonly OrderItemInput[],
 ): Effect.fn.Return<readonly CoffeeOrderItem[], OrderItemResolutionError, MenuRepository> {
   const menuRepository = yield* MenuRepository;
@@ -232,7 +232,7 @@ export const resolveOrderItems = Effect.fnUntraced(function* (
   );
 });
 
-export const resolveOrderQuote = Effect.fnUntraced(function* (
+export const resolveOrderQuote = Effect.fn("orderItems.resolveOrderQuote")(function* (
   items: readonly OrderItemInput[],
 ): Effect.fn.Return<
   OrderQuote,

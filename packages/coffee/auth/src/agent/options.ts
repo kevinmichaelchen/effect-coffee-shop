@@ -72,7 +72,7 @@ export function createCoffeeAgentAppRunner(input: {
     Context.add(CurrentActor, toAgentActor(input.session)),
   );
 
-  return <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) =>
+  return <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp | CurrentActor>) =>
     effect.pipe(Effect.provide(liveLayer), Effect.provide(services));
 }
 

@@ -8,6 +8,7 @@ import { OrderNotFoundError } from "@effect-coffee-shop/coffee-core/domain/error
 import type { CoffeeOrder, OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
 import {
   AuthenticationRequiredError,
+  CurrentActor,
   requireSignedInActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import {
@@ -26,7 +27,7 @@ export const getOrder = Effect.fn("CoffeeOrders.getOrder")(function* (
 ): Effect.fn.Return<
   CoffeeOrder,
   AuthenticationRequiredError | OrderNotFoundError | InternalAppError,
-  OrderRepository
+  CurrentActor | OrderRepository
 > {
   const actor = yield* requireSignedInActor();
   const orderRepository = yield* OrderRepository;

@@ -14,6 +14,7 @@ import {
 import { type CoffeeOrder } from "@effect-coffee-shop/coffee-core/domain/order";
 import {
   AuthenticationRequiredError,
+  CurrentActor,
   requireSignedInActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import {
@@ -38,7 +39,7 @@ import { invalidOrderInput, resolveOrderQuote } from "./orderItems.ts";
 
 const decodeCustomerName = Schema.decodeUnknownEffect(CustomerNameSchema);
 
-const validateCustomerName = Effect.fnUntraced(function* (
+const validateCustomerName = Effect.fn("placeOrder.validateCustomerName")(function* (
   customerName: string,
 ): Effect.fn.Return<CustomerName, InvalidOrderInputError> {
   return yield* decodeCustomerName(customerName).pipe(
@@ -53,7 +54,7 @@ export const placeOrder = Effect.fn("CoffeeOrders.placeOrder")(function* (
 ): Effect.fn.Return<
   CoffeeOrder,
   AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
-  MenuRepository | OrderIdGenerator | OrderRepository
+  CurrentActor | MenuRepository | OrderIdGenerator | OrderRepository
 > {
   const actor = yield* requireSignedInActor();
   const orderIdGenerator = yield* OrderIdGenerator;
