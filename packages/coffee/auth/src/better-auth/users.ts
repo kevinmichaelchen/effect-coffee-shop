@@ -11,7 +11,7 @@ const DisplayNameSchema = Schema.Trim.check(
   Schema.isNonEmpty({ message: "displayName must not be blank" }),
 );
 
-const decodeJsonString = Schema.decodeUnknownSync(Schema.UnknownFromJsonString);
+const decodeJsonString = Schema.decodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
 const decodePasskeyRegistrationShape = Schema.decodeUnknownSync(PasskeyRegistrationContextSchema);
 const decodeDisplayName = Schema.decodeUnknownSync(DisplayNameSchema);
 

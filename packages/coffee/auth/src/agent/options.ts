@@ -42,21 +42,21 @@ const toAgentActor = (session: AgentSession) => ({
   userId: session.user.id,
 });
 
-class AgentCapabilityExecutionError extends Schema.TaggedErrorClass<AgentCapabilityExecutionError>()(
+class AgentCapabilityExecutionError extends Schema.TaggedError<AgentCapabilityExecutionError>()(
   "AgentCapabilityExecutionError",
   {
     message: Schema.String,
   },
 ) {}
 
-class AgentCapabilityInputError extends Schema.TaggedErrorClass<AgentCapabilityInputError>()(
+class AgentCapabilityInputError extends Schema.TaggedError<AgentCapabilityInputError>()(
   "AgentCapabilityInputError",
   {
     message: Schema.String,
   },
 ) {}
 
-class UnsupportedAgentCapabilityError extends Schema.TaggedErrorClass<UnsupportedAgentCapabilityError>()(
+class UnsupportedAgentCapabilityError extends Schema.TaggedError<UnsupportedAgentCapabilityError>()(
   "UnsupportedAgentCapabilityError",
   {
     capability: Schema.String,
