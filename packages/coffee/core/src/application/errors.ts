@@ -7,7 +7,7 @@ import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-export class PersistenceError extends Schema.TaggedErrorClass<PersistenceError>()(
+export class PersistenceError extends Schema.TaggedError<PersistenceError>()(
   "PersistenceError",
   {
     message: Schema.String,
@@ -28,7 +28,7 @@ export class PersistenceError extends Schema.TaggedErrorClass<PersistenceError>(
       );
 }
 
-export class InternalAppError extends Schema.TaggedErrorClass<InternalAppError>()(
+export class InternalAppError extends Schema.TaggedError<InternalAppError>()(
   "InternalAppError",
   {
     message: Schema.String,

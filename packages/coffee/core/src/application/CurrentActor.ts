@@ -43,7 +43,7 @@ export const CurrentActor = Context.Reference<AppActor>(
   },
 );
 
-export class AuthenticationRequiredError extends Schema.TaggedErrorClass<AuthenticationRequiredError>()(
+export class AuthenticationRequiredError extends Schema.TaggedError<AuthenticationRequiredError>()(
   "AuthenticationRequiredError",
   {
     message: Schema.String,
@@ -51,7 +51,7 @@ export class AuthenticationRequiredError extends Schema.TaggedErrorClass<Authent
   { httpApiStatus: 401 },
 ) {}
 
-export class StaffRoleRequiredError extends Schema.TaggedErrorClass<StaffRoleRequiredError>()(
+export class StaffRoleRequiredError extends Schema.TaggedError<StaffRoleRequiredError>()(
   "StaffRoleRequiredError",
   {
     message: Schema.String,

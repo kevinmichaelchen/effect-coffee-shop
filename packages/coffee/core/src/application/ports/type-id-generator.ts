@@ -1,4 +1,4 @@
-import type { TypeIdFactory, TypeIdFrom } from "@just-be/effect-typed-id";
+import type { TypeIdFactory, TypeIdOf } from "@just-be/effect-typed-id";
 import * as Crypto from "effect/Crypto";
 import * as Effect from "effect/Effect";
 
@@ -13,6 +13,6 @@ const GlobalCrypto = Crypto.make({
 
 export const makeTypeIdGenerator = <const Name extends string>(
   factory: TypeIdFactory<Name>,
-): TypeIdGenerator<TypeIdFrom<TypeIdFactory<Name>>> => ({
+): TypeIdGenerator<TypeIdOf<Name>> => ({
   next: factory.generate.pipe(Effect.provideService(Crypto.Crypto, GlobalCrypto), Effect.orDie),
 });
