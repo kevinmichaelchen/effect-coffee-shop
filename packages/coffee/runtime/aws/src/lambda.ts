@@ -38,19 +38,17 @@ const runtimeEnvConfig = Config.all({
   coffeeStaffUserIds: optionalVariableConfig(awsEnvNames.coffeeStaffUserIds),
   ollamaHost: optionalVariableConfig(awsEnvNames.ollamaHost),
 }).pipe(
-  Config.map(
-    (env): AwsLambdaEnv => ({
-      BETTER_AUTH_SECRET: Redacted.value(env.betterAuthSecret),
-      CLOUDFLARE_ACCOUNT_ID: env.assistantWorkersAiAccountId,
-      CLOUDFLARE_API_TOKEN: Redacted.value(env.assistantWorkersAiApiToken),
-      COFFEE_ASSISTANT_MODEL: env.coffeeAssistantModel,
-      COFFEE_ASSISTANT_OLLAMA_URL: env.coffeeAssistantOllamaUrl,
-      COFFEE_ASSISTANT_PROVIDER: env.coffeeAssistantProvider,
-      COFFEE_POSTGRES_URL: Redacted.value(env.coffeePostgresUrl),
-      COFFEE_STAFF_USER_IDS: env.coffeeStaffUserIds,
-      OLLAMA_HOST: env.ollamaHost,
-    }),
-  ),
+  Config.map((env): AwsLambdaEnv => ({
+    BETTER_AUTH_SECRET: Redacted.value(env.betterAuthSecret),
+    CLOUDFLARE_ACCOUNT_ID: env.assistantWorkersAiAccountId,
+    CLOUDFLARE_API_TOKEN: Redacted.value(env.assistantWorkersAiApiToken),
+    COFFEE_ASSISTANT_MODEL: env.coffeeAssistantModel,
+    COFFEE_ASSISTANT_OLLAMA_URL: env.coffeeAssistantOllamaUrl,
+    COFFEE_ASSISTANT_PROVIDER: env.coffeeAssistantProvider,
+    COFFEE_POSTGRES_URL: Redacted.value(env.coffeePostgresUrl),
+    COFFEE_STAFF_USER_IDS: env.coffeeStaffUserIds,
+    OLLAMA_HOST: env.ollamaHost,
+  })),
 );
 
 const runtimeEnv = runtimeEnvConfig.pipe(Effect.orDie);
