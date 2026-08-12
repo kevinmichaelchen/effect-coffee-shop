@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  contracts:
+    name: repository contracts (services-free)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Run in-memory repository contract
+        working-directory: packages/coffee/external/in-memory
+        run: bunx vitest run src/repositories/contract.test.ts
+      - name: Run PGlite repository contract
+        working-directory: packages/coffee/external/drizzle-postgres
+        run: bunx vitest run src/repositories/contract.pglite.test.ts
+
+  contract-postgres-service:
+    name: repository contract (Postgres service container)
+    runs-on: ubuntu-latest
+    # Fidelity backstop against a real Postgres server (real @effect/sql-pg
+    # driver + wire protocol). Slow (image pull + health-check wait) and needs
+    # a service container, so keep it its own job and run only on main; PRs
+    # gate on the fast, services-free contracts above.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: coffee
+          POSTGRES_DB: coffee
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Run server-backed repository contract
+        working-directory: packages/coffee/external/drizzle-postgres
+        env:
+          COFFEE_POSTGRES_TEST_URL: postgres://postgres:coffee@localhost:5432/coffee
+        run: bunx vitest run src/repositories/contract.test.ts

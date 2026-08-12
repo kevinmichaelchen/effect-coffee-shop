@@ -23,9 +23,14 @@ export const DrizzlePostgresCoffeeRepositoriesLive = Layer.mergeAll(
   DrizzleOrderRepositoryLive,
 );
 
-export const DrizzlePostgresCoffeeAppLive = Layer.mergeAll(
+export const DrizzleCoffeeAppLayer = Layer.mergeAll(
   DrizzlePostgresCoffeeRepositoriesLive,
   DrizzleCartItemIdGeneratorLive,
   DrizzleCheckoutSessionIdGeneratorLive,
   DrizzleOrderIdGeneratorLive,
-).pipe(Layer.provide(DrizzlePostgresSchemaLive), Layer.provide(CoffeeDb.layer));
+);
+
+export const DrizzlePostgresCoffeeAppLive = DrizzleCoffeeAppLayer.pipe(
+  Layer.provide(DrizzlePostgresSchemaLive),
+  Layer.provide(CoffeeDb.layer),
+);

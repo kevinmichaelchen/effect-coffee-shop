@@ -3,4 +3,27 @@ linker = "isolated"
 globalStore = true
 minimumReleaseAge = 259200
 # Bun 1.3.11 only honors package-level release-age exclusions.
-minimumReleaseAgeExcludes = ["alchemy"]
+# pglite-test and its constructive-io dependency chain publish faster than the
+# release-age window; all are from the same publisher.
+minimumReleaseAgeExcludes = [
+  "alchemy",
+  "pglite-test",
+  "@pgpmjs/core",
+  "@pgpmjs/env",
+  "@pgpmjs/pglite-adapter",
+  "@pgpmjs/types",
+  "pg-cache",
+  "pg-env",
+  "pgsql-client",
+  "pgsql-test",
+  "@pgpmjs/ast",
+  "@pgpmjs/bundle",
+  "csv-to-pg",
+  "pgsql-deparser",
+  "pgsql-parser",
+  "pgsql-seed",
+  "@pgpmjs/traverse",
+  "@pgsql/quotes",
+  "@pgsql/utils",
+  "libpg-query",
+]

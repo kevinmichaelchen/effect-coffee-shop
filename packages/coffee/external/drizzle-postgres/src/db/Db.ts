@@ -1,6 +1,10 @@
 /**
  * Defines the Drizzle/Postgres database service and live client layer.
  *
+ * The service shape is the driver-agnostic `EffectPgDatabase` (no `$client`
+ * pin), so alternative Postgres drivers — e.g. PGlite via
+ * `drizzle-orm/effect-pglite` in tests — can satisfy the same service.
+ *
  * @module
  */
 import { PgClient } from "@effect/sql-pg";
@@ -13,13 +17,10 @@ export const PgCoffeeClientLive = PgClient.layerConfig({
   url: Config.redacted("COFFEE_POSTGRES_URL"),
 });
 
-export class CoffeeDb extends Context.Service<CoffeeDb>()(
+export class CoffeeDb extends Context.Service<CoffeeDb, PgDrizzle.EffectPgDatabase>()(
   "effect-coffee-shop/external/drizzle-postgres/CoffeeDb",
-  {
-    make: PgDrizzle.make(),
-  },
 ) {
-  static readonly layer = Layer.effect(this, this.make).pipe(
+  static readonly layer = Layer.effect(this, PgDrizzle.make()).pipe(
     Layer.provide(PgDrizzle.DefaultServices),
     Layer.provide(PgCoffeeClientLive),
   );
