@@ -59,7 +59,7 @@ export interface CloudflareWorkerEnv {
   ASSETS?: AssetFetcher;
 }
 
-class CloudflareSecretBindingError extends Schema.TaggedErrorClass<CloudflareSecretBindingError>()(
+class CloudflareSecretBindingError extends Schema.TaggedError<CloudflareSecretBindingError>()(
   "CloudflareSecretBindingError",
   {
     message: Schema.String,

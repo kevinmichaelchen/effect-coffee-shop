@@ -9,7 +9,7 @@ import { betterAuth } from "better-auth";
 import * as Schema from "effect/Schema";
 import { sqlfuBetterAuthAdapter } from "sqlfu/better-auth";
 
-class UnavailableCapabilityExecutorError extends Schema.TaggedErrorClass<UnavailableCapabilityExecutorError>()(
+class UnavailableCapabilityExecutorError extends Schema.TaggedError<UnavailableCapabilityExecutorError>()(
   "UnavailableCapabilityExecutorError",
   {
     message: Schema.String,

@@ -16,6 +16,7 @@ import {
 } from "@effect-coffee-shop/coffee-core/domain/order";
 import {
   AuthenticationRequiredError,
+  CurrentActor,
   StaffRoleRequiredError,
   requireStaffActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
@@ -41,7 +42,7 @@ type UpdateOrderStatusError =
 const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* (
   orderId: OrderId,
   to: OrderStatus,
-): Effect.fn.Return<CoffeeOrder, UpdateOrderStatusError, OrderRepository> {
+): Effect.fn.Return<CoffeeOrder, UpdateOrderStatusError, CurrentActor | OrderRepository> {
   const actor = yield* requireStaffActor();
   const orderRepository = yield* OrderRepository;
   const observabilityAttributes = {
@@ -93,7 +94,7 @@ const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* 
 const makeOrderStatusUpdater = (name: string, status: OrderStatus) =>
   Effect.fn(name)(function* (
     orderId: OrderId,
-  ): Effect.fn.Return<CoffeeOrder, UpdateOrderStatusError, OrderRepository> {
+  ): Effect.fn.Return<CoffeeOrder, UpdateOrderStatusError, CurrentActor | OrderRepository> {
     return yield* updateOrderStatus(orderId, status);
   });
 

@@ -35,6 +35,7 @@ import type {
 } from "@effect-coffee-shop/coffee-core/application/contracts";
 import {
   AuthenticationRequiredError,
+  CurrentActor,
   StaffRoleRequiredError,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { InternalAppError } from "./errors.ts";
@@ -84,19 +85,22 @@ export class CoffeeOrderApp extends Context.Service<
       input: PlaceOrderRequest,
     ) => Effect.Effect<
       CoffeeOrder,
-      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
+      CurrentActor
     >;
     readonly getOrder: (
       orderId: OrderId,
     ) => Effect.Effect<
       CoffeeOrder,
-      AuthenticationRequiredError | OrderNotFoundError | InternalAppError
+      AuthenticationRequiredError | OrderNotFoundError | InternalAppError,
+      CurrentActor
     >;
     readonly listOrders: (
       input: ListOrdersRequest,
     ) => Effect.Effect<
       CoffeeOrders,
-      AuthenticationRequiredError | InvalidOrderInputError | InternalAppError
+      AuthenticationRequiredError | InvalidOrderInputError | InternalAppError,
+      CurrentActor
     >;
     readonly startBrewing: (
       orderId: OrderId,
@@ -106,7 +110,8 @@ export class CoffeeOrderApp extends Context.Service<
       | InvalidOrderStatusTransitionError
       | OrderNotFoundError
       | StaffRoleRequiredError
-      | InternalAppError
+      | InternalAppError,
+      CurrentActor
     >;
     readonly markReady: (
       orderId: OrderId,
@@ -116,7 +121,8 @@ export class CoffeeOrderApp extends Context.Service<
       | InvalidOrderStatusTransitionError
       | OrderNotFoundError
       | StaffRoleRequiredError
-      | InternalAppError
+      | InternalAppError,
+      CurrentActor
     >;
     readonly pickUpOrder: (
       orderId: OrderId,
@@ -126,7 +132,8 @@ export class CoffeeOrderApp extends Context.Service<
       | InvalidOrderStatusTransitionError
       | OrderNotFoundError
       | StaffRoleRequiredError
-      | InternalAppError
+      | InternalAppError,
+      CurrentActor
     >;
     readonly cancelOrder: (
       orderId: OrderId,
@@ -136,47 +143,56 @@ export class CoffeeOrderApp extends Context.Service<
       | InvalidOrderStatusTransitionError
       | OrderNotFoundError
       | StaffRoleRequiredError
-      | InternalAppError
+      | InternalAppError,
+      CurrentActor
     >;
     readonly getCart: () => Effect.Effect<
       CartSnapshot,
-      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
+      CurrentActor
     >;
     readonly addCartItem: (
       input: OrderItemInput,
     ) => Effect.Effect<
       CartSnapshot,
-      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
+      CurrentActor
     >;
     readonly updateCartItem: (
       input: UpdateCartItemRequest,
     ) => Effect.Effect<
       CartSnapshot,
-      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
+      CurrentActor
     >;
     readonly removeCartItem: (
       input: CartItemIdRequest,
     ) => Effect.Effect<
       CartSnapshot,
-      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
+      CurrentActor
     >;
     readonly clearCart: () => Effect.Effect<
       CartSnapshot,
-      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
+      CurrentActor
     >;
     readonly checkoutCart: (
       input: CheckoutCartRequest,
     ) => Effect.Effect<
       CoffeeOrder,
-      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
+      CurrentActor
     >;
     readonly prepareCartCheckout: () => Effect.Effect<
       CheckoutSession,
-      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError
+      AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
+      CurrentActor
     >;
     readonly getCurrentCheckoutSession: () => Effect.Effect<
       Option.Option<CheckoutSession>,
-      AuthenticationRequiredError | InternalAppError
+      AuthenticationRequiredError | InternalAppError,
+      CurrentActor
     >;
   }
 >()("effect-coffee-shop/application/CoffeeOrderApp") {

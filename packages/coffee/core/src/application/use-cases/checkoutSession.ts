@@ -10,7 +10,11 @@ import * as Schema from "effect/Schema";
 import type { DrinkNotFoundError, InvalidOrderInputError } from "../../domain/errors.ts";
 import type { Cart } from "../../domain/cart.ts";
 import type { CheckoutSession } from "../../domain/checkout-session.ts";
-import { AuthenticationRequiredError, requireSignedInActor } from "../CurrentActor.ts";
+import {
+  AuthenticationRequiredError,
+  CurrentActor,
+  requireSignedInActor,
+} from "../CurrentActor.ts";
 import { OrderItemsInputSchema } from "../contracts.ts";
 import { InternalAppError, internalAppErrorFromPersistence } from "../errors.ts";
 import { CartRepository } from "../ports/CartRepository.ts";
@@ -27,10 +31,10 @@ const emptyCart = (ownerUserId: string): Cart => ({
   items: [],
 });
 
-const readActorCart = Effect.fnUntraced(function* (): Effect.fn.Return<
+const readActorCart = Effect.fn("checkoutSession.readActorCart")(function* (): Effect.fn.Return<
   Cart,
   AuthenticationRequiredError | InternalAppError,
-  CartRepository
+  CartRepository | CurrentActor
 > {
   const actor = yield* requireSignedInActor();
   const cartRepository = yield* CartRepository;
@@ -49,7 +53,11 @@ export const prepareCartCheckout = Effect.fn("CoffeeOrders.prepareCartCheckout")
   function* (): Effect.fn.Return<
     CheckoutSession,
     AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
-    CartRepository | CheckoutSessionIdGenerator | CheckoutSessionRepository | MenuRepository
+    | CurrentActor
+    | CartRepository
+    | CheckoutSessionIdGenerator
+    | CheckoutSessionRepository
+    | MenuRepository
   > {
     const cart = yield* readActorCart();
     const items = yield* decodeOrderItemsInput(cart.items.map(toOrderItemInput)).pipe(
@@ -87,7 +95,7 @@ export const getCurrentCheckoutSession = Effect.fn("CoffeeOrders.getCurrentCheck
   function* (): Effect.fn.Return<
     Option.Option<CheckoutSession>,
     AuthenticationRequiredError | InternalAppError,
-    CheckoutSessionRepository
+    CheckoutSessionRepository | CurrentActor
   > {
     const actor = yield* requireSignedInActor();
     const checkoutSessionRepository = yield* CheckoutSessionRepository;

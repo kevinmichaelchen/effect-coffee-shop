@@ -43,7 +43,7 @@ const hydrateOrder = Effect.fnUntraced(function* (
     Effect.provideService(SqlClient.SqlClient, sqlClient),
     Effect.flatMap(decodeSqlOrderItems),
   );
-  return toCoffeeOrder(order, items);
+  return yield* toCoffeeOrder(order, items);
 });
 
 const makeSqlOrderQueries = Effect.gen(function* () {

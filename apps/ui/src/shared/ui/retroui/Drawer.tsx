@@ -1,3 +1,4 @@
+/* oxlint-disable typescript/no-unsafe-argument -- oxlint cannot resolve Vaul component props */
 import type { ComponentProps } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 

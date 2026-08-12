@@ -41,9 +41,10 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("combobox", { name: /milk/i }));
+    const trigger = canvas.getByRole("combobox", { name: /milk/i });
+    await userEvent.click(trigger);
     await userEvent.click(await screen.findByText("Oat"));
-    await expect(canvas.getByRole("combobox", { name: /milk/i })).toHaveTextContent("Oat");
+    await expect(trigger).toHaveTextContent("Oat");
   },
 };
 

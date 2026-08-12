@@ -22,6 +22,7 @@ import {
   createProviderStatusMessage,
   decodeJsonTextEffect,
   postJsonResponse,
+  type ProviderHttpClient,
   readResponseText,
 } from "./provider-http.ts";
 
@@ -54,11 +55,12 @@ const WorkersAiEnvelopeSchema = Schema.Struct({
 });
 
 type WorkersAiDecodedOutput = Schema.Schema.Type<typeof WorkersAiOutputSchema>;
-const encodeJsonString = Schema.encodeUnknownSync(Schema.UnknownFromJsonString);
+const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
 
 export function runWorkersAiOverRest(input: {
   readonly accountId: string;
   readonly apiKey: Redacted.Redacted<string>;
+  readonly client: ProviderHttpClient;
   readonly model: string;
   readonly request: AiTextGenerationInput;
 }): Effect.Effect<
@@ -68,6 +70,7 @@ export function runWorkersAiOverRest(input: {
   return postJsonResponse({
     bearerToken: input.apiKey,
     body: input.request,
+    client: input.client,
     onResponse: readWorkersAiOutput,
     onStatusError: rejectWorkersAiRequest,
     provider: "Workers AI",
@@ -92,6 +95,7 @@ function rejectWorkersAiRequest(
     const envelope = yield* decodeJsonTextEffect({
       provider: "Workers AI",
       rawBody,
+      reportInput: true,
       schema: WorkersAiEnvelopeSchema,
     }).pipe(Effect.option);
     const message = envelope.pipe(

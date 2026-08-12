@@ -23,6 +23,9 @@ const viewportOptions = {
 const preview: Preview = {
   tags: ["test"],
   parameters: {
+    a11y: {
+      test: "todo",
+    },
     layout: "padded",
     controls: {
       matchers: {
@@ -47,6 +50,7 @@ const preview: Preview = {
     },
   },
   initialGlobals: {
+    theme: "light",
     viewport: { value: "desktop", isRotated: false },
   },
   globalTypes: {

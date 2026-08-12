@@ -30,21 +30,21 @@ const JsonRpcSuccessEnvelopeSchema = Schema.Struct({
   result: Schema.Unknown,
 });
 
-class McpMiniflareBundleError extends Schema.TaggedErrorClass<McpMiniflareBundleError>()(
+class McpMiniflareBundleError extends Schema.TaggedError<McpMiniflareBundleError>()(
   "McpMiniflareBundleError",
   {
     message: Schema.String,
   },
 ) {}
 
-class McpMiniflareTransportError extends Schema.TaggedErrorClass<McpMiniflareTransportError>()(
+class McpMiniflareTransportError extends Schema.TaggedError<McpMiniflareTransportError>()(
   "McpMiniflareTransportError",
   {
     message: Schema.String,
   },
 ) {}
 
-class McpJsonRpcResponseError extends Schema.TaggedErrorClass<McpJsonRpcResponseError>()(
+class McpJsonRpcResponseError extends Schema.TaggedError<McpJsonRpcResponseError>()(
   "McpJsonRpcResponseError",
   {
     code: Schema.Number,
@@ -126,7 +126,7 @@ const createMiniflare = (script: string): Miniflare =>
 
 const decodeJsonRpcSuccessEnvelope = Schema.decodeUnknownEffect(JsonRpcSuccessEnvelopeSchema);
 const decodeJsonRpcErrorEnvelope = Schema.decodeUnknownOption(JsonRpcErrorEnvelopeSchema);
-const encodeJsonString = Schema.encodeUnknownEffect(Schema.UnknownFromJsonString);
+const encodeJsonString = Schema.encodeUnknownEffect(Schema.fromJsonString(Schema.Unknown));
 
 export const measureMcpWorkerBundle = Effect.fn("measureMcpWorkerBundle")(function* () {
   const bundleStart = performance.now();
@@ -238,12 +238,15 @@ export const createMcpMiniflareClient = async (): Promise<McpMiniflareClient> =>
 function createMcpRequestHeaders(sessionId: string | null): Readonly<Record<string, string>> {
   if (sessionId === null) {
     return {
+      accept: "application/json, text/event-stream",
       "content-type": "application/json",
     };
   }
 
   return {
+    accept: "application/json, text/event-stream",
     "content-type": "application/json",
+    "Mcp-Protocol-Version": "2025-06-18",
     "Mcp-Session-Id": sessionId,
   };
 }

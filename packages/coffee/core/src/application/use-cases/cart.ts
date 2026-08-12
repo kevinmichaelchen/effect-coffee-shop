@@ -13,7 +13,11 @@ import type { DrinkNotFoundError, InvalidOrderInputError } from "../../domain/er
 import type { Cart, CartItem } from "../../domain/cart.ts";
 import { sumMoney } from "../../domain/money.ts";
 import type { CoffeeOrder, CoffeeOrderItem } from "../../domain/order.ts";
-import { AuthenticationRequiredError, requireSignedInActor } from "../CurrentActor.ts";
+import {
+  AuthenticationRequiredError,
+  CurrentActor,
+  requireSignedInActor,
+} from "../CurrentActor.ts";
 import type {
   CartItemIdRequest,
   CartSnapshot,
@@ -44,10 +48,10 @@ const emptyCart = (ownerUserId: string): Cart => ({
   items: [],
 });
 
-const readActorCart = Effect.fnUntraced(function* (): Effect.fn.Return<
+const readActorCart = Effect.fn("cart.readActorCart")(function* (): Effect.fn.Return<
   Cart,
   AuthenticationRequiredError | InternalAppError,
-  CartRepository
+  CartRepository | CurrentActor
 > {
   const actor = yield* requireSignedInActor();
   const cartRepository = yield* CartRepository;
@@ -62,7 +66,7 @@ const readActorCart = Effect.fnUntraced(function* (): Effect.fn.Return<
   );
 });
 
-const toSnapshot = Effect.fnUntraced(function* (
+const toSnapshot = Effect.fn("cart.toSnapshot")(function* (
   cart: Cart,
 ): Effect.fn.Return<
   CartSnapshot,
@@ -89,7 +93,7 @@ const toSnapshot = Effect.fnUntraced(function* (
   );
 });
 
-const normalizeCartItem = Effect.fnUntraced(function* (
+const normalizeCartItem = Effect.fn("cart.normalizeCartItem")(function* (
   id: CartItem["id"],
   input: OrderItemInput,
 ): Effect.fn.Return<
@@ -111,7 +115,7 @@ const normalizeCartItem = Effect.fnUntraced(function* (
   };
 });
 
-const saveSnapshot = Effect.fnUntraced(function* (
+const saveSnapshot = Effect.fn("cart.saveSnapshot")(function* (
   cart: Cart,
 ): Effect.fn.Return<
   CartSnapshot,
@@ -128,7 +132,7 @@ const saveSnapshot = Effect.fnUntraced(function* (
 export const getCart = Effect.fn("CoffeeOrders.getCart")(function* (): Effect.fn.Return<
   CartSnapshot,
   AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
-  CartRepository | MenuRepository
+  CurrentActor | CartRepository | MenuRepository
 > {
   const cart = yield* readActorCart();
   return yield* toSnapshot(cart);
@@ -139,7 +143,7 @@ export const addCartItem = Effect.fn("CoffeeOrders.addCartItem")(function* (
 ): Effect.fn.Return<
   CartSnapshot,
   AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
-  CartItemIdGenerator | CartRepository | MenuRepository
+  CurrentActor | CartItemIdGenerator | CartRepository | MenuRepository
 > {
   const cart = yield* readActorCart();
   const cartItemIdGenerator = yield* CartItemIdGenerator;
@@ -157,7 +161,7 @@ export const updateCartItem = Effect.fn("CoffeeOrders.updateCartItem")(function*
 ): Effect.fn.Return<
   CartSnapshot,
   AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
-  CartRepository | MenuRepository
+  CurrentActor | CartRepository | MenuRepository
 > {
   const cart = yield* readActorCart();
   const currentItem = yield* Option.fromUndefinedOr(
@@ -198,7 +202,7 @@ export const removeCartItem = Effect.fn("CoffeeOrders.removeCartItem")(function*
 ): Effect.fn.Return<
   CartSnapshot,
   AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
-  CartRepository | MenuRepository
+  CurrentActor | CartRepository | MenuRepository
 > {
   const cart = yield* readActorCart();
 
@@ -218,7 +222,7 @@ export const removeCartItem = Effect.fn("CoffeeOrders.removeCartItem")(function*
 export const clearCart = Effect.fn("CoffeeOrders.clearCart")(function* (): Effect.fn.Return<
   CartSnapshot,
   AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
-  CartRepository | MenuRepository
+  CurrentActor | CartRepository | MenuRepository
 > {
   const cart = yield* readActorCart();
   const cartRepository = yield* CartRepository;
@@ -246,7 +250,12 @@ export const checkoutCart = Effect.fn("CoffeeOrders.checkoutCart")(function* (
 ): Effect.fn.Return<
   CoffeeOrder,
   AuthenticationRequiredError | DrinkNotFoundError | InvalidOrderInputError | InternalAppError,
-  CartRepository | CheckoutSessionRepository | MenuRepository | OrderIdGenerator | OrderRepository
+  | CartRepository
+  | CheckoutSessionRepository
+  | CurrentActor
+  | MenuRepository
+  | OrderIdGenerator
+  | OrderRepository
 > {
   const actor = yield* requireSignedInActor();
   const checkoutSessionRepository = yield* CheckoutSessionRepository;

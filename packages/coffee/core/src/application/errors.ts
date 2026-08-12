@@ -3,11 +3,10 @@
  *
  * @module
  */
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-export class PersistenceError extends Schema.TaggedErrorClass<PersistenceError>()(
+export class PersistenceError extends Schema.TaggedError<PersistenceError>()(
   "PersistenceError",
   {
     message: Schema.String,
@@ -18,17 +17,17 @@ export class PersistenceError extends Schema.TaggedErrorClass<PersistenceError>(
   static refail =
     (message: string) =>
     <A, E, R>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, PersistenceError, R> =>
-      Effect.catchCause(effect, (cause) =>
-        Effect.fail(
+      Effect.mapError(
+        effect,
+        (cause) =>
           new PersistenceError({
             message,
-            cause: Cause.squash(cause),
+            cause,
           }),
-        ),
       );
 }
 
-export class InternalAppError extends Schema.TaggedErrorClass<InternalAppError>()(
+export class InternalAppError extends Schema.TaggedError<InternalAppError>()(
   "InternalAppError",
   {
     message: Schema.String,

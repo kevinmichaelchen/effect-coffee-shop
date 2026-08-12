@@ -4,6 +4,7 @@
  * @module
  */
 import * as Layer from "effect/Layer";
+import * as McpProtocol from "effect/unstable/ai/McpProtocol";
 import * as McpServer from "effect/unstable/ai/McpServer";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import { CoffeeActionToolsLive } from "./action-tools.ts";
@@ -12,6 +13,7 @@ import { RecommendDrinkPrompt, SummarizeOpenOrdersPrompt } from "./prompts.ts";
 
 const mcpServerInfo = {
   name: "Coffee Orders MCP",
+  protocols: [McpProtocol.v2025_06_18],
   version: "0.1.0",
 } as const;
 

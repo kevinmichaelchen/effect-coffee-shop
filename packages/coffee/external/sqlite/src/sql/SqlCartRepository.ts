@@ -60,7 +60,8 @@ const makeSqlCartQueries = Effect.gen(function* () {
       Effect.provideService(SqlClient.SqlClient, sqlClient),
       Effect.flatMap(decodeSqlCartItems),
     );
-    const cart: Cart = { ownerUserId, items: rows.map(toCartItem) };
+    const items = yield* Effect.forEach(rows, toCartItem, { concurrency: 1 });
+    const cart: Cart = { ownerUserId, items };
 
     return Option.match(Option.fromUndefinedOr(cart.items[0]), {
       onNone: () => Option.none<Cart>(),

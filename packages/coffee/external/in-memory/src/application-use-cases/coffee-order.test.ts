@@ -74,7 +74,9 @@ describe("coffee order workflow", () => {
         customerName: "Morgan",
         items: [{ drinkId: "tea", size: "small" }],
       });
-      const encodedFirst = yield* Schema.encodeUnknownEffect(Schema.UnknownFromJsonString)(first);
+      const encodedFirst = yield* Schema.encodeUnknownEffect(Schema.fromJsonString(Schema.Unknown))(
+        first,
+      );
 
       assert.match(first.id, orderIdPattern);
       assert.match(second.id, orderIdPattern);

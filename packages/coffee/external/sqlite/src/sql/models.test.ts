@@ -1,3 +1,4 @@
+import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { describe, expect, it } from "vitest";
@@ -22,7 +23,7 @@ const encodeSqlOrder = Schema.encodeSync(SqlOrderModel);
 const encodeSqlOrderItem = Schema.encodeSync(SqlOrderItemModel);
 
 describe("sqlite row models", () => {
-  it("decodes menu rows from snake_case storage keys into camelCase models", () => {
+  it("decodes menu rows from snake_case storage keys into camelCase models", async () => {
     const decoded = decodeSqlMenuItem({
       id: "latte",
       name: "Latte",
@@ -32,7 +33,7 @@ describe("sqlite row models", () => {
       available_temperatures: '["hot","iced"]',
       max_shots: 4,
     });
-    const menuItem = toMenuItem(decoded);
+    const menuItem = await Effect.runPromise(toMenuItem(decoded));
 
     expect(moneyToCents(decoded.basePrice)).toBe(450);
     expect(decoded.availableMilks).toEqual(["whole", "oat"]);
@@ -50,7 +51,7 @@ describe("sqlite row models", () => {
     });
   });
 
-  it("decodes order rows from snake_case storage keys into camelCase models", () => {
+  it("decodes order rows from snake_case storage keys into camelCase models", async () => {
     const order = decodeSqlOrder({
       id: "order_00000000000000000000000001",
       customer_name: "Avery",
@@ -73,7 +74,7 @@ describe("sqlite row models", () => {
       unit_price_cents: 525,
       line_total_cents: 1050,
     });
-    const coffeeOrder = toCoffeeOrder(order, [item]);
+    const coffeeOrder = await Effect.runPromise(toCoffeeOrder(order, [item]));
 
     expect(order.customerName).toBe("Avery");
     expect(order.ownerUserId).toBe("user-avery");
@@ -110,7 +111,7 @@ describe("sqlite row models", () => {
     });
   });
 
-  it("decodes cart rows from snake_case storage keys into camelCase models", () => {
+  it("decodes cart rows from snake_case storage keys into camelCase models", async () => {
     const decoded = decodeSqlCartItem({
       owner_user_id: "user-avery",
       id: "cart_item_00000000000000000000000001",
@@ -123,7 +124,7 @@ describe("sqlite row models", () => {
       notes: null,
       quantity: 1,
     });
-    const cartItem = toCartItem(decoded);
+    const cartItem = await Effect.runPromise(toCartItem(decoded));
 
     expect(decoded.ownerUserId).toBe("user-avery");
     expect(decoded.drinkId).toBe("latte");

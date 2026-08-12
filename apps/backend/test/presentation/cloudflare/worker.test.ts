@@ -79,15 +79,30 @@ const mcpInitializeRequest = (id: number | string): Request =>
       },
     }),
     headers: {
+      accept: "application/json, text/event-stream",
       "content-type": "application/json",
     },
     method: "POST",
   });
 
+class TestSpan {
+  end() {}
+  get isTraced() {
+    return false;
+  }
+  setAttribute() {}
+}
+
 describe("cloudflare worker", () => {
   const executionContext: ExecutionContext = {
+    exports: {},
     passThroughOnException() {},
     props: undefined,
+    tracing: {
+      Span: TestSpan,
+      enterSpan: (_name, callback, ...args) => callback(new TestSpan(), ...args),
+      startActiveSpan: (_name, callback, ...args) => callback(new TestSpan(), ...args),
+    },
     waitUntil() {},
   };
 

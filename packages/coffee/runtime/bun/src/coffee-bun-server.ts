@@ -20,7 +20,7 @@ type CoffeeBunEnv = Record<string, string | undefined>;
 
 export type BunHttpRoute = HttpRoute<CoffeeBunEnv>;
 
-class InvalidBunServerPortError extends Schema.TaggedErrorClass<InvalidBunServerPortError>()(
+class InvalidBunServerPortError extends Schema.TaggedError<InvalidBunServerPortError>()(
   "InvalidBunServerPortError",
   {
     message: Schema.String,

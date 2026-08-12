@@ -1,7 +1,7 @@
 import * as Schema from "effect/Schema";
 
 const maxSurrogateRequestId = Number.MAX_SAFE_INTEGER;
-const encodeJsonString = Schema.encodeUnknownSync(Schema.UnknownFromJsonString);
+const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
 
 const JsonRpcIdSchema = Schema.Union([Schema.String, Schema.Number]);
 

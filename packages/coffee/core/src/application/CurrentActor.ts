@@ -36,14 +36,11 @@ export const systemActor: AuthenticatedActor = {
   userId: "system",
 };
 
-export const CurrentActor = Context.Reference<AppActor>(
+export class CurrentActor extends Context.Service<CurrentActor, AppActor>()(
   "effect-coffee-shop/application/CurrentActor",
-  {
-    defaultValue: () => anonymousActor,
-  },
-);
+) {}
 
-export class AuthenticationRequiredError extends Schema.TaggedErrorClass<AuthenticationRequiredError>()(
+export class AuthenticationRequiredError extends Schema.TaggedError<AuthenticationRequiredError>()(
   "AuthenticationRequiredError",
   {
     message: Schema.String,
@@ -51,7 +48,7 @@ export class AuthenticationRequiredError extends Schema.TaggedErrorClass<Authent
   { httpApiStatus: 401 },
 ) {}
 
-export class StaffRoleRequiredError extends Schema.TaggedErrorClass<StaffRoleRequiredError>()(
+export class StaffRoleRequiredError extends Schema.TaggedError<StaffRoleRequiredError>()(
   "StaffRoleRequiredError",
   {
     message: Schema.String,
@@ -77,28 +74,30 @@ const staffRoleRequiredError = () =>
     message: "Only coffee-shop staff can manage the live queue.",
   });
 
-export const requireSignedInActor = Effect.fnUntraced(function* (): Effect.fn.Return<
-  AuthenticatedActor,
-  AuthenticationRequiredError
-> {
-  const actor = yield* CurrentActor;
+export const requireSignedInActor = Effect.fn("CurrentActor.requireSignedInActor")(
+  function* (): Effect.fn.Return<AuthenticatedActor, AuthenticationRequiredError, CurrentActor> {
+    const actor = yield* CurrentActor;
 
-  if (!isAuthenticatedActor(actor)) {
-    return yield* authenticationRequiredError();
-  }
+    if (!isAuthenticatedActor(actor)) {
+      return yield* authenticationRequiredError();
+    }
 
-  return actor;
-});
+    return actor;
+  },
+);
 
-export const requireStaffActor = Effect.fnUntraced(function* (): Effect.fn.Return<
-  AuthenticatedActor,
-  AuthenticationRequiredError | StaffRoleRequiredError
-> {
-  const actor = yield* requireSignedInActor();
+export const requireStaffActor = Effect.fn("CurrentActor.requireStaffActor")(
+  function* (): Effect.fn.Return<
+    AuthenticatedActor,
+    AuthenticationRequiredError | StaffRoleRequiredError,
+    CurrentActor
+  > {
+    const actor = yield* requireSignedInActor();
 
-  if (!isStaffActor(actor)) {
-    return yield* staffRoleRequiredError();
-  }
+    if (!isStaffActor(actor)) {
+      return yield* staffRoleRequiredError();
+    }
 
-  return actor;
-});
+    return actor;
+  },
+);

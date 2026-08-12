@@ -23,6 +23,11 @@ function StatusBadgeMatrix() {
 const meta = {
   title: "Shared/Feedback/StatusBadge",
   component: StatusBadgeMatrix,
+  parameters: {
+    a11y: {
+      test: "error",
+    },
+  },
   tags: ["autodocs"],
 } satisfies Meta<typeof StatusBadgeMatrix>;
 

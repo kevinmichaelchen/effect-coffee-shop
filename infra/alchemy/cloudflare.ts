@@ -30,7 +30,7 @@ class DeploySmokeCheckError extends Data.TaggedError("DeploySmokeCheckError")<{
   readonly cause?: unknown;
 }> {}
 
-const encodeJsonString = Schema.encodeUnknownSync(Schema.UnknownFromJsonString);
+const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
 
 const betterAuthSecret = Effect.gen(function* () {
   const provided = yield* optionalTrimmedRedacted(cloudflareEnvNames.betterAuthSecret);

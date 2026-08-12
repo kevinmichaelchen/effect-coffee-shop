@@ -25,6 +25,7 @@ import {
   createProviderStatusMessage,
   decodeJsonTextEffect,
   postJsonResponse,
+  type ProviderHttpClient,
   readResponseText,
 } from "./provider-http.ts";
 
@@ -86,15 +87,19 @@ interface OllamaToolCall {
   };
 }
 
-export function makeOllamaRunner(config: OllamaConfig): AssistantModelRunnerService {
+export function makeOllamaRunner(
+  config: OllamaConfig,
+  client: ProviderHttpClient,
+): AssistantModelRunnerService {
   const endpoint = normalizeEndpoint(config.endpoint);
 
   return {
-    run: (request) => runOllamaChat(endpoint, config.model, request),
+    run: (request) => runOllamaChat(client, endpoint, config.model, request),
   };
 }
 
 function runOllamaChat(
+  client: ProviderHttpClient,
   endpoint: string,
   model: string,
   request: AssistantModelRequest,
@@ -104,6 +109,7 @@ function runOllamaChat(
 > {
   return postJsonResponse({
     body: toOllamaChatRequest(model, request),
+    client,
     onResponse: readOllamaResponse,
     onStatusError: rejectOllamaRequest,
     provider: "Ollama",

@@ -42,21 +42,21 @@ const toAgentActor = (session: AgentSession) => ({
   userId: session.user.id,
 });
 
-class AgentCapabilityExecutionError extends Schema.TaggedErrorClass<AgentCapabilityExecutionError>()(
+class AgentCapabilityExecutionError extends Schema.TaggedError<AgentCapabilityExecutionError>()(
   "AgentCapabilityExecutionError",
   {
     message: Schema.String,
   },
 ) {}
 
-class AgentCapabilityInputError extends Schema.TaggedErrorClass<AgentCapabilityInputError>()(
+class AgentCapabilityInputError extends Schema.TaggedError<AgentCapabilityInputError>()(
   "AgentCapabilityInputError",
   {
     message: Schema.String,
   },
 ) {}
 
-class UnsupportedAgentCapabilityError extends Schema.TaggedErrorClass<UnsupportedAgentCapabilityError>()(
+class UnsupportedAgentCapabilityError extends Schema.TaggedError<UnsupportedAgentCapabilityError>()(
   "UnsupportedAgentCapabilityError",
   {
     capability: Schema.String,
@@ -72,7 +72,7 @@ export function createCoffeeAgentAppRunner(input: {
     Context.add(CurrentActor, toAgentActor(input.session)),
   );
 
-  return <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) =>
+  return <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp | CurrentActor>) =>
     effect.pipe(Effect.provide(liveLayer), Effect.provide(services));
 }
 

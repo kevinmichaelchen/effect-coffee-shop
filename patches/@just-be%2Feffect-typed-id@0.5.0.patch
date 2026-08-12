@@ -1,0 +1,13 @@
+diff --git a/dist/index.js b/dist/index.js
+index 906074e83572868b810e5e2f1515367f95a5eacf..b25e6f7e16b280764572a0a3d364dbd0cec6046c 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -29,7 +29,7 @@ export const Prefix = Schema.String.pipe(Schema.brand("TypeIdPrefix"));
+ export const Suffix = Schema.String.pipe(Schema.brand("TypeIdSuffix"));
+ export const Uuid = Schema.String.pipe(Schema.brand("Uuid"));
+ export const TypeId = Schema.String.pipe(Schema.brand("TypeId"));
+-export class TypeIdError extends Schema.TaggedErrorClass()("TypeIdError", {
++export class TypeIdError extends Schema.TaggedError()("TypeIdError", {
+     input: Schema.String,
+     message: Schema.String,
+ }) {

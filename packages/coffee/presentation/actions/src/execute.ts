@@ -7,6 +7,7 @@ import type * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
+import { CurrentActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import type { CoffeeOrder, OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
 import {
   type NoCheckoutSessionView,
@@ -34,7 +35,7 @@ import {
 import type { CoffeeActionName } from "./specs.ts";
 
 export type CoffeeAppRunner = <A, E>(
-  effect: Effect.Effect<A, E, CoffeeOrderApp>,
+  effect: Effect.Effect<A, E, CoffeeOrderApp | CurrentActor>,
 ) => Effect.Effect<A, E>;
 type CoffeeOrderAppService = Context.Service.Shape<typeof CoffeeOrderApp>;
 type ActionInputDecoder<A> = (payload: unknown) => Effect.Effect<A, unknown>;
@@ -59,7 +60,9 @@ const noCheckoutSessionView: NoCheckoutSessionView = {
 const payloadOrEmpty = (payload: unknown): unknown => payload ?? {};
 
 const runEmptyAction =
-  <A, E>(runEffect: (app: CoffeeOrderAppService) => Effect.Effect<A, E>): ActionHandler =>
+  <A, E>(
+    runEffect: (app: CoffeeOrderAppService) => Effect.Effect<A, E, CurrentActor>,
+  ): ActionHandler =>
   (input) =>
     decodeEmptyActionInput(payloadOrEmpty(input.payload)).pipe(
       Effect.flatMap(() => input.runApp(CoffeeOrderApp.use(runEffect))),
@@ -68,7 +71,7 @@ const runEmptyAction =
 const runDecodedAction =
   <Payload, A, E>(
     decode: ActionInputDecoder<Payload>,
-    runEffect: (app: CoffeeOrderAppService, payload: Payload) => Effect.Effect<A, E>,
+    runEffect: (app: CoffeeOrderAppService, payload: Payload) => Effect.Effect<A, E, CurrentActor>,
   ): ActionHandler =>
   (input) =>
     decode(payloadOrEmpty(input.payload)).pipe(
@@ -78,7 +81,10 @@ const runDecodedAction =
     );
 
 const runOrderIdAction = <E>(
-  runEffect: (app: CoffeeOrderAppService, orderId: OrderId) => Effect.Effect<CoffeeOrder, E>,
+  runEffect: (
+    app: CoffeeOrderAppService,
+    orderId: OrderId,
+  ) => Effect.Effect<CoffeeOrder, E, CurrentActor>,
 ): ActionHandler =>
   runDecodedAction(decodeOrderIdInput, (app, payload) =>
     runEffect(app, payload.orderId).pipe(Effect.map(toCoffeeOrderView)),

@@ -8,6 +8,7 @@ import { InvalidOrderInputError } from "@effect-coffee-shop/coffee-core/domain/e
 import { isOrderStatus, type CoffeeOrders } from "@effect-coffee-shop/coffee-core/domain/order";
 import {
   AuthenticationRequiredError,
+  CurrentActor,
   requireSignedInActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import {
@@ -28,7 +29,7 @@ export const listOrders = Effect.fn("CoffeeOrders.listOrders")(function* (
 ): Effect.fn.Return<
   CoffeeOrders,
   AuthenticationRequiredError | InvalidOrderInputError | InternalAppError,
-  OrderRepository
+  CurrentActor | OrderRepository
 > {
   const actor = yield* requireSignedInActor();
   const orderRepository = yield* OrderRepository;

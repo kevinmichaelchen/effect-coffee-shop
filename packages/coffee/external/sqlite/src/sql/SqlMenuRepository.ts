@@ -21,7 +21,8 @@ const decodeSqlMenuItem = Schema.decodeUnknownEffect(SqlMenuItemModel);
 const decodeOptionalSqlMenuItem = (row: unknown) =>
   Option.match(Option.fromNullishOr(row), {
     onNone: () => Effect.succeed(Option.none<MenuItem>()),
-    onSome: (row) => decodeSqlMenuItem(row).pipe(Effect.map(toMenuItem), Effect.map(Option.some)),
+    onSome: (row) =>
+      decodeSqlMenuItem(row).pipe(Effect.flatMap(toMenuItem), Effect.map(Option.some)),
   });
 
 const makeSqlMenuQueries = Effect.gen(function* () {
@@ -30,7 +31,7 @@ const makeSqlMenuQueries = Effect.gen(function* () {
   const list = Effect.provideService(
     listMenuItems().pipe(
       Effect.flatMap(decodeSqlMenuItems),
-      Effect.map((items) => items.map(toMenuItem)),
+      Effect.flatMap((items) => Effect.forEach(items, toMenuItem, { concurrency: 1 })),
     ),
     SqlClient.SqlClient,
     sqlClient,

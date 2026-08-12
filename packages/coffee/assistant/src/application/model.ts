@@ -61,7 +61,7 @@ export interface AssistantModelResponse {
 
 export type AssistantModelError = AssistantModelRequestError | AssistantModelResponseDecodeError;
 
-export class AssistantModelRequestError extends Schema.TaggedErrorClass<AssistantModelRequestError>()(
+export class AssistantModelRequestError extends Schema.TaggedError<AssistantModelRequestError>()(
   "AssistantModelRequestError",
   {
     message: Schema.String,
@@ -70,7 +70,7 @@ export class AssistantModelRequestError extends Schema.TaggedErrorClass<Assistan
   },
 ) {}
 
-export class AssistantModelResponseDecodeError extends Schema.TaggedErrorClass<AssistantModelResponseDecodeError>()(
+export class AssistantModelResponseDecodeError extends Schema.TaggedError<AssistantModelResponseDecodeError>()(
   "AssistantModelResponseDecodeError",
   {
     message: Schema.String,

@@ -27,7 +27,7 @@
     "effect": "catalog:"
   },
   "devDependencies": {
-    "@copilotkit/aimock": "1.26.1",
+    "@copilotkit/aimock": "1.38.0",
     "@effect-coffee-shop/coffee-external-in-memory": "workspace:*",
     "@types/bun": "catalog:",
     "lintcn": "catalog:",

@@ -1,12 +1,12 @@
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-class HttpRequestError extends Schema.TaggedErrorClass<HttpRequestError>()("HttpRequestError", {
+class HttpRequestError extends Schema.TaggedError<HttpRequestError>()("HttpRequestError", {
   message: Schema.String,
   status: Schema.Number,
 }) {}
 
-class HttpResponseDecodeError extends Schema.TaggedErrorClass<HttpResponseDecodeError>()(
+class HttpResponseDecodeError extends Schema.TaggedError<HttpResponseDecodeError>()(
   "HttpResponseDecodeError",
   {
     message: Schema.String,
@@ -162,7 +162,7 @@ function decodeJsonText<SchemaType extends Schema.ConstraintDecoder<unknown, nev
   path: string,
   schema: SchemaType,
 ): Effect.Effect<SchemaType["Type"], HttpResponseDecodeError> {
-  return Schema.decodeUnknownEffect(Schema.UnknownFromJsonString)(rawBody).pipe(
+  return Schema.decodeUnknownEffect(Schema.fromJsonString(Schema.Unknown))(rawBody).pipe(
     Effect.flatMap(Schema.decodeUnknownEffect(schema)),
     Effect.mapError(
       () =>

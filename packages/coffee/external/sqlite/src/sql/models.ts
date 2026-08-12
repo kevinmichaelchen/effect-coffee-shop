@@ -3,6 +3,7 @@
  *
  * @module
  */
+import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import {
@@ -113,10 +114,10 @@ type SqlOrderItem = typeof SqlOrderItemModel.Type;
 type SqlCartItem = typeof SqlCartItemModel.Type;
 type SqlMenuItem = typeof SqlMenuItemModel.Type;
 
-const decodeCartItem = Schema.decodeUnknownSync(CartItemSchema);
-const decodeCoffeeOrderType = Schema.decodeUnknownSync(Schema.toType(CoffeeOrderSchema));
-const decodeCoffeeOrderItem = Schema.decodeUnknownSync(CoffeeOrderItemSchema);
-const decodeMenuItem = Schema.decodeUnknownSync(MenuItemSchema);
+const decodeCartItem = Schema.decodeUnknownEffect(CartItemSchema);
+const decodeCoffeeOrderType = Schema.decodeUnknownEffect(Schema.toType(CoffeeOrderSchema));
+const decodeCoffeeOrderItem = Schema.decodeUnknownEffect(CoffeeOrderItemSchema);
+const decodeMenuItem = Schema.decodeUnknownEffect(MenuItemSchema);
 
 export interface SqlOrderSave {
   readonly id: string;
@@ -207,7 +208,7 @@ export const toSqlCartItemSave = (
   quantity: item.quantity,
 });
 
-export const toCartItem = (item: SqlCartItem): CartItem =>
+export const toCartItem = (item: SqlCartItem): Effect.Effect<CartItem, Schema.SchemaError> =>
   decodeCartItem({
     id: item.id,
     drinkId: item.drinkId,
@@ -222,7 +223,9 @@ export const toCartItem = (item: SqlCartItem): CartItem =>
     }),
   });
 
-const toCoffeeOrderItem = (item: SqlOrderItem): CoffeeOrderItem =>
+const toCoffeeOrderItem = (
+  item: SqlOrderItem,
+): Effect.Effect<CoffeeOrderItem, Schema.SchemaError> =>
   decodeCoffeeOrderItem({
     drinkId: item.drinkId,
     drinkName: item.drinkName,
@@ -239,18 +242,23 @@ const toCoffeeOrderItem = (item: SqlOrderItem): CoffeeOrderItem =>
     }),
   });
 
-export const toCoffeeOrder = (order: SqlOrder, items: readonly SqlOrderItem[]): CoffeeOrder =>
-  decodeCoffeeOrderType({
+export const toCoffeeOrder = Effect.fn("SqlModels.toCoffeeOrder")(function* (
+  order: SqlOrder,
+  items: readonly SqlOrderItem[],
+) {
+  const decodedItems = yield* Effect.forEach(items, toCoffeeOrderItem, { concurrency: 1 });
+  return yield* decodeCoffeeOrderType({
     id: order.id,
     customerName: order.customerName,
     ownerUserId: order.ownerUserId,
-    items: items.map(toCoffeeOrderItem),
+    items: decodedItems,
     status: order.status,
     totalPrice: order.totalPrice,
     createdAt: order.createdAt,
   });
+});
 
-export const toMenuItem = (item: SqlMenuItem): MenuItem =>
+export const toMenuItem = (item: SqlMenuItem): Effect.Effect<MenuItem, Schema.SchemaError> =>
   decodeMenuItem({
     id: item.id,
     name: item.name,

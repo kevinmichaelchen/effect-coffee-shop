@@ -36,6 +36,8 @@ function createAgentSession(input: {
   readonly userId: string;
 }): AgentSession {
   return {
+    agentId: "agent-coffee",
+    userId: input.userId,
     agent: {
       activatedAt: new Date(),
       capabilityGrants: [],
