@@ -37,6 +37,10 @@ jobs:
   contract-postgres-service:
     name: repository contract (Postgres service container)
     runs-on: ubuntu-latest
+    # Fidelity backstop against a real Postgres server. Slow (image pull +
+    # health-check wait), so run it only on main; PRs gate on the fast,
+    # services-free PGlite contract above.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     services:
       postgres:
         image: postgres:17-alpine
