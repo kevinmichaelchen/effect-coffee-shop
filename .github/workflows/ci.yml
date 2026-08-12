@@ -6,8 +6,8 @@ on:
     branches: [main]
 
 jobs:
-  contract-in-memory:
-    name: repository contract (in-memory)
+  contracts:
+    name: repository contracts (services-free)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,17 +19,6 @@ jobs:
       - name: Run in-memory repository contract
         working-directory: packages/coffee/external/in-memory
         run: bunx vitest run src/repositories/contract.test.ts
-
-  contract-pglite:
-    name: repository contract (PGlite, services-free)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.3.14"
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
       - name: Run PGlite repository contract
         working-directory: packages/coffee/external/drizzle-postgres
         run: bunx vitest run src/repositories/contract.pglite.test.ts
@@ -37,9 +26,10 @@ jobs:
   contract-postgres-service:
     name: repository contract (Postgres service container)
     runs-on: ubuntu-latest
-    # Fidelity backstop against a real Postgres server. Slow (image pull +
-    # health-check wait), so run it only on main; PRs gate on the fast,
-    # services-free PGlite contract above.
+    # Fidelity backstop against a real Postgres server (real @effect/sql-pg
+    # driver + wire protocol). Slow (image pull + health-check wait) and needs
+    # a service container, so keep it its own job and run only on main; PRs
+    # gate on the fast, services-free contracts above.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     services:
       postgres:
