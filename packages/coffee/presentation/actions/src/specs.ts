@@ -34,11 +34,14 @@ const actionSpec = <Parameters extends Schema.Top, Success extends Schema.Top>(i
   failure: AppErrorSchema,
 });
 
+const inlineStruct = <Fields extends Schema.Struct.Fields>(schema: { readonly fields: Fields }) =>
+  Schema.Struct(schema.fields);
+
 const orderStatusActionSpec = (description: string) =>
   actionSpec({
     description,
     parameters: OrderIdActionInputSchema,
-    success: CoffeeOrderViewSchema,
+    success: inlineStruct(CoffeeOrderViewSchema),
   });
 
 const cartViewActionSpec = <Parameters extends Schema.Top>(
@@ -48,7 +51,7 @@ const cartViewActionSpec = <Parameters extends Schema.Top>(
   actionSpec({
     description,
     parameters,
-    success: CartViewSchema,
+    success: inlineStruct(CartViewSchema),
   });
 
 export const coffeeActionSpecs = {
@@ -59,23 +62,23 @@ export const coffeeActionSpecs = {
   }),
   get_item_options: actionSpec({
     description: "Get valid options and defaults for one menu item",
-    parameters: ItemOptionsRequestSchema,
-    success: ItemOptionsViewSchema,
+    parameters: inlineStruct(ItemOptionsRequestSchema),
+    success: inlineStruct(ItemOptionsViewSchema),
   }),
   validate_order: actionSpec({
     description: "Validate a proposed multi-item coffee order",
-    parameters: QuoteOrderRequestSchema,
-    success: OrderValidationViewSchema,
+    parameters: inlineStruct(QuoteOrderRequestSchema),
+    success: inlineStruct(OrderValidationViewSchema),
   }),
   quote_order: actionSpec({
     description: "Quote a proposed multi-item coffee order",
-    parameters: QuoteOrderRequestSchema,
-    success: OrderQuoteViewSchema,
+    parameters: inlineStruct(QuoteOrderRequestSchema),
+    success: inlineStruct(OrderQuoteViewSchema),
   }),
   place_order: actionSpec({
     description: "Create a new multi-item coffee order",
-    parameters: PlaceOrderRequestSchema,
-    success: CoffeeOrderViewSchema,
+    parameters: inlineStruct(PlaceOrderRequestSchema),
+    success: inlineStruct(CoffeeOrderViewSchema),
   }),
   get_order: actionSpec({
     description: "Fetch one order by id",
@@ -84,7 +87,7 @@ export const coffeeActionSpecs = {
   }),
   list_orders: actionSpec({
     description: "List orders, optionally filtered by status",
-    parameters: ListOrdersRequestSchema,
+    parameters: inlineStruct(ListOrdersRequestSchema),
     success: Schema.Struct({ orders: CoffeeOrdersViewSchema }),
   }),
   start_brewing: orderStatusActionSpec("Move an order from pending to brewing"),
@@ -94,22 +97,22 @@ export const coffeeActionSpecs = {
   get_cart: cartViewActionSpec("Fetch the signed-in actor's current cart", EmptyActionInputSchema),
   add_cart_item: cartViewActionSpec(
     "Add a validated item to the signed-in actor's cart",
-    OrderItemInputSchema,
+    inlineStruct(OrderItemInputSchema),
   ),
   update_cart_item: cartViewActionSpec(
     "Update one item in the signed-in actor's cart",
-    UpdateCartItemRequestSchema,
+    inlineStruct(UpdateCartItemRequestSchema),
   ),
   remove_cart_item: cartViewActionSpec(
     "Remove one item from the signed-in actor's cart",
-    CartItemIdRequestSchema,
+    inlineStruct(CartItemIdRequestSchema),
   ),
   clear_cart: cartViewActionSpec("Clear the signed-in actor's cart", EmptyActionInputSchema),
   prepare_cart_checkout: actionSpec({
     description:
       "Price the signed-in actor's cart and store an immutable checkout session awaiting confirmation",
     parameters: EmptyActionInputSchema,
-    success: CheckoutSessionViewSchema,
+    success: inlineStruct(CheckoutSessionViewSchema),
   }),
   get_checkout_session: actionSpec({
     description: "Fetch the signed-in actor's latest checkout session awaiting confirmation",
@@ -118,8 +121,8 @@ export const coffeeActionSpecs = {
   }),
   checkout_cart: actionSpec({
     description: "Place the signed-in actor's cart as one multi-item order",
-    parameters: CheckoutCartRequestSchema,
-    success: CoffeeOrderViewSchema,
+    parameters: inlineStruct(CheckoutCartRequestSchema),
+    success: inlineStruct(CoffeeOrderViewSchema),
   }),
 } as const;
 

@@ -200,7 +200,7 @@ export const CoffeeOrderViewSchema = Schema.Struct({
   items: Schema.NonEmptyArray(CoffeeOrderItemViewSchema),
   status: OrderStatusSchema,
   totalPriceCents: Schema.Int,
-  createdAt: Schema.DateTimeUtc,
+  createdAt: Schema.toEncoded(Schema.DateTimeUtcFromString),
 }).annotate({ identifier: "CoffeeOrderView" });
 export type CoffeeOrderView = typeof CoffeeOrderViewSchema.Type;
 
@@ -241,9 +241,9 @@ export const CheckoutSessionViewSchema = Schema.Struct({
   status: CheckoutSessionStatusSchema,
   items: Schema.NonEmptyArray(CoffeeOrderItemViewSchema),
   totalPriceCents: Schema.Int,
-  createdAt: Schema.DateTimeUtc,
-  updatedAt: Schema.DateTimeUtc,
-  expiresAt: Schema.DateTimeUtc,
+  createdAt: Schema.toEncoded(Schema.DateTimeUtcFromString),
+  updatedAt: Schema.toEncoded(Schema.DateTimeUtcFromString),
+  expiresAt: Schema.toEncoded(Schema.DateTimeUtcFromString),
 }).annotate({ identifier: "CheckoutSessionView" });
 export type CheckoutSessionView = typeof CheckoutSessionViewSchema.Type;
 
@@ -312,7 +312,7 @@ const CoffeeOrderViewModelSchema = Schema.Struct({
   items: Schema.NonEmptyArray(CoffeeOrderItemViewModelSchema),
   status: OrderStatusSchema,
   totalPrice: MoneyFromCentsSchema,
-  createdAt: Schema.DateTimeUtc,
+  createdAt: Schema.DateTimeUtcFromString,
 }).pipe(
   Schema.encodeKeys({
     totalPrice: "totalPriceCents",
@@ -359,9 +359,9 @@ const CheckoutSessionViewModelSchema = Schema.Struct({
   status: CheckoutSessionStatusSchema,
   items: Schema.NonEmptyArray(CoffeeOrderItemViewModelSchema),
   totalPrice: MoneyFromCentsSchema,
-  createdAt: Schema.DateTimeUtc,
-  updatedAt: Schema.DateTimeUtc,
-  expiresAt: Schema.DateTimeUtc,
+  createdAt: Schema.DateTimeUtcFromString,
+  updatedAt: Schema.DateTimeUtcFromString,
+  expiresAt: Schema.DateTimeUtcFromString,
 }).pipe(
   Schema.encodeKeys({
     totalPrice: "totalPriceCents",

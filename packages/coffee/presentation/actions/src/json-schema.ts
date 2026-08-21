@@ -20,7 +20,7 @@ import { OrderIdActionInputSchema } from "./schemas.ts";
 
 export type CoffeeActionJsonSchema = JsonSchema.JsonSchema;
 
-const EmptyActionInputSchema = Schema.Struct({});
+const EmptyActionInputSchema = Schema.Record(Schema.String, Schema.Never);
 
 function actionJsonSchema(schema: Schema.Top): CoffeeActionJsonSchema {
   const document = JsonSchema.resolveTopLevel$ref(
