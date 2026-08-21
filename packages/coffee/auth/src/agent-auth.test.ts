@@ -1,8 +1,9 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import type { AgentSession } from "@better-auth/agent-auth";
+import { D1 } from "@alchemy.run/cloudflare-runtime/core/bindings";
+import { getPlatformProxy } from "@alchemy.run/cloudflare-runtime/core/platform-proxy";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
-import { Miniflare } from "miniflare";
 import { describe, expect, it } from "vitest";
 import {
   CoffeeOrderViewSchema,
@@ -18,16 +19,12 @@ import {
 import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
 
 async function withTestDatabase<A>(effect: (db: D1Database) => Promise<A>): Promise<A> {
-  const miniflare = new Miniflare({
-    d1Databases: {
-      DB: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    },
-    modules: true,
-    script: "",
+  const proxy = await getPlatformProxy<{ readonly DB: D1Database }>({
+    bindings: [D1.local({ binding: "DB" })],
+    name: "coffee-agent-auth-test",
   });
-  const db: D1Database = await miniflare.getD1Database("DB");
 
-  return effect(db).finally(() => miniflare.dispose());
+  return effect(proxy.env.DB).finally(() => proxy.dispose());
 }
 
 function createAgentSession(input: {

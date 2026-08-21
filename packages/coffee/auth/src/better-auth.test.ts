@@ -1,5 +1,6 @@
 import type { D1Database } from "@cloudflare/workers-types";
-import { Miniflare } from "miniflare";
+import { D1 } from "@alchemy.run/cloudflare-runtime/core/bindings";
+import { getPlatformProxy } from "@alchemy.run/cloudflare-runtime/core/platform-proxy";
 import { describe, expect, it } from "vitest";
 import { anonymousActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
@@ -14,16 +15,12 @@ import {
 } from "@effect-coffee-shop/coffee-auth/better-auth/users";
 
 async function withTestDatabase<A>(effect: (db: D1Database) => Promise<A>): Promise<A> {
-  const miniflare = new Miniflare({
-    d1Databases: {
-      DB: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    },
-    modules: true,
-    script: "",
+  const proxy = await getPlatformProxy<{ readonly DB: D1Database }>({
+    bindings: [D1.local({ binding: "DB" })],
+    name: "coffee-better-auth-test",
   });
-  const db: D1Database = await miniflare.getD1Database("DB");
 
-  return effect(db).finally(() => miniflare.dispose());
+  return effect(proxy.env.DB).finally(() => proxy.dispose());
 }
 
 describe("passkey registration helpers", () => {
