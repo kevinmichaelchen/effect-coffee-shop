@@ -7,5 +7,5 @@ export function getCoffeeHeaderLinks(target: "shop" | "staff"): readonly Navigat
       ? { href: appRoutes.staff, label: "Staff queue", variant: "outline" as const }
       : { href: appRoutes.shop, label: "Customer workspace", variant: "outline" as const };
 
-  return [{ href: appRoutes.home, label: "Beanline Assistant", variant: "outline" }, workspaceLink];
+  return [workspaceLink];
 }
