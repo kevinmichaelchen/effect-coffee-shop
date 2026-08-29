@@ -20,7 +20,7 @@ import {
   optionalTrimmedString,
   stringWithDefault,
 } from "./config.ts";
-import { coffeeStackName, uiBuild } from "./shared.ts";
+import { coffeeStackName } from "./shared.ts";
 
 const state = () =>
   process.env.ALCHEMY_LOCAL_STATE === "1" ? Alchemy.localState() : Cloudflare.state();
@@ -159,31 +159,34 @@ export default Alchemy.Stack(
       name: "COFFEE_OBSERVABILITY_SAMPLING_RATE",
     });
 
-    const coffeeDb = yield* Cloudflare.D1Database("coffee-db", {
+    const coffeeDb = yield* Cloudflare.D1.Database("coffee-db", {
       migrationsDir: "./packages/coffee/external/sqlite/src/sql/migrations",
     });
-    const secretsStore = yield* Cloudflare.SecretsStore("coffee-secrets");
-    const betterAuthStoreSecret = yield* Cloudflare.Secret(cloudflareEnvNames.betterAuthSecret, {
-      comment: "Better Auth signing secret for the Coffee Shop Cloudflare Worker.",
-      name: cloudflareEnvNames.betterAuthSecret,
-      store: secretsStore,
-      value: yield* betterAuthSecret,
-    });
+    const secretsStore = yield* Cloudflare.SecretsStore.Store("coffee-secrets");
+    const betterAuthStoreSecret = yield* Cloudflare.SecretsStore.Secret(
+      cloudflareEnvNames.betterAuthSecret,
+      {
+        comment: "Better Auth signing secret for the Coffee Shop Cloudflare Worker.",
+        name: cloudflareEnvNames.betterAuthSecret,
+        store: secretsStore,
+        value: yield* betterAuthSecret,
+      },
+    );
 
     const assistantGateway = aiGatewayEnabled
-      ? yield* Cloudflare.AiGateway(cloudflareBindingNames.aiGateway, {
+      ? yield* Cloudflare.AI.Gateway(cloudflareAssistantGatewayId, {
           authentication: true,
           collectLogs: true,
           id: cloudflareAssistantGatewayId,
         })
       : undefined;
 
-    const website = yield* Cloudflare.StaticSite("onion", {
-      url: true,
+    const website = yield* Cloudflare.Website.Vite("onion", {
+      rootDir: "apps/ui",
       compatibility: {
         flags: ["nodejs_compat"],
       },
-      main: "./apps/backend/src/cloudflare/worker.ts",
+      main: "../backend/src/cloudflare/worker.ts",
       observability: {
         enabled: true,
         headSamplingRate: observabilitySamplingRate,
@@ -199,45 +202,23 @@ export default Alchemy.Stack(
           persist: true,
         },
       },
-      cwd: "apps/ui",
-      command: uiBuild.command,
-      outdir: uiBuild.output,
       memo: {
-        include: [...uiBuild.include],
-        lockfile: uiBuild.lockfile,
+        workspaces: "auto",
       },
-      dev: {
-        command: "bun run dev -- --host 127.0.0.1 --port 5173",
-      },
-      assetsConfig: {
+      assets: {
         runWorkerFirst: ["/.well-known/agent-configuration", "/api", "/api/*", "/mcp", "/mcp/*"],
       },
-      bindings: {
-        [cloudflareBindingNames.db]: coffeeDb,
-      },
       env: {
+        [cloudflareBindingNames.ai]: Cloudflare.Workers.AI(cloudflareBindingNames.ai),
+        [cloudflareBindingNames.db]: coffeeDb,
         [cloudflareEnvNames.aiGatewayId]: assistantGateway?.gatewayId ?? "",
+        [cloudflareEnvNames.betterAuthSecret]: betterAuthStoreSecret,
         [cloudflareEnvNames.coffeeAssistantModel]: assistantModel ?? "",
         [cloudflareEnvNames.coffeeStaffUserIds]: yield* stringWithDefault(
           cloudflareEnvNames.coffeeStaffUserIds,
           "",
         ),
       },
-    });
-
-    yield* website.bind(cloudflareEnvNames.betterAuthSecret, {
-      bindings: [
-        {
-          type: "secrets_store_secret",
-          name: cloudflareEnvNames.betterAuthSecret,
-          secretName: betterAuthStoreSecret.secretName,
-          storeId: betterAuthStoreSecret.storeId,
-        },
-      ],
-    });
-
-    yield* website.bind(cloudflareBindingNames.ai, {
-      bindings: [{ type: "ai", name: cloudflareBindingNames.ai }],
     });
 
     const smoke = yield* CloudflareDeploymentSmokeCheck({

@@ -23,7 +23,7 @@ import {
 } from "../../application/model.ts";
 import {
   createProviderStatusMessage,
-  decodeJsonTextEffect,
+  decodeJsonResponseEffect,
   postJsonResponse,
   type ProviderHttpClient,
   readResponseText,
@@ -146,13 +146,9 @@ function readOllamaResponse(
   AssistantModelRequestError | AssistantModelResponseDecodeError
 > {
   return Effect.gen(function* () {
-    const rawBody = yield* readResponseText({
+    const output = yield* decodeJsonResponseEffect({
       provider: "Ollama",
       response,
-    });
-    const output = yield* decodeJsonTextEffect({
-      provider: "Ollama",
-      rawBody,
       schema: OllamaChatResponseSchema,
     });
 

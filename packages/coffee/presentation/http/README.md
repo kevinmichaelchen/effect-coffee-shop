@@ -10,8 +10,6 @@ bindings, assistant serving, or core business behavior.
 
 - [`src/api.ts`](./src/api.ts) defines health, session, menu, and order HTTP API groups and
   handlers.
-- [`src/mcp-jsonrpc-ids.ts`](./src/mcp-jsonrpc-ids.ts) preserves MCP JSON-RPC ids when MCP HTTP
-  routes are served through the shared web handler.
 - [`src/web-handler.ts`](./src/web-handler.ts) turns API layers into a Fetch-compatible handler.
 - [`src/test-support.ts`](./src/test-support.ts) contains HTTP test helpers.
 

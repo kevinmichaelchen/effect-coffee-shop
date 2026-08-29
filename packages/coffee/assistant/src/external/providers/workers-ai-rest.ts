@@ -20,6 +20,7 @@ import {
 } from "../../application/model.ts";
 import {
   createProviderStatusMessage,
+  decodeJsonResponseEffect,
   decodeJsonTextEffect,
   postJsonResponse,
   type ProviderHttpClient,
@@ -54,7 +55,16 @@ const WorkersAiEnvelopeSchema = Schema.Struct({
   result: WorkersAiOutputSchema,
 });
 
+const WorkersAiResponseSchema = Schema.Struct({
+  errors: WorkersAiEnvelopeSchema.fields.errors,
+  response: WorkersAiOutputSchema.fields.response,
+  result: Schema.optionalKey(WorkersAiOutputSchema),
+  tool_calls: WorkersAiOutputSchema.fields.tool_calls,
+  usage: WorkersAiOutputSchema.fields.usage,
+});
+
 type WorkersAiDecodedOutput = Schema.Schema.Type<typeof WorkersAiOutputSchema>;
+type WorkersAiResponse = Schema.Schema.Type<typeof WorkersAiResponseSchema>;
 const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
 
 export function runWorkersAiOverRest(input: {
@@ -129,37 +139,20 @@ function readWorkersAiOutput(
   AiTextGenerationOutput,
   AssistantModelRequestError | AssistantModelResponseDecodeError
 > {
-  return Effect.gen(function* () {
-    const rawBody = yield* readResponseText({
-      provider: "Workers AI",
-      response,
-    });
-
-    return yield* decodeWorkersAiOutput(rawBody);
-  });
-}
-
-function decodeWorkersAiOutput(
-  rawBody: string,
-): Effect.Effect<AiTextGenerationOutput, AssistantModelResponseDecodeError> {
-  return decodeJsonTextEffect({
+  return decodeJsonResponseEffect({
     provider: "Workers AI",
-    rawBody,
-    schema: WorkersAiEnvelopeSchema,
-  }).pipe(
-    Effect.matchEffect({
-      onFailure: () =>
-        decodeJsonTextEffect({
-          provider: "Workers AI",
-          rawBody,
-          schema: WorkersAiOutputSchema,
-        }).pipe(Effect.map(toAiTextGenerationOutput)),
-      onSuccess: (envelope) => Effect.succeed(toAiTextGenerationOutput(envelope.result)),
-    }),
-  );
+    response,
+    schema: WorkersAiResponseSchema,
+  }).pipe(Effect.map(toAiTextGenerationOutput));
 }
 
-function toAiTextGenerationOutput(output: WorkersAiDecodedOutput): AiTextGenerationOutput {
+function toAiTextGenerationOutput(output: WorkersAiResponse): AiTextGenerationOutput {
+  return toAiTextGenerationOutputFromDecoded(output.result ?? output);
+}
+
+function toAiTextGenerationOutputFromDecoded(
+  output: WorkersAiDecodedOutput,
+): AiTextGenerationOutput {
   const normalized: AiTextGenerationOutput = {};
 
   if (output.response !== undefined) {

@@ -1,5 +1,4 @@
 export const appRoutes = {
-  agentCapabilities: "/device/capabilities",
   home: "/",
   shop: "/shop",
   staff: "/staff",

@@ -35,13 +35,14 @@ const createAiRunMock = () =>
     ) => Promise<AiTextGenerationOutput>
   >();
 
-const createAssistantRequest = (messages: unknown) =>
+const createAssistantRequest = (messages: unknown, signal?: AbortSignal) =>
   new Request("http://example.com/assistant", {
     body: jsonString({ messages }),
     headers: {
       "content-type": "application/json",
     },
     method: "POST",
+    signal: signal ?? null,
   });
 
 const createBindingAiConfig = (
@@ -341,6 +342,41 @@ const verifyAiGatewayRouting = async () => {
   );
 };
 
+const verifyAssistantRequestAbort = async () => {
+  const abortController = new AbortController();
+  const aiRun = createAiRunMock().mockImplementation(() => new Promise(() => undefined));
+
+  const response = await handleAssistantRequest(
+    createAssistantRequest(
+      [{ role: "user", content: "List the menu briefly." }],
+      abortController.signal,
+    ),
+    createAssistantHandlerOptions(aiRun),
+  );
+
+  await vi.waitFor(() => expect(aiRun).toHaveBeenCalledTimes(1));
+  abortController.abort();
+
+  await expect(response.text()).resolves.toBe("");
+};
+
+const verifyPreAbortedAssistantRequest = async () => {
+  const abortController = new AbortController();
+  const aiRun = createAiRunMock();
+  abortController.abort();
+
+  const response = await handleAssistantRequest(
+    createAssistantRequest(
+      [{ role: "user", content: "List the menu briefly." }],
+      abortController.signal,
+    ),
+    createAssistantHandlerOptions(aiRun),
+  );
+
+  await expect(response.text()).resolves.toBe("");
+  expect(aiRun).not.toHaveBeenCalled();
+};
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -363,4 +399,6 @@ describe("assistant handler", () => {
     "routes Cloudflare Worker assistant traffic through the configured AI Gateway",
     verifyAiGatewayRouting,
   );
+  it("stops the active assistant stream when its request is aborted", verifyAssistantRequestAbort);
+  it("does not start an assistant run for a pre-aborted request", verifyPreAbortedAssistantRequest);
 });

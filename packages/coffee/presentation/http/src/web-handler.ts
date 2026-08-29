@@ -7,10 +7,9 @@ import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";
 import * as HttpServer from "effect/unstable/http/HttpServer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import { emptyWebHandlerServices } from "@effect-coffee-shop/http-routing/request-services";
 import { HttpObservabilityLive } from "@effect-coffee-shop/http-routing/observability";
+import { emptyWebHandlerServices } from "@effect-coffee-shop/http-routing/request-services";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
-import { normalizeMcpHttpRequestIds, restoreMcpHttpResponseIds } from "./mcp-jsonrpc-ids.ts";
 
 export interface CoffeeWebHandler {
   readonly dispose: () => Promise<void>;
@@ -35,10 +34,6 @@ export function createCoffeeWebHandler<
 
   return {
     dispose,
-    handler: async (request: Request, services = emptyWebHandlerServices()) => {
-      const normalized = await normalizeMcpHttpRequestIds(request);
-      const response = await handler(normalized.request, services);
-      return restoreMcpHttpResponseIds(response, normalized.surrogateIdMap);
-    },
+    handler: (request: Request, services = emptyWebHandlerServices()) => handler(request, services),
   };
 }

@@ -7,6 +7,15 @@ minimumReleaseAge = 259200
 # release-age window; all are from the same publisher.
 minimumReleaseAgeExcludes = [
   "alchemy",
+  "effect",
+  "@effect/platform-bun",
+  "@effect/platform-node",
+  "@effect/platform-node-shared",
+  "@effect/sql-d1",
+  "@effect/sql-pg",
+  "@effect/sql-pglite",
+  "@effect/sql-sqlite-bun",
+  "@effect/vitest",
   "pglite-test",
   "@pgpmjs/core",
   "@pgpmjs/env",
