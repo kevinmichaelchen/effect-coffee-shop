@@ -16,6 +16,7 @@ import { createCoffeeWebHandler } from "@effect-coffee-shop/coffee-http/web-hand
 type CoffeeWebHandlerInput = Parameters<typeof createCoffeeWebHandler>;
 type CoffeeRoutesLayer = CoffeeWebHandlerInput[0];
 type CoffeeAppLayer = CoffeeWebHandlerInput[1];
+// oxlint-disable-next-line effect/prefer-option-over-null -- Native environment adapter accepts/emits undefined; decoded runtime configuration uses Option.
 type CoffeeBunEnv = Record<string, string | undefined>;
 
 export type BunHttpRoute = HttpRoute<CoffeeBunEnv>;
@@ -33,6 +34,7 @@ export async function startCoffeeBunServer(input: {
   readonly portEnv?: string;
   readonly routes: CoffeeRoutesLayer;
 }): Promise<void> {
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
   const port = await Effect.runPromise(readPort(input.portEnv ?? "COFFEE_HTTP_PORT"));
   const { dispose, handler } = createCoffeeWebHandler(input.routes, input.appLayer);
   const handleHttpRequest = createHttpRouter<CoffeeBunEnv>([
@@ -52,6 +54,7 @@ export async function startCoffeeBunServer(input: {
   });
 
   registerShutdown(dispose, server);
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
   await Effect.runPromise(
     Effect.logInfo("Coffee HTTP server listening").pipe(
       Effect.annotateLogs("url", String(server.url)),

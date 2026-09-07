@@ -72,14 +72,16 @@ interface AwsRuntimeConfig {
   readonly ollamaHost: Option.Option<string>;
 }
 
+// oxlint-disable-next-line effect/prefer-option-over-null -- Native environment adapter accepts/emits undefined; decoded runtime configuration uses Option.
 const optionalStringValue = (value: Option.Option<string>): string | undefined =>
   Option.getOrUndefined(value);
 
 const optionalRedactedValue = (
   value: Option.Option<Redacted.Redacted<string>>,
+  // oxlint-disable-next-line effect/prefer-option-over-null -- Native environment adapter accepts/emits undefined; decoded runtime configuration uses Option.
 ): string | undefined => Option.getOrUndefined(Option.map(value, Redacted.value));
 
-const toAssistantEnv = (env: AwsRuntimeConfig): Record<string, string | undefined> => ({
+const toAssistantEnv = (env: AwsRuntimeConfig) => ({
   [awsEnvNames.assistantWorkersAiAccountId]: optionalStringValue(env.assistantWorkersAiAccountId),
   [awsEnvNames.assistantWorkersAiApiToken]: optionalRedactedValue(env.assistantWorkersAiApiToken),
   [awsEnvNames.coffeeAssistantModel]: optionalStringValue(env.coffeeAssistantModel),
@@ -88,7 +90,9 @@ const toAssistantEnv = (env: AwsRuntimeConfig): Record<string, string | undefine
   [awsEnvNames.ollamaHost]: optionalStringValue(env.ollamaHost),
 });
 
+// oxlint-disable-next-line effect/no-unknown-parameters -- AWS environment boundary forwards unknown input to the Config decoder.
 export const readAwsRuntime = (env: unknown): AwsRuntime => {
+  // oxlint-disable-next-line effect/effect-run-in-body -- Synchronous AWS configuration boundary; Config validates input before constructing the runtime.
   const decodedConfig = Effect.runSync(
     awsRuntimeConfig.parse(ConfigProvider.fromUnknown(env).pipe(ConfigProvider.constantCase)),
   );
@@ -97,7 +101,7 @@ export const readAwsRuntime = (env: unknown): AwsRuntime => {
 
   return {
     config: {
-      assistantAi: Option.fromNullishOr(assistantAi),
+      assistantAi,
       betterAuthSecret: trimOptionalRedactedString(
         decodedConfig.betterAuthSecret,
         awsEnvNames.betterAuthSecret,

@@ -12,12 +12,12 @@ import {
   defaultTemperatureFor,
   drinkSizes,
 } from "../../domain/menu.ts";
-import { QuantitySchema } from "../../domain/order-primitives.ts";
+import { Quantity } from "../../domain/order-primitives.ts";
 import type { ItemOptions, ItemOptionsRequest } from "../contracts.ts";
 import { InternalAppError, internalAppErrorFromPersistence } from "../errors.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 
-const defaultQuantity = Schema.decodeUnknownSync(QuantitySchema)(1);
+const defaultQuantity = Schema.decodeUnknownSync(Quantity)(1);
 
 export const getItemOptions = Effect.fn("CoffeeOrders.getItemOptions")(function* (
   request: ItemOptionsRequest,

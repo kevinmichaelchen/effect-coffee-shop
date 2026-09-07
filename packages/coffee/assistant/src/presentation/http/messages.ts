@@ -1,3 +1,4 @@
+import * as Option from "effect/Option";
 /**
  * Decodes assistant request bodies and normalizes UI/model messages.
  *
@@ -7,54 +8,55 @@ import type { AssistantConversationMessage } from "../../application/model.ts";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-const AssistantContentTextPartSchema = Schema.Struct({
+const AssistantContentTextPart = Schema.Struct({
   type: Schema.Literal("text"),
   content: Schema.String,
 });
 
-const AssistantThinkingPartSchema = Schema.Struct({
+const AssistantThinkingPart = Schema.Struct({
   type: Schema.Literal("thinking"),
   content: Schema.String,
 });
 
-const AssistantModelMessageSchema = Schema.Struct({
+const AssistantModelMessage = Schema.Struct({
   role: Schema.Literals(["user", "assistant", "tool"] as const),
-  content: Schema.Union([Schema.String, Schema.Null, Schema.Array(AssistantContentTextPartSchema)]),
+  content: Schema.Union([Schema.String, Schema.Null, Schema.Array(AssistantContentTextPart)]),
 });
 
-const AssistantUiMessageSchema = Schema.Struct({
+const AssistantUiMessage = Schema.Struct({
   id: Schema.String,
   role: Schema.Literals(["system", "user", "assistant"] as const),
-  parts: Schema.Array(Schema.Union([AssistantContentTextPartSchema, AssistantThinkingPartSchema])),
+  parts: Schema.Array(Schema.Union([AssistantContentTextPart, AssistantThinkingPart])),
 });
 
-const AssistantRequestBodySchema = Schema.Struct({
-  messages: Schema.Array(Schema.Union([AssistantModelMessageSchema, AssistantUiMessageSchema])),
+const AssistantRequestBody = Schema.Struct({
+  messages: Schema.Array(Schema.Union([AssistantModelMessage, AssistantUiMessage])),
 });
 
-type AssistantModelMessageInput = typeof AssistantModelMessageSchema.Type;
-export type AssistantRequestBody = typeof AssistantRequestBodySchema.Type;
-type AssistantRequestMessage = (typeof AssistantRequestBodySchema.Type.messages)[number];
-type AssistantUiMessageInput = typeof AssistantUiMessageSchema.Type;
+type AssistantModelMessageInput = typeof AssistantModelMessage.Type;
+export type AssistantRequestBody = typeof AssistantRequestBody.Type;
+type AssistantRequestMessage = (typeof AssistantRequestBody.Type.messages)[number];
+type AssistantUiMessageInput = typeof AssistantUiMessage.Type;
 
-const decodeAssistantRequestBody = Schema.decodeUnknownEffect(AssistantRequestBodySchema);
-const isAssistantUiMessage = Schema.is(AssistantUiMessageSchema);
+const decodeAssistantRequestBody = Schema.decodeUnknownEffect(AssistantRequestBody);
+const isAssistantUiMessage = Schema.is(AssistantUiMessage);
 
 export async function parseAssistantRequestBody(
   request: Request,
-): Promise<AssistantRequestBody | null> {
+): Promise<Option.Option<AssistantRequestBody>> {
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
   return Effect.runPromise(
     Effect.tryPromise({
       try: async () => request.json(),
       catch: () => null,
     }).pipe(
       Effect.matchEffect({
-        onFailure: () => Effect.succeed(null),
+        onFailure: () => Effect.succeedNone,
         onSuccess: (body) =>
           decodeAssistantRequestBody(body).pipe(
             Effect.matchEffect({
-              onFailure: () => Effect.succeed(null),
-              onSuccess: Effect.succeed,
+              onFailure: () => Effect.succeedNone,
+              onSuccess: Effect.succeedSome,
             }),
           ),
       }),
@@ -77,7 +79,7 @@ function extractModelMessageText(content: AssistantModelMessageInput["content"])
     return "";
   }
 
-  if (typeof content === "string") {
+  if (Schema.is(Schema.String)(content)) {
     return content;
   }
 

@@ -87,9 +87,25 @@
         "infra/turbo-cache/**"
       ],
       "outputs": []
+    },
+    "//#lint:infra": {
+      "inputs": [
+        "infra/**/*.ts",
+        "infra/**/tsconfig.json",
+        "alchemy.run.ts",
+        "packages/**/*.ts",
+        "packages/**/tsconfig.json",
+        "packages/**/package.json"
+      ],
+      "outputs": []
     }
   },
-  "globalDependencies": ["packages/.oxlintrc.json", "bunfig.toml", ".node-version"],
+  "globalDependencies": [
+    "packages/.oxlintrc.json",
+    "bunfig.toml",
+    ".node-version",
+    "packages/oxlint.config.ts"
+  ],
   "remoteCache": {
     "signature": true
   }

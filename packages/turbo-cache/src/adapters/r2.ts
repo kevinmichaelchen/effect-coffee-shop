@@ -1,3 +1,4 @@
+import { flow } from "effect/Function";
 import type { ReadWriteBucketClient } from "alchemy/Cloudflare/R2";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
@@ -11,8 +12,10 @@ export const makeR2Store = Effect.fn("TurboCache.makeR2Store")(function* (
   bucket: ReadWriteBucketClient,
 ) {
   const runtime = yield* Effect.context<import("alchemy/RuntimeContext").RuntimeContext>();
-  const metadata = (value: unknown) =>
-    Schema.decodeUnknownEffect(ArtifactMetadata)(value).pipe(Effect.mapError(storageFailure));
+  const metadata = flow(
+    Schema.decodeUnknownEffect(ArtifactMetadata),
+    Effect.mapError(storageFailure),
+  );
   return ArtifactStore.of({
     head: Effect.fn("R2.head")(function* (key) {
       const object = yield* bucket

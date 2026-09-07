@@ -1,3 +1,5 @@
+import * as Order from "effect/Order";
+import * as Arr from "effect/Array";
 /**
  * Stores checkout sessions in memory for local and test runtimes.
  *
@@ -23,12 +25,14 @@ export const InMemoryCheckoutSessionRepositoryLive = Layer.effect(
     const currentSessionForOwner =
       (currentSessions: HashMap.HashMap<CheckoutSessionId, CheckoutSession>) =>
       (ownerUserId: string) =>
-        Array.from(HashMap.values(currentSessions))
-          .filter((session) => session.ownerUserId === ownerUserId)
-          .sort(
-            (left, right) =>
-              DateTime.toEpochMillis(right.updatedAt) - DateTime.toEpochMillis(left.updatedAt),
-          )[0];
+        Arr.sort(
+          Array.from(HashMap.values(currentSessions)).filter(
+            (session) => session.ownerUserId === ownerUserId,
+          ),
+          Order.mapInput(Order.flip(Order.Number), (value: CheckoutSession) =>
+            DateTime.toEpochMillis(value.updatedAt),
+          ),
+        )[0];
 
     return CheckoutSessionRepository.of({
       getById: (id) => Ref.get(sessions).pipe(Effect.map(HashMap.get(id))),

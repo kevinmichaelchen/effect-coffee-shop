@@ -9,7 +9,7 @@ import { FetchHttpClient } from "effect/unstable/http";
 import { Otlp } from "effect/unstable/observability";
 
 const defaultServiceName = "http-routing";
-const nonBlankString = Option.filter((value: string) => value.trim().length > 0);
+const nonBlankString = Option.filter((value: string) => value.trim() !== "");
 
 const ConsoleObservabilityLive = Layer.mergeAll(
   Logger.layer([Logger.consoleJson], { mergeWithExisting: true }),
@@ -91,12 +91,12 @@ export const recordHttpRequestCompleted = (input: {
   readonly routeKind: string;
   readonly status: number;
 }) => {
-  const attributes: MetricAttributes = {
+  const attributes = {
     http_method: input.method,
     http_status: String(input.status),
     outcome: "success",
     route_kind: input.routeKind,
-  };
+  } satisfies MetricAttributes;
 
   return Effect.gen(function* () {
     yield* Metric.update(Metric.withAttributes(requestTotal, attributes), 1);
@@ -109,11 +109,11 @@ export const recordHttpRequestFailed = (input: {
   readonly method: string;
   readonly routeKind: string;
 }) => {
-  const attributes: MetricAttributes = {
+  const attributes = {
     http_method: input.method,
     outcome: "error",
     route_kind: input.routeKind,
-  };
+  } satisfies MetricAttributes;
 
   return Effect.gen(function* () {
     yield* Metric.update(Metric.withAttributes(requestTotal, attributes), 1);

@@ -13,7 +13,7 @@ export const ArtifactMetadata = Schema.Struct({
   sha: HeaderValue,
   dirtyHash: HeaderValue,
 });
-export interface ArtifactMetadata extends Schema.Schema.Type<typeof ArtifactMetadata> {}
+export type ArtifactMetadata = typeof ArtifactMetadata.Type;
 
 export class CacheError extends Schema.TaggedError<CacheError>()("CacheError", {
   status: Schema.Number,
@@ -25,3 +25,7 @@ export const storageFailure = () =>
 export const invalidRequest = () =>
   new CacheError({ status: 400, message: "Invalid cache request" });
 export const PART_BYTES = 5 * 1024 * 1024;
+
+export type Identifier = typeof Identifier.Type;
+
+export type ByteLength = typeof ByteLength.Type;

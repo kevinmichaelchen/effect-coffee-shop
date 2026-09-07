@@ -9,21 +9,21 @@ import {
 } from "@effect-coffee-shop/coffee-core/domain/errors";
 import { InternalAppError } from "@effect-coffee-shop/coffee-core/application/errors";
 
-const KnownToolFailureSchema = Schema.Union([
+const KnownToolFailure = Schema.Union([
   DrinkNotFoundError,
   InternalAppError,
   InvalidOrderInputError,
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
 ]);
-const MessageOnlyFailureSchema = Schema.Struct({
+const MessageOnlyFailure = Schema.Struct({
   message: Schema.String,
 });
 
-type KnownToolFailure = typeof KnownToolFailureSchema.Type;
+type KnownToolFailure = typeof KnownToolFailure.Type;
 
-const decodeKnownToolFailure = Schema.decodeUnknownOption(KnownToolFailureSchema);
-const decodeMessageOnlyFailure = Schema.decodeUnknownOption(MessageOnlyFailureSchema);
+const decodeKnownToolFailure = Schema.decodeUnknownOption(KnownToolFailure);
+const decodeMessageOnlyFailure = Schema.decodeUnknownOption(MessageOnlyFailure);
 
 const formatKnownToolFailure = (error: KnownToolFailure): string =>
   Match.value(error).pipe(
@@ -38,10 +38,10 @@ const formatKnownToolFailure = (error: KnownToolFailure): string =>
     Match.exhaustive,
   );
 
-export const formatToolFailure = (error: unknown): string =>
-  Option.match(decodeKnownToolFailure(error), {
+export const formatToolFailure = (cause: unknown): string =>
+  Option.match(decodeKnownToolFailure(cause), {
     onNone: () =>
-      Option.match(decodeMessageOnlyFailure(error), {
+      Option.match(decodeMessageOnlyFailure(cause), {
         onNone: () => "Assistant tool execution failed.",
         onSome: (failure) => failure.message,
       }),

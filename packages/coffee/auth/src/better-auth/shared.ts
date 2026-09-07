@@ -6,11 +6,7 @@ import * as Schema from "effect/Schema";
 import { createCoffeeAgentAuthOptions } from "../agent/options.ts";
 import { logStructuredEvent } from "@effect-coffee-shop/http-routing/logging";
 import { runHttpEffect } from "@effect-coffee-shop/http-routing/observability";
-import {
-  AppActorSchema,
-  anonymousActor,
-  type AppActor,
-} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { AppActor, anonymousActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import {
   createProvisionalUser,
   createRegisteredUser,
@@ -18,9 +14,9 @@ import {
   provisionalUserPrefix,
 } from "./users.ts";
 
-const BetterAuthSecretSchema = Schema.Trim.pipe(Schema.check(Schema.isNonEmpty()));
-const decodeResolvedActor = Schema.decodeUnknownSync(AppActorSchema);
-const decodeBetterAuthSecret = Schema.decodeUnknownSync(BetterAuthSecretSchema);
+const BetterAuthSecret = Schema.Trim.pipe(Schema.check(Schema.isNonEmpty()));
+const decodeResolvedActor = Schema.decodeUnknownSync(AppActor);
+const decodeBetterAuthSecret = Schema.decodeUnknownSync(BetterAuthSecret);
 const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
 type CoffeeAuthAppLayer = Parameters<typeof createCoffeeAgentAuthOptions>[0]["appLayer"];
 type BetterAuthOptions = Parameters<typeof betterAuth>[0];
@@ -38,6 +34,7 @@ export interface CoffeeActorResolutionInput {
   readonly appLayer: CoffeeAuthAppLayer;
   readonly database: BetterAuthDatabase;
   readonly request: Request;
+  // oxlint-disable-next-line effect/prefer-option-over-null -- Better Auth SDK represents absent secrets and registration context with nullish values.
   readonly secret: string | undefined;
   readonly staffUserIds: ReadonlySet<string>;
 }

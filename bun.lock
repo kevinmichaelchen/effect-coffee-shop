@@ -12,12 +12,14 @@
         "@effect/platform-node": "catalog:",
         "@effect/tsgo": "0.41.0",
         "@j178/prek": "0.4.12",
-        "@mpsuesser/oxlint-plugin-effect": "^0.4.3",
+        "@mpsuesser/oxlint-plugin-effect": "0.5.0",
         "@types/bun": "catalog:",
         "@types/node": "catalog:",
         "alchemy": "catalog:",
         "effect": "catalog:",
         "fallow": "catalog:",
+        "oxlint": "catalog:",
+        "oxlint-tsgolint": "catalog:",
         "turbo": "2.10.12",
         "typescript": "catalog:",
         "varlock": "1.18.0",
@@ -112,6 +114,7 @@
       "devDependencies": {
         "@copilotkit/aimock": "1.38.0",
         "@effect-coffee-shop/coffee-external-in-memory": "workspace:*",
+        "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
         "lintcn": "catalog:",
         "oxfmt": "catalog:",
@@ -241,6 +244,7 @@
       "devDependencies": {
         "@alchemy.run/cloudflare-runtime": "catalog:",
         "@cloudflare/workers-types": "catalog:",
+        "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
         "lintcn": "catalog:",
         "oxfmt": "catalog:",
@@ -258,6 +262,7 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
         "lintcn": "catalog:",
         "oxfmt": "catalog:",
@@ -393,6 +398,7 @@
       },
       "devDependencies": {
         "@alchemy.run/cloudflare-runtime": "catalog:",
+        "@effect/vitest": "catalog:",
         "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
@@ -1031,7 +1037,7 @@
 
     "@mdx-js/react": ["@mdx-js/react@3.1.1", "", { "dependencies": { "@types/mdx": "^2.0.0" }, "peerDependencies": { "@types/react": ">=16", "react": ">=16" } }, "sha512-f++rKLQgUVYDAtECQ6fn/is15GkEH9+nZPM3MS0RcxVqoTfawHvDlSCH7JbMhAM6uJ32v3eXLvLmLvjGu7PTQw=="],
 
-    "@mpsuesser/oxlint-plugin-effect": ["@mpsuesser/oxlint-plugin-effect@0.4.3", "", { "dependencies": { "@oxlint/plugins": "^1.66.0", "effect": "4.0.0-beta.100", "effect-oxlint": "^0.3.3" } }, "sha512-zUuShvX0nIq7UYnjk1mz7YDQMb6A9cJ7vWnDUBwicmiI87rCfqieYAvQC40Mr9ifzXal07VArrOeZw3Ysikzeg=="],
+    "@mpsuesser/oxlint-plugin-effect": ["@mpsuesser/oxlint-plugin-effect@0.5.0", "", { "dependencies": { "@oxlint/plugins": "^1.66.0", "effect": "4.0.0-beta.100", "effect-oxlint": "^0.3.3" } }, "sha512-RksB0kBL3aEzMdSgozRgKjVc9++k8EsmoqS9QQ4+AS9TVBVcHyA+Q6dE9gcsRqYWbsGNQQ58STDJAwlwczsAqg=="],
 
     "@mrleebo/prisma-ast": ["@mrleebo/prisma-ast@0.13.1", "", { "dependencies": { "chevrotain": "^10.5.0", "lilconfig": "^2.1.0" } }, "sha512-XyroGQXcHrZdvmrGJvsA9KNeOOgGMg1Vg9OlheUsBOSKznLMDl+YChxbkboRHvtFYJEMRYmlV3uoo/njCw05iw=="],
 

@@ -10,15 +10,13 @@ const allowedTransitions = {
 } as const satisfies Record<OrderStatus, ReadonlyArray<OrderStatus>>;
 
 describe("order domain", () => {
-  it("accepts only the supported status transitions", () => {
-    for (const from of orderStatuses) {
-      for (const to of orderStatuses) {
-        const nextStatuses = allowedTransitions[from];
-        assert.strictEqual(
-          canTransitionTo(from, to),
-          nextStatuses.some((nextStatus) => nextStatus === to),
-        );
-      }
-    }
-  });
+  it.each(orderStatuses.flatMap((from) => orderStatuses.map((to) => ({ from, to }))))(
+    "validates the transition from $from to $to",
+    ({ from, to }) => {
+      assert.strictEqual(
+        canTransitionTo(from, to),
+        allowedTransitions[from].some((status) => status === to),
+      );
+    },
+  );
 });

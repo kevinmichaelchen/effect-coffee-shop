@@ -30,18 +30,22 @@ export type AssistantRunnableTool = Readonly<{
   parameters?: AssistantToolDefinition["parameters"];
 }>;
 
-const WorkersAiToolCallSchema = Schema.Struct({
+const WorkersAiToolCall = Schema.Struct({
   arguments: Schema.Unknown,
   name: Schema.String,
 });
 
-type WorkersAiToolCall = typeof WorkersAiToolCallSchema.Type;
-const isWorkersAiToolCall = Schema.is(WorkersAiToolCallSchema);
+type WorkersAiToolCall = typeof WorkersAiToolCall.Type;
+const isWorkersAiToolCall = Schema.is(WorkersAiToolCall);
 
 export function createGatewayOptions(
+  // oxlint-disable-next-line effect/prefer-option-over-null -- Workers AI request/metadata contract permits absent fields and native JSON null values.
   gatewayId: string | undefined,
+  // oxlint-disable-next-line effect/prefer-option-over-null -- Workers AI request/metadata contract permits absent fields and native JSON null values.
   metadata: AssistantRequestMetadata | undefined,
+  // oxlint-disable-next-line effect/prefer-option-over-null -- Workers AI request/metadata contract permits absent fields and native JSON null values.
   eventId: string | undefined,
+  // oxlint-disable-next-line effect/prefer-option-over-null -- Workers AI request/metadata contract permits absent fields and native JSON null values.
 ): AssistantGatewayOptions | undefined {
   const normalizedGatewayId = Option.fromNullishOr(gatewayId?.trim()).pipe(
     Option.filter((id) => id !== ""),

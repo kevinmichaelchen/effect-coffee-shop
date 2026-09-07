@@ -4,11 +4,17 @@ import * as Test from "alchemy/Test/Vitest";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { expect } from "vitest";
+// oxlint-disable-next-line effect/use-command-executor-service -- Native CLI integration adapter exercises the real Turbo process, filesystem and Node byte APIs; cleanup is acquireRelease-scoped.
 import { execFile } from "node:child_process";
+// oxlint-disable-next-line effect/avoid-node-imports -- Native CLI integration adapter exercises the real Turbo process, filesystem and Node byte APIs; cleanup is acquireRelease-scoped.
 import { randomBytes } from "node:crypto";
+// oxlint-disable-next-line effect/use-filesystem-service -- Native CLI integration adapter exercises the real Turbo process, filesystem and Node byte APIs; cleanup is acquireRelease-scoped.
 import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
+// oxlint-disable-next-line effect/use-temp-file-scoped -- Native CLI integration adapter exercises the real Turbo process, filesystem and Node byte APIs; cleanup is acquireRelease-scoped.
 import { tmpdir } from "node:os";
+// oxlint-disable-next-line effect/use-path-service -- Native CLI integration adapter exercises the real Turbo process, filesystem and Node byte APIs; cleanup is acquireRelease-scoped.
 import { join, resolve } from "node:path";
+// oxlint-disable-next-line effect/avoid-node-imports -- Native CLI integration adapter exercises the real Turbo process, filesystem and Node byte APIs; cleanup is acquireRelease-scoped.
 import { promisify } from "node:util";
 import Stack from "./cloudflare.ts";
 
@@ -24,9 +30,11 @@ afterAll(destroy(Stack), { timeout: 120_000 });
 const writeToken = "test-write-token-not-a-real-secret-0001";
 const readToken = "test-read-token-not-a-real-secret-00002";
 const request = (url: string, path: string, init: RequestInit = {}) =>
+  // oxlint-disable-next-line effect/avoid-native-fetch -- Native HTTP probe checks the deployed wire protocol; rejection is handled at this adapter boundary.
   Effect.promise((signal) => fetch(new URL(path, url), { ...init, signal }));
 
 const execute = promisify(execFile);
+const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
 
 test(
   "the real Turbo CLI restores a signed multipart artifact from an empty local cache",
@@ -41,7 +49,7 @@ test(
     yield* Effect.promise(() =>
       writeFile(
         join(cwd, "package.json"),
-        JSON.stringify({
+        encodeJsonString({
           name: "signed-cache-fixture",
           private: true,
           packageManager: "bun@1.4.2",
@@ -52,7 +60,7 @@ test(
     yield* Effect.promise(() =>
       writeFile(
         join(cwd, "turbo.json"),
-        JSON.stringify({
+        encodeJsonString({
           remoteCache: { signature: true },
           tasks: { build: { outputs: ["dist/**"], inputs: ["input.bin", "build.mjs"] } },
         }),
@@ -112,23 +120,30 @@ test(
       },
     });
     expect(put.status).toBe(200);
-    for (const method of ["GET", "HEAD"]) {
-      const result = yield* request(url, path, {
-        method,
-        headers: { authorization: `Bearer ${readToken}` },
-      });
-      expect(result.status).toBe(200);
-      if (method === "HEAD")
-        expect(result.headers.get("content-length")).toBe(String(bytes.byteLength));
-      expect(result.headers.get("x-artifact-tag")).toBe("signature-preserved-at-9-MiB");
-      expect(result.headers.get("x-artifact-duration")).toBe("1234");
-      expect(result.headers.get("x-artifact-sha")).toBe("abcdef");
-      expect(result.headers.get("x-artifact-dirty-hash")).toBe("dirty123");
-      const body = yield* Effect.promise(() => result.arrayBuffer());
-      expect(
-        Buffer.from(body).equals(Buffer.from(method === "GET" ? bytes : new Uint8Array())),
-      ).toBe(true);
-    }
+    const head = yield* request(url, path, {
+      method: "HEAD",
+      headers: { authorization: `Bearer ${readToken}` },
+    });
+    expect(head.headers.get("content-length")).toBe(String(bytes.byteLength));
+    yield* Effect.forEach(
+      ["GET", "HEAD"],
+      Effect.fnUntraced(function* (method) {
+        const result = yield* request(url, path, {
+          method,
+          headers: { authorization: `Bearer ${readToken}` },
+        });
+        expect(result.status).toBe(200);
+        expect(result.headers.get("x-artifact-tag")).toBe("signature-preserved-at-9-MiB");
+        expect(result.headers.get("x-artifact-duration")).toBe("1234");
+        expect(result.headers.get("x-artifact-sha")).toBe("abcdef");
+        expect(result.headers.get("x-artifact-dirty-hash")).toBe("dirty123");
+        const body = yield* Effect.promise(() => result.arrayBuffer());
+        expect(
+          Buffer.from(body).equals(Buffer.from(method === "GET" ? bytes : new Uint8Array())),
+        ).toBe(true);
+      }),
+      { concurrency: 1, discard: true },
+    );
   }),
 );
 
@@ -148,24 +163,28 @@ test(
         headers: { authorization: `Bearer ${readToken}` },
       }),
     ).toBe(403);
-    for (const attempt of Array.from({ length: 20 }, (_, index) => index)) {
-      expect(
-        yield* status(`/v8/artifacts/forbidden-${attempt}?slug=cache-test`, {
-          method: "PUT",
-          body: "bad",
-          headers: { authorization: `Bearer ${readToken}` },
-        }),
-      ).toBe(403);
-      const preflight = yield* request(url, "/v8/artifacts/test", {
-        method: "OPTIONS",
-        headers: { authorization: `Bearer ${writeToken}` },
-      });
-      expect({
-        status: preflight.status,
-        body: yield* Effect.promise(() => preflight.text()),
-      }).toEqual({ status: 204, body: "" });
-      expect(preflight.headers.get("access-control-allow-headers")).toContain("Authorization");
-    }
+    yield* Effect.forEach(
+      Array.from({ length: 20 }, (_, index) => index),
+      Effect.fnUntraced(function* (attempt) {
+        expect(
+          yield* status(`/v8/artifacts/forbidden-${attempt}?slug=cache-test`, {
+            method: "PUT",
+            body: "bad",
+            headers: { authorization: `Bearer ${readToken}` },
+          }),
+        ).toBe(403);
+        const preflight = yield* request(url, "/v8/artifacts/test", {
+          method: "OPTIONS",
+          headers: { authorization: `Bearer ${writeToken}` },
+        });
+        expect({
+          status: preflight.status,
+          body: yield* Effect.promise(() => preflight.text()),
+        }).toEqual({ status: 204, body: "" });
+        expect(preflight.headers.get("access-control-allow-headers")).toContain("Authorization");
+      }),
+      { concurrency: 1, discard: true },
+    );
     expect(
       yield* status("/v8/artifacts/missing?slug=cache-test", {
         headers: { authorization: `Bearer ${readToken}` },

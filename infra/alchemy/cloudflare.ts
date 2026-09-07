@@ -5,7 +5,8 @@
  */
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
-import * as Data from "effect/Data";
+import * as Option from "effect/Option";
+import * as R from "effect/Record";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import {
@@ -23,16 +24,20 @@ import {
 import { coffeeStackName } from "./shared.ts";
 
 const state = () =>
+  // oxlint-disable-next-line effect/avoid-process-env -- Alchemy state-backend bootstrap runs before the stack Effect or Config provider exists.
   process.env.ALCHEMY_LOCAL_STATE === "1" ? Alchemy.localState() : Cloudflare.state();
 
-class DeploySmokeCheckError extends Data.TaggedError("DeploySmokeCheckError")<{
-  readonly message: string;
-  readonly cause?: unknown;
-}> {}
+class DeploySmokeCheckError extends Schema.TaggedError<DeploySmokeCheckError>()(
+  "DeploySmokeCheckError",
+  {
+    message: Schema.String,
+    cause: Schema.optionalKey(Schema.Unknown),
+  },
+) {}
 
 const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
 
-const betterAuthSecret = Effect.gen(function* () {
+const betterAuthSecret = Effect.fn("Cloudflare.betterAuthSecret")(function* () {
   const provided = yield* optionalTrimmedRedacted(cloudflareEnvNames.betterAuthSecret);
 
   if (provided !== undefined) {
@@ -51,6 +56,7 @@ const fetchSmokeResponse = (input: {
   readonly url: string;
 }) =>
   Effect.tryPromise({
+    // oxlint-disable-next-line effect/avoid-native-fetch -- Native HTTP probe checks the deployed wire protocol; rejection is handled at this adapter boundary.
     try: () => fetch(input.url, input.init),
     catch: (cause) =>
       new DeploySmokeCheckError({
@@ -169,7 +175,7 @@ export default Alchemy.Stack(
         comment: "Better Auth signing secret for the Coffee Shop Cloudflare Worker.",
         name: cloudflareEnvNames.betterAuthSecret,
         store: secretsStore,
-        value: yield* betterAuthSecret,
+        value: yield* betterAuthSecret(),
       },
     );
 
@@ -213,9 +219,11 @@ export default Alchemy.Stack(
         // real Cloudflare API even under `alchemy dev`. Only attach it when an
         // assistant model is configured so local stacks and `bun run cf:test`
         // never reach a real account.
-        ...(assistantModel === undefined
-          ? {}
-          : { [cloudflareBindingNames.ai]: Cloudflare.Workers.AI(cloudflareBindingNames.ai) }),
+        ...R.getSomes({
+          [cloudflareBindingNames.ai]: Option.fromUndefinedOr(assistantModel).pipe(
+            Option.map(() => Cloudflare.Workers.AI(cloudflareBindingNames.ai)),
+          ),
+        }),
         [cloudflareBindingNames.db]: coffeeDb,
         [cloudflareEnvNames.aiGatewayId]: assistantGateway?.gatewayId ?? "",
         [cloudflareEnvNames.betterAuthSecret]: betterAuthStoreSecret,

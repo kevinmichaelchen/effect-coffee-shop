@@ -9,6 +9,7 @@ export interface PersistedCoffeeOrderItemFields {
   readonly milk: CoffeeOrderItem["milk"];
   readonly temperature: CoffeeOrderItem["temperature"];
   readonly shots: CoffeeOrderItem["shots"];
+  // oxlint-disable-next-line effect/prefer-option-over-null -- SQL encoding contract uses NULL; domain notes are already Option.
   readonly notes: string | null;
   readonly quantity: CoffeeOrderItem["quantity"];
   readonly unitPriceCents: number;

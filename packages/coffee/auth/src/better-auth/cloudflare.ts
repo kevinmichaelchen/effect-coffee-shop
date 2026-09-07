@@ -26,6 +26,7 @@ export async function resolveCloudflareActor(input: {
   readonly appLayer: CoffeeAuthAppLayer;
   readonly db: D1Database;
   readonly request: Request;
+  // oxlint-disable-next-line effect/prefer-option-over-null -- Better Auth SDK represents absent secrets and registration context with nullish values.
   readonly secret: string | undefined;
   readonly staffUserIds: ReadonlySet<string>;
 }) {

@@ -35,17 +35,17 @@ export interface OllamaConfig {
   readonly model: string;
 }
 
-const OllamaToolCallSchema = Schema.Struct({
+const OllamaToolCall = Schema.Struct({
   function: Schema.Struct({
     arguments: Schema.Unknown,
     name: Schema.String,
   }),
 });
 
-const OllamaChatResponseSchema = Schema.Struct({
+const OllamaChatResponse = Schema.Struct({
   message: Schema.Struct({
     content: Schema.optionalKey(Schema.String),
-    tool_calls: Schema.optionalKey(Schema.Array(OllamaToolCallSchema)),
+    tool_calls: Schema.optionalKey(Schema.Array(OllamaToolCall)),
   }),
 });
 
@@ -149,7 +149,7 @@ function readOllamaResponse(
     const output = yield* decodeJsonResponseEffect({
       provider: "Ollama",
       response,
-      schema: OllamaChatResponseSchema,
+      schema: OllamaChatResponse,
     });
 
     return {
@@ -215,7 +215,7 @@ function toOllamaToolCall(toolCall: AssistantToolCall): OllamaToolCall {
 }
 
 function toAssistantToolCall(
-  toolCall: Schema.Schema.Type<typeof OllamaToolCallSchema>,
+  toolCall: Schema.Schema.Type<typeof OllamaToolCall>,
 ): AssistantToolCall {
   return {
     arguments: toolCall.function.arguments,

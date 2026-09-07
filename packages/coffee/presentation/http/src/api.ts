@@ -17,7 +17,7 @@ import {
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
 } from "@effect-coffee-shop/coffee-core/domain/errors";
-import { OrderIdSchema } from "@effect-coffee-shop/coffee-core/domain/order";
+import { OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import {
   type AppActor,
@@ -28,29 +28,29 @@ import {
   isAuthenticatedActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import {
-  CoffeeOrderViewSchema,
-  CoffeeOrdersViewSchema,
-  ListOrdersRequestSchema,
-  MenuViewSchema,
-  PlaceOrderRequestSchema,
+  CoffeeOrderView,
+  CoffeeOrdersView,
+  ListOrdersRequest,
+  MenuView,
+  PlaceOrderRequest,
   toCoffeeOrderView,
   toCoffeeOrdersView,
   toMenuView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
 import { InternalAppError } from "@effect-coffee-shop/coffee-core/application/errors";
 
-const HealthStatusSchema = Schema.Struct({
+const HealthStatus = Schema.Struct({
   status: Schema.Literal("ok"),
 }).annotate({ identifier: "HealthStatus" });
-const HEALTH_STATUS: typeof HealthStatusSchema.Type = { status: "ok" };
+const HEALTH_STATUS: typeof HealthStatus.Type = { status: "ok" };
 
-const ActorSummarySchema = Schema.Struct({
+const ActorSummary = Schema.Struct({
   displayName: Schema.optionalKey(Schema.String),
   kind: Schema.Literals(["anonymous", "customer", "staff"] as const),
   userId: Schema.optionalKey(Schema.String),
 }).annotate({ identifier: "ActorSummary" });
 
-type ActorSummary = typeof ActorSummarySchema.Type;
+type ActorSummary = typeof ActorSummary.Type;
 
 const toActorSummary = (actor: AppActor): ActorSummary =>
   isAuthenticatedActor(actor)
@@ -62,7 +62,7 @@ const toActorSummary = (actor: AppActor): ActorSummary =>
     : anonymousActor;
 
 const orderIdParams = {
-  orderId: OrderIdSchema,
+  orderId: OrderId,
 };
 
 const orderStatusErrors = [
@@ -79,13 +79,13 @@ const orderStatusEndpoint = <Name extends string, Path extends `/${string}`>(
 ) =>
   HttpApiEndpoint.post(name, path, {
     params: orderIdParams,
-    success: CoffeeOrderViewSchema,
+    success: CoffeeOrderView,
     error: orderStatusErrors,
   });
 
 class HealthApi extends HttpApiGroup.make("health", { topLevel: true }).add(
   HttpApiEndpoint.get("check", "/health", {
-    success: HttpApiSchema.WithHeaders(HealthStatusSchema, {
+    success: HttpApiSchema.WithHeaders(HealthStatus, {
       "cache-control": Schema.Literal("no-store"),
     }),
   }),
@@ -94,7 +94,7 @@ class HealthApi extends HttpApiGroup.make("health", { topLevel: true }).add(
 class MenuApi extends HttpApiGroup.make("menu")
   .add(
     HttpApiEndpoint.get("list", "/", {
-      success: MenuViewSchema,
+      success: MenuView,
       error: InternalAppError,
     }),
   )
@@ -103,7 +103,7 @@ class MenuApi extends HttpApiGroup.make("menu")
 class SessionApi extends HttpApiGroup.make("session")
   .add(
     HttpApiEndpoint.get("me", "/me", {
-      success: ActorSummarySchema,
+      success: ActorSummary,
     }),
   )
   .prefix("/") {}
@@ -111,8 +111,8 @@ class SessionApi extends HttpApiGroup.make("session")
 class OrdersApi extends HttpApiGroup.make("orders")
   .add(
     HttpApiEndpoint.post("create", "/", {
-      payload: PlaceOrderRequestSchema,
-      success: CoffeeOrderViewSchema,
+      payload: PlaceOrderRequest,
+      success: CoffeeOrderView,
       error: [
         AuthenticationRequiredError,
         DrinkNotFoundError,
@@ -121,15 +121,15 @@ class OrdersApi extends HttpApiGroup.make("orders")
       ],
     }),
     HttpApiEndpoint.get("list", "/", {
-      query: ListOrdersRequestSchema,
-      success: CoffeeOrdersViewSchema,
+      query: ListOrdersRequest,
+      success: CoffeeOrdersView,
       error: [AuthenticationRequiredError, InvalidOrderInputError, InternalAppError],
     }),
     HttpApiEndpoint.get("getById", "/:orderId", {
       params: {
-        orderId: OrderIdSchema,
+        orderId: OrderId,
       },
-      success: CoffeeOrderViewSchema,
+      success: CoffeeOrderView,
       error: [AuthenticationRequiredError, OrderNotFoundError, InternalAppError],
     }),
     orderStatusEndpoint("startBrewing", "/:orderId/start-brewing"),

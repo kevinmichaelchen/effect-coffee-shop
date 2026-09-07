@@ -32,13 +32,11 @@ const getAssistantAiConfig = (runtime: CloudflareRuntime): Option.Option<Assista
   Option.match(runtime.bindings.ai, {
     onNone: () => Option.none(),
     onSome: (binding) =>
-      Option.fromNullishOr(
-        createWorkersAiBindingConfig({
-          binding,
-          gatewayId: Option.getOrUndefined(runtime.config.aiGatewayId),
-          model: Option.getOrUndefined(runtime.config.assistantModel),
-        }),
-      ),
+      createWorkersAiBindingConfig({
+        binding,
+        gatewayId: runtime.config.aiGatewayId,
+        model: runtime.config.assistantModel,
+      }),
   });
 
 export const assistantRoute: HttpRoute<CloudflareWorkerEnv> = {

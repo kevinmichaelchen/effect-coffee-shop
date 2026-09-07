@@ -25,7 +25,7 @@ import type {
   OrderItemInput,
   UpdateCartItemRequest,
 } from "../contracts.ts";
-import { CartItemQuoteSchema, OrderItemsInputSchema } from "../contracts.ts";
+import { CartItemQuote, OrderItemsInput } from "../contracts.ts";
 import { InternalAppError, internalAppErrorFromPersistence } from "../errors.ts";
 import { CartItemIdGenerator } from "../ports/CartItemIdGenerator.ts";
 import { CartRepository } from "../ports/CartRepository.ts";
@@ -41,7 +41,7 @@ import {
 } from "./orderItems.ts";
 import { placeOrder } from "./placeOrder.ts";
 
-const decodeOrderItemsInput = Schema.decodeUnknownEffect(OrderItemsInputSchema);
+const decodeOrderItemsInput = Schema.decodeUnknownEffect(OrderItemsInput);
 
 const emptyCart = (ownerUserId: string): Cart => ({
   ownerUserId,
@@ -79,9 +79,7 @@ const toSnapshot = Effect.fn("cart.toSnapshot")(function* (
     item: resolvedItems[index],
   }));
 
-  return yield* Schema.decodeUnknownEffect(Schema.Array(Schema.toType(CartItemQuoteSchema)))(
-    items,
-  ).pipe(
+  return yield* Schema.decodeUnknownEffect(Schema.Array(Schema.toType(CartItemQuote)))(items).pipe(
     Effect.catchTag("SchemaError", () =>
       Effect.fail(invalidOrderInput("cart items could not be resolved")),
     ),

@@ -1,4 +1,5 @@
 // Cryptographic adapter shared by Bun and Workers' nodejs_compat runtime.
+// oxlint-disable-next-line effect/avoid-node-imports -- Cryptographic boundary: Workers nodejs_compat and Bun provide timingSafeEqual.
 import { createHash, timingSafeEqual } from "node:crypto";
 import * as Effect from "effect/Effect";
 import * as Redacted from "effect/Redacted";

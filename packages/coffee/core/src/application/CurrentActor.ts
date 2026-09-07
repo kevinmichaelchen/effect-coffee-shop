@@ -7,24 +7,23 @@ import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import * as Context from "effect/Context";
 
-const AnonymousActorSchema = Schema.Struct({
+const AnonymousActor = Schema.Struct({
   kind: Schema.Literal("anonymous"),
 }).annotate({ identifier: "AnonymousActor" });
 
-const AuthenticatedActorSchema = Schema.Struct({
+const AuthenticatedActor = Schema.Struct({
   displayName: Schema.String,
   kind: Schema.Literals(["customer", "staff", "system"] as const),
   userId: Schema.String,
 }).annotate({ identifier: "AuthenticatedActor" });
 
-export const AppActorSchema = Schema.Union([
-  AnonymousActorSchema,
-  AuthenticatedActorSchema,
-]).annotate({ identifier: "AppActor" });
+export const AppActor = Schema.Union([AnonymousActor, AuthenticatedActor]).annotate({
+  identifier: "AppActor",
+});
 
-export type AppActor = typeof AppActorSchema.Type;
-type AnonymousActor = typeof AnonymousActorSchema.Type;
-type AuthenticatedActor = typeof AuthenticatedActorSchema.Type;
+export type AppActor = typeof AppActor.Type;
+type AnonymousActor = typeof AnonymousActor.Type;
+type AuthenticatedActor = typeof AuthenticatedActor.Type;
 
 export const anonymousActor: AnonymousActor = {
   kind: "anonymous",

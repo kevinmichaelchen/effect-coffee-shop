@@ -1,22 +1,16 @@
-import type {
+import type { MenuItem, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
+import {
   CoffeeApiError,
   CoffeeOrder,
-  MenuItem,
-  OrderAction,
+  CoffeeOrders,
+  Menu,
   PlaceOrderRequest,
-} from "#features/coffee-shop/lib/coffee.ts";
-import {
-  CoffeeApiErrorSchema,
-  CoffeeOrderSchema,
-  CoffeeOrdersSchema,
-  MenuSchema,
-  PlaceOrderRequestSchema,
 } from "#features/coffee-shop/lib/coffee-schemas.ts";
 import { requestJson } from "#shared/lib/http.ts";
 import * as Schema from "effect/Schema";
 
 const apiBaseUrl = import.meta.env.VITE_COFFEE_API_URL ?? "/api";
-const encodePlaceOrderRequest = Schema.encodeUnknownSync(PlaceOrderRequestSchema);
+const encodePlaceOrderRequest = Schema.encodeUnknownSync(PlaceOrderRequest);
 
 function toRequestUrl(path: string): string {
   return `${apiBaseUrl}${path}`;
@@ -39,25 +33,25 @@ function getActionPath(orderId: string, action: OrderAction): string {
 
 export async function fetchMenu(): Promise<readonly MenuItem[]> {
   return requestJson({
-    errorSchema: CoffeeApiErrorSchema,
+    errorSchema: CoffeeApiError,
     path: toRequestUrl("/menu"),
     readErrorMessage: readApiErrorMessage,
-    schema: MenuSchema,
+    schema: Menu,
   });
 }
 
 export async function fetchOrders(): Promise<readonly CoffeeOrder[]> {
   return requestJson({
-    errorSchema: CoffeeApiErrorSchema,
+    errorSchema: CoffeeApiError,
     path: toRequestUrl("/orders"),
     readErrorMessage: readApiErrorMessage,
-    schema: CoffeeOrdersSchema,
+    schema: CoffeeOrders,
   });
 }
 
 export async function createOrder(payload: PlaceOrderRequest): Promise<CoffeeOrder> {
   return requestJson({
-    errorSchema: CoffeeApiErrorSchema,
+    errorSchema: CoffeeApiError,
     init: {
       body: JSON.stringify(encodePlaceOrderRequest(payload)),
       headers: { "content-type": "application/json" },
@@ -65,7 +59,7 @@ export async function createOrder(payload: PlaceOrderRequest): Promise<CoffeeOrd
     },
     path: toRequestUrl("/orders"),
     readErrorMessage: readApiErrorMessage,
-    schema: CoffeeOrderSchema,
+    schema: CoffeeOrder,
   });
 }
 
@@ -74,10 +68,10 @@ export async function updateOrderStatus(
   action: OrderAction,
 ): Promise<CoffeeOrder> {
   return requestJson({
-    errorSchema: CoffeeApiErrorSchema,
+    errorSchema: CoffeeApiError,
     init: { method: "POST" },
     path: toRequestUrl(getActionPath(orderId, action)),
     readErrorMessage: readApiErrorMessage,
-    schema: CoffeeOrderSchema,
+    schema: CoffeeOrder,
   });
 }

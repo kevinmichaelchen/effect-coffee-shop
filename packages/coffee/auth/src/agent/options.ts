@@ -28,6 +28,7 @@ import { formatToolFailure } from "@effect-coffee-shop/coffee-actions/format";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import { CurrentActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
+// oxlint-disable-next-line effect/no-unknown-parameters -- Tool input decoder boundary: provider payloads remain unknown until the selected Schema decodes them.
 type AgentInputDecoder<A> = (value: unknown) => Effect.Effect<A, unknown>;
 
 interface AgentActionInput {
@@ -76,9 +77,9 @@ export function createCoffeeAgentAppRunner(input: {
     effect.pipe(Effect.provide(liveLayer), Effect.provide(services));
 }
 
-function toExecutionError(error: unknown): AgentCapabilityExecutionError {
+function toExecutionError(cause: unknown): AgentCapabilityExecutionError {
   return new AgentCapabilityExecutionError({
-    message: formatToolFailure(error),
+    message: formatToolFailure(cause),
   });
 }
 
@@ -231,6 +232,7 @@ export function createCoffeeAgentAuthOptions(input: {
         session: agentSession,
       });
 
+      // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
       return Effect.runPromise(
         executeCoffeeAgentCapabilityEffect({
           arguments: args,

@@ -6,10 +6,8 @@ import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { describe, expect, it } from "vitest";
 import {
-  CoffeeOrderViewSchema,
-  CoffeeOrdersViewSchema,
-  type CoffeeOrderView,
-  type CoffeeOrdersView,
+  CoffeeOrderView,
+  CoffeeOrdersView,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
 import {
   createCoffeeAgentAppRunner,
@@ -27,6 +25,7 @@ async function withTestDatabase<A>(effect: (db: D1Database) => Promise<A>): Prom
     name: "coffee-agent-auth-test",
   });
 
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
   await Effect.runPromise(migrateCloudflareD1(proxy.env.DB));
 
   return effect(proxy.env.DB).finally(() => proxy.dispose());
@@ -41,9 +40,11 @@ function createAgentSession(input: {
     agentId: "agent-coffee",
     userId: input.userId,
     agent: {
-      activatedAt: new Date(),
+      // oxlint-disable-next-line effect/use-clock-service -- Fixed test instant; this constructor does not read the wall clock.
+      activatedAt: new Date("2026-01-01T00:00:00Z"),
       capabilityGrants: [],
-      createdAt: new Date(),
+      // oxlint-disable-next-line effect/use-clock-service -- Fixed test instant; this constructor does not read the wall clock.
+      createdAt: new Date("2026-01-01T00:00:00Z"),
       hostId: "host-coffee",
       id: "agent-coffee",
       metadata: null,
@@ -65,6 +66,7 @@ async function placeLatteOrder(db: D1Database, session: AgentSession) {
     appLayer: makeCloudflareCoffeeAppLive(db),
     session,
   });
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
   const result = await Effect.runPromise(
     executeCoffeeAgentCapabilityEffect({
       arguments: {
@@ -75,7 +77,8 @@ async function placeLatteOrder(db: D1Database, session: AgentSession) {
     }),
   );
 
-  return Effect.runPromise(Schema.decodeUnknownEffect(CoffeeOrderViewSchema)(result));
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
+  return Effect.runPromise(Schema.decodeUnknownEffect(CoffeeOrderView)(result));
 }
 
 async function listOrders(db: D1Database, session: AgentSession): Promise<CoffeeOrdersView> {
@@ -83,6 +86,7 @@ async function listOrders(db: D1Database, session: AgentSession): Promise<Coffee
     appLayer: makeCloudflareCoffeeAppLive(db),
     session,
   });
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
   const result = await Effect.runPromise(
     executeCoffeeAgentCapabilityEffect({
       arguments: {},
@@ -91,7 +95,8 @@ async function listOrders(db: D1Database, session: AgentSession): Promise<Coffee
     }),
   );
 
-  return Effect.runPromise(Schema.decodeUnknownEffect(CoffeeOrdersViewSchema)(result));
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
+  return Effect.runPromise(Schema.decodeUnknownEffect(CoffeeOrdersView)(result));
 }
 
 async function getOrder(
@@ -103,6 +108,7 @@ async function getOrder(
     appLayer: makeCloudflareCoffeeAppLive(db),
     session,
   });
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
   const result = await Effect.runPromise(
     executeCoffeeAgentCapabilityEffect({
       arguments: { orderId },
@@ -111,7 +117,8 @@ async function getOrder(
     }),
   );
 
-  return Effect.runPromise(Schema.decodeUnknownEffect(CoffeeOrderViewSchema)(result));
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
+  return Effect.runPromise(Schema.decodeUnknownEffect(CoffeeOrderView)(result));
 }
 
 describe("coffee agent auth", () => {
@@ -176,6 +183,7 @@ describe("coffee agent auth", () => {
       });
 
       await expect(
+        // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
         Effect.runPromise(
           executeCoffeeAgentCapabilityEffect({
             arguments: {},

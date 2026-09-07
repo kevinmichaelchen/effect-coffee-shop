@@ -1,3 +1,4 @@
+import * as Arr from "effect/Array";
 /**
  * Runs multi-turn assistant tool conversations against a provided model runner.
  *
@@ -25,7 +26,9 @@ const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.U
 
 interface AssistantConversationRoundInput {
   readonly conversation: readonly AssistantConversationMessage[];
+  // oxlint-disable-next-line effect/prefer-option-over-null -- Workers AI request/metadata contract permits absent fields and native JSON null values.
   readonly eventId: string | undefined;
+  // oxlint-disable-next-line effect/prefer-option-over-null -- Workers AI request/metadata contract permits absent fields and native JSON null values.
   readonly requestMetadata: AssistantRequestMetadata | undefined;
   readonly round: number;
   readonly tools: readonly AssistantToolDefinition[];
@@ -65,7 +68,7 @@ function runAssistantConversationRound(
       })
       .pipe(
         Effect.flatMap((response) => {
-          if (response.toolCalls.length === 0) {
+          if (Arr.isReadonlyArrayEmpty(response.toolCalls)) {
             return Effect.succeed(response.text);
           }
 

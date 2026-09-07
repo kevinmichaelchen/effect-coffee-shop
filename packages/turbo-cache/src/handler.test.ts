@@ -79,11 +79,15 @@ it.effect("packs multipart uploads and completes only after the final byte", () 
 
 it.effect("aborts uploads for truncated and oversized bodies", () =>
   Effect.gen(function* () {
-    for (const declared of ["1", "100"]) {
-      const test = fixture();
-      expect((yield* test.run(put(new Uint8Array(10), declared))).status).toBe(400);
-      expect(test.state).toEqual({ begins: 1, completes: 0, aborts: 1 });
-    }
+    yield* Effect.forEach(
+      ["1", "100"],
+      Effect.fnUntraced(function* (declared) {
+        const test = fixture();
+        expect((yield* test.run(put(new Uint8Array(10), declared))).status).toBe(400);
+        expect(test.state).toEqual({ begins: 1, completes: 0, aborts: 1 });
+      }),
+      { concurrency: 1, discard: true },
+    );
   }),
 );
 
@@ -129,14 +133,18 @@ it.effect("aborts multipart state when the request fiber is interrupted", () =>
 it.effect("rejects invalid lengths and metadata before creating an upload", () =>
   Effect.gen(function* () {
     const test = fixture();
-    for (const [length, expected] of [
-      ["0", 413],
-      ["67108865", 413],
-      ["abc", 400],
-    ]) {
-      const request = put(new Uint8Array(1), String(length));
-      expect((yield* test.run(request)).status).toBe(expected);
-    }
+    yield* Effect.forEach(
+      [
+        ["0", 413],
+        ["67108865", 413],
+        ["abc", 400],
+      ],
+      Effect.fnUntraced(function* ([length, expected]) {
+        const request = put(new Uint8Array(1), String(length));
+        expect((yield* test.run(request)).status).toBe(expected);
+      }),
+      { concurrency: 1, discard: true },
+    );
     const missing = put(new Uint8Array(1));
     missing.headers.delete("content-length");
     expect((yield* test.run(missing)).status).toBe(411);
@@ -149,37 +157,45 @@ it.effect("rejects invalid lengths and metadata before creating an upload", () =
 
 it.effect("distinguishes storage outages from cache misses, including HEAD", () =>
   Effect.gen(function* () {
-    for (const method of ["GET", "HEAD"]) {
-      const request = () =>
-        new Request("http://cache/v8/artifacts/hash?teamId=test", {
-          method,
-          headers: { authorization: `Bearer ${Redacted.value(config.readToken)}` },
-        });
-      expect((yield* fixture("read").run(request())).status).toBe(503);
-      const miss = yield* fixture().run(request());
-      expect(miss.status).toBe(404);
-      if (method === "HEAD") expect(miss.body).toBeNull();
-    }
+    yield* Effect.forEach(
+      ["GET", "HEAD"],
+      Effect.fnUntraced(function* (method) {
+        const request = () =>
+          new Request("http://cache/v8/artifacts/hash?teamId=test", {
+            method,
+            headers: { authorization: `Bearer ${Redacted.value(config.readToken)}` },
+          });
+        expect((yield* fixture("read").run(request())).status).toBe(503);
+        const miss = yield* fixture().run(request());
+        expect(miss.status).toBe(404);
+        expect(miss.body).toBeNull();
+      }),
+      { concurrency: 1, discard: true },
+    );
   }),
 );
 
 it.effect("rejects unauthenticated writes, read-only writes, and conflicting tenants", () =>
   Effect.gen(function* () {
     const test = fixture();
-    for (const [authorization, query, status] of [
-      ["", "slug=test", 401],
-      [`Bearer ${Redacted.value(config.readToken)}`, "slug=test", 403],
-      [`Bearer ${Redacted.value(config.writeToken)}`, "slug=test&teamId=other", 403],
-      [`Bearer ${Redacted.value(config.writeToken)}`, "", 403],
-    ]) {
-      const response = yield* test.run(
-        new Request(`http://cache/v8/artifacts/hash?${query}`, {
-          method: "PUT",
-          headers: { authorization: String(authorization) },
-        }),
-      );
-      expect(response.status).toBe(status);
-    }
+    yield* Effect.forEach(
+      [
+        ["", "slug=test", 401],
+        [`Bearer ${Redacted.value(config.readToken)}`, "slug=test", 403],
+        [`Bearer ${Redacted.value(config.writeToken)}`, "slug=test&teamId=other", 403],
+        [`Bearer ${Redacted.value(config.writeToken)}`, "", 403],
+      ],
+      Effect.fnUntraced(function* ([authorization, query, status]) {
+        const response = yield* test.run(
+          new Request(`http://cache/v8/artifacts/hash?${query}`, {
+            method: "PUT",
+            headers: { authorization: String(authorization) },
+          }),
+        );
+        expect(response.status).toBe(status);
+      }),
+      { concurrency: 1, discard: true },
+    );
     expect(test.state.begins).toBe(0);
   }),
 );

@@ -1,24 +1,21 @@
 import * as Schema from "effect/Schema";
 
-const AnonymousViewerSchema = Schema.Struct({
+const AnonymousViewer = Schema.Struct({
   kind: Schema.Literal("anonymous"),
 }).annotate({ identifier: "AnonymousViewer" });
 
-const AuthenticatedViewerSchema = Schema.Struct({
+const AuthenticatedViewer = Schema.Struct({
   displayName: Schema.String,
   kind: Schema.Literals(["customer", "staff"] as const),
   userId: Schema.String,
 }).annotate({ identifier: "AuthenticatedViewer" });
 
-export const ViewerSchema = Schema.Union([
-  AnonymousViewerSchema,
-  AuthenticatedViewerSchema,
-]).annotate({
+export const Viewer = Schema.Union([AnonymousViewer, AuthenticatedViewer]).annotate({
   identifier: "Viewer",
 });
 
-export type Viewer = typeof ViewerSchema.Type;
-export type AuthenticatedViewer = typeof AuthenticatedViewerSchema.Type;
+export type Viewer = typeof Viewer.Type;
+export type AuthenticatedViewer = typeof AuthenticatedViewer.Type;
 
 export const anonymousViewer: Viewer = {
   kind: "anonymous",

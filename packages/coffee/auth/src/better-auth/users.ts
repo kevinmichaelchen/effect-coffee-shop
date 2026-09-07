@@ -4,19 +4,22 @@ const syntheticEmailDomain = "users.coffee.invalid";
 
 export const provisionalUserPrefix = "passkey-signup-";
 
-const PasskeyRegistrationContextSchema = Schema.Struct({
+const PasskeyRegistrationContext = Schema.Struct({
   displayName: Schema.String,
 });
-const DisplayNameSchema = Schema.Trim.check(
+const DisplayName = Schema.Trim.check(
   Schema.isNonEmpty({ message: "displayName must not be blank" }),
 );
 
 const decodeJsonString = Schema.decodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
-const decodePasskeyRegistrationShape = Schema.decodeUnknownSync(PasskeyRegistrationContextSchema);
-const decodeDisplayName = Schema.decodeUnknownSync(DisplayNameSchema);
+const decodePasskeyRegistrationContext = Schema.decodeUnknownSync(PasskeyRegistrationContext);
+const decodeDisplayName = Schema.decodeUnknownSync(DisplayName);
 
+// oxlint-disable-next-line effect/prefer-option-over-null -- Better Auth SDK represents absent secrets and registration context with nullish values.
 export function getDisplayName(context: string | null | undefined): string {
-  const parsed = decodePasskeyRegistrationShape(decodeJsonString(context ?? '{"displayName":""}'));
+  const parsed = decodePasskeyRegistrationContext(
+    decodeJsonString(context ?? '{"displayName":""}'),
+  );
   return decodeDisplayName(parsed.displayName);
 }
 
@@ -34,6 +37,7 @@ export function createProvisionalUser(displayName: string) {
 }
 
 export function createRegisteredUser(input: {
+  // oxlint-disable-next-line effect/prefer-option-over-null -- Better Auth SDK represents absent secrets and registration context with nullish values.
   readonly context: string | null | undefined;
   readonly userId: string;
 }) {

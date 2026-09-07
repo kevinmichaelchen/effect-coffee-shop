@@ -1,3 +1,4 @@
+import * as Arr from "effect/Array";
 /**
  * Runs assistant requests against Cloudflare Workers AI over REST.
  *
@@ -27,24 +28,24 @@ import {
   readResponseText,
 } from "./provider-http.ts";
 
-const WorkersAiToolCallSchema = Schema.Struct({
+const WorkersAiToolCall = Schema.Struct({
   arguments: Schema.Unknown,
   name: Schema.String,
 });
 
-const WorkersAiUsageSchema = Schema.Struct({
+const WorkersAiUsage = Schema.Struct({
   completion_tokens: Schema.Number,
   prompt_tokens: Schema.Number,
   total_tokens: Schema.Number,
 });
 
-const WorkersAiOutputSchema = Schema.Struct({
+const WorkersAiOutput = Schema.Struct({
   response: Schema.optionalKey(Schema.String),
-  tool_calls: Schema.optionalKey(Schema.Array(WorkersAiToolCallSchema)),
-  usage: Schema.optionalKey(WorkersAiUsageSchema),
+  tool_calls: Schema.optionalKey(Schema.Array(WorkersAiToolCall)),
+  usage: Schema.optionalKey(WorkersAiUsage),
 });
 
-const WorkersAiEnvelopeSchema = Schema.Struct({
+const WorkersAiEnvelope = Schema.Struct({
   errors: Schema.optionalKey(
     Schema.Array(
       Schema.Struct({
@@ -52,19 +53,19 @@ const WorkersAiEnvelopeSchema = Schema.Struct({
       }),
     ),
   ),
-  result: WorkersAiOutputSchema,
+  result: WorkersAiOutput,
 });
 
-const WorkersAiResponseSchema = Schema.Struct({
-  errors: WorkersAiEnvelopeSchema.fields.errors,
-  response: WorkersAiOutputSchema.fields.response,
-  result: Schema.optionalKey(WorkersAiOutputSchema),
-  tool_calls: WorkersAiOutputSchema.fields.tool_calls,
-  usage: WorkersAiOutputSchema.fields.usage,
+const WorkersAiResponse = Schema.Struct({
+  errors: WorkersAiEnvelope.fields.errors,
+  response: WorkersAiOutput.fields.response,
+  result: Schema.optionalKey(WorkersAiOutput),
+  tool_calls: WorkersAiOutput.fields.tool_calls,
+  usage: WorkersAiOutput.fields.usage,
 });
 
-type WorkersAiDecodedOutput = Schema.Schema.Type<typeof WorkersAiOutputSchema>;
-type WorkersAiResponse = Schema.Schema.Type<typeof WorkersAiResponseSchema>;
+type WorkersAiDecodedOutput = Schema.Schema.Type<typeof WorkersAiOutput>;
+type WorkersAiResponse = Schema.Schema.Type<typeof WorkersAiResponse>;
 const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
 
 export function runWorkersAiOverRest(input: {
@@ -106,7 +107,7 @@ function rejectWorkersAiRequest(
       provider: "Workers AI",
       rawBody,
       reportInput: true,
-      schema: WorkersAiEnvelopeSchema,
+      schema: WorkersAiEnvelope,
     }).pipe(Effect.option);
     const message = envelope.pipe(
       Option.match({
@@ -114,7 +115,7 @@ function rejectWorkersAiRequest(
         onSome: (payload) => {
           const errors = payload.errors ?? [];
 
-          if (errors.length === 0) {
+          if (Arr.isReadonlyArrayEmpty(errors)) {
             return fallbackMessage;
           }
 
@@ -142,7 +143,7 @@ function readWorkersAiOutput(
   return decodeJsonResponseEffect({
     provider: "Workers AI",
     response,
-    schema: WorkersAiResponseSchema,
+    schema: WorkersAiResponse,
   }).pipe(Effect.map(toAiTextGenerationOutput));
 }
 
@@ -171,7 +172,7 @@ function toAiTextGenerationOutputFromDecoded(
 }
 
 function toHybridToolCall(
-  toolCall: Schema.Schema.Type<typeof WorkersAiToolCallSchema>,
+  toolCall: Schema.Schema.Type<typeof WorkersAiToolCall>,
   index: number,
 ): AiTextGenerationToolLegacyOutput & AiTextGenerationToolOutput {
   return {

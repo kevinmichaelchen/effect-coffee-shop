@@ -8,16 +8,16 @@ import * as Hash from "effect/Hash";
 import * as Schema from "effect/Schema";
 import * as SchemaTransformation from "effect/SchemaTransformation";
 
-export const CurrencySchema = Schema.Literal("USD");
-export type Currency = typeof CurrencySchema.Type;
-export const MinorUnitsInputSchema = Schema.Int.check(Schema.isGreaterThanOrEqualTo(0));
-export const MinorUnitsSchema = MinorUnitsInputSchema.pipe(Schema.brand("MinorUnits"));
-export type MinorUnits = typeof MinorUnitsSchema.Type;
+export const Currency = Schema.Literal("USD");
+export type Currency = typeof Currency.Type;
+export const MinorUnitsInput = Schema.Int.check(Schema.isGreaterThanOrEqualTo(0));
+export const MinorUnits = MinorUnitsInput.pipe(Schema.brand("MinorUnits"));
+export type MinorUnits = typeof MinorUnits.Type;
 
 export class Money
   extends Schema.Class<Money>("Money")({
-    currency: CurrencySchema,
-    minorUnits: MinorUnitsSchema,
+    currency: Currency,
+    minorUnits: MinorUnits,
   })
   implements Eq.Equal
 {
@@ -34,11 +34,9 @@ export class Money
   }
 }
 
-export const MoneySchema = Money;
-
-export const MoneyFromCentsSchema = MinorUnitsInputSchema.pipe(
+export const MoneyFromCents = MinorUnitsInput.pipe(
   Schema.decodeTo(
-    MoneySchema,
+    Money,
     SchemaTransformation.transform({
       decode: (minorUnits) => ({
         currency: "USD",
@@ -49,7 +47,7 @@ export const MoneyFromCentsSchema = MinorUnitsInputSchema.pipe(
   ),
 ).annotate({ identifier: "MoneyFromCents" });
 
-const minorUnitsFromNumber = Schema.decodeUnknownSync(MinorUnitsSchema);
+const minorUnitsFromNumber = Schema.decodeUnknownSync(MinorUnits);
 
 export const zeroMoney: Money = new Money({
   currency: "USD",
@@ -57,7 +55,7 @@ export const zeroMoney: Money = new Money({
 });
 
 export const moneyFromCents = (cents: number): Money =>
-  Schema.decodeUnknownSync(MoneyFromCentsSchema)(cents);
+  Schema.decodeUnknownSync(MoneyFromCents)(cents);
 
 export const moneyToCents = (money: Money): number => money.minorUnits;
 
@@ -71,3 +69,5 @@ export const multiplyMoney = (money: Money, quantity: number): Money =>
 
 export const scaleMoney = (money: Money, multiplier: number): Money =>
   moneyFromCents(Math.round(money.minorUnits * multiplier));
+
+export type MinorUnitsInput = typeof MinorUnitsInput.Type;

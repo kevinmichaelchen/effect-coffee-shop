@@ -115,12 +115,12 @@ export type ProviderHttpClient = Effect.Success<ReturnType<typeof makeProviderHt
 
 function postJson(input: {
   readonly client: ProviderHttpClient;
-  readonly bearerToken: Redacted.Redacted<string> | undefined;
+  readonly bearerToken: Option.Option<Redacted.Redacted<string>>;
   readonly body: unknown;
   readonly provider: string;
   readonly url: string | URL;
 }) {
-  const request = Option.match(Option.fromUndefinedOr(input.bearerToken), {
+  const request = Option.match(input.bearerToken, {
     onNone: () => HttpClientRequest.post(input.url),
     onSome: (bearerToken) =>
       HttpClientRequest.post(input.url).pipe(HttpClientRequest.bearerToken(bearerToken)),
@@ -161,7 +161,7 @@ export function postJsonResponse<A, E>(input: {
 }) {
   return Effect.gen(function* () {
     const response = yield* postJson({
-      bearerToken: input.bearerToken,
+      bearerToken: Option.fromUndefinedOr(input.bearerToken),
       body: input.body,
       client: input.client,
       provider: input.provider,

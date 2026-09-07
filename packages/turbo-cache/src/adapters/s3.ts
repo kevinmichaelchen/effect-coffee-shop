@@ -1,3 +1,4 @@
+import { flow } from "effect/Function";
 import * as S3 from "alchemy/AWS/S3";
 import type { Bucket } from "alchemy/AWS/S3";
 import * as Effect from "effect/Effect";
@@ -13,16 +14,16 @@ const StoredMetadata = Schema.Struct({
   sha: ArtifactMetadata.fields.sha,
   dirtyhash: ArtifactMetadata.fields.dirtyHash,
 });
-const decodeStored = (value: unknown) =>
-  Schema.decodeUnknownEffect(StoredMetadata)(value).pipe(
-    Effect.map((meta) => ({
-      duration: meta.duration,
-      tag: meta.tag,
-      sha: meta.sha,
-      dirtyHash: meta.dirtyhash,
-    })),
-    Effect.mapError(storageFailure),
-  );
+const decodeStored = flow(
+  Schema.decodeUnknownEffect(StoredMetadata),
+  Effect.map((meta) => ({
+    duration: meta.duration,
+    tag: meta.tag,
+    sha: meta.sha,
+    dirtyHash: meta.dirtyhash,
+  })),
+  Effect.mapError(storageFailure),
+);
 
 export const makeS3Store = Effect.fn("TurboCache.makeS3Store")(function* (bucket: Bucket) {
   const head = yield* S3.HeadObject(bucket);

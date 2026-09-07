@@ -37,7 +37,9 @@ import type { CoffeeActionName } from "./specs.ts";
 export type CoffeeAppRunner = <A, E>(
   effect: Effect.Effect<A, E, CoffeeOrderApp | CurrentActor>,
 ) => Effect.Effect<A, E>;
+// oxlint-disable-next-line effect/no-shape-in-symbol-names -- Context.Service.Shape is an upstream Effect type member, not an application symbol.
 type CoffeeOrderAppService = Context.Service.Shape<typeof CoffeeOrderApp>;
+// oxlint-disable-next-line effect/no-unknown-parameters -- Tool input decoder boundary: provider payloads remain unknown until the selected Schema decodes them.
 type ActionInputDecoder<A> = (payload: unknown) => Effect.Effect<A, unknown>;
 
 interface ActionContext {
@@ -57,14 +59,12 @@ const noCheckoutSessionView: NoCheckoutSessionView = {
   status: "no_checkout_session",
 };
 
-const payloadOrEmpty = (payload: unknown): unknown => payload ?? {};
-
 const runEmptyAction =
   <A, E>(
     runEffect: (app: CoffeeOrderAppService) => Effect.Effect<A, E, CurrentActor>,
   ): ActionHandler =>
   (input) =>
-    decodeEmptyActionInput(payloadOrEmpty(input.payload)).pipe(
+    decodeEmptyActionInput(input.payload ?? {}).pipe(
       Effect.flatMap(() => input.runApp(CoffeeOrderApp.use(runEffect))),
     );
 
@@ -74,7 +74,7 @@ const runDecodedAction =
     runEffect: (app: CoffeeOrderAppService, payload: Payload) => Effect.Effect<A, E, CurrentActor>,
   ): ActionHandler =>
   (input) =>
-    decode(payloadOrEmpty(input.payload)).pipe(
+    decode(input.payload ?? {}).pipe(
       Effect.flatMap((payload) =>
         input.runApp(CoffeeOrderApp.use((app) => runEffect(app, payload))),
       ),

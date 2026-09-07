@@ -1,3 +1,5 @@
+import type * as Schema from "effect/Schema";
+import * as Option from "effect/Option";
 /**
  * Tests assistant request body parsing at the HTTP boundary.
  *
@@ -7,7 +9,7 @@ import { jsonString } from "@effect-coffee-shop/http-routing/json";
 import { describe, expect, it } from "vitest";
 import { parseAssistantRequestBody } from "./messages.ts";
 
-const makeJsonRequest = (body: unknown): Request =>
+const makeJsonRequest = (body: Schema.Json): Request =>
   new Request("http://example.com/assistant", {
     body: jsonString(body),
     headers: {
@@ -29,14 +31,16 @@ describe("assistant request body parsing", () => {
       }),
     );
 
-    expect(body).toEqual({
-      messages: [
-        {
-          content: "List the menu briefly.",
-          role: "user",
-        },
-      ],
-    });
+    expect(body).toEqual(
+      Option.some({
+        messages: [
+          {
+            content: "List the menu briefly.",
+            role: "user",
+          },
+        ],
+      }),
+    );
   });
 
   it("accepts browser UI messages", async () => {
@@ -52,18 +56,20 @@ describe("assistant request body parsing", () => {
       }),
     );
 
-    expect(body).toEqual({
-      messages: [
-        {
-          id: "message-1",
-          parts: [{ content: "List the menu briefly.", type: "text" }],
-          role: "user",
-        },
-      ],
-    });
+    expect(body).toEqual(
+      Option.some({
+        messages: [
+          {
+            id: "message-1",
+            parts: [{ content: "List the menu briefly.", type: "text" }],
+            role: "user",
+          },
+        ],
+      }),
+    );
   });
 
-  it("returns null for invalid JSON", async () => {
+  it("returns None for invalid JSON", async () => {
     const body = await parseAssistantRequestBody(
       new Request("http://example.com/assistant", {
         body: "{",
@@ -74,10 +80,10 @@ describe("assistant request body parsing", () => {
       }),
     );
 
-    expect(body).toBeNull();
+    expect(body).toEqual(Option.none());
   });
 
-  it("returns null for bodies outside the assistant request schema", async () => {
+  it("returns None for bodies outside the assistant request schema", async () => {
     const body = await parseAssistantRequestBody(
       makeJsonRequest({
         messages: [
@@ -89,6 +95,6 @@ describe("assistant request body parsing", () => {
       }),
     );
 
-    expect(body).toBeNull();
+    expect(body).toEqual(Option.none());
   });
 });

@@ -1,27 +1,27 @@
 import * as Schema from "effect/Schema";
 import { drinkSizes, milks, orderStatuses, temperatures } from "./coffee.ts";
 
-const DrinkSizeSchema = Schema.Literals(drinkSizes);
-const MilkSchema = Schema.Literals(milks);
-const TemperatureSchema = Schema.Literals(temperatures);
-const OrderStatusSchema = Schema.Literals(orderStatuses);
+const DrinkSize = Schema.Literals(drinkSizes);
+const Milk = Schema.Literals(milks);
+const Temperature = Schema.Literals(temperatures);
+const OrderStatus = Schema.Literals(orderStatuses);
 
-const MenuItemSchema = Schema.Struct({
+const MenuItem = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   kind: Schema.Literals(["espresso", "tea"] as const),
   basePriceCents: Schema.Int,
-  availableMilks: Schema.Array(MilkSchema),
-  availableTemperatures: Schema.Array(TemperatureSchema),
+  availableMilks: Schema.Array(Milk),
+  availableTemperatures: Schema.Array(Temperature),
   maxShots: Schema.Int,
 });
 
-const CoffeeOrderItemSchema = Schema.Struct({
+const CoffeeOrderItem = Schema.Struct({
   drinkId: Schema.String,
   drinkName: Schema.String,
-  size: DrinkSizeSchema,
-  milk: MilkSchema,
-  temperature: TemperatureSchema,
+  size: DrinkSize,
+  milk: Milk,
+  temperature: Temperature,
   shots: Schema.Int,
   notes: Schema.optional(Schema.String),
   quantity: Schema.Int,
@@ -29,39 +29,39 @@ const CoffeeOrderItemSchema = Schema.Struct({
   lineTotalCents: Schema.Int,
 });
 
-const OrderItemRequestSchema = Schema.Struct({
+const OrderItemRequest = Schema.Struct({
   drinkId: Schema.String,
-  size: DrinkSizeSchema,
-  milk: Schema.optional(MilkSchema),
-  temperature: Schema.optional(TemperatureSchema),
+  size: DrinkSize,
+  milk: Schema.optional(Milk),
+  temperature: Schema.optional(Temperature),
   shots: Schema.optional(Schema.Int),
   notes: Schema.optional(Schema.String),
   quantity: Schema.optional(Schema.Int),
 });
 
-export const PlaceOrderRequestSchema = Schema.Struct({
-  items: Schema.Array(OrderItemRequestSchema),
+export const PlaceOrderRequest = Schema.Struct({
+  items: Schema.Array(OrderItemRequest),
 });
 
-export const CoffeeOrderSchema = Schema.Struct({
+export const CoffeeOrder = Schema.Struct({
   id: Schema.String,
   customerName: Schema.String,
   ownerUserId: Schema.String,
-  items: Schema.Array(CoffeeOrderItemSchema),
-  status: OrderStatusSchema,
+  items: Schema.Array(CoffeeOrderItem),
+  status: OrderStatus,
   totalPriceCents: Schema.Int,
   createdAt: Schema.String,
 });
 
-export const CoffeeApiErrorSchema = Schema.Struct({
+export const CoffeeApiError = Schema.Struct({
   _tag: Schema.optional(Schema.String),
   message: Schema.optional(Schema.String),
 });
 
-export const MenuSchema = Schema.Array(MenuItemSchema);
-export const CoffeeOrdersSchema = Schema.Array(CoffeeOrderSchema);
+export const Menu = Schema.Array(MenuItem);
+export const CoffeeOrders = Schema.Array(CoffeeOrder);
 
-export type MenuItem = typeof MenuItemSchema.Type;
-export type CoffeeOrder = typeof CoffeeOrderSchema.Type;
-export type PlaceOrderRequest = typeof PlaceOrderRequestSchema.Type;
-export type CoffeeApiError = typeof CoffeeApiErrorSchema.Type;
+export type MenuItem = typeof MenuItem.Type;
+export type CoffeeOrder = typeof CoffeeOrder.Type;
+export type PlaceOrderRequest = typeof PlaceOrderRequest.Type;
+export type CoffeeApiError = typeof CoffeeApiError.Type;

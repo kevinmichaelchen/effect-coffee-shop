@@ -34,7 +34,7 @@ const handleAuthRequest = Effect.fn("Aws.handleAuthRequest")(function* (
     onSome: (secret) => {
       const backend = getAwsRuntimeBackend();
       const ensurePersistence = Effect.promise(async () => backend.ensureAuthPersistence());
-      const response = Effect.gen(function* () {
+      const response = Effect.fn("auth.response")(function* () {
         const database = yield* Effect.promise(async () => backend.persistence.authDatabase());
 
         return yield* Effect.promise(async () =>
@@ -47,7 +47,7 @@ const handleAuthRequest = Effect.fn("Aws.handleAuthRequest")(function* (
         );
       });
 
-      return ensurePersistence.pipe(Effect.andThen(response));
+      return ensurePersistence.pipe(Effect.andThen(response()));
     },
   });
 });

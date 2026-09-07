@@ -56,11 +56,12 @@ const assistantRunMetricAttributes = (input: {
   readonly gatewayEnabled: boolean;
   readonly model: string;
   readonly outcome: string;
-}): MetricAttributes => ({
-  assistant_gateway_enabled: String(input.gatewayEnabled),
-  assistant_model: input.model,
-  outcome: input.outcome,
-});
+}) =>
+  ({
+    assistant_gateway_enabled: String(input.gatewayEnabled),
+    assistant_model: input.model,
+    outcome: input.outcome,
+  }) satisfies MetricAttributes;
 
 export function createAssistantGatewayMetadata(actor: AppActor, runId: string) {
   return {

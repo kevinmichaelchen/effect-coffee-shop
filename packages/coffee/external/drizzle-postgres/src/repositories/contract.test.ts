@@ -1,3 +1,4 @@
+import * as Option from "effect/Option";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
@@ -34,14 +35,14 @@ type RepositoryServices =
 const postgresTestUrl = process.env.COFFEE_POSTGRES_TEST_URL;
 const describeWithPostgres = postgresTestUrl === undefined ? describe.skip : describe;
 
-let runtime: ContractRuntime | undefined;
+let runtime: Option.Option<ContractRuntime> = Option.none();
 
 const getRuntime = () => {
-  if (runtime === undefined) {
+  if (Option.isNone(runtime)) {
     assert.fail("Drizzle Postgres test runtime is not initialized");
   }
 
-  return runtime;
+  return runtime.value;
 };
 
 const run = <A, E>(effect: Effect.Effect<A, E, ContractServices>) =>
@@ -50,7 +51,7 @@ const run = <A, E>(effect: Effect.Effect<A, E, ContractServices>) =>
 const runRepositoryContract = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) =>
   run(effect);
 
-const resetDatabase = Effect.gen(function* () {
+const resetDatabase = Effect.fn("contract.test.resetDatabase")(function* () {
   const db = yield* CoffeeDb;
 
   yield* db.execute(sql`delete from checkout_session_items`);
@@ -68,13 +69,15 @@ describeWithPostgres("Drizzle Postgres coffee repositories", () => {
   beforeAll(async () => {
     if (postgresTestUrl !== undefined) {
       process.env.COFFEE_POSTGRES_URL = postgresTestUrl;
-      runtime = ManagedRuntime.make(DrizzlePostgresCoffeeAppLive.pipe(Layer.merge(CoffeeDb.layer)));
+      runtime = Option.some(
+        ManagedRuntime.make(DrizzlePostgresCoffeeAppLive.pipe(Layer.merge(CoffeeDb.layer))),
+      );
       await getRuntime().context();
     }
   });
 
   beforeEach(async () => {
-    await run(resetDatabase);
+    await run(resetDatabase());
   });
 
   afterAll(async () => {

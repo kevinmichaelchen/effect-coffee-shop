@@ -1,3 +1,4 @@
+import { it } from "@effect/vitest";
 /**
  * Tests Cloudflare runtime binding and configuration decoding.
  *
@@ -13,7 +14,7 @@ import { getPlatformProxy } from "@alchemy.run/cloudflare-runtime/core/platform-
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as Effect from "effect/Effect";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect } from "vitest";
 import {
   readCloudflareRuntime,
   type AssetFetcher,
@@ -53,9 +54,9 @@ describe("cloudflare runtime config", () => {
     await disposeAlchemy();
   });
 
-  it("normalizes optional strings and staff ids", async () => {
-    const runtime = await Effect.runPromise(
-      readCloudflareRuntime({
+  it.effect("normalizes optional strings and staff ids", () =>
+    Effect.gen(function* () {
+      const runtime = yield* readCloudflareRuntime({
         AI: makeAiBinding(),
         AI_GATEWAY_ID: " gateway-123 ",
         ASSETS: makeAssetFetcher(),
@@ -63,35 +64,35 @@ describe("cloudflare runtime config", () => {
         COFFEE_ASSISTANT_MODEL: " @cf/example/model ",
         COFFEE_STAFF_USER_IDS: " staff-a, staff-b , , staff-a ",
         DB: database,
-      }),
-    );
+      });
 
-    expect(Option.isSome(runtime.bindings.ai)).toBe(true);
-    expect(Option.isSome(runtime.bindings.assets)).toBe(true);
-    expect(Option.getOrUndefined(runtime.config.aiGatewayId)).toBe("gateway-123");
-    expect(Option.getOrUndefined(runtime.config.assistantModel)).toBe("@cf/example/model");
-    expect(Option.map(runtime.config.betterAuthSecret, Redacted.value)).toEqual(
-      Option.some("secret-123"),
-    );
-    expect([...runtime.config.staffUserIds]).toEqual(["staff-a", "staff-b"]);
-  });
+      expect(Option.isSome(runtime.bindings.ai)).toBe(true);
+      expect(Option.isSome(runtime.bindings.assets)).toBe(true);
+      expect(Option.getOrUndefined(runtime.config.aiGatewayId)).toBe("gateway-123");
+      expect(Option.getOrUndefined(runtime.config.assistantModel)).toBe("@cf/example/model");
+      expect(Option.map(runtime.config.betterAuthSecret, Redacted.value)).toEqual(
+        Option.some("secret-123"),
+      );
+      expect([...runtime.config.staffUserIds]).toEqual(["staff-a", "staff-b"]);
+    }),
+  );
 
-  it("treats missing or blank optional values as absent", async () => {
-    const runtime = await Effect.runPromise(
-      readCloudflareRuntime({
+  it.effect("treats missing or blank optional values as absent", () =>
+    Effect.gen(function* () {
+      const runtime = yield* readCloudflareRuntime({
         AI_GATEWAY_ID: "   ",
         BETTER_AUTH_SECRET: "",
         COFFEE_ASSISTANT_MODEL: " ",
         COFFEE_STAFF_USER_IDS: " ,  , ",
         DB: database,
-      } satisfies CloudflareWorkerEnv),
-    );
+      } satisfies CloudflareWorkerEnv);
 
-    expect(Option.isNone(runtime.bindings.ai)).toBe(true);
-    expect(Option.isNone(runtime.bindings.assets)).toBe(true);
-    expect(Option.isNone(runtime.config.aiGatewayId)).toBe(true);
-    expect(Option.isNone(runtime.config.assistantModel)).toBe(true);
-    expect(Option.isNone(runtime.config.betterAuthSecret)).toBe(true);
-    expect([...runtime.config.staffUserIds]).toEqual([]);
-  });
+      expect(Option.isNone(runtime.bindings.ai)).toBe(true);
+      expect(Option.isNone(runtime.bindings.assets)).toBe(true);
+      expect(Option.isNone(runtime.config.aiGatewayId)).toBe(true);
+      expect(Option.isNone(runtime.config.assistantModel)).toBe(true);
+      expect(Option.isNone(runtime.config.betterAuthSecret)).toBe(true);
+      expect([...runtime.config.staffUserIds]).toEqual([]);
+    }),
+  );
 });

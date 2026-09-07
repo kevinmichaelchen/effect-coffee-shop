@@ -1,3 +1,6 @@
+import type { AssistantToolActivity } from "../../application/model.ts";
+import * as Clock from "effect/Clock";
+import * as Random from "effect/Random";
 /**
  * Builds TanStack AI stream chunks and async queues for assistant responses.
  *
@@ -11,7 +14,7 @@ import * as Stream from "effect/Stream";
 export interface AssistantChunkQueue<TChunk> {
   readonly stream: AsyncIterable<TChunk>;
   readonly close: () => void;
-  readonly fail: (error: unknown) => void;
+  readonly fail: (cause: unknown) => void;
   readonly push: (chunk: TChunk) => void;
 }
 
@@ -20,9 +23,13 @@ export type AssistantStreamChunk = StreamChunk;
 export function createAssistantChunkQueue<TChunk>(
   signal?: AbortSignal,
 ): AssistantChunkQueue<TChunk> {
+  // oxlint-disable-next-line effect/effect-run-in-body -- Synchronous TanStack async-iterator adapter; queue operations must complete before returning.
   const queue = Effect.runSync(Queue.unbounded<TChunk, unknown>());
+  // oxlint-disable-next-line effect/effect-run-in-body -- Synchronous TanStack async-iterator adapter; queue operations must complete before returning.
   const close = () => void Effect.runSync(Queue.end(queue));
-  const fail = (error: unknown) => void Effect.runSync(Queue.fail(queue, error));
+  // oxlint-disable-next-line effect/effect-run-in-body -- Synchronous TanStack async-iterator adapter; queue operations must complete before returning.
+  const fail = (cause: unknown) => void Effect.runSync(Queue.fail(queue, cause));
+  // oxlint-disable-next-line effect/effect-run-in-body -- Synchronous TanStack async-iterator adapter; queue operations must complete before returning.
   const push = (chunk: TChunk) => void Effect.runSync(Queue.offer(queue, chunk));
 
   signal?.addEventListener("abort", close, { once: true });
@@ -35,17 +42,22 @@ export function createAssistantChunkQueue<TChunk>(
   };
 }
 
-export function createAssistantRunStartedChunk(runId: string, model: string): AssistantStreamChunk {
+export function createAssistantRunStartedChunk(
+  timestamp: number,
+  runId: string,
+  model: string,
+): AssistantStreamChunk {
   return {
     type: EventType.RUN_STARTED,
     threadId: runId,
     runId,
     model,
-    timestamp: Date.now(),
+    timestamp,
   };
 }
 
 export function createAssistantRunFinishedChunk(
+  timestamp: number,
   runId: string,
   model: string,
 ): AssistantStreamChunk {
@@ -54,12 +66,13 @@ export function createAssistantRunFinishedChunk(
     threadId: runId,
     runId,
     model,
-    timestamp: Date.now(),
+    timestamp,
     finishReason: "stop",
   };
 }
 
 export function createAssistantTextStartChunk(
+  timestamp: number,
   messageId: string,
   model: string,
 ): AssistantStreamChunk {
@@ -67,12 +80,13 @@ export function createAssistantTextStartChunk(
     type: EventType.TEXT_MESSAGE_START,
     messageId,
     model,
-    timestamp: Date.now(),
+    timestamp,
     role: "assistant",
   };
 }
 
 export function createAssistantTextContentChunk(
+  timestamp: number,
   messageId: string,
   model: string,
   content: string,
@@ -81,13 +95,14 @@ export function createAssistantTextContentChunk(
     type: EventType.TEXT_MESSAGE_CONTENT,
     messageId,
     model,
-    timestamp: Date.now(),
+    timestamp,
     delta: content,
     content,
   };
 }
 
 export function createAssistantTextEndChunk(
+  timestamp: number,
   messageId: string,
   model: string,
 ): AssistantStreamChunk {
@@ -95,24 +110,29 @@ export function createAssistantTextEndChunk(
     type: EventType.TEXT_MESSAGE_END,
     messageId,
     model,
-    timestamp: Date.now(),
+    timestamp,
   };
 }
 
 export function createAssistantCustomChunk(
+  timestamp: number,
   model: string,
   name: string,
-  value: unknown,
+  value: AssistantToolActivity,
 ): AssistantStreamChunk {
   return {
     type: EventType.CUSTOM,
-    timestamp: Date.now(),
+    timestamp,
     model,
     name,
     value,
   };
 }
 
-export function createAssistantStreamId(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
+export const createAssistantStreamId = Effect.fn("Assistant.createStreamId")(function* (
+  prefix: string,
+) {
+  const now = yield* Clock.currentTimeMillis;
+  const random = yield* Random.next;
+  return `${prefix}-${now}-${random.toString(36).slice(2, 9)}`;
+});

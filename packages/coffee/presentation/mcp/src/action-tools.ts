@@ -29,6 +29,7 @@ const noCheckoutSessionView: NoCheckoutSessionView = {
   status: "no_checkout_session",
 };
 
+// oxlint-disable-next-line effect/prefer-option-over-null -- MCP callback contract permits an explicitly undefined toolCallId.
 const annotateToolCall = (context: { readonly toolCallId?: string | undefined }) =>
   Effect.annotateSpans("mcp.tool_call_id", context.toolCallId);
 

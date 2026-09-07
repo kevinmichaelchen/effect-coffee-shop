@@ -24,6 +24,7 @@ async function withTestDatabase<A>(effect: (db: D1Database) => Promise<A>): Prom
     name: "coffee-better-auth-test",
   });
 
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
   await Effect.runPromise(migrateCloudflareD1(proxy.env.DB));
 
   return effect(proxy.env.DB).finally(() => proxy.dispose());
@@ -79,6 +80,7 @@ describe("cloudflare better-auth wiring", () => {
         db,
         request: new Request("http://example.com/api/me"),
         secret: undefined,
+        // oxlint-disable-next-line effect/avoid-native-object-helpers -- The runtime port requires a native ReadonlySet; Effect HashSet has a different contract.
         staffUserIds: new Set(["staff-user"]),
       });
 

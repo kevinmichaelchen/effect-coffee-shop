@@ -18,6 +18,7 @@ import { SqlMenuItemModel, toMenuItem } from "./models.ts";
 const decodeSqlMenuItems = Schema.decodeUnknownEffect(Schema.Array(SqlMenuItemModel));
 const decodeSqlMenuItem = Schema.decodeUnknownEffect(SqlMenuItemModel);
 
+// oxlint-disable-next-line effect/no-unknown-parameters -- Untrusted SQL row is decoded here with Schema before entering domain logic.
 const decodeOptionalSqlMenuItem = (row: unknown) =>
   Option.match(Option.fromNullishOr(row), {
     onNone: () => Effect.succeed(Option.none<MenuItem>()),
@@ -25,7 +26,7 @@ const decodeOptionalSqlMenuItem = (row: unknown) =>
       decodeSqlMenuItem(row).pipe(Effect.flatMap(toMenuItem), Effect.map(Option.some)),
   });
 
-const makeSqlMenuQueries = Effect.gen(function* () {
+const makeSqlMenuQueries = Effect.fn("SqlMenuRepository.makeSqlMenuQueries")(function* () {
   const sqlClient = yield* SqlClient.SqlClient;
 
   const list = Effect.provideService(
@@ -51,7 +52,7 @@ const makeSqlMenuQueries = Effect.gen(function* () {
 export const SqlMenuRepositoryLive = Layer.effect(
   MenuRepository,
   Effect.gen(function* () {
-    const queries = yield* makeSqlMenuQueries;
+    const queries = yield* makeSqlMenuQueries();
 
     return MenuRepository.of({
       list: queries.list.pipe(PersistenceError.refail("Failed to load the coffee menu")),

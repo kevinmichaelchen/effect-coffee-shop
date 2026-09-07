@@ -1,3 +1,4 @@
+import * as R from "effect/Record";
 /**
  * Derives Coffee action JSON Schema metadata from boundary schemas.
  *
@@ -7,26 +8,26 @@ import * as JsonSchema from "effect/JsonSchema";
 import * as Match from "effect/Match";
 import * as Schema from "effect/Schema";
 import {
-  CartItemIdRequestSchema,
-  CheckoutCartRequestSchema,
-  ItemOptionsRequestSchema,
-  ListOrdersRequestSchema,
-  OrderItemInputSchema,
-  PlaceOrderRequestSchema,
-  QuoteOrderRequestSchema,
-  UpdateCartItemRequestSchema,
+  CartItemIdRequest,
+  CheckoutCartRequest,
+  ItemOptionsRequest,
+  ListOrdersRequest,
+  OrderItemInput,
+  PlaceOrderRequest,
+  QuoteOrderRequest,
+  UpdateCartItemRequest,
 } from "@effect-coffee-shop/coffee-core/application/contracts";
-import { OrderIdActionInputSchema } from "./schemas.ts";
+import { OrderIdActionInput } from "./schemas.ts";
 
 export type CoffeeActionJsonSchema = JsonSchema.JsonSchema;
 
-const EmptyActionInputSchema = Schema.Record(Schema.String, Schema.Never);
+const EmptyActionInput = Schema.Record(Schema.String, Schema.Never);
 
 function actionJsonSchema(schema: Schema.Top): CoffeeActionJsonSchema {
   const document = Schema.toJsonSchemaDocument(schema, { generateDescriptions: true });
   const definitions = document.definitions;
 
-  return Match.value(Object.keys(definitions).length).pipe(
+  return Match.value(R.keys(definitions).length).pipe(
     Match.when(0, () => document.schema),
     Match.orElse(() => ({
       ...document.schema,
@@ -35,15 +36,15 @@ function actionJsonSchema(schema: Schema.Top): CoffeeActionJsonSchema {
   );
 }
 
-export const emptyActionJsonSchema = actionJsonSchema(EmptyActionInputSchema);
+export const emptyActionJsonSchema = actionJsonSchema(EmptyActionInput);
 export const prepareCartCheckoutActionJsonSchema = emptyActionJsonSchema;
 export const getCheckoutSessionActionJsonSchema = emptyActionJsonSchema;
-export const orderIdActionJsonSchema = actionJsonSchema(OrderIdActionInputSchema);
-export const itemOptionsActionJsonSchema = actionJsonSchema(ItemOptionsRequestSchema);
-export const listOrdersActionJsonSchema = actionJsonSchema(ListOrdersRequestSchema);
-export const placeOrderActionJsonSchema = actionJsonSchema(PlaceOrderRequestSchema);
-export const quoteOrderActionJsonSchema = actionJsonSchema(QuoteOrderRequestSchema);
-export const orderItemActionJsonSchema = actionJsonSchema(OrderItemInputSchema);
-export const updateCartItemActionJsonSchema = actionJsonSchema(UpdateCartItemRequestSchema);
-export const cartItemIdActionJsonSchema = actionJsonSchema(CartItemIdRequestSchema);
-export const checkoutCartActionJsonSchema = actionJsonSchema(CheckoutCartRequestSchema);
+export const orderIdActionJsonSchema = actionJsonSchema(OrderIdActionInput);
+export const itemOptionsActionJsonSchema = actionJsonSchema(ItemOptionsRequest);
+export const listOrdersActionJsonSchema = actionJsonSchema(ListOrdersRequest);
+export const placeOrderActionJsonSchema = actionJsonSchema(PlaceOrderRequest);
+export const quoteOrderActionJsonSchema = actionJsonSchema(QuoteOrderRequest);
+export const orderItemActionJsonSchema = actionJsonSchema(OrderItemInput);
+export const updateCartItemActionJsonSchema = actionJsonSchema(UpdateCartItemRequest);
+export const cartItemIdActionJsonSchema = actionJsonSchema(CartItemIdRequest);
+export const checkoutCartActionJsonSchema = actionJsonSchema(CheckoutCartRequest);

@@ -30,7 +30,7 @@ export interface WorkersAiBinding {
   run(
     model: string,
     inputs: AiTextGenerationInput,
-    options?: object,
+    options?: import("@cloudflare/workers-types").AiOptions,
   ): Promise<AiTextGenerationOutput>;
 }
 

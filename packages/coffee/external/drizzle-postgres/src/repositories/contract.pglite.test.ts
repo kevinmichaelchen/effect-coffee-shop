@@ -1,3 +1,4 @@
+import * as Option from "effect/Option";
 /**
  * Runs the full repository contract against in-process Postgres.
  *
@@ -41,24 +42,24 @@ type RepositoryServices =
   | MenuRepository
   | OrderRepository;
 
-let runtime: ContractRuntime | undefined;
-let superuser: PgTestClient | undefined;
-let teardownPglite: (() => Promise<void>) | undefined;
+let runtime: Option.Option<ContractRuntime> = Option.none();
+let superuser: Option.Option<PgTestClient> = Option.none();
+let teardownPglite: Option.Option<() => Promise<void>> = Option.none();
 
 const getRuntime = () => {
-  if (runtime === undefined) {
+  if (Option.isNone(runtime)) {
     assert.fail("Drizzle PGlite test runtime is not initialized");
   }
 
-  return runtime;
+  return runtime.value;
 };
 
 const getSuperuser = () => {
-  if (superuser === undefined) {
+  if (Option.isNone(superuser)) {
     assert.fail("PGlite superuser client is not initialized");
   }
 
-  return superuser;
+  return superuser.value;
 };
 
 const run = <A, E>(effect: Effect.Effect<A, E, ContractServices>) =>
@@ -67,7 +68,7 @@ const run = <A, E>(effect: Effect.Effect<A, E, ContractServices>) =>
 const runRepositoryContract = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) =>
   run(effect);
 
-const resetDatabase = Effect.gen(function* () {
+const resetDatabase = Effect.fn("contract.pglite.test.resetDatabase")(function* () {
   const db = yield* CoffeeDb;
 
   yield* db.execute(sql`delete from checkout_session_items`);
@@ -84,26 +85,31 @@ const checkoutSessionIdPattern = /^checkout_session_[0123456789abcdefghjkmnpqrst
 describe("Drizzle PGlite coffee repositories", () => {
   beforeAll(async () => {
     const connections = await getConnections({ pglite: { roles: false } }, []);
-    superuser = connections.pg;
-    teardownPglite = connections.teardown;
+    superuser = Option.some(connections.pg);
+    teardownPglite = Option.some(connections.teardown);
 
     const coffeeDbLayer = makePgliteCoffeeDbLayer(connections.instance);
-    runtime = ManagedRuntime.make(
-      DrizzleCoffeeAppLayer.pipe(
-        Layer.provide(DrizzlePgliteSchemaLive),
-        Layer.provide(coffeeDbLayer),
-      ).pipe(Layer.merge(coffeeDbLayer)),
+    runtime = Option.some(
+      ManagedRuntime.make(
+        DrizzleCoffeeAppLayer.pipe(
+          Layer.provide(DrizzlePgliteSchemaLive),
+          Layer.provide(coffeeDbLayer),
+        ).pipe(Layer.merge(coffeeDbLayer)),
+      ),
     );
     await getRuntime().context();
   });
 
   beforeEach(async () => {
-    await run(resetDatabase);
+    await run(resetDatabase());
   });
 
   afterAll(async () => {
     await getRuntime().dispose();
-    await teardownPglite?.();
+    await Option.match(teardownPglite, {
+      onNone: async () => {},
+      onSome: (teardown) => teardown(),
+    });
   });
 
   it("applies migrations idempotently and keeps the schema ready", async () => {

@@ -7,6 +7,7 @@ export default Alchemy.Stack(
   "effect-turbo-cache-cloudflare",
   {
     providers: Cloudflare.providers(),
+    // oxlint-disable-next-line effect/avoid-process-env -- Alchemy state-backend bootstrap runs before the stack Effect or Config provider exists.
     state: process.env.ALCHEMY_LOCAL_STATE === "true" ? Alchemy.localState() : Cloudflare.state(),
   },
   Effect.gen(function* () {

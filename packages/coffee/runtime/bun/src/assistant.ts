@@ -24,8 +24,7 @@ export const makeAssistantRoute = (input: { readonly appLayer: CoffeeAppLayer })
   matches: isAssistantRequest,
   handle: ({ env, request }) =>
     Effect.gen(function* () {
-      const ai = getBunAssistantAiConfig(env);
-      const assistantAi = Option.fromNullishOr(ai);
+      const assistantAi = getBunAssistantAiConfig(env);
       const modelLayer = Option.match(assistantAi, {
         onNone: () => undefined,
         onSome: createAssistantModelRunnerLayer,

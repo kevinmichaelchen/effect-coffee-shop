@@ -6,7 +6,7 @@
 import * as Effect from "effect/Effect";
 import * as McpSchema from "effect/unstable/ai/McpSchema";
 import * as McpServer from "effect/unstable/ai/McpServer";
-import { OrderIdSchema } from "@effect-coffee-shop/coffee-core/domain/order";
+import { OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
 import {
   toCoffeeOrderView,
@@ -40,7 +40,7 @@ export const OpenOrdersResource = McpServer.resource({
   ),
 });
 
-const orderIdParam = McpSchema.param("orderId", OrderIdSchema);
+const orderIdParam = McpSchema.param("orderId", OrderId);
 
 export const OrderResource = McpServer.resource`coffee://orders/${orderIdParam}`({
   name: "Coffee Order",

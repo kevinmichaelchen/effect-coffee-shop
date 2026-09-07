@@ -46,7 +46,7 @@ const hydrateOrder = Effect.fnUntraced(function* (
   return yield* toCoffeeOrder(order, items);
 });
 
-const makeSqlOrderQueries = Effect.gen(function* () {
+const makeSqlOrderQueries = Effect.fn("SqlOrderRepository.makeSqlOrderQueries")(function* () {
   const sqlClient = yield* SqlClient.SqlClient;
 
   const save = Effect.fn("SqlOrderRepository.save")(function* (order: CoffeeOrder) {
@@ -102,7 +102,7 @@ const makeSqlOrderQueries = Effect.gen(function* () {
 export const SqlOrderRepositoryLive = Layer.effect(
   OrderRepository,
   Effect.gen(function* () {
-    const queries = yield* makeSqlOrderQueries;
+    const queries = yield* makeSqlOrderQueries();
 
     return OrderRepository.of({
       save: (order) =>

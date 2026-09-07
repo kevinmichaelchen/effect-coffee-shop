@@ -9,13 +9,13 @@ import {
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
 } from "@effect-coffee-shop/coffee-core/domain/errors";
-import { OrderIdSchema } from "@effect-coffee-shop/coffee-core/domain/order";
+import { OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
 import { InternalAppError } from "@effect-coffee-shop/coffee-core/application/errors";
 import { HttpApiPersistenceFailureTestLive, HttpApiTestLive } from "./test-support.ts";
 import { CoffeeHttpApi } from "./api.ts";
 
-const CreatedOrderResponseSchema = Schema.Struct({
-  id: OrderIdSchema,
+const CreatedOrderResponse = Schema.Struct({
+  id: OrderId,
   status: Schema.Literal("pending"),
   totalPriceCents: Schema.Int,
   createdAt: Schema.String,
@@ -60,9 +60,7 @@ describe("http api success responses", () => {
       const response = yield* HttpClient.post("/orders", {
         body: HttpBody.jsonUnsafe(orderPayload),
       });
-      const body = yield* Schema.decodeUnknownEffect(CreatedOrderResponseSchema)(
-        yield* response.json,
-      );
+      const body = yield* Schema.decodeUnknownEffect(CreatedOrderResponse)(yield* response.json);
 
       assert.strictEqual(response.status, 200);
       assert.match(body.id, orderIdPattern);

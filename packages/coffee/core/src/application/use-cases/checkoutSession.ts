@@ -15,7 +15,7 @@ import {
   CurrentActor,
   requireSignedInActor,
 } from "../CurrentActor.ts";
-import { OrderItemsInputSchema } from "../contracts.ts";
+import { OrderItemsInput } from "../contracts.ts";
 import { InternalAppError, internalAppErrorFromPersistence } from "../errors.ts";
 import { CartRepository } from "../ports/CartRepository.ts";
 import { CheckoutSessionIdGenerator } from "../ports/CheckoutSessionIdGenerator.ts";
@@ -24,7 +24,7 @@ import { MenuRepository } from "../ports/MenuRepository.ts";
 import { invalidOrderInput, resolveOrderQuote, toOrderItemInput } from "./orderItems.ts";
 
 const checkoutSessionTtlMinutes = 15;
-const decodeOrderItemsInput = Schema.decodeUnknownEffect(OrderItemsInputSchema);
+const decodeOrderItemsInput = Schema.decodeUnknownEffect(OrderItemsInput);
 
 const emptyCart = (ownerUserId: string): Cart => ({
   ownerUserId,

@@ -1,3 +1,5 @@
+import * as Option from "effect/Option";
+import * as R from "effect/Record";
 /**
  * Lists Coffee orders visible to the current actor.
  *
@@ -37,7 +39,7 @@ export const listOrders = Effect.fn("CoffeeOrders.listOrders")(function* (
   const observabilityAttributes = {
     ...actorObservabilityAttributes(actor),
     order_action: "list",
-    ...(request.status === undefined ? {} : { order_status: request.status }),
+    ...R.getSomes({ order_status: Option.fromUndefinedOr(request.status) }),
   };
 
   yield* annotateObservabilitySpan(observabilityAttributes);

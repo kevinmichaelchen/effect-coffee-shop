@@ -5,31 +5,32 @@
  */
 import { makeTypeId, type TypeIdFrom } from "@just-be/effect-typed-id";
 import * as Schema from "effect/Schema";
-import { MoneySchema } from "./money.ts";
-import { CoffeeOrderItemSchema } from "./order.ts";
-import { makeTypeIdSchema } from "./typed-id.ts";
+import { Money } from "./money.ts";
+import { CoffeeOrderItem } from "./order.ts";
+import { typeId } from "./typed-id.ts";
 
 export const CheckoutSessionIdFactory = makeTypeId("checkout_session", {
   brand: "CheckoutSessionId",
 });
 export type CheckoutSessionId = TypeIdFrom<typeof CheckoutSessionIdFactory>;
-export const CheckoutSessionIdSchema = makeTypeIdSchema(CheckoutSessionIdFactory).annotate({
+export const CheckoutSessionId = typeId(CheckoutSessionIdFactory).annotate({
   identifier: "CheckoutSessionId",
 });
-export const checkoutSessionIdFromString = Schema.decodeUnknownSync(CheckoutSessionIdSchema);
+// oxlint-disable-next-line effect/require-schema-type-alias -- Schema decoder functions have no .Type member.
+export const checkoutSessionIdFromString = Schema.decodeUnknownSync(CheckoutSessionId);
 
 export const checkoutSessionStatuses = ["awaiting_confirmation"] as const;
 export type CheckoutSessionStatus = (typeof checkoutSessionStatuses)[number];
-export const CheckoutSessionStatusSchema = Schema.Literals(checkoutSessionStatuses);
+export const CheckoutSessionStatus = Schema.Literals(checkoutSessionStatuses);
 
-export const CheckoutSessionSchema = Schema.Struct({
-  id: CheckoutSessionIdSchema,
+export const CheckoutSession = Schema.Struct({
+  id: CheckoutSessionId,
   ownerUserId: Schema.String,
-  status: CheckoutSessionStatusSchema,
-  items: Schema.NonEmptyArray(CoffeeOrderItemSchema),
-  totalPrice: MoneySchema,
+  status: CheckoutSessionStatus,
+  items: Schema.NonEmptyArray(CoffeeOrderItem),
+  totalPrice: Money,
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
   expiresAt: Schema.DateTimeUtc,
 }).annotate({ identifier: "CheckoutSession" });
-export type CheckoutSession = typeof CheckoutSessionSchema.Type;
+export type CheckoutSession = typeof CheckoutSession.Type;

@@ -1,3 +1,5 @@
+import type * as Schema from "effect/Schema";
+import * as Option from "effect/Option";
 /**
  * Verifies assistant request handling, provider routing, and stream output.
  *
@@ -35,7 +37,7 @@ const createAiRunMock = () =>
     ) => Promise<AiTextGenerationOutput>
   >();
 
-const createAssistantRequest = (messages: unknown, signal?: AbortSignal) =>
+const createAssistantRequest = (messages: Schema.Json, signal?: AbortSignal) =>
   new Request("http://example.com/assistant", {
     body: jsonString({ messages }),
     headers: {
@@ -181,21 +183,22 @@ const createAimockOllamaModelLayer = (
           );
         }),
         () =>
-          Effect.gen(function* () {
-            requests.push(...mock.getRequests());
-            yield* Effect.promise(() => mock.stop());
-          }),
+          Effect.sync(() => requests.push(...mock.getRequests())).pipe(
+            Effect.andThen(Effect.promise(() => mock.stop())),
+          ),
       );
-    }).pipe(Effect.provide(ProviderHttpLive)),
-  );
+    }),
+  ).pipe(Layer.provide(ProviderHttpLive));
 
 const verifyWorkersAiRestEnvWinsOverAmbientOllama = () => {
-  const config = getAssistantAiConfigFromEnv({
-    CLOUDFLARE_ACCOUNT_ID: "account-id",
-    CLOUDFLARE_API_TOKEN: "token",
-    COFFEE_ASSISTANT_MODEL: assistantModel,
-    OLLAMA_HOST: "http://localhost:11434",
-  });
+  const config = Option.getOrUndefined(
+    getAssistantAiConfigFromEnv({
+      CLOUDFLARE_ACCOUNT_ID: "account-id",
+      CLOUDFLARE_API_TOKEN: "token",
+      COFFEE_ASSISTANT_MODEL: assistantModel,
+      OLLAMA_HOST: "http://localhost:11434",
+    }),
+  );
 
   expect(config?.kind).toBe("workers-ai-rest");
 
@@ -209,12 +212,14 @@ const verifyWorkersAiRestEnvWinsOverAmbientOllama = () => {
 };
 
 const verifyExplicitOllamaEnv = () => {
-  const config = getAssistantAiConfigFromEnv({
-    CLOUDFLARE_ACCOUNT_ID: "account-id",
-    CLOUDFLARE_API_TOKEN: "token",
-    COFFEE_ASSISTANT_MODEL: localAssistantModel,
-    COFFEE_ASSISTANT_PROVIDER: "ollama",
-  });
+  const config = Option.getOrUndefined(
+    getAssistantAiConfigFromEnv({
+      CLOUDFLARE_ACCOUNT_ID: "account-id",
+      CLOUDFLARE_API_TOKEN: "token",
+      COFFEE_ASSISTANT_MODEL: localAssistantModel,
+      COFFEE_ASSISTANT_PROVIDER: "ollama",
+    }),
+  );
 
   expect(config).toEqual({
     endpoint: "http://localhost:11434",
@@ -224,20 +229,24 @@ const verifyExplicitOllamaEnv = () => {
 };
 
 const verifyProviderRequiresModel = () => {
-  const config = getAssistantAiConfigFromEnv({
-    CLOUDFLARE_ACCOUNT_ID: "account-id",
-    CLOUDFLARE_API_TOKEN: "token",
-  });
+  const config = Option.getOrUndefined(
+    getAssistantAiConfigFromEnv({
+      CLOUDFLARE_ACCOUNT_ID: "account-id",
+      CLOUDFLARE_API_TOKEN: "token",
+    }),
+  );
 
   expect(config).toBeUndefined();
 };
 
 const verifyExplicitWorkersAiRequiresCredentials = () => {
-  const config = getAssistantAiConfigFromEnv({
-    COFFEE_ASSISTANT_MODEL: assistantModel,
-    COFFEE_ASSISTANT_PROVIDER: "workers-ai",
-    OLLAMA_HOST: "http://localhost:11434",
-  });
+  const config = Option.getOrUndefined(
+    getAssistantAiConfigFromEnv({
+      COFFEE_ASSISTANT_MODEL: assistantModel,
+      COFFEE_ASSISTANT_PROVIDER: "workers-ai",
+      OLLAMA_HOST: "http://localhost:11434",
+    }),
+  );
 
   expect(config).toBeUndefined();
 };

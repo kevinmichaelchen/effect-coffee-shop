@@ -18,5 +18,6 @@ const handleHttpRequest = createHttpRouter([
   mcpRoute,
 ]);
 
+// oxlint-disable-next-line effect/no-unknown-parameters -- AWS environment boundary forwards unknown input to the Config decoder.
 export const routeAwsRequest = (request: Request, env: unknown) =>
   handleHttpRequest(request, readAwsRuntime(env));

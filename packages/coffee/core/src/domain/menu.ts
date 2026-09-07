@@ -5,8 +5,8 @@
  */
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { MoneySchema, moneyFromCents, scaleMoney, addMoney, type Money } from "./money.ts";
-import { ShotCountSchema, type ShotCount } from "./order-primitives.ts";
+import { Money, moneyFromCents, scaleMoney, addMoney } from "./money.ts";
+import { ShotCount } from "./order-primitives.ts";
 
 export const drinkIds = [
   "espresso",
@@ -16,38 +16,38 @@ export const drinkIds = [
   "cold-brew",
   "tea",
 ] as const;
-export const DrinkIdSchema = Schema.Literals(drinkIds);
+export const DrinkId = Schema.Literals(drinkIds);
 
 const drinkKinds = ["espresso", "tea"] as const;
-export const DrinkKindSchema = Schema.Literals(drinkKinds);
+export const DrinkKind = Schema.Literals(drinkKinds);
 
 export const drinkSizes = ["small", "medium", "large"] as const;
 export type DrinkSize = (typeof drinkSizes)[number];
-export const DrinkSizeSchema = Schema.Literals(drinkSizes);
+export const DrinkSize = Schema.Literals(drinkSizes);
 
 export const milks = ["whole", "oat", "almond", "none"] as const;
 export type Milk = (typeof milks)[number];
-export const MilkSchema = Schema.Literals(milks);
+export const Milk = Schema.Literals(milks);
 
 export const temperatures = ["hot", "iced", "extra-hot"] as const;
 export type Temperature = (typeof temperatures)[number];
-export const TemperatureSchema = Schema.Literals(temperatures);
+export const Temperature = Schema.Literals(temperatures);
 
-export const MenuItemSchema = Schema.Struct({
-  id: DrinkIdSchema,
+export const MenuItem = Schema.Struct({
+  id: DrinkId,
   name: Schema.String,
-  kind: DrinkKindSchema,
-  basePrice: MoneySchema,
-  availableMilks: Schema.Array(MilkSchema),
-  availableTemperatures: Schema.Array(TemperatureSchema),
-  maxShots: ShotCountSchema,
+  kind: DrinkKind,
+  basePrice: Money,
+  availableMilks: Schema.Array(Milk),
+  availableTemperatures: Schema.Array(Temperature),
+  maxShots: ShotCount,
 }).annotate({ identifier: "MenuItem" });
-export type MenuItem = typeof MenuItemSchema.Type;
+export type MenuItem = typeof MenuItem.Type;
 
-export const MenuSchema = Schema.Array(MenuItemSchema).annotate({ identifier: "Menu" });
-export type Menu = typeof MenuSchema.Type;
+export const Menu = Schema.Array(MenuItem).annotate({ identifier: "Menu" });
+export type Menu = typeof Menu.Type;
 
-export const menuItems = Schema.decodeUnknownSync(MenuSchema)([
+export const menuItems = Schema.decodeUnknownSync(Menu)([
   {
     id: "espresso",
     name: "Espresso",
@@ -104,7 +104,7 @@ export const menuItems = Schema.decodeUnknownSync(MenuSchema)([
   },
 ]);
 
-const shotCount = Schema.decodeUnknownSync(ShotCountSchema);
+const shotCount = Schema.decodeUnknownSync(ShotCount);
 
 const sizeMultipliers: Record<DrinkSize, number> = {
   small: 1,
@@ -136,3 +136,7 @@ export const calculatePrice = (item: MenuItem, size: DrinkSize, shots: ShotCount
 };
 
 export const availableValues = (values: readonly string[]): string => values.join(", ");
+
+export type DrinkId = typeof DrinkId.Type;
+
+export type DrinkKind = typeof DrinkKind.Type;

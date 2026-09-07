@@ -1,3 +1,4 @@
+import * as R from "effect/Record";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
@@ -123,7 +124,9 @@ export const handleRequest = Effect.fn("TurboCache.handleRequest")((request: Req
             "cache-control": "no-store",
             // Rejected uploads may leave request bytes unread. Tell HTTP/1
             // peers to close that connection instead of pooling it.
-            ...(request.body !== null ? { connection: "close" } : {}),
+            ...R.getSomes({
+              connection: Option.fromNullishOr(request.body).pipe(Option.as("close")),
+            }),
           },
         });
       }),

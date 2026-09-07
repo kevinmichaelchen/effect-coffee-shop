@@ -1,3 +1,5 @@
+import * as Option from "effect/Option";
+import * as Clock from "effect/Clock";
 /**
  * Handles Beanline assistant HTTP requests and streams model responses.
  *
@@ -54,7 +56,9 @@ interface AssistantHandlerOptions {
   readonly actor: AppActor;
   readonly appLayer: Layer.Layer<never, any, any>;
   readonly gatewayEnabled?: boolean;
+  // oxlint-disable-next-line effect/prefer-option-over-null -- Native HTTP adapter accepts absent provider options and rejects them before starting an Effect.
   readonly model: string | undefined;
+  // oxlint-disable-next-line effect/prefer-option-over-null -- Native HTTP adapter accepts absent provider options and rejects them before starting an Effect.
   readonly modelLayer: Layer.Layer<AssistantModelRunner> | undefined;
 }
 
@@ -87,7 +91,7 @@ export async function handleAssistantRequest(
 
   const body = await parseAssistantRequestBody(request);
 
-  if (body === null) {
+  if (Option.isNone(body)) {
     return new Response("Invalid assistant request body.", { status: 400 });
   }
 
@@ -98,7 +102,7 @@ export async function handleAssistantRequest(
     : streamAssistantResponse({
         actor: options.actor,
         appLayer: options.appLayer,
-        body,
+        body: body.value,
         gatewayEnabled: options.gatewayEnabled ?? false,
         model: options.model,
         queue,
@@ -110,8 +114,10 @@ export async function handleAssistantRequest(
         }),
         Effect.scoped,
       );
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
   const fiber = Effect.runFork(assistant);
   const interruptAssistant = () => {
+    // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
     Effect.runFork(Fiber.interrupt(fiber));
   };
   abortController.signal.addEventListener("abort", interruptAssistant, { once: true });
@@ -134,8 +140,9 @@ function streamAssistantResponse(input: PreparedAssistantRequest) {
   return Effect.gen(function* () {
     const activityFibers = yield* FiberSet.make<void, never>();
     const runActivity = yield* FiberSet.runtime(activityFibers)<never>();
-    const messageId = createAssistantStreamId("msg");
-    const runId = createAssistantStreamId("chat");
+    const clock = yield* Clock.Clock;
+    const messageId = yield* createAssistantStreamId("msg");
+    const runId = yield* createAssistantStreamId("chat");
     const runApp = createCoffeeAppRunner(input.appLayer, input.actor);
     const startedAt = yield* Effect.sync(() => performance.now());
     let toolCallCount = 0;
@@ -151,11 +158,18 @@ function streamAssistantResponse(input: PreparedAssistantRequest) {
         }),
       );
       input.queue.push(
-        createAssistantCustomChunk(input.model, getAssistantToolActivityEvent(), activity),
+        createAssistantCustomChunk(
+          clock.currentTimeMillisUnsafe(),
+          input.model,
+          getAssistantToolActivityEvent(),
+          activity,
+        ),
       );
     };
 
-    input.queue.push(createAssistantRunStartedChunk(runId, input.model));
+    input.queue.push(
+      createAssistantRunStartedChunk(clock.currentTimeMillisUnsafe(), runId, input.model),
+    );
     yield* logAssistantRunStarted({
       actor: input.actor,
       gatewayEnabled: input.gatewayEnabled,
@@ -170,7 +184,7 @@ function streamAssistantResponse(input: PreparedAssistantRequest) {
       systemPrompt: coffeeAssistantSystemPrompt,
       tools: createCoffeeAssistantTools(runApp, emitActivity),
     }).pipe(
-      Effect.tapError((error: unknown) =>
+      Effect.tapError((error) =>
         logAssistantRunFailed({
           actor: input.actor,
           durationMs: performance.now() - startedAt,
@@ -189,10 +203,23 @@ function streamAssistantResponse(input: PreparedAssistantRequest) {
       }),
     );
 
-    input.queue.push(createAssistantTextStartChunk(messageId, input.model));
-    input.queue.push(createAssistantTextContentChunk(messageId, input.model, response));
-    input.queue.push(createAssistantTextEndChunk(messageId, input.model));
-    input.queue.push(createAssistantRunFinishedChunk(runId, input.model));
+    input.queue.push(
+      createAssistantTextStartChunk(clock.currentTimeMillisUnsafe(), messageId, input.model),
+    );
+    input.queue.push(
+      createAssistantTextContentChunk(
+        clock.currentTimeMillisUnsafe(),
+        messageId,
+        input.model,
+        response,
+      ),
+    );
+    input.queue.push(
+      createAssistantTextEndChunk(clock.currentTimeMillisUnsafe(), messageId, input.model),
+    );
+    input.queue.push(
+      createAssistantRunFinishedChunk(clock.currentTimeMillisUnsafe(), runId, input.model),
+    );
     input.queue.close();
 
     yield* FiberSet.awaitEmpty(activityFibers);
