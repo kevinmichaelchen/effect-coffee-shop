@@ -136,32 +136,40 @@ test(
   "enforces authentication, tenant boundaries, write permissions and preflight",
   Effect.gen(function* () {
     const url = yield* Schema.decodeUnknownEffect(Schema.String)((yield* deployed).url);
-    expect((yield* request(url, "/v8/artifacts/status?slug=cache-test")).status).toBe(401);
-    expect(
-      (yield* request(url, "/v8/artifacts/status?slug=other", {
-        headers: { authorization: `Bearer ${readToken}` },
-      })).status,
-    ).toBe(403);
-    expect(
-      (yield* request(url, "/v8/artifacts/forbidden?slug=cache-test", {
-        method: "PUT",
-        body: "bad",
-        headers: { authorization: `Bearer ${readToken}` },
-      })).status,
-    ).toBe(403);
-    const preflight = yield* request(url, "/v8/artifacts/test", {
-      method: "OPTIONS",
-      headers: { authorization: `Bearer ${writeToken}` },
+    const status = Effect.fn(function* (path: string, init: RequestInit = {}) {
+      const response = yield* request(url, path, init);
+      // Consume error responses so the test itself does not hold open connections.
+      yield* Effect.promise(() => response.text());
+      return response.status;
     });
-    expect({
-      status: preflight.status,
-      body: yield* Effect.promise(() => preflight.text()),
-    }).toEqual({ status: 204, body: "" });
-    expect(preflight.headers.get("access-control-allow-headers")).toContain("Authorization");
+    expect(yield* status("/v8/artifacts/status?slug=cache-test")).toBe(401);
     expect(
-      (yield* request(url, "/v8/artifacts/missing?slug=cache-test", {
+      yield* status("/v8/artifacts/status?slug=other", {
         headers: { authorization: `Bearer ${readToken}` },
-      })).status,
+      }),
+    ).toBe(403);
+    for (const attempt of Array.from({ length: 20 }, (_, index) => index)) {
+      expect(
+        yield* status(`/v8/artifacts/forbidden-${attempt}?slug=cache-test`, {
+          method: "PUT",
+          body: "bad",
+          headers: { authorization: `Bearer ${readToken}` },
+        }),
+      ).toBe(403);
+      const preflight = yield* request(url, "/v8/artifacts/test", {
+        method: "OPTIONS",
+        headers: { authorization: `Bearer ${writeToken}` },
+      });
+      expect({
+        status: preflight.status,
+        body: yield* Effect.promise(() => preflight.text()),
+      }).toEqual({ status: 204, body: "" });
+      expect(preflight.headers.get("access-control-allow-headers")).toContain("Authorization");
+    }
+    expect(
+      yield* status("/v8/artifacts/missing?slug=cache-test", {
+        headers: { authorization: `Bearer ${readToken}` },
+      }),
     ).toBe(404);
   }),
 );

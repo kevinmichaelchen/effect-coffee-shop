@@ -116,7 +116,12 @@ export const handleRequest = Effect.fn("TurboCache.handleRequest")((request: Req
       Effect.succeed(
         new Response(request.method === "HEAD" ? null : error.message, {
           status: error.status,
-          headers: { "cache-control": "no-store" },
+          headers: {
+            "cache-control": "no-store",
+            // Rejected uploads may leave request bytes unread. Tell HTTP/1
+            // peers to close that connection instead of pooling it.
+            ...(request.body !== null ? { connection: "close" } : {}),
+          },
         }),
       ),
     ),
