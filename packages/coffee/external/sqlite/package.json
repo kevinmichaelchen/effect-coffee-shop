@@ -16,7 +16,7 @@
     "db:format": "sqlfu --config src/sql/sqlfu.config.ts format \"src/sql/**/*.sql\"",
     "db:generate": "sqlfu --config src/sql/sqlfu.config.ts generate && oxfmt --write \"src/sql/**/*.ts\"",
     "db:migrate": "sqlfu --config src/sql/sqlfu.config.ts migrate",
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "lint": "bun --bun oxlint -c ../../../.oxlintrc.json --disable-nested-config .",
     "lint:fix": "bun --bun oxlint -c ../../../.oxlintrc.json --disable-nested-config --fix .",
     "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/external/sqlite/tsconfig.json",

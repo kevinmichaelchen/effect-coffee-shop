@@ -11,7 +11,7 @@
     "./http/direct-auth": "./src/http/direct-auth.ts"
   },
   "scripts": {
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "lint": "bun --bun oxlint -c ../../.oxlintrc.json --disable-nested-config .",
     "lint:fix": "bun --bun oxlint -c ../../.oxlintrc.json --disable-nested-config --fix .",
     "lint:custom": "cd ../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/backend/tsconfig.json",

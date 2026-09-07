@@ -148,10 +148,33 @@ bun run hooks:run:pre-commit
 bun run hooks:run:pre-push
 ```
 
+## CI
+
+CI runs three jobs in parallel on every PR and push to `main`:
+
+| Command | Coverage |
+| --- | --- |
+| `bun run ci:static` | Native TypeScript 7 + Effect diagnostics, type-aware Oxlint, Oxfmt, and infrastructure typechecking. |
+| `bun run ci:backend` | All backend/package tests, including in-memory/PGlite contracts, plus Cloudflare infrastructure tests. |
+| `bun run ci:ui` | Storybook browser tests in light/dark themes and the production Vite build. |
+
+For local browser tests, first run `bunx --no-install playwright install --with-deps --only-shell chromium`
+from `apps/ui`. Real Postgres contracts run in a separate service-container job on
+`main`. The custom `lintcn` and Fallow audits remain available through `bun run check`.
+
+CI restores Turborepo task caches and cancels superseded PR runs. Shared lint
+configuration and dependency typechecks participate in cache invalidation.
+Dependencies are installed from the frozen lockfile, and the Effect compiler
+patch runs on every install. Keep TypeScript and `@effect/tsgo` pinned to a
+[supported combination](https://github.com/Effect-TS/tsgo#supported-package-versions).
+The compiler executable is named `tsc` in TypeScript 7; the old native-preview
+`tsgo` package is no longer needed.
+
 ## Local Configuration
 
 The root install covers all workspaces, uses the root dependency catalog, and
-installs local Git hooks outside CI.
+patches TypeScript with Effect tsgo diagnostics, and installs local Git hooks
+outside CI.
 
 Environment examples live in:
 
@@ -198,7 +221,8 @@ provider-specific stack files.
 - Root tasks are run by Turborepo.
 - `check:affected`, `build:affected`, and `test:affected` use Turborepo's
   affected mode against the current branch.
-- `bun run tsgo:patch` opts into the Effect TypeScript language service binary;
-  `bun run tsgo:unpatch` restores the stock native TypeScript binary.
+- Installs automatically apply the Effect tsgo compiler patch. `bun run tsgo:patch`
+  reapplies it; `bun run tsgo:unpatch` restores the stock native TypeScript binary.
+  Typechecks use native TypeScript 7 through `tsc`, with Effect diagnostics enabled.
 - Decode external input at the boundary, preferably with `effect/Schema`, then
   pass typed domain values inward.

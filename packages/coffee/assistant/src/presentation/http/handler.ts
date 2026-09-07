@@ -103,8 +103,7 @@ export async function handleAssistantRequest(
         model: options.model,
         queue,
       }).pipe(
-        Effect.provide(options.modelLayer),
-        Effect.provide(HttpObservabilityLive),
+        Effect.provide(Layer.merge(options.modelLayer, HttpObservabilityLive)),
         Effect.matchCauseEffect({
           onFailure: (cause) => Effect.sync(() => queue.fail(Cause.squash(cause))),
           onSuccess: () => Effect.void,
@@ -217,9 +216,12 @@ function createCoffeeAppRunner(
 
   return (effect) =>
     effect.pipe(
-      Effect.provide(liveLayer),
-      Effect.provide(HttpObservabilityLive),
-      Effect.provide(services),
+      Effect.provide(
+        liveLayer.pipe(
+          Layer.provideMerge(HttpObservabilityLive),
+          Layer.provideMerge(Layer.succeedContext(services)),
+        ),
+      ),
     );
 }
 

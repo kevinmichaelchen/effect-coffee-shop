@@ -15,7 +15,7 @@
     "build-storybook": "storybook build",
     "test": "vitest run --project=storybook-light --project=storybook-dark",
     "test:watch": "vitest --project=storybook-light --project=storybook-dark",
-    "typecheck": "tsgo --noEmit -p tsconfig.app.json && tsgo --noEmit -p tsconfig.node.json",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "build": "vite build",
     "check": "bun run typecheck && bun run lint && bun run lint:custom && bun run fmt:check && bun run test && bun run build",
     "lint": "oxlint -c .oxlintrc.json .",
