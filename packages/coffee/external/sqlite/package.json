@@ -25,7 +25,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@better-auth/agent-auth": "catalog:",
     "@better-auth/passkey": "catalog:",
     "@effect-coffee-shop/coffee-core": "workspace:*",
     "@effect/platform-bun": "catalog:",

@@ -21,8 +21,6 @@
           "@effect-coffee-shop/backend/*",
           "@effect-coffee-shop/http-routing",
           "@effect-coffee-shop/http-routing/*",
-          "@effect-coffee-shop/coffee-assistant",
-          "@effect-coffee-shop/coffee-assistant/*",
           "@effect-coffee-shop/coffee-auth",
           "@effect-coffee-shop/coffee-auth/*",
           "@effect-coffee-shop/coffee-cli",

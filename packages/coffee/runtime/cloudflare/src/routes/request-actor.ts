@@ -18,7 +18,6 @@ export const resolveCloudflareRequestActor = Effect.fn("Cloudflare.resolveReques
 
     const actor = yield* Effect.promise(async () =>
       resolveCloudflareActor({
-        appLayer: backend.appLayer,
         db: backend.persistence,
         request: input.request,
         secret,

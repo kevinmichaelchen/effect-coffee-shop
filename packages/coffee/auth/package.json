@@ -5,8 +5,6 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./agent/capabilities": "./src/agent/capabilities.ts",
-    "./agent/options": "./src/agent/options.ts",
     "./better-auth/cloudflare": "./src/better-auth/cloudflare.ts",
     "./better-auth/shared": "./src/better-auth/shared.ts",
     "./better-auth/users": "./src/better-auth/users.ts"
@@ -21,10 +19,8 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@better-auth/agent-auth": "catalog:",
     "@better-auth/passkey": "catalog:",
     "@cloudflare/workers-types": "catalog:",
-    "@effect-coffee-shop/coffee-actions": "workspace:*",
     "@effect-coffee-shop/coffee-core": "workspace:*",
     "@effect-coffee-shop/http-routing": "workspace:*",
     "better-auth": "catalog:",

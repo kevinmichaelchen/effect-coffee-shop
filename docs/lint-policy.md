@@ -37,8 +37,7 @@ remove it when its boundary disappears or the upstream rule is corrected.
 ## Conventions adopted
 
 Schemas and their exported types share a domain name (`CoffeeOrder`, `CartItem`),
-without a `Schema` suffix. Optional domain values and provider selection use
+without a `Schema` suffix. Optional domain values use
 `Option`; schema codecs retain external storage and transport encodings. Pure
 Effect tests use `@effect/vitest`; effectful test traversals specify concurrency.
-Assistant stream timestamps use the captured Effect clock, random stream IDs use
-Effect random, and repository sorting uses Effect array/order helpers.
+Repository sorting uses Effect array/order helpers.

@@ -20,7 +20,6 @@ export const resolveAwsRequestActor = Effect.fn("Aws.resolveRequestActor")(funct
   const database = yield* Effect.promise(async () => backend.persistence.authDatabase());
   const actor = yield* Effect.promise(async () =>
     resolveCoffeeActor({
-      appLayer: backend.appLayer,
       database,
       request: input.request,
       secret,

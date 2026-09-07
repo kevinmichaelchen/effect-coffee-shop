@@ -5,9 +5,6 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./execute": "./src/execute.ts",
-    "./format": "./src/format.ts",
-    "./json-schema": "./src/json-schema.ts",
     "./schemas": "./src/schemas.ts",
     "./specs": "./src/specs.ts"
   },

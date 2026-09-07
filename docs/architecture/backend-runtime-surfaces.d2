@@ -26,7 +26,7 @@ runtimes: "deployable runtimes" {
   bun: "Bun\nlocal HTTP, local API, MCP stdio/HTTP" {
     class: runtime
   }
-  cloudflare: "Cloudflare Worker\nD1, assets, Workers AI" {
+  cloudflare: "Cloudflare Worker\nD1, assets" {
     class: runtime
   }
   aws: "AWS Lambda\nPostgres, Function URL" {
@@ -53,12 +53,6 @@ surfaces: "mounted surfaces" {
   auth: "Better Auth\n/api/auth/*" {
     class: surface
   }
-  assistant: "Assistant\n/api/assistant or local /assistant" {
-    class: surface
-  }
-  discovery: "Agent discovery\n/.well-known/*" {
-    class: surface
-  }
   assets: "Static assets\nCloudflare fallback" {
     class: surface
   }
@@ -72,7 +66,7 @@ implementations: "surface implementations" {
   app_layer: "Coffee app layer\npersistence + domain services" {
     class: implementation
   }
-  auth_assistant: "auth + assistant adapters\nsession, capability, model runners" {
+  auth: "auth adapters\npasskeys and session resolution" {
     class: implementation
   }
 }

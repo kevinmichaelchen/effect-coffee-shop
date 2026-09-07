@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./assistant": "./src/assistant.ts",
     "./cli-main": "./src/cli-main.ts",
     "./http-main": "./src/http-main.ts",
     "./local-backend-main": "./src/local-backend-main.ts",
@@ -22,7 +21,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@effect-coffee-shop/coffee-assistant": "workspace:*",
     "@effect-coffee-shop/coffee-backend": "workspace:*",
     "@effect-coffee-shop/coffee-cli": "workspace:*",
     "@effect-coffee-shop/coffee-core": "workspace:*",

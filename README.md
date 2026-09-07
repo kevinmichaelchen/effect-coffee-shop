@@ -3,7 +3,7 @@
 Coffee-ordering app used to explore Onion Architecture with TypeScript, Bun,
 and Effect.
 
-The Coffee domain is shared across HTTP, CLI, MCP, assistant, auth, and browser
+The Coffee domain is shared across HTTP, CLI, MCP, auth, and browser
 UI surfaces. Runtime shells compose that domain for local Bun execution,
 Cloudflare Workers/D1 deployment, and an optional AWS/Postgres stack.
 
@@ -13,8 +13,7 @@ Cloudflare Workers/D1 deployment, and an optional AWS/Postgres stack.
   typed error channels.
 - Onion Architecture boundaries between core business rules, presentation
   protocols, external adapters, and deployable runtime shells.
-- One Coffee action catalog projected into MCP tools, assistant tools, and Agent
-  Auth capabilities.
+- One Coffee action catalog projected into Effect MCP tools.
 - A Vite/React browser app backed by the same HTTP API used by local and
   deployed runtimes.
 
@@ -41,7 +40,7 @@ bun run dev
 The UI runs at `http://localhost:5173` and proxies `/api/*` to the Bun backend
 at `http://localhost:3000`.
 
-For Portless subdomains, passkey auth, assistant credentials, and proxy
+For Portless subdomains, passkey auth and proxy
 overrides, see [`apps/ui`](./apps/ui).
 
 ## Architecture At A Glance
@@ -50,49 +49,36 @@ overrides, see [`apps/ui`](./apps/ui).
 <summary>Architecture diagrams</summary>
 
 The package layer view shows dependency direction. The runtime surface view shows how the backend
-exposes HTTP, MCP, auth, assistant, discovery, and static asset surfaces through the Fetch host. The
-assistant boundary view shows the internal split between HTTP presentation, chat application logic,
-Coffee tool projection, and external model providers.
+exposes HTTP, MCP, auth, and static asset surfaces through the Fetch host.
 
 ![Package layer diagram](./docs/architecture/package-layers.svg)
 
 ![Backend runtime surface diagram](./docs/architecture/backend-runtime-surfaces.svg)
 
-![Assistant boundary diagram](./docs/architecture/assistant-boundaries.svg)
-
 Editable sources live in [`docs/architecture`](./docs/architecture).
 
 </details>
 
-| Layer | Workspace | Owns |
-| --- | --- | --- |
-| Domain/application | [`packages/coffee/core`](./packages/coffee/core) | Coffee domain model, use cases, ports, actors, contracts, and repository contract tests. |
-| Presentation | [`packages/coffee/presentation`](./packages/coffee/presentation) | HTTP, CLI, and MCP protocol adapters over the application service. |
-| Presentation support | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions) | Shared Coffee capability names, schemas, dispatch, and neutral result formatting for presentation and capability adapters. |
-| Assistant | [`packages/coffee/assistant`](./packages/coffee/assistant) | Provider-neutral assistant runtime, streaming chunks, model adapters, and tool projection. |
-| Auth | [`packages/coffee/auth`](./packages/coffee/auth) | Better Auth setup, actor resolution, and Agent Auth capability execution. |
-| External adapters | [`packages/coffee/external`](./packages/coffee/external) | In-memory, SQLite/D1, and Drizzle/Postgres implementations of Coffee ports. |
-| Host utilities | [`packages/backend-host`](./packages/backend-host) | Runtime-agnostic Fetch host primitives, mounts, logging, and request-scoped services. |
-| Runtime shell | [`apps/backend`](./apps/backend) | Bun, Cloudflare, and AWS composition roots that choose concrete Layers. |
-| Browser app | [`apps/ui`](./apps/ui) | Vite/React UI, local proxying, passkey flows, and assistant client integration. |
+| Layer                | Workspace                                                                        | Owns                                                                                     |
+| -------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Domain/application   | [`packages/coffee/core`](./packages/coffee/core)                                 | Coffee domain model, use cases, ports, actors, contracts, and repository contract tests. |
+| Presentation         | [`packages/coffee/presentation`](./packages/coffee/presentation)                 | HTTP, CLI, and MCP protocol adapters over the application service.                       |
+| Presentation support | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions) | Coffee tool names, descriptions, and schemas used by Effect MCP.                         |
+| Auth                 | [`packages/coffee/auth`](./packages/coffee/auth)                                 | Better Auth passkey setup and actor resolution.                                          |
+| External adapters    | [`packages/coffee/external`](./packages/coffee/external)                         | In-memory, SQLite/D1, and Drizzle/Postgres implementations of Coffee ports.              |
+| Host utilities       | [`packages/backend-host`](./packages/backend-host)                               | Runtime-agnostic Fetch host primitives, mounts, logging, and request-scoped services.    |
+| Runtime shell        | [`apps/backend`](./apps/backend)                                                 | Bun, Cloudflare, and AWS composition roots that choose concrete Layers.                  |
+| Browser app          | [`apps/ui`](./apps/ui)                                                           | Vite/React UI, local proxying, passkey sign-in, and coffee ordering.                     |
 
 ## Why Coffee Actions Exists
 
 [`coffee-core`](./packages/coffee/core) owns the real Coffee behavior: domain
-rules, use cases, ports, and typed errors. Several outside surfaces need to
-offer those same use cases, but each surface speaks a different protocol:
-MCP tools, assistant tools, and Agent Auth capabilities all have different
-metadata and schema shapes.
+rules, use cases, ports, and typed errors. HTTP and CLI use those application contracts directly, while MCP publishes them as tools.
 
-[`coffee-actions`](./packages/coffee/presentation/actions) lives under presentation because it is
-shared presentation-side support. It gives each shared Coffee capability one stable name,
-description, input schema, neutral result format, and dispatch path into `CoffeeOrderApp`. That keeps
-MCP, the assistant, and Agent Auth from each inventing their own version of `list_menu`,
-`place_order`, or `checkout_cart`.
-
-Concrete surfaces still own their protocol projection. MCP builds Effect AI toolkit definitions in
-[`coffee-mcp`](./packages/coffee/presentation/mcp), and the assistant builds model-callable tool
-definitions in [`coffee-assistant`](./packages/coffee/assistant).
+[`coffee-actions`](./packages/coffee/presentation/actions) gives each MCP-callable Coffee capability
+one stable name, description, and input/output schema.
+[`coffee-mcp`](./packages/coffee/presentation/mcp) projects those contracts into Effect MCP tools,
+resources, and prompts without duplicating business behavior.
 
 It is not a fifth onion layer, and it is not a second business layer. If the behavior changes,
 change `coffee-core`. If one surface needs a private helper, keep that helper in the surface
@@ -101,33 +87,32 @@ case in a protocol-neutral shape.
 
 ## Choose Your Path
 
-| Goal | Start Here |
-| --- | --- |
-| Run or change backend runtime composition | [`apps/backend/README.md`](./apps/backend/README.md) |
-| Work on the browser UI | [`apps/ui/README.md`](./apps/ui/README.md) |
-| Understand package boundaries | [`packages/README.md`](./packages/README.md) |
-| Add or change Coffee business behavior | [`packages/coffee/core`](./packages/coffee/core) |
-| Add a shared tool/capability action | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions) |
-| Change HTTP, CLI, or MCP surfaces | [`packages/coffee/presentation`](./packages/coffee/presentation) |
-| Change assistant behavior or providers | [`packages/coffee/assistant`](./packages/coffee/assistant) |
-| Change auth or Agent Auth capabilities | [`packages/coffee/auth`](./packages/coffee/auth) |
-| Read the SFT experiment notes | [`docs/beanline-prime-intellect-flight-log.md`](./docs/beanline-prime-intellect-flight-log.md) |
+| Goal                                      | Start Here                                                                                     |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Run or change backend runtime composition | [`apps/backend/README.md`](./apps/backend/README.md)                                           |
+| Work on the browser UI                    | [`apps/ui/README.md`](./apps/ui/README.md)                                                     |
+| Understand package boundaries             | [`packages/README.md`](./packages/README.md)                                                   |
+| Add or change Coffee business behavior    | [`packages/coffee/core`](./packages/coffee/core)                                               |
+| Add a shared tool/capability action       | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions)               |
+| Change HTTP, CLI, or MCP surfaces         | [`packages/coffee/presentation`](./packages/coffee/presentation)                               |
+| Change passkey auth                       | [`packages/coffee/auth`](./packages/coffee/auth)                                               |
+| Read the SFT experiment notes             | [`docs/beanline-prime-intellect-flight-log.md`](./docs/beanline-prime-intellect-flight-log.md) |
 
 ## Common Commands
 
-| Command | Purpose |
-| --- | --- |
-| `bun run http` | Run the local Bun HTTP API. |
-| `bun run dev` | Run the Vite UI dev server. |
-| `bun run cli -- menu list` | Smoke-check the Coffee CLI through the backend composition root. |
-| `bun run mcp:stdio` | Run the MCP server over stdio. |
-| `bun run mcp:http` | Run the MCP server over HTTP. |
-| `bun run storybook` | Run the UI Storybook dev server. |
-| `bun run build-storybook` | Build the UI Storybook static site. |
-| `bun run check` | Run typecheck, lint, format check, tests, custom lint, and Fallow. |
-| `bun run check:affected` | Run the affected workspace gate against the current branch. |
-| `bun run test:local:full` | Run the full local gate, including a disposable Postgres contract test. |
-| `bun run build` | Build distributable workspace artifacts through Turborepo. |
+| Command                    | Purpose                                                                 |
+| -------------------------- | ----------------------------------------------------------------------- |
+| `bun run http`             | Run the local Bun HTTP API.                                             |
+| `bun run dev`              | Run the Vite UI dev server.                                             |
+| `bun run cli -- menu list` | Smoke-check the Coffee CLI through the backend composition root.        |
+| `bun run mcp:stdio`        | Run the MCP server over stdio.                                          |
+| `bun run mcp:http`         | Run the MCP server over HTTP.                                           |
+| `bun run storybook`        | Run the UI Storybook dev server.                                        |
+| `bun run build-storybook`  | Build the UI Storybook static site.                                     |
+| `bun run check`            | Run typecheck, lint, format check, tests, custom lint, and Fallow.      |
+| `bun run check:affected`   | Run the affected workspace gate against the current branch.             |
+| `bun run test:local:full`  | Run the full local gate, including a disposable Postgres contract test. |
+| `bun run build`            | Build distributable workspace artifacts through Turborepo.              |
 
 Workspace-specific gates:
 
@@ -154,11 +139,11 @@ CI pins Node.js via `.node-version` alongside Bun: Vitest and Cloudflare tooling
 use Node and require modern JavaScript resource-management syntax.
 CI runs three jobs in parallel on every PR and push to `main`:
 
-| Command | Coverage |
-| --- | --- |
-| `bun run ci:static` | Native TypeScript 7 + Effect diagnostics, type-aware Oxlint, Oxfmt, and infrastructure typechecking. |
+| Command              | Coverage                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------ |
+| `bun run ci:static`  | Native TypeScript 7 + Effect diagnostics, type-aware Oxlint, Oxfmt, and infrastructure typechecking.   |
 | `bun run ci:backend` | All backend/package tests, including in-memory/PGlite contracts, plus Cloudflare infrastructure tests. |
-| `bun run ci:ui` | Storybook browser tests in light/dark themes and the production Vite build. |
+| `bun run ci:ui`      | Storybook browser tests in light/dark themes and the production Vite build.                            |
 
 For local browser tests, first run `bunx --no-install playwright install --with-deps --only-shell chromium`
 from `apps/ui`. Real Postgres contracts run in a separate service-container job on
@@ -180,13 +165,10 @@ outside CI.
 
 Environment examples live in:
 
-- [`.env.example`](./.env.example): application, auth, assistant, observability,
+- [`.env.example`](./.env.example): application, auth, observability,
   and deployment variables.
 - [`.env.alchemy.example`](./.env.alchemy.example): Alchemy state and provider
   variables.
-
-Local assistant setup is documented in
-[`packages/coffee/assistant`](./packages/coffee/assistant).
 
 ## Deployment
 
@@ -210,12 +192,12 @@ provider-specific stack files.
 
 ## Project Images
 
-| Beanline architecture counter | Typed order pipeline |
-| --- | --- |
+| Beanline architecture counter                                                                    | Typed order pipeline                                                           |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | ![Beanline architecture counter](./docs/assets/readme-images/beanline-architecture-counter.webp) | ![Typed order pipeline](./docs/assets/readme-images/typed-order-pipeline.webp) |
 
-| Assistant at the bar | Flight log SFT workbench |
-| --- | --- |
+| Assistant at the bar                                                           | Flight log SFT workbench                                                               |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
 | ![Assistant at the bar](./docs/assets/readme-images/assistant-at-the-bar.webp) | ![Flight log SFT workbench](./docs/assets/readme-images/flight-log-sft-workbench.webp) |
 
 ## Notes For Contributors

@@ -80,3 +80,16 @@ test(
     expect(initialize.result.serverInfo.name).toBe("Coffee Orders MCP");
   }),
 );
+
+test(
+  "returns 404 for the retired assistant and agent discovery endpoints",
+  Effect.forEach(
+    ["/api/assistant", "/api/auth/agent-configuration"],
+    Effect.fnUntraced(function* (path) {
+      const { url } = yield* deployed;
+      const response = yield* HttpClient.get(new URL(path, url));
+      expect(response.status).toBe(404);
+    }),
+    { concurrency: 1, discard: true },
+  ),
+);

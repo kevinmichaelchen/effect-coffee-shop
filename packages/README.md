@@ -18,19 +18,14 @@ under `packages/coffee`, while shared HTTP routing utilities stay directly under
 - [`coffee/external/drizzle-postgres`](./coffee/external/drizzle-postgres):
   Drizzle-backed Postgres Coffee External Layer.
 - [`coffee/presentation/actions`](./coffee/presentation/actions):
-  protocol-neutral Coffee action catalog used by MCP tools, assistant tools,
-  and Agent Auth capability execution.
+  protocol-neutral Coffee action catalog used by Effect MCP tools.
 - [`coffee/presentation/http`](./coffee/presentation/http): Effect HTTP API
   routes and web handler construction.
 - [`coffee/presentation/mcp`](./coffee/presentation/mcp): MCP resources,
   prompts, Effect AI toolkit projection, tools, and stdio/HTTP MCP Layers.
 - [`coffee/presentation/cli`](./coffee/presentation/cli): CLI command tree over
   `CoffeeOrderApp`.
-- [`coffee/assistant`](./coffee/assistant): Beanline assistant HTTP
-  presentation, chat-loop application runtime, provider adapters, streaming
-  chunks, and assistant tool projection.
-- [`coffee/auth`](./coffee/auth): Better Auth runtime setup and delegated Agent
-  Auth capability execution.
+- [`coffee/auth`](./coffee/auth): Better Auth passkey setup and actor resolution.
 - [`coffee/runtime`](./coffee/runtime): runtime adapters for Bun, Cloudflare Workers, and AWS
   Lambda.
 

@@ -4,11 +4,7 @@ import { it } from "@effect/vitest";
  *
  * @module
  */
-import type {
-  AiTextGenerationInput,
-  AiTextGenerationOutput,
-  D1Database,
-} from "@cloudflare/workers-types";
+import type { D1Database } from "@cloudflare/workers-types";
 import { D1 } from "@alchemy.run/cloudflare-runtime/core/bindings";
 import { getPlatformProxy } from "@alchemy.run/cloudflare-runtime/core/platform-proxy";
 import * as Option from "effect/Option";
@@ -20,13 +16,7 @@ import {
   type AssetFetcher,
   type CloudflareWorkerEnv,
   type SecretValueBinding,
-  type WorkersAiBinding,
 } from "./env.ts";
-
-const makeAiBinding = (): WorkersAiBinding => ({
-  run: async (_model: string, _inputs: AiTextGenerationInput): Promise<AiTextGenerationOutput> =>
-    Promise.reject("not used in this test"),
-});
 
 const makeAssetFetcher = (): AssetFetcher => ({
   fetch: async () => new Response("ok"),
@@ -57,19 +47,13 @@ describe("cloudflare runtime config", () => {
   it.effect("normalizes optional strings and staff ids", () =>
     Effect.gen(function* () {
       const runtime = yield* readCloudflareRuntime({
-        AI: makeAiBinding(),
-        AI_GATEWAY_ID: " gateway-123 ",
         ASSETS: makeAssetFetcher(),
         BETTER_AUTH_SECRET: makeSecretBinding(" secret-123 "),
-        COFFEE_ASSISTANT_MODEL: " @cf/example/model ",
         COFFEE_STAFF_USER_IDS: " staff-a, staff-b , , staff-a ",
         DB: database,
       });
 
-      expect(Option.isSome(runtime.bindings.ai)).toBe(true);
       expect(Option.isSome(runtime.bindings.assets)).toBe(true);
-      expect(Option.getOrUndefined(runtime.config.aiGatewayId)).toBe("gateway-123");
-      expect(Option.getOrUndefined(runtime.config.assistantModel)).toBe("@cf/example/model");
       expect(Option.map(runtime.config.betterAuthSecret, Redacted.value)).toEqual(
         Option.some("secret-123"),
       );
@@ -80,17 +64,12 @@ describe("cloudflare runtime config", () => {
   it.effect("treats missing or blank optional values as absent", () =>
     Effect.gen(function* () {
       const runtime = yield* readCloudflareRuntime({
-        AI_GATEWAY_ID: "   ",
         BETTER_AUTH_SECRET: "",
-        COFFEE_ASSISTANT_MODEL: " ",
         COFFEE_STAFF_USER_IDS: " ,  , ",
         DB: database,
       } satisfies CloudflareWorkerEnv);
 
-      expect(Option.isNone(runtime.bindings.ai)).toBe(true);
       expect(Option.isNone(runtime.bindings.assets)).toBe(true);
-      expect(Option.isNone(runtime.config.aiGatewayId)).toBe(true);
-      expect(Option.isNone(runtime.config.assistantModel)).toBe(true);
       expect(Option.isNone(runtime.config.betterAuthSecret)).toBe(true);
       expect([...runtime.config.staffUserIds]).toEqual([]);
     }),

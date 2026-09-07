@@ -1,9 +1,7 @@
-import { agentAuth } from "@better-auth/agent-auth";
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { createCoffeeAgentAuthOptions } from "../agent/options.ts";
 import { logStructuredEvent } from "@effect-coffee-shop/http-routing/logging";
 import { runHttpEffect } from "@effect-coffee-shop/http-routing/observability";
 import { AppActor, anonymousActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
@@ -18,20 +16,17 @@ const BetterAuthSecret = Schema.Trim.pipe(Schema.check(Schema.isNonEmpty()));
 const decodeResolvedActor = Schema.decodeUnknownSync(AppActor);
 const decodeBetterAuthSecret = Schema.decodeUnknownSync(BetterAuthSecret);
 const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
-type CoffeeAuthAppLayer = Parameters<typeof createCoffeeAgentAuthOptions>[0]["appLayer"];
 type BetterAuthOptions = Parameters<typeof betterAuth>[0];
 type BetterAuthDatabase = BetterAuthOptions["database"];
 export type CoffeeAuthDatabase = BetterAuthDatabase;
 
 export interface CoffeeAuthInput {
-  readonly appLayer: CoffeeAuthAppLayer;
   readonly database: BetterAuthDatabase;
   readonly request: Request;
   readonly secret: string;
 }
 
 export interface CoffeeActorResolutionInput {
-  readonly appLayer: CoffeeAuthAppLayer;
   readonly database: BetterAuthDatabase;
   readonly request: Request;
   // oxlint-disable-next-line effect/prefer-option-over-null -- Better Auth SDK represents absent secrets and registration context with nullish values.
@@ -64,7 +59,6 @@ function buildCoffeeAuthOptions(input: CoffeeAuthInput): BetterAuthOptions {
         ),
     },
     plugins: [
-      agentAuth(createCoffeeAgentAuthOptions({ appLayer: input.appLayer })),
       passkey({
         registration: {
           afterVerification: async ({ ctx, context, user }) => {
@@ -101,7 +95,6 @@ function buildCoffeeAuthOptions(input: CoffeeAuthInput): BetterAuthOptions {
 export function createCoffeeAuth(input: CoffeeAuthInput) {
   const secret = decodeBetterAuthSecret(input.secret);
   const authOptions = buildCoffeeAuthOptions({
-    appLayer: input.appLayer,
     database: input.database,
     request: input.request,
     secret,
@@ -119,7 +112,6 @@ export async function resolveCoffeeActor(input: CoffeeActorResolutionInput): Pro
       onNone: async () => anonymousActor,
       onSome: async (secret) => {
         const auth = createCoffeeAuth({
-          appLayer: input.appLayer,
           database: input.database,
           request: input.request,
           secret,

@@ -5,12 +5,9 @@
  */
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
-import * as Option from "effect/Option";
-import * as R from "effect/Record";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import {
-  cloudflareAssistantGatewayId,
   cloudflareBindingNames,
   cloudflareEnvNames,
 } from "@effect-coffee-shop/coffee-runtime-cloudflare/env";
@@ -18,7 +15,6 @@ import {
   booleanWithDefault,
   numberBetweenWithDefault,
   optionalTrimmedRedacted,
-  optionalTrimmedString,
   stringWithDefault,
 } from "./config.ts";
 import { coffeeStackName } from "./shared.ts";
@@ -154,10 +150,8 @@ export default Alchemy.Stack(
     state: state(),
   },
   Effect.gen(function* () {
-    const aiGatewayEnabled = yield* booleanWithDefault("COFFEE_ASSISTANT_AI_GATEWAY", false);
     const deploySmokeChecksEnabled = yield* booleanWithDefault("COFFEE_DEPLOY_SMOKE_CHECKS", false);
     const deployMcpSmokeCheckEnabled = yield* booleanWithDefault("COFFEE_DEPLOY_SMOKE_MCP", false);
-    const assistantModel = yield* optionalTrimmedString(cloudflareEnvNames.coffeeAssistantModel);
     const observabilitySamplingRate = yield* numberBetweenWithDefault({
       defaultValue: 1,
       maximum: 1,
@@ -178,14 +172,6 @@ export default Alchemy.Stack(
         value: yield* betterAuthSecret(),
       },
     );
-
-    const assistantGateway = aiGatewayEnabled
-      ? yield* Cloudflare.AI.Gateway(cloudflareAssistantGatewayId, {
-          authentication: true,
-          collectLogs: true,
-          id: cloudflareAssistantGatewayId,
-        })
-      : undefined;
 
     const website = yield* Cloudflare.Website.Vite("onion", {
       rootDir: "apps/ui",
@@ -212,22 +198,11 @@ export default Alchemy.Stack(
         workspaces: "auto",
       },
       assets: {
-        runWorkerFirst: ["/.well-known/agent-configuration", "/api", "/api/*", "/mcp", "/mcp/*"],
+        runWorkerFirst: ["/api", "/api/*", "/mcp", "/mcp/*"],
       },
       env: {
-        // Workers AI has no local emulator: Alchemy proxies the binding to the
-        // real Cloudflare API even under `alchemy dev`. Only attach it when an
-        // assistant model is configured so local stacks and `bun run cf:test`
-        // never reach a real account.
-        ...R.getSomes({
-          [cloudflareBindingNames.ai]: Option.fromUndefinedOr(assistantModel).pipe(
-            Option.map(() => Cloudflare.Workers.AI(cloudflareBindingNames.ai)),
-          ),
-        }),
         [cloudflareBindingNames.db]: coffeeDb,
-        [cloudflareEnvNames.aiGatewayId]: assistantGateway?.gatewayId ?? "",
         [cloudflareEnvNames.betterAuthSecret]: betterAuthStoreSecret,
-        [cloudflareEnvNames.coffeeAssistantModel]: assistantModel ?? "",
         [cloudflareEnvNames.coffeeStaffUserIds]: yield* stringWithDefault(
           cloudflareEnvNames.coffeeStaffUserIds,
           "",
@@ -242,7 +217,6 @@ export default Alchemy.Stack(
     });
 
     return {
-      assistantGateway: assistantGateway?.gatewayId ?? null,
       database: coffeeDb.databaseName,
       smoke,
       url: website.url,

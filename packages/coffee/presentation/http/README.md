@@ -4,7 +4,7 @@
 
 It defines HTTP groups, endpoint schemas, handler layers, a Web Fetch handler adapter, and a local
 Fetch handler adapter. The package owns the HTTP shape, but not database selection, deployment
-bindings, assistant serving, or core business behavior.
+bindings or core business behavior.
 
 ## Directory Map
 
@@ -16,7 +16,7 @@ bindings, assistant serving, or core business behavior.
 ## Boundary Rule
 
 HTTP paths, HTTP payload decoding, response schemas, and HTTP handler composition belong here.
-Request actor resolution, assistant routes, concrete persistence, and Bun server wiring are provided
+Request actor resolution, concrete persistence, and Bun server wiring are provided
 by runtime shells such as [`apps/backend`](../../../../apps/backend). Business behavior stays in
 [`coffee-core`](../../core).
 

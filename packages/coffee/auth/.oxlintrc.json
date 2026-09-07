@@ -15,8 +15,6 @@
       "error",
       {
         "patterns": [
-          "@effect-coffee-shop/coffee-assistant",
-          "@effect-coffee-shop/coffee-assistant/*",
           "@effect-coffee-shop/coffee-cli",
           "@effect-coffee-shop/coffee-cli/*",
           "@effect-coffee-shop/coffee-http",
