@@ -88,5 +88,5 @@
       "outputs": []
     }
   },
-  "globalDependencies": ["packages/.oxlintrc.json", "bunfig.toml"]
+  "globalDependencies": ["packages/.oxlintrc.json", "bunfig.toml", ".node-version"]
 }

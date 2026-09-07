@@ -150,6 +150,8 @@ bun run hooks:run:pre-push
 
 ## CI
 
+CI pins Node.js via `.node-version` alongside Bun: Vitest and Cloudflare tooling
+use Node and require modern JavaScript resource-management syntax.
 CI runs three jobs in parallel on every PR and push to `main`:
 
 | Command | Coverage |
