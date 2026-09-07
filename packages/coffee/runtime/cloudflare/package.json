@@ -10,9 +10,9 @@
     "./worker": "./src/worker.ts"
   },
   "scripts": {
-    "typecheck": "tsgo --noEmit",
-    "lint": "bun --bun oxlint -c ../../../.oxlintrc.json --disable-nested-config .",
-    "lint:fix": "bun --bun oxlint -c ../../../.oxlintrc.json --disable-nested-config --fix .",
+    "typecheck": "tsc --noEmit",
+    "lint": "bun --bun oxlint -c ../../../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "lint:fix": "bun --bun oxlint -c ../../../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
     "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/runtime/cloudflare/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
@@ -20,7 +20,6 @@
   },
   "dependencies": {
     "@cloudflare/workers-types": "catalog:",
-    "@effect-coffee-shop/coffee-assistant": "workspace:*",
     "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-backend": "workspace:*",
     "@effect-coffee-shop/coffee-core": "workspace:*",
@@ -33,6 +32,7 @@
   },
   "devDependencies": {
     "@alchemy.run/cloudflare-runtime": "catalog:",
+    "@effect/vitest": "catalog:",
     "lintcn": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",

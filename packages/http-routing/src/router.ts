@@ -1,3 +1,4 @@
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import { logRequestCompleted, logRequestFailed } from "./logging.ts";
@@ -28,17 +29,20 @@ const createRequestContext = <TEnv>(
 const findMatchingRoute = <TEnv>(
   routes: ReadonlyArray<HttpRoute<TEnv>>,
   request: Request,
-): HttpRoute<TEnv> | undefined => routes.find((route) => route.matches(request));
+): Option.Option<HttpRoute<TEnv>> => Arr.findFirst(routes, (route) => route.matches(request));
 
 export const createHttpRouter =
   <TEnv>(routes: ReadonlyArray<HttpRoute<TEnv>>) =>
   (request: Request, env: TEnv, runtime: HttpRuntimeContext = {}) => {
     const route = findMatchingRoute(routes, request);
-    const routeKind = route?.name ?? "unmatched";
+    const routeKind = Option.match(route, {
+      onNone: () => "unmatched",
+      onSome: (route) => route.name,
+    });
     const startedAt = performance.now();
 
     return Effect.gen(function* () {
-      const { logFields, response } = yield* Option.match(Option.fromUndefinedOr(route), {
+      const { logFields, response } = yield* Option.match(route, {
         onNone: () => {
           const result: HttpRouteResult = { response: notFoundResponse() };
           return Effect.succeed(result);
@@ -75,7 +79,7 @@ export const createHttpRouter =
 
       return response;
     }).pipe(
-      Effect.tapError((error: unknown) => {
+      Effect.tapError((error) => {
         const durationMs = performance.now() - startedAt;
 
         return recordHttpRequestFailed({

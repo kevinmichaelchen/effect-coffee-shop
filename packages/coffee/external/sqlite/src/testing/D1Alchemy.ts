@@ -34,12 +34,14 @@ export const createSqlCoffeeRepositoriesTestHarness =
   async (): Promise<SqlCoffeeRepositoriesTestHarness> => {
     const proxy = await createD1AlchemyProxy();
     const db = proxy.env.DB;
+    // oxlint-disable-next-line effect/effect-run-in-body -- Shared repository contract exposes a Promise runner to the native test harness.
     await Effect.runPromise(migrateCloudflareD1(db));
     const repositoryLayer = SqlCoffeeRepositoriesLive.pipe(
       Layer.provide(D1Client.layer({ db })),
       Layer.provide(CloudflareSqlCoffeeSchemaLive),
     );
 
+    // oxlint-disable-next-line effect/effect-run-in-body -- Shared repository contract exposes a Promise runner to the native test harness.
     const repositories = await Effect.runPromise(
       Effect.gen(function* () {
         return {
@@ -59,6 +61,7 @@ export const createSqlCoffeeRepositoriesTestHarness =
     );
 
     const run = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) =>
+      // oxlint-disable-next-line effect/effect-run-in-body -- Shared repository contract exposes a Promise runner to the native test harness.
       Effect.runPromise(effect.pipe(Effect.provide(providedRepositories)));
 
     const reset = () =>

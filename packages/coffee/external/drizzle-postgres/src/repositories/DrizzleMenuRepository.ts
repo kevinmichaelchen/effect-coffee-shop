@@ -13,11 +13,11 @@ import type { MenuItem } from "@effect-coffee-shop/coffee-core/domain/menu";
 import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
 import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
 import { CoffeeDb } from "../db/Db.ts";
-import { DrizzleMenuItemRowSchema, toMenuItem } from "../db/models.ts";
+import { DrizzleMenuItemRow, toMenuItem } from "../db/models.ts";
 import { menuItemsTable } from "../db/schema.ts";
 
-const decodeMenuItemRows = Schema.decodeUnknownEffect(Schema.Array(DrizzleMenuItemRowSchema));
-const decodeMenuItemRow = Schema.decodeUnknownEffect(DrizzleMenuItemRowSchema);
+const decodeMenuItemRows = Schema.decodeUnknownEffect(Schema.Array(DrizzleMenuItemRow));
+const decodeMenuItemRow = Schema.decodeUnknownEffect(DrizzleMenuItemRow);
 
 const decodeOptionalMenuItem = (rows: ReadonlyArray<unknown>) =>
   Option.match(Arr.head(rows), {

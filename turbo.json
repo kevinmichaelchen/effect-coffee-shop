@@ -30,7 +30,8 @@
       "description": "Run standard workspace lint checks.",
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
       "outputs": [],
-      "outputLogs": "new-only"
+      "outputLogs": "new-only",
+      "dependsOn": ["^typecheck"]
     },
     "lint:custom": {
       "description": "Run workspace-specific custom lint rules.",
@@ -55,7 +56,8 @@
       "dependsOn": ["typecheck"],
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
       "outputs": [],
-      "outputLogs": "new-only"
+      "outputLogs": "new-only",
+      "env": ["COFFEE_POSTGRES_TEST_URL"]
     },
     "dev": {
       "description": "Run long-lived local development servers.",
@@ -74,6 +76,37 @@
       "inputs": ["$TURBO_DEFAULT$", ".fallowrc.jsonc", "!README.md"],
       "outputs": [],
       "outputLogs": "new-only"
+    },
+    "//#typecheck:infra": {
+      "inputs": [
+        "infra/alchemy/**",
+        "alchemy.run.ts",
+        "packages/**/*.ts",
+        "packages/**/tsconfig.json",
+        "packages/**/package.json",
+        "infra/turbo-cache/**"
+      ],
+      "outputs": []
+    },
+    "//#lint:infra": {
+      "inputs": [
+        "infra/**/*.ts",
+        "infra/**/tsconfig.json",
+        "alchemy.run.ts",
+        "packages/**/*.ts",
+        "packages/**/tsconfig.json",
+        "packages/**/package.json"
+      ],
+      "outputs": []
     }
+  },
+  "globalDependencies": [
+    "packages/.oxlintrc.json",
+    "bunfig.toml",
+    ".node-version",
+    "packages/oxlint.config.ts"
+  ],
+  "remoteCache": {
+    "signature": true
   }
 }

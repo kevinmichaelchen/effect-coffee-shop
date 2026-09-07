@@ -3,24 +3,9 @@
  *
  * @module
  */
-import { agentAuth } from "@better-auth/agent-auth";
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
-import * as Schema from "effect/Schema";
 import { sqlfuBetterAuthAdapter } from "sqlfu/better-auth";
-
-class UnavailableCapabilityExecutorError extends Schema.TaggedError<UnavailableCapabilityExecutorError>()(
-  "UnavailableCapabilityExecutorError",
-  {
-    message: Schema.String,
-  },
-) {}
-
-const unavailableCapabilityExecutor = async () => {
-  throw new UnavailableCapabilityExecutorError({
-    message: "This Better Auth config is only for SQLFu schema generation.",
-  });
-};
 
 const auth = betterAuth({
   appName: "Effect Coffee Shop",
@@ -28,16 +13,6 @@ const auth = betterAuth({
   baseURL: "http://localhost",
   database: sqlfuBetterAuthAdapter(),
   plugins: [
-    agentAuth({
-      approvalMethods: ["device_authorization"],
-      capabilities: [],
-      deviceAuthorizationPage: "/device/capabilities",
-      modes: ["delegated"],
-      onExecute: unavailableCapabilityExecutor,
-      providerDescription:
-        "Coffee ordering capabilities for delegated AI agents acting on behalf of a signed-in customer.",
-      providerName: "Effect Coffee Shop",
-    }),
     passkey({
       registration: {
         requireSession: false,

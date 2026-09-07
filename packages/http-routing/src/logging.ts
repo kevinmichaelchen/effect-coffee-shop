@@ -1,5 +1,6 @@
 import * as Effect from "effect/Effect";
 
+// oxlint-disable-next-line effect/prefer-option-over-null -- Structured JSON logs preserve null for missing transport headers.
 type StructuredLogValue = boolean | number | string | null;
 export type StructuredLogRecord = Readonly<Record<string, StructuredLogValue>>;
 
@@ -41,13 +42,13 @@ export function logRequestFailed(input: {
   });
 }
 
-function requestLogFields(request: Request, routeKind: string): StructuredLogRecord {
+function requestLogFields(request: Request, routeKind: string) {
   return {
     http_method: request.method,
     http_path: new URL(request.url).pathname,
     request_id: request.headers.get("cf-ray") ?? request.headers.get("x-amzn-trace-id"),
     route_kind: routeKind,
-  };
+  } satisfies StructuredLogRecord;
 }
 
 export function roundDurationMs(durationMs: number): number {

@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./assistant": "./src/assistant.ts",
     "./cli-main": "./src/cli-main.ts",
     "./http-main": "./src/http-main.ts",
     "./local-backend-main": "./src/local-backend-main.ts",
@@ -13,16 +12,15 @@
     "./server": "./src/coffee-bun-server.ts"
   },
   "scripts": {
-    "typecheck": "tsgo --noEmit",
-    "lint": "bun --bun oxlint -c ../../../.oxlintrc.json --disable-nested-config .",
-    "lint:fix": "bun --bun oxlint -c ../../../.oxlintrc.json --disable-nested-config --fix .",
+    "typecheck": "tsc --noEmit",
+    "lint": "bun --bun oxlint -c ../../../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "lint:fix": "bun --bun oxlint -c ../../../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
     "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/runtime/bun/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@effect-coffee-shop/coffee-assistant": "workspace:*",
     "@effect-coffee-shop/coffee-backend": "workspace:*",
     "@effect-coffee-shop/coffee-cli": "workspace:*",
     "@effect-coffee-shop/coffee-core": "workspace:*",

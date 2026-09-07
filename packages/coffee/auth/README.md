@@ -1,24 +1,16 @@
 # Coffee Auth
 
-`@effect-coffee-shop/coffee-auth` is a Coffee security and integration adapter package.
+`@effect-coffee-shop/coffee-auth` provides Better Auth passkey sign-in and resolves
+sessions into Coffee application actors. It depends on core actor contracts and
+HTTP logging; it does not execute Coffee capabilities or own an application layer.
 
-It is intentionally cross-cutting: Better Auth handles identity/session concerns, Agent Auth exposes
-delegated Coffee capabilities, and actor resolution feeds authenticated identity into the application
-layer. The package depends inward on [`coffee-actions`](../presentation/actions) and
-[`coffee-core/application`](../core/src/application), while Cloudflare-specific Better Auth wiring is
-isolated under [`src/better-auth`](./src/better-auth).
+- [`src/better-auth/shared.ts`](./src/better-auth/shared.ts) configures passkeys and
+  resolves anonymous, customer, and staff actors.
+- [`src/better-auth/cloudflare.ts`](./src/better-auth/cloudflare.ts) adapts D1 to the
+  shared authentication setup.
+- [`src/better-auth/users.ts`](./src/better-auth/users.ts) handles passkey-first user registration.
 
-## Directory Map
-
-- [`src/agent/capabilities.ts`](./src/agent/capabilities.ts) adapts neutral Coffee action specs into
-  Agent Auth capability metadata.
-- [`src/agent/options.ts`](./src/agent/options.ts) wires Agent Auth execution to `CoffeeOrderApp`
-  with the signed-in customer actor.
-- [`src/better-auth/cloudflare.ts`](./src/better-auth/cloudflare.ts) configures Better Auth for the
-  current Cloudflare/D1 runtime.
-- [`src/better-auth/users.ts`](./src/better-auth/users.ts) owns passkey-first user registration
-  helpers.
-
-## Boundary Rule
-
-Auth may adapt identity and capability protocols to Coffee application use cases, but it should not define canonical Coffee actions or business rules. If Cloudflare-specific auth code grows beyond this adapter, split it into a dedicated runtime package.
+Agent Auth is no longer registered, and its execution and discovery routes are
+removed. Historical database migrations and SQLFu's legacy table definitions are
+retained so this code change does not delete existing data; no runtime capability
+code uses those tables. Any physical cleanup needs a separate reviewed migration.

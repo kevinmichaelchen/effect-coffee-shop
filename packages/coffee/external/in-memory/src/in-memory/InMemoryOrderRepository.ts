@@ -1,3 +1,5 @@
+import * as Order from "effect/Order";
+import * as Arr from "effect/Array";
 /**
  * Stores Coffee orders in memory for local and test runtimes.
  *
@@ -26,16 +28,17 @@ export const InMemoryOrderRepositoryLive = Layer.effect(
       list: (filters: ListOrdersFilters = {}) =>
         Ref.get(orders).pipe(
           Effect.map((currentOrders) =>
-            Array.from(HashMap.values(currentOrders))
-              .filter(
-                (order) =>
-                  filters.ownerUserId === undefined || order.ownerUserId === filters.ownerUserId,
-              )
-              .filter((order) => filters.status === undefined || order.status === filters.status)
-              .sort(
-                (left, right) =>
-                  DateTime.toEpochMillis(left.createdAt) - DateTime.toEpochMillis(right.createdAt),
+            Arr.sort(
+              Array.from(HashMap.values(currentOrders))
+                .filter(
+                  (order) =>
+                    filters.ownerUserId === undefined || order.ownerUserId === filters.ownerUserId,
+                )
+                .filter((order) => filters.status === undefined || order.status === filters.status),
+              Order.mapInput(Order.Number, (value: CoffeeOrder) =>
+                DateTime.toEpochMillis(value.createdAt),
               ),
+            ),
           ),
         ),
     });

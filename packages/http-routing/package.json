@@ -13,9 +13,9 @@
     "./request-services": "./src/request-services.ts"
   },
   "scripts": {
-    "typecheck": "tsgo --noEmit",
-    "lint": "bun --bun oxlint -c ../.oxlintrc.json --disable-nested-config .",
-    "lint:fix": "bun --bun oxlint -c ../.oxlintrc.json --disable-nested-config --fix .",
+    "typecheck": "tsc --noEmit",
+    "lint": "bun --bun oxlint -c ../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "lint:fix": "bun --bun oxlint -c ../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
     "lint:custom": "cd ../../apps/backend && lintcn lint --tsconfig ../../packages/http-routing/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",

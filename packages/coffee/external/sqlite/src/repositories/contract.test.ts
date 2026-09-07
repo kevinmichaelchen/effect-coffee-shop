@@ -1,20 +1,21 @@
+import * as Option from "effect/Option";
 import type { SqlCoffeeRepositoriesTestHarness } from "../testing/D1Alchemy.ts";
 import { createSqlCoffeeRepositoriesTestHarness } from "../testing/D1Alchemy.ts";
 import { afterAll, assert, beforeAll, beforeEach } from "vitest";
 import { defineRepositoryContract } from "@effect-coffee-shop/coffee-core/application/testing/repository-contract";
 
-let harness: SqlCoffeeRepositoriesTestHarness | undefined;
+let harness: Option.Option<SqlCoffeeRepositoriesTestHarness> = Option.none();
 
 const getHarness = () => {
-  if (harness === undefined) {
+  if (Option.isNone(harness)) {
     assert.fail("SQL repository test harness is not initialized");
   }
 
-  return harness;
+  return harness.value;
 };
 
 beforeAll(async () => {
-  harness = await createSqlCoffeeRepositoriesTestHarness();
+  harness = Option.some(await createSqlCoffeeRepositoriesTestHarness());
 });
 
 beforeEach(async () => {

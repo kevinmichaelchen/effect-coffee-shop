@@ -16,16 +16,15 @@
     "db:format": "sqlfu --config src/sql/sqlfu.config.ts format \"src/sql/**/*.sql\"",
     "db:generate": "sqlfu --config src/sql/sqlfu.config.ts generate && oxfmt --write \"src/sql/**/*.ts\"",
     "db:migrate": "sqlfu --config src/sql/sqlfu.config.ts migrate",
-    "typecheck": "tsgo --noEmit",
-    "lint": "bun --bun oxlint -c ../../../.oxlintrc.json --disable-nested-config .",
-    "lint:fix": "bun --bun oxlint -c ../../../.oxlintrc.json --disable-nested-config --fix .",
+    "typecheck": "tsc --noEmit",
+    "lint": "bun --bun oxlint -c ../../../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "lint:fix": "bun --bun oxlint -c ../../../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
     "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/external/sqlite/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@better-auth/agent-auth": "catalog:",
     "@better-auth/passkey": "catalog:",
     "@effect-coffee-shop/coffee-core": "workspace:*",
     "@effect/platform-bun": "catalog:",
@@ -38,6 +37,7 @@
   "devDependencies": {
     "@alchemy.run/cloudflare-runtime": "catalog:",
     "@cloudflare/workers-types": "catalog:",
+    "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
     "lintcn": "catalog:",
     "oxfmt": "catalog:",

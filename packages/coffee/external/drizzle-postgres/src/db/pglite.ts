@@ -7,7 +7,7 @@
  *
  * @module
  */
-import * as NodePath from "node:path";
+import * as Path from "effect/Path";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { PgliteClient } from "@effect/sql-pglite";
@@ -16,8 +16,6 @@ import * as PgliteDrizzle from "drizzle-orm/effect-pglite";
 import { migrate } from "drizzle-orm/effect-pglite/migrator";
 import { CoffeeDb } from "./Db.ts";
 import { DrizzlePostgresSchemaReady } from "./schema-ready.ts";
-
-const migrationsFolder = NodePath.join(import.meta.dirname, "migrations");
 
 /**
  * Backs {@link CoffeeDb} with an existing PGlite instance. The instance is
@@ -33,9 +31,11 @@ export const DrizzlePgliteSchemaLive = Layer.effect(
   DrizzlePostgresSchemaReady,
   Effect.gen(function* () {
     const db = yield* CoffeeDb;
+    const path = yield* Path.Path;
+    const migrationsFolder = path.join(import.meta.dirname, "migrations");
 
     yield* migrate(db, { migrationsFolder });
 
     return { ready: true };
   }),
-);
+).pipe(Layer.provide(Path.layer));

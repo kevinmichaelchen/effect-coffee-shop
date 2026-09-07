@@ -4,10 +4,7 @@ import { D1 } from "@alchemy.run/cloudflare-runtime/core/bindings";
 import { getPlatformProxy } from "@alchemy.run/cloudflare-runtime/core/platform-proxy";
 import { describe, expect, it } from "vitest";
 import { anonymousActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import {
-  makeCloudflareCoffeeAppLive,
-  migrateCloudflareD1,
-} from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
+import { migrateCloudflareD1 } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
 import {
   createCloudflareAuth,
   resolveCloudflareActor,
@@ -24,6 +21,7 @@ async function withTestDatabase<A>(effect: (db: D1Database) => Promise<A>): Prom
     name: "coffee-better-auth-test",
   });
 
+  // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
   await Effect.runPromise(migrateCloudflareD1(proxy.env.DB));
 
   return effect(proxy.env.DB).finally(() => proxy.dispose());
@@ -63,7 +61,6 @@ describe("cloudflare better-auth wiring", () => {
     await withTestDatabase(async (db) => {
       expect(() =>
         createCloudflareAuth({
-          appLayer: makeCloudflareCoffeeAppLive(db),
           db,
           request: new Request("http://example.com/api/auth/session"),
           secret: "   ",
@@ -75,10 +72,10 @@ describe("cloudflare better-auth wiring", () => {
   it("resolves anonymous actors when auth is not configured", async () => {
     await withTestDatabase(async (db) => {
       const actor = await resolveCloudflareActor({
-        appLayer: makeCloudflareCoffeeAppLive(db),
         db,
         request: new Request("http://example.com/api/me"),
         secret: undefined,
+        // oxlint-disable-next-line effect/avoid-native-object-helpers -- The runtime port requires a native ReadonlySet; Effect HashSet has a different contract.
         staffUserIds: new Set(["staff-user"]),
       });
 

@@ -21,3 +21,6 @@ storybook-static
 .sqlfu
 **/.sqlfu
 **/.prime
+
+!infra/turbo-cache/.env.schema
+!config/turbo-cache/.env.schema

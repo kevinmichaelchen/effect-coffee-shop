@@ -16,8 +16,8 @@ import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/er
 import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
 import { CoffeeDb } from "../db/Db.ts";
 import {
-  DrizzleCheckoutSessionItemRowSchema,
-  DrizzleCheckoutSessionRowSchema,
+  DrizzleCheckoutSessionItemRow,
+  DrizzleCheckoutSessionRow,
   toCheckoutSession,
   toCheckoutSessionInsert,
   toCheckoutSessionItemInsert,
@@ -25,10 +25,10 @@ import {
 import { checkoutSessionItemsTable, checkoutSessionsTable } from "../db/schema.ts";
 
 const decodeCheckoutSessionRows = Schema.decodeUnknownEffect(
-  Schema.Array(DrizzleCheckoutSessionRowSchema),
+  Schema.Array(DrizzleCheckoutSessionRow),
 );
 const decodeCheckoutSessionItemRows = Schema.decodeUnknownEffect(
-  Schema.Array(DrizzleCheckoutSessionItemRowSchema),
+  Schema.Array(DrizzleCheckoutSessionItemRow),
 );
 
 export const DrizzleCheckoutSessionRepositoryLive = Layer.effect(
@@ -45,7 +45,7 @@ export const DrizzleCheckoutSessionRepositoryLive = Layer.effect(
         .pipe(Effect.flatMap(decodeCheckoutSessionItemRows));
 
     const loadSession = Effect.fn("DrizzleCheckoutSessionRepository.loadSession")(function* (
-      session: typeof DrizzleCheckoutSessionRowSchema.Type,
+      session: typeof DrizzleCheckoutSessionRow.Type,
     ) {
       const items = yield* listItems(session.id);
       return toCheckoutSession(session, items);

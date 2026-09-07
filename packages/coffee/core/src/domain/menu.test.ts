@@ -8,9 +8,9 @@ import {
   menuItems,
 } from "./menu.ts";
 import { moneyToCents } from "./money.ts";
-import { ShotCountSchema } from "./order-primitives.ts";
+import { ShotCount } from "./order-primitives.ts";
 
-const shotCount = Schema.decodeUnknownSync(ShotCountSchema);
+const shotCount = Schema.decodeUnknownSync(ShotCount);
 const getMenuItem = (id: string) => {
   const item = menuItems.find((candidate) => candidate.id === id);
   if (item === undefined) {

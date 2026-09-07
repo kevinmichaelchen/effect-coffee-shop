@@ -17,10 +17,7 @@ import {
   CurrentActor,
   requireSignedInActor,
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import {
-  CustomerNameSchema,
-  type CustomerName,
-} from "@effect-coffee-shop/coffee-core/domain/order-primitives";
+import { CustomerName } from "@effect-coffee-shop/coffee-core/domain/order-primitives";
 import {
   InternalAppError,
   internalAppErrorFromPersistence,
@@ -37,7 +34,7 @@ import { OrderRepository } from "../ports/OrderRepository.ts";
 import { type PlaceOrderRequest } from "../contracts.ts";
 import { invalidOrderInput, resolveOrderQuote } from "./orderItems.ts";
 
-const decodeCustomerName = Schema.decodeUnknownEffect(CustomerNameSchema);
+const decodeCustomerName = Schema.decodeUnknownEffect(CustomerName);
 
 const validateCustomerName = Effect.fn("placeOrder.validateCustomerName")(function* (
   customerName: string,

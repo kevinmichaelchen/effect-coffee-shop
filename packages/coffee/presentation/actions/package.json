@@ -5,16 +5,13 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./execute": "./src/execute.ts",
-    "./format": "./src/format.ts",
-    "./json-schema": "./src/json-schema.ts",
     "./schemas": "./src/schemas.ts",
     "./specs": "./src/specs.ts"
   },
   "scripts": {
-    "typecheck": "tsgo --noEmit",
-    "lint": "bun --bun oxlint -c .oxlintrc.json --disable-nested-config .",
-    "lint:fix": "bun --bun oxlint -c .oxlintrc.json --disable-nested-config --fix .",
+    "typecheck": "tsc --noEmit",
+    "lint": "bun --bun oxlint -c oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "lint:fix": "bun --bun oxlint -c oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
     "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/presentation/actions/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
@@ -25,6 +22,7 @@
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
     "lintcn": "catalog:",
     "oxfmt": "catalog:",

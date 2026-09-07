@@ -1,3 +1,4 @@
+import * as Arr from "effect/Array";
 /**
  * Validates, defaults, and prices requested Coffee order items.
  *
@@ -21,38 +22,27 @@ import {
   drinkSizes,
   milks,
   temperatures,
-  DrinkSizeSchema,
-  MilkSchema,
-  TemperatureSchema,
-  type DrinkSize,
+  DrinkSize,
+  Milk,
+  Temperature,
   type MenuItem,
-  type Milk,
-  type Temperature,
 } from "@effect-coffee-shop/coffee-core/domain/menu";
 import { multiplyMoney, sumMoney } from "@effect-coffee-shop/coffee-core/domain/money";
-import {
-  QuantitySchema,
-  ShotCountSchema,
-  type Quantity,
-  type ShotCount,
-} from "@effect-coffee-shop/coffee-core/domain/order-primitives";
-import {
-  CoffeeOrderItemSchema,
-  type CoffeeOrderItem,
-} from "@effect-coffee-shop/coffee-core/domain/order";
+import { Quantity, ShotCount } from "@effect-coffee-shop/coffee-core/domain/order-primitives";
+import { CoffeeOrderItem } from "@effect-coffee-shop/coffee-core/domain/order";
 import type { OrderItemInput, OrderQuote } from "../contracts.ts";
 import { InternalAppError, internalAppErrorFromPersistence } from "../errors.ts";
 import { MenuRepository } from "../ports/MenuRepository.ts";
 
 const defaultQuantity = 1;
 const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
-const decodeDrinkSize = Schema.decodeUnknownEffect(DrinkSizeSchema);
-const decodeMilk = Schema.decodeUnknownEffect(MilkSchema);
-const decodeQuantity = Schema.decodeUnknownEffect(QuantitySchema);
-const decodeShotCount = Schema.decodeUnknownEffect(ShotCountSchema);
-const decodeTemperature = Schema.decodeUnknownEffect(TemperatureSchema);
+const decodeDrinkSize = Schema.decodeUnknownEffect(DrinkSize);
+const decodeMilk = Schema.decodeUnknownEffect(Milk);
+const decodeQuantity = Schema.decodeUnknownEffect(Quantity);
+const decodeShotCount = Schema.decodeUnknownEffect(ShotCount);
+const decodeTemperature = Schema.decodeUnknownEffect(Temperature);
 const decodeResolvedItems = Schema.decodeUnknownEffect(
-  Schema.NonEmptyArray(Schema.toType(CoffeeOrderItemSchema)),
+  Schema.NonEmptyArray(Schema.toType(CoffeeOrderItem)),
 );
 type OrderItemResolutionError = DrinkNotFoundError | InvalidOrderInputError | InternalAppError;
 
@@ -64,10 +54,10 @@ class ResolveOrderItemRequest extends Request.TaggedClass("ResolveOrderItemReque
   OrderItemResolutionError
 > {}
 
-const trimmedOption = (value: string | undefined): Option.Option<string> =>
-  Option.fromUndefinedOr(value).pipe(
+const trimmedOption = (value: Option.Option<string>): Option.Option<string> =>
+  value.pipe(
     Option.map(decodeTrimmedString),
-    Option.filter((input) => input.length > 0),
+    Option.filter((input) => input !== ""),
   );
 
 export const invalidOrderInput = (message: string) => new InvalidOrderInputError({ message });
@@ -84,9 +74,9 @@ const validateSize = Effect.fn("orderItems.validateSize")(function* (
 
 const resolveMilk = Effect.fn("orderItems.resolveMilk")(function* (
   menuItem: MenuItem,
-  milk: string | undefined,
+  milk: Option.Option<string>,
 ): Effect.fn.Return<Milk, InvalidOrderInputError> {
-  const selectedMilk = yield* Option.fromNullishOr(milk).pipe(
+  const selectedMilk = yield* milk.pipe(
     Option.match({
       onNone: () => Effect.succeed(defaultMilkFor(menuItem)),
       onSome: (m) =>
@@ -108,9 +98,9 @@ const resolveMilk = Effect.fn("orderItems.resolveMilk")(function* (
 
 const resolveTemperature = Effect.fn("orderItems.resolveTemperature")(function* (
   menuItem: MenuItem,
-  temperature: string | undefined,
+  temperature: Option.Option<string>,
 ): Effect.fn.Return<Temperature, InvalidOrderInputError> {
-  const selectedTemperature = yield* Option.fromNullishOr(temperature).pipe(
+  const selectedTemperature = yield* temperature.pipe(
     Option.match({
       onNone: () => Effect.succeed(defaultTemperatureFor(menuItem)),
       onSome: (t) =>
@@ -138,9 +128,9 @@ const resolveTemperature = Effect.fn("orderItems.resolveTemperature")(function* 
 
 const resolveShots = Effect.fn("orderItems.resolveShots")(function* (
   menuItem: MenuItem,
-  shots: number | undefined,
+  shots: Option.Option<number>,
 ): Effect.fn.Return<ShotCount, InvalidOrderInputError> {
-  const selectedShots = shots ?? defaultShotsFor(menuItem);
+  const selectedShots = Option.getOrElse(shots, () => defaultShotsFor(menuItem));
 
   const shotCount = yield* decodeShotCount(selectedShots).pipe(
     Effect.catchTag("SchemaError", () =>
@@ -161,9 +151,9 @@ const resolveShots = Effect.fn("orderItems.resolveShots")(function* (
 });
 
 const resolveQuantity = Effect.fn("orderItems.resolveQuantity")(function* (
-  quantity: number | undefined,
+  quantity: Option.Option<number>,
 ): Effect.fn.Return<Quantity, InvalidOrderInputError> {
-  const selectedQuantity = quantity ?? defaultQuantity;
+  const selectedQuantity = Option.getOrElse(quantity, () => defaultQuantity);
 
   return yield* decodeQuantity(selectedQuantity).pipe(
     Effect.catchTag("SchemaError", () =>
@@ -192,13 +182,16 @@ export const resolveOrderItem = Effect.fn("orderItems.resolveOrderItem")(functio
 > {
   const menuItem = yield* findMenuItem(request.drinkId);
   const size = yield* validateSize(request.size);
-  const milk = yield* resolveMilk(menuItem, request.milk);
-  const temperature = yield* resolveTemperature(menuItem, request.temperature);
-  const shots = yield* resolveShots(menuItem, request.shots);
-  const quantity = yield* resolveQuantity(request.quantity);
+  const milk = yield* resolveMilk(menuItem, Option.fromUndefinedOr(request.milk));
+  const temperature = yield* resolveTemperature(
+    menuItem,
+    Option.fromUndefinedOr(request.temperature),
+  );
+  const shots = yield* resolveShots(menuItem, Option.fromUndefinedOr(request.shots));
+  const quantity = yield* resolveQuantity(Option.fromUndefinedOr(request.quantity));
   const unitPrice = calculatePrice(menuItem, size, shots);
   const lineTotal = multiplyMoney(unitPrice, quantity);
-  const notes = trimmedOption(request.notes);
+  const notes = trimmedOption(Option.fromUndefinedOr(request.notes));
 
   return {
     drinkId: menuItem.id,
@@ -240,9 +233,8 @@ export const resolveOrderQuote = Effect.fn("orderItems.resolveOrderQuote")(funct
   MenuRepository
 > {
   yield* Effect.succeed(items).pipe(
-    Effect.filterOrFail(
-      (inputItems) => inputItems.length > 0,
-      () => invalidOrderInput("items must include at least one drink"),
+    Effect.filterOrFail(Arr.isReadonlyArrayNonEmpty, () =>
+      invalidOrderInput("items must include at least one drink"),
     ),
   );
 

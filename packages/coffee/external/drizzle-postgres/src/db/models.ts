@@ -6,34 +6,26 @@
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { createSelectSchema } from "drizzle-orm/effect-schema";
+import { CartItemId, CartItem } from "@effect-coffee-shop/coffee-core/domain/cart";
 import {
-  CartItemIdSchema,
-  CartItemSchema,
-  type CartItem,
-} from "@effect-coffee-shop/coffee-core/domain/cart";
-import {
-  CheckoutSessionIdSchema,
-  CheckoutSessionSchema,
-  CheckoutSessionStatusSchema,
-  type CheckoutSession,
+  CheckoutSessionId,
+  CheckoutSession,
+  CheckoutSessionStatus,
 } from "@effect-coffee-shop/coffee-core/domain/checkout-session";
 import {
-  DrinkIdSchema,
-  DrinkKindSchema,
-  DrinkSizeSchema,
-  MenuItemSchema,
-  MilkSchema,
-  TemperatureSchema,
-  type MenuItem,
+  DrinkId,
+  DrinkKind,
+  DrinkSize,
+  MenuItem,
+  Milk,
+  Temperature,
 } from "@effect-coffee-shop/coffee-core/domain/menu";
-import { MoneyFromCentsSchema, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
+import { MoneyFromCents, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
 import {
-  CoffeeOrderItemSchema,
-  CoffeeOrderSchema,
-  OrderIdSchema,
-  OrderStatusSchema,
-  type CoffeeOrder,
-  type CoffeeOrderItem,
+  CoffeeOrderItem,
+  CoffeeOrder,
+  OrderId,
+  OrderStatus,
 } from "@effect-coffee-shop/coffee-core/domain/order";
 import { toPersistedCoffeeOrderItemFields } from "@effect-coffee-shop/coffee-core/application/ports/coffee-order-item-persistence";
 import {
@@ -45,64 +37,64 @@ import {
   ordersTable,
 } from "./schema.ts";
 
-export const DrizzleMenuItemRowSchema = createSelectSchema(menuItemsTable, {
-  id: DrinkIdSchema,
-  kind: DrinkKindSchema,
-  availableMilks: Schema.Array(MilkSchema),
-  availableTemperatures: Schema.Array(TemperatureSchema),
+export const DrizzleMenuItemRow = createSelectSchema(menuItemsTable, {
+  id: DrinkId,
+  kind: DrinkKind,
+  availableMilks: Schema.Array(Milk),
+  availableTemperatures: Schema.Array(Temperature),
 });
 
-export const DrizzleOrderRowSchema = createSelectSchema(ordersTable, {
-  id: OrderIdSchema,
-  status: OrderStatusSchema,
+export const DrizzleOrderRow = createSelectSchema(ordersTable, {
+  id: OrderId,
+  status: OrderStatus,
   createdAt: Schema.DateTimeUtcFromString,
 });
 
-export const DrizzleOrderItemRowSchema = createSelectSchema(orderItemsTable, {
-  orderId: OrderIdSchema,
-  drinkId: DrinkIdSchema,
-  size: DrinkSizeSchema,
-  milk: MilkSchema,
-  temperature: TemperatureSchema,
+export const DrizzleOrderItemRow = createSelectSchema(orderItemsTable, {
+  orderId: OrderId,
+  drinkId: DrinkId,
+  size: DrinkSize,
+  milk: Milk,
+  temperature: Temperature,
 });
 
-export const DrizzleCartItemRowSchema = createSelectSchema(cartItemsTable, {
-  id: CartItemIdSchema,
-  drinkId: DrinkIdSchema,
-  size: DrinkSizeSchema,
-  milk: MilkSchema,
-  temperature: TemperatureSchema,
+export const DrizzleCartItemRow = createSelectSchema(cartItemsTable, {
+  id: CartItemId,
+  drinkId: DrinkId,
+  size: DrinkSize,
+  milk: Milk,
+  temperature: Temperature,
 });
 
-export const DrizzleCheckoutSessionRowSchema = createSelectSchema(checkoutSessionsTable, {
-  id: CheckoutSessionIdSchema,
-  status: CheckoutSessionStatusSchema,
+export const DrizzleCheckoutSessionRow = createSelectSchema(checkoutSessionsTable, {
+  id: CheckoutSessionId,
+  status: CheckoutSessionStatus,
   createdAt: Schema.DateTimeUtcFromString,
   updatedAt: Schema.DateTimeUtcFromString,
   expiresAt: Schema.DateTimeUtcFromString,
 });
 
-export const DrizzleCheckoutSessionItemRowSchema = createSelectSchema(checkoutSessionItemsTable, {
-  sessionId: CheckoutSessionIdSchema,
-  drinkId: DrinkIdSchema,
-  size: DrinkSizeSchema,
-  milk: MilkSchema,
-  temperature: TemperatureSchema,
+export const DrizzleCheckoutSessionItemRow = createSelectSchema(checkoutSessionItemsTable, {
+  sessionId: CheckoutSessionId,
+  drinkId: DrinkId,
+  size: DrinkSize,
+  milk: Milk,
+  temperature: Temperature,
 });
 
-type DrizzleMenuItemRow = typeof DrizzleMenuItemRowSchema.Type;
-type DrizzleOrderRow = typeof DrizzleOrderRowSchema.Type;
-type DrizzleOrderItemRow = typeof DrizzleOrderItemRowSchema.Type;
-type DrizzleCartItemRow = typeof DrizzleCartItemRowSchema.Type;
-type DrizzleCheckoutSessionRow = typeof DrizzleCheckoutSessionRowSchema.Type;
-type DrizzleCheckoutSessionItemRow = typeof DrizzleCheckoutSessionItemRowSchema.Type;
+type DrizzleMenuItemRow = typeof DrizzleMenuItemRow.Type;
+type DrizzleOrderRow = typeof DrizzleOrderRow.Type;
+type DrizzleOrderItemRow = typeof DrizzleOrderItemRow.Type;
+type DrizzleCartItemRow = typeof DrizzleCartItemRow.Type;
+type DrizzleCheckoutSessionRow = typeof DrizzleCheckoutSessionRow.Type;
+type DrizzleCheckoutSessionItemRow = typeof DrizzleCheckoutSessionItemRow.Type;
 
-const decodeCartItem = Schema.decodeUnknownSync(CartItemSchema);
-const decodeCoffeeOrderType = Schema.decodeUnknownSync(Schema.toType(CoffeeOrderSchema));
-const decodeCoffeeOrderItem = Schema.decodeUnknownSync(CoffeeOrderItemSchema);
-const decodeCheckoutSession = Schema.decodeUnknownSync(Schema.toType(CheckoutSessionSchema));
-const decodeMenuItem = Schema.decodeUnknownSync(MenuItemSchema);
-const decodeMoneyFromCents = Schema.decodeUnknownSync(MoneyFromCentsSchema);
+const decodeCartItem = Schema.decodeUnknownSync(CartItem);
+const decodeCoffeeOrderType = Schema.decodeUnknownSync(Schema.toType(CoffeeOrder));
+const decodeCoffeeOrderItem = Schema.decodeUnknownSync(CoffeeOrderItem);
+const decodeCheckoutSession = Schema.decodeUnknownSync(Schema.toType(CheckoutSession));
+const decodeMenuItem = Schema.decodeUnknownSync(MenuItem);
+const decodeMoneyFromCents = Schema.decodeUnknownSync(MoneyFromCents);
 
 export const toMenuItem = (item: DrizzleMenuItemRow): MenuItem =>
   decodeMenuItem({

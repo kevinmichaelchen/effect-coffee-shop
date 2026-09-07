@@ -6,42 +6,35 @@
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
+import { CartItemId, CartItem } from "@effect-coffee-shop/coffee-core/domain/cart";
 import {
-  CartItemIdSchema,
-  CartItemSchema,
-  type CartItem,
-} from "@effect-coffee-shop/coffee-core/domain/cart";
-import {
-  DrinkIdSchema,
-  DrinkKindSchema,
-  DrinkSizeSchema,
-  MenuItemSchema,
-  MilkSchema,
-  TemperatureSchema,
-  type MenuItem,
+  DrinkId,
+  DrinkKind,
+  DrinkSize,
+  MenuItem,
+  Milk,
+  Temperature,
 } from "@effect-coffee-shop/coffee-core/domain/menu";
-import { MoneyFromCentsSchema, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
+import { MoneyFromCents, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
 import {
-  CoffeeOrderItemSchema,
-  CoffeeOrderSchema,
-  OrderIdSchema,
-  OrderStatusSchema,
-  type CoffeeOrder,
-  type CoffeeOrderItem,
+  CoffeeOrderItem,
+  CoffeeOrder,
+  OrderId,
+  OrderStatus,
 } from "@effect-coffee-shop/coffee-core/domain/order";
 import { toPersistedCoffeeOrderItemFields } from "@effect-coffee-shop/coffee-core/application/ports/coffee-order-item-persistence";
 
-const SqlNullableStringOptionSchema = Schema.OptionFromNullishOr(Schema.String, {
+const SqlNullableStringOption = Schema.OptionFromNullishOr(Schema.String, {
   onNoneEncoding: null,
 });
 
 export const SqlMenuItemModel = Schema.Struct({
-  id: DrinkIdSchema,
+  id: DrinkId,
   name: Schema.String,
-  kind: DrinkKindSchema,
-  basePrice: MoneyFromCentsSchema,
-  availableMilks: Schema.fromJsonString(Schema.Array(MilkSchema)),
-  availableTemperatures: Schema.fromJsonString(Schema.Array(TemperatureSchema)),
+  kind: DrinkKind,
+  basePrice: MoneyFromCents,
+  availableMilks: Schema.fromJsonString(Schema.Array(Milk)),
+  availableTemperatures: Schema.fromJsonString(Schema.Array(Temperature)),
   maxShots: Schema.Int,
 }).pipe(
   Schema.encodeKeys({
@@ -53,11 +46,11 @@ export const SqlMenuItemModel = Schema.Struct({
 );
 
 export const SqlOrderModel = Schema.Struct({
-  id: OrderIdSchema,
+  id: OrderId,
   customerName: Schema.String,
   ownerUserId: Schema.String,
-  status: OrderStatusSchema,
-  totalPrice: MoneyFromCentsSchema,
+  status: OrderStatus,
+  totalPrice: MoneyFromCents,
   createdAt: Schema.DateTimeUtcFromString,
 }).pipe(
   Schema.encodeKeys({
@@ -69,18 +62,18 @@ export const SqlOrderModel = Schema.Struct({
 );
 
 export const SqlOrderItemModel = Schema.Struct({
-  orderId: OrderIdSchema,
+  orderId: OrderId,
   position: Schema.Int,
-  drinkId: DrinkIdSchema,
+  drinkId: DrinkId,
   drinkName: Schema.String,
-  size: DrinkSizeSchema,
-  milk: MilkSchema,
-  temperature: TemperatureSchema,
+  size: DrinkSize,
+  milk: Milk,
+  temperature: Temperature,
   shots: Schema.Int,
-  notes: SqlNullableStringOptionSchema,
+  notes: SqlNullableStringOption,
   quantity: Schema.Int,
-  unitPrice: MoneyFromCentsSchema,
-  lineTotal: MoneyFromCentsSchema,
+  unitPrice: MoneyFromCents,
+  lineTotal: MoneyFromCents,
 }).pipe(
   Schema.encodeKeys({
     orderId: "order_id",
@@ -93,14 +86,14 @@ export const SqlOrderItemModel = Schema.Struct({
 
 export const SqlCartItemModel = Schema.Struct({
   ownerUserId: Schema.String,
-  id: CartItemIdSchema,
+  id: CartItemId,
   position: Schema.Int,
-  drinkId: DrinkIdSchema,
-  size: DrinkSizeSchema,
-  milk: MilkSchema,
-  temperature: TemperatureSchema,
+  drinkId: DrinkId,
+  size: DrinkSize,
+  milk: Milk,
+  temperature: Temperature,
   shots: Schema.Int,
-  notes: SqlNullableStringOptionSchema,
+  notes: SqlNullableStringOption,
   quantity: Schema.Int,
 }).pipe(
   Schema.encodeKeys({
@@ -114,10 +107,10 @@ type SqlOrderItem = typeof SqlOrderItemModel.Type;
 type SqlCartItem = typeof SqlCartItemModel.Type;
 type SqlMenuItem = typeof SqlMenuItemModel.Type;
 
-const decodeCartItem = Schema.decodeUnknownEffect(CartItemSchema);
-const decodeCoffeeOrderType = Schema.decodeUnknownEffect(Schema.toType(CoffeeOrderSchema));
-const decodeCoffeeOrderItem = Schema.decodeUnknownEffect(CoffeeOrderItemSchema);
-const decodeMenuItem = Schema.decodeUnknownEffect(MenuItemSchema);
+const decodeCartItem = Schema.decodeUnknownEffect(CartItem);
+const decodeCoffeeOrderType = Schema.decodeUnknownEffect(Schema.toType(CoffeeOrder));
+const decodeCoffeeOrderItem = Schema.decodeUnknownEffect(CoffeeOrderItem);
+const decodeMenuItem = Schema.decodeUnknownEffect(MenuItem);
 
 export interface SqlOrderSave {
   readonly id: string;
@@ -137,6 +130,7 @@ export interface SqlOrderItemSave {
   readonly milk: string;
   readonly temperature: string;
   readonly shots: number;
+  // oxlint-disable-next-line effect/prefer-option-over-null -- SQL encoding contract uses NULL; domain notes are already Option.
   readonly notes: string | null;
   readonly quantity: number;
   readonly unitPriceCents: number;
@@ -152,6 +146,7 @@ export interface SqlCartItemSave {
   readonly milk: string;
   readonly temperature: string;
   readonly shots: number;
+  // oxlint-disable-next-line effect/prefer-option-over-null -- SQL encoding contract uses NULL; domain notes are already Option.
   readonly notes: string | null;
   readonly quantity: number;
 }
@@ -167,9 +162,9 @@ export interface SqlMenuItemSeed {
   readonly maxShots: number;
 }
 
-const encodeMilksJson = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Array(MilkSchema)));
+const encodeMilksJson = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Array(Milk)));
 const encodeTemperaturesJson = Schema.encodeUnknownSync(
-  Schema.fromJsonString(Schema.Array(TemperatureSchema)),
+  Schema.fromJsonString(Schema.Array(Temperature)),
 );
 
 export const toSqlOrderSave = (order: CoffeeOrder): SqlOrderSave => ({
@@ -279,3 +274,11 @@ export const toSqlMenuItemSeed = (item: MenuItem, sortOrder: number): SqlMenuIte
   availableTemperatures: encodeTemperaturesJson(item.availableTemperatures),
   maxShots: item.maxShots,
 });
+
+export type SqlMenuItemModel = typeof SqlMenuItemModel.Type;
+
+export type SqlOrderModel = typeof SqlOrderModel.Type;
+
+export type SqlOrderItemModel = typeof SqlOrderItemModel.Type;
+
+export type SqlCartItemModel = typeof SqlCartItemModel.Type;

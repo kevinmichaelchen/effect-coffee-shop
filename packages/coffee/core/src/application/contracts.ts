@@ -6,298 +6,284 @@
 import * as Arr from "effect/Array";
 import * as Schema from "effect/Schema";
 import * as SchemaTransformation from "effect/SchemaTransformation";
-import { CartItemIdSchema } from "../domain/cart.ts";
+import { CartItemId } from "../domain/cart.ts";
 import {
-  CheckoutSessionIdSchema,
-  CheckoutSessionStatusSchema,
+  CheckoutSessionId,
+  CheckoutSessionStatus,
   type CheckoutSession,
 } from "../domain/checkout-session.ts";
-import {
-  DrinkIdSchema,
-  DrinkKindSchema,
-  DrinkSizeSchema,
-  MenuItemSchema,
-  MilkSchema,
-  TemperatureSchema,
-  type MenuItem,
-} from "../domain/menu.ts";
-import { MoneyFromCentsSchema, MoneySchema } from "../domain/money.ts";
-import { QuantityInputSchema, ShotCountInputSchema } from "../domain/order-primitives.ts";
-import {
-  CoffeeOrderItemSchema,
-  OrderIdSchema,
-  OrderStatusSchema,
-  type CoffeeOrder,
-  type CoffeeOrderItem,
-} from "../domain/order.ts";
+import { DrinkId, DrinkKind, DrinkSize, MenuItem, Milk, Temperature } from "../domain/menu.ts";
+import { MoneyFromCents, Money } from "../domain/money.ts";
+import { QuantityInput, ShotCountInput } from "../domain/order-primitives.ts";
+import { CoffeeOrderItem, OrderId, OrderStatus, type CoffeeOrder } from "../domain/order.ts";
 
 // Keep menu-choice request fields as trimmed strings so use cases can surface
 // domain-specific errors instead of boundary SchemaError failures.
-const BoundaryStringSchema = Schema.Trim;
-const CartItemIdInputSchema = CartItemIdSchema.annotate({
+const BoundaryString = Schema.Trim;
+const CartItemIdInput = CartItemId.annotate({
   description: "Cart line id, such as cart_item_00000000000000000000000001.",
 });
-const CheckoutSessionIdInputSchema = CheckoutSessionIdSchema.annotate({
+const CheckoutSessionIdInput = CheckoutSessionId.annotate({
   description: "Checkout session id returned by prepare_cart_checkout.",
 });
-const CustomerNameInputSchema = BoundaryStringSchema.annotate({
+const CustomerNameInput = BoundaryString.annotate({
   description: "Optional customer display name for system or staff checkout.",
 });
-const DrinkIdInputSchema = BoundaryStringSchema.annotate({
+const DrinkIdInput = BoundaryString.annotate({
   description: "Menu drink id such as latte.",
 });
-const MilkInputSchema = BoundaryStringSchema.annotate({
+const MilkInput = BoundaryString.annotate({
   description: "Milk choice such as whole, oat, almond, or none.",
 });
-const NotesInputSchema = BoundaryStringSchema.annotate({
+const NotesInput = BoundaryString.annotate({
   description: "Optional item note.",
 });
-const OrderStatusInputSchema = BoundaryStringSchema.annotate({
+const OrderStatusInput = BoundaryString.annotate({
   description: "Optional order status filter such as pending, brewing, ready, or picked-up.",
 });
-const QuantityInputFieldSchema = QuantityInputSchema.annotate({
+const QuantityInputField = QuantityInput.annotate({
   description: "Positive line quantity.",
 });
-const ShotCountInputFieldSchema = ShotCountInputSchema.annotate({
+const ShotCountInputField = ShotCountInput.annotate({
   description: "Number of espresso shots.",
 });
-const SizeInputSchema = BoundaryStringSchema.annotate({
+const SizeInput = BoundaryString.annotate({
   description: "Drink size such as small, medium, or large.",
 });
-const TemperatureInputSchema = BoundaryStringSchema.annotate({
+const TemperatureInput = BoundaryString.annotate({
   description: "Drink temperature such as hot or iced.",
 });
 
-export const OrderItemInputSchema = Schema.Struct({
-  drinkId: DrinkIdInputSchema,
-  size: SizeInputSchema,
-  milk: Schema.optionalKey(MilkInputSchema),
-  temperature: Schema.optionalKey(TemperatureInputSchema),
-  shots: Schema.optionalKey(ShotCountInputFieldSchema),
-  notes: Schema.optionalKey(NotesInputSchema),
-  quantity: Schema.optionalKey(QuantityInputFieldSchema),
+export const OrderItemInput = Schema.Struct({
+  drinkId: DrinkIdInput,
+  size: SizeInput,
+  milk: Schema.optionalKey(MilkInput),
+  temperature: Schema.optionalKey(TemperatureInput),
+  shots: Schema.optionalKey(ShotCountInputField),
+  notes: Schema.optionalKey(NotesInput),
+  quantity: Schema.optionalKey(QuantityInputField),
 }).annotate({ identifier: "OrderItemInput" });
-export type OrderItemInput = typeof OrderItemInputSchema.Type;
+export type OrderItemInput = typeof OrderItemInput.Type;
 
-export const OrderItemsInputSchema = Schema.NonEmptyArray(OrderItemInputSchema).annotate({
+export const OrderItemsInput = Schema.NonEmptyArray(OrderItemInput).annotate({
   identifier: "OrderItemsInput",
 });
-export type OrderItemsInput = typeof OrderItemsInputSchema.Type;
+export type OrderItemsInput = typeof OrderItemsInput.Type;
 
-export const PlaceOrderRequestSchema = Schema.Struct({
-  customerName: Schema.optionalKey(CustomerNameInputSchema),
-  items: OrderItemsInputSchema,
+export const PlaceOrderRequest = Schema.Struct({
+  customerName: Schema.optionalKey(CustomerNameInput),
+  items: OrderItemsInput,
 }).annotate({ identifier: "PlaceOrderRequest" });
-export type PlaceOrderRequest = typeof PlaceOrderRequestSchema.Type;
+export type PlaceOrderRequest = typeof PlaceOrderRequest.Type;
 
-export const QuoteOrderRequestSchema = Schema.Struct({
-  items: OrderItemsInputSchema,
+export const QuoteOrderRequest = Schema.Struct({
+  items: OrderItemsInput,
 }).annotate({ identifier: "QuoteOrderRequest" });
-export type QuoteOrderRequest = typeof QuoteOrderRequestSchema.Type;
+export type QuoteOrderRequest = typeof QuoteOrderRequest.Type;
 
-export const ItemOptionsRequestSchema = Schema.Struct({
-  drinkId: DrinkIdInputSchema,
+export const ItemOptionsRequest = Schema.Struct({
+  drinkId: DrinkIdInput,
 }).annotate({ identifier: "ItemOptionsRequest" });
-export type ItemOptionsRequest = typeof ItemOptionsRequestSchema.Type;
+export type ItemOptionsRequest = typeof ItemOptionsRequest.Type;
 
-export const UpdateCartItemRequestSchema = Schema.Struct({
-  cartItemId: CartItemIdInputSchema,
-  drinkId: Schema.optionalKey(DrinkIdInputSchema),
-  size: Schema.optionalKey(SizeInputSchema),
-  milk: Schema.optionalKey(MilkInputSchema),
-  temperature: Schema.optionalKey(TemperatureInputSchema),
-  shots: Schema.optionalKey(ShotCountInputFieldSchema),
-  notes: Schema.optionalKey(NotesInputSchema),
-  quantity: Schema.optionalKey(QuantityInputFieldSchema),
+export const UpdateCartItemRequest = Schema.Struct({
+  cartItemId: CartItemIdInput,
+  drinkId: Schema.optionalKey(DrinkIdInput),
+  size: Schema.optionalKey(SizeInput),
+  milk: Schema.optionalKey(MilkInput),
+  temperature: Schema.optionalKey(TemperatureInput),
+  shots: Schema.optionalKey(ShotCountInputField),
+  notes: Schema.optionalKey(NotesInput),
+  quantity: Schema.optionalKey(QuantityInputField),
 }).annotate({ identifier: "UpdateCartItemRequest" });
-export type UpdateCartItemRequest = typeof UpdateCartItemRequestSchema.Type;
+export type UpdateCartItemRequest = typeof UpdateCartItemRequest.Type;
 
-export const CartItemIdRequestSchema = Schema.Struct({
-  cartItemId: CartItemIdInputSchema,
+export const CartItemIdRequest = Schema.Struct({
+  cartItemId: CartItemIdInput,
 }).annotate({ identifier: "CartItemIdRequest" });
-export type CartItemIdRequest = typeof CartItemIdRequestSchema.Type;
+export type CartItemIdRequest = typeof CartItemIdRequest.Type;
 
-export const CheckoutCartRequestSchema = Schema.Struct({
-  checkoutSessionId: CheckoutSessionIdInputSchema,
-  customerName: Schema.optionalKey(CustomerNameInputSchema),
+export const CheckoutCartRequest = Schema.Struct({
+  checkoutSessionId: CheckoutSessionIdInput,
+  customerName: Schema.optionalKey(CustomerNameInput),
 }).annotate({ identifier: "CheckoutCartRequest" });
-export type CheckoutCartRequest = typeof CheckoutCartRequestSchema.Type;
+export type CheckoutCartRequest = typeof CheckoutCartRequest.Type;
 
-export const CheckoutSessionIdRequestSchema = Schema.Struct({
-  checkoutSessionId: CheckoutSessionIdInputSchema,
+export const CheckoutSessionIdRequest = Schema.Struct({
+  checkoutSessionId: CheckoutSessionIdInput,
 }).annotate({ identifier: "CheckoutSessionIdRequest" });
-export type CheckoutSessionIdRequest = typeof CheckoutSessionIdRequestSchema.Type;
+export type CheckoutSessionIdRequest = typeof CheckoutSessionIdRequest.Type;
 
-export const ListOrdersRequestSchema = Schema.Struct({
-  status: Schema.optionalKey(OrderStatusInputSchema),
+export const ListOrdersRequest = Schema.Struct({
+  status: Schema.optionalKey(OrderStatusInput),
 }).annotate({ identifier: "ListOrdersRequest" });
-export type ListOrdersRequest = typeof ListOrdersRequestSchema.Type;
+export type ListOrdersRequest = typeof ListOrdersRequest.Type;
 
-export const OrderQuoteSchema = Schema.Struct({
-  items: Schema.NonEmptyArray(CoffeeOrderItemSchema),
-  totalPrice: MoneySchema,
+export const OrderQuote = Schema.Struct({
+  items: Schema.NonEmptyArray(CoffeeOrderItem),
+  totalPrice: Money,
 }).annotate({ identifier: "OrderQuote" });
-export type OrderQuote = typeof OrderQuoteSchema.Type;
+export type OrderQuote = typeof OrderQuote.Type;
 
-export const CartItemQuoteSchema = Schema.Struct({
-  cartItemId: CartItemIdSchema,
-  item: CoffeeOrderItemSchema,
+export const CartItemQuote = Schema.Struct({
+  cartItemId: CartItemId,
+  item: CoffeeOrderItem,
 }).annotate({ identifier: "CartItemQuote" });
-export type CartItemQuote = typeof CartItemQuoteSchema.Type;
+export type CartItemQuote = typeof CartItemQuote.Type;
 
-export const CartSnapshotSchema = Schema.Struct({
+export const CartSnapshot = Schema.Struct({
   ownerUserId: Schema.String,
-  items: Schema.Array(CartItemQuoteSchema),
-  totalPrice: MoneySchema,
+  items: Schema.Array(CartItemQuote),
+  totalPrice: Money,
 }).annotate({ identifier: "CartSnapshot" });
-export type CartSnapshot = typeof CartSnapshotSchema.Type;
+export type CartSnapshot = typeof CartSnapshot.Type;
 
-export const ItemOptionsSchema = Schema.Struct({
-  item: MenuItemSchema,
-  availableSizes: Schema.Array(DrinkSizeSchema),
-  defaultSize: DrinkSizeSchema,
-  defaultMilk: MilkSchema,
-  defaultTemperature: TemperatureSchema,
-  defaultShots: ShotCountInputSchema,
-  defaultQuantity: QuantityInputSchema,
+export const ItemOptions = Schema.Struct({
+  item: MenuItem,
+  availableSizes: Schema.Array(DrinkSize),
+  defaultSize: DrinkSize,
+  defaultMilk: Milk,
+  defaultTemperature: Temperature,
+  defaultShots: ShotCountInput,
+  defaultQuantity: QuantityInput,
 }).annotate({ identifier: "ItemOptions" });
-export type ItemOptions = typeof ItemOptionsSchema.Type;
+export type ItemOptions = typeof ItemOptions.Type;
 
-export const MenuItemViewSchema = Schema.Struct({
-  id: DrinkIdSchema,
+export const MenuItemView = Schema.Struct({
+  id: DrinkId,
   name: Schema.String,
-  kind: DrinkKindSchema,
+  kind: DrinkKind,
   basePriceCents: Schema.Int,
-  availableMilks: Schema.Array(MilkSchema),
-  availableTemperatures: Schema.Array(TemperatureSchema),
-  maxShots: ShotCountInputSchema,
+  availableMilks: Schema.Array(Milk),
+  availableTemperatures: Schema.Array(Temperature),
+  maxShots: ShotCountInput,
 }).annotate({ identifier: "MenuItemView" });
-export type MenuItemView = typeof MenuItemViewSchema.Type;
+export type MenuItemView = typeof MenuItemView.Type;
 
-export const MenuViewSchema = Schema.Array(MenuItemViewSchema).annotate({
+export const MenuView = Schema.Array(MenuItemView).annotate({
   identifier: "MenuView",
 });
-export type MenuView = typeof MenuViewSchema.Type;
+export type MenuView = typeof MenuView.Type;
 
-export const CoffeeOrderItemViewSchema = Schema.Struct({
-  drinkId: DrinkIdSchema,
+export const CoffeeOrderItemView = Schema.Struct({
+  drinkId: DrinkId,
   drinkName: Schema.String,
-  size: DrinkSizeSchema,
-  milk: MilkSchema,
-  temperature: TemperatureSchema,
-  shots: ShotCountInputSchema,
+  size: DrinkSize,
+  milk: Milk,
+  temperature: Temperature,
+  shots: ShotCountInput,
   notes: Schema.optionalKey(Schema.String),
-  quantity: QuantityInputSchema,
+  quantity: QuantityInput,
   unitPriceCents: Schema.Int,
   lineTotalCents: Schema.Int,
 }).annotate({ identifier: "CoffeeOrderItemView" });
-export type CoffeeOrderItemView = typeof CoffeeOrderItemViewSchema.Type;
+export type CoffeeOrderItemView = typeof CoffeeOrderItemView.Type;
 
-export const CoffeeOrderViewSchema = Schema.Struct({
-  id: Schema.toEncoded(OrderIdSchema),
+export const CoffeeOrderView = Schema.Struct({
+  id: Schema.toEncoded(OrderId),
   customerName: Schema.String,
   ownerUserId: Schema.String,
-  items: Schema.NonEmptyArray(CoffeeOrderItemViewSchema),
-  status: OrderStatusSchema,
+  items: Schema.NonEmptyArray(CoffeeOrderItemView),
+  status: OrderStatus,
   totalPriceCents: Schema.Int,
   createdAt: Schema.toEncoded(Schema.DateTimeUtcFromString),
 }).annotate({ identifier: "CoffeeOrderView" });
-export type CoffeeOrderView = typeof CoffeeOrderViewSchema.Type;
+export type CoffeeOrderView = typeof CoffeeOrderView.Type;
 
-export const CoffeeOrdersViewSchema = Schema.Array(CoffeeOrderViewSchema).annotate({
+export const CoffeeOrdersView = Schema.Array(CoffeeOrderView).annotate({
   identifier: "CoffeeOrdersView",
 });
-export type CoffeeOrdersView = typeof CoffeeOrdersViewSchema.Type;
+export type CoffeeOrdersView = typeof CoffeeOrdersView.Type;
 
-export const OrderQuoteViewSchema = Schema.Struct({
-  items: Schema.NonEmptyArray(CoffeeOrderItemViewSchema),
+export const OrderQuoteView = Schema.Struct({
+  items: Schema.NonEmptyArray(CoffeeOrderItemView),
   totalPriceCents: Schema.Int,
 }).annotate({ identifier: "OrderQuoteView" });
-export type OrderQuoteView = typeof OrderQuoteViewSchema.Type;
+export type OrderQuoteView = typeof OrderQuoteView.Type;
 
-export const OrderValidationViewSchema = Schema.Struct({
+export const OrderValidationView = Schema.Struct({
   valid: Schema.Literal(true),
-  items: Schema.NonEmptyArray(CoffeeOrderItemViewSchema),
+  items: Schema.NonEmptyArray(CoffeeOrderItemView),
   totalPriceCents: Schema.Int,
 }).annotate({ identifier: "OrderValidationView" });
-export type OrderValidationView = typeof OrderValidationViewSchema.Type;
+export type OrderValidationView = typeof OrderValidationView.Type;
 
-export const CartItemViewSchema = Schema.Struct({
-  cartItemId: Schema.toEncoded(CartItemIdSchema),
-  item: CoffeeOrderItemViewSchema,
+export const CartItemView = Schema.Struct({
+  cartItemId: Schema.toEncoded(CartItemId),
+  item: CoffeeOrderItemView,
 }).annotate({ identifier: "CartItemView" });
-export type CartItemView = typeof CartItemViewSchema.Type;
+export type CartItemView = typeof CartItemView.Type;
 
-export const CartViewSchema = Schema.Struct({
+export const CartView = Schema.Struct({
   ownerUserId: Schema.String,
-  items: Schema.Array(CartItemViewSchema),
+  items: Schema.Array(CartItemView),
   totalPriceCents: Schema.Int,
 }).annotate({ identifier: "CartView" });
-export type CartView = typeof CartViewSchema.Type;
+export type CartView = typeof CartView.Type;
 
-export const CheckoutSessionViewSchema = Schema.Struct({
-  id: Schema.toEncoded(CheckoutSessionIdSchema),
+export const CheckoutSessionView = Schema.Struct({
+  id: Schema.toEncoded(CheckoutSessionId),
   ownerUserId: Schema.String,
-  status: CheckoutSessionStatusSchema,
-  items: Schema.NonEmptyArray(CoffeeOrderItemViewSchema),
+  status: CheckoutSessionStatus,
+  items: Schema.NonEmptyArray(CoffeeOrderItemView),
   totalPriceCents: Schema.Int,
   createdAt: Schema.toEncoded(Schema.DateTimeUtcFromString),
   updatedAt: Schema.toEncoded(Schema.DateTimeUtcFromString),
   expiresAt: Schema.toEncoded(Schema.DateTimeUtcFromString),
 }).annotate({ identifier: "CheckoutSessionView" });
-export type CheckoutSessionView = typeof CheckoutSessionViewSchema.Type;
+export type CheckoutSessionView = typeof CheckoutSessionView.Type;
 
-export const NoCheckoutSessionViewSchema = Schema.Struct({
+export const NoCheckoutSessionView = Schema.Struct({
   status: Schema.Literal("no_checkout_session"),
 }).annotate({ identifier: "NoCheckoutSessionView" });
-export type NoCheckoutSessionView = typeof NoCheckoutSessionViewSchema.Type;
+export type NoCheckoutSessionView = typeof NoCheckoutSessionView.Type;
 
-export const CheckoutSessionLookupViewSchema = Schema.Union([
-  CheckoutSessionViewSchema,
-  NoCheckoutSessionViewSchema,
+export const CheckoutSessionLookupView = Schema.Union([
+  CheckoutSessionView,
+  NoCheckoutSessionView,
 ]).annotate({ identifier: "CheckoutSessionLookupView" });
-export type CheckoutSessionLookupView = typeof CheckoutSessionLookupViewSchema.Type;
+export type CheckoutSessionLookupView = typeof CheckoutSessionLookupView.Type;
 
-export const ItemOptionsViewSchema = Schema.Struct({
-  item: MenuItemViewSchema,
-  availableSizes: Schema.Array(DrinkSizeSchema),
-  defaultSize: DrinkSizeSchema,
-  defaultMilk: MilkSchema,
-  defaultTemperature: TemperatureSchema,
-  defaultShots: ShotCountInputSchema,
-  defaultQuantity: QuantityInputSchema,
+export const ItemOptionsView = Schema.Struct({
+  item: MenuItemView,
+  availableSizes: Schema.Array(DrinkSize),
+  defaultSize: DrinkSize,
+  defaultMilk: Milk,
+  defaultTemperature: Temperature,
+  defaultShots: ShotCountInput,
+  defaultQuantity: QuantityInput,
 }).annotate({ identifier: "ItemOptionsView" });
-export type ItemOptionsView = typeof ItemOptionsViewSchema.Type;
+export type ItemOptionsView = typeof ItemOptionsView.Type;
 
-const OptionalViewStringSchema = Schema.optionalKey(Schema.String).pipe(
+const OptionalViewString = Schema.optionalKey(Schema.String).pipe(
   Schema.decodeTo(Schema.Option(Schema.String), SchemaTransformation.optionFromOptionalKey()),
 );
 
-const MenuItemViewModelSchema = Schema.Struct({
-  id: DrinkIdSchema,
+const MenuItemViewModel = Schema.Struct({
+  id: DrinkId,
   name: Schema.String,
-  kind: DrinkKindSchema,
-  basePrice: MoneyFromCentsSchema,
-  availableMilks: Schema.Array(MilkSchema),
-  availableTemperatures: Schema.Array(TemperatureSchema),
-  maxShots: ShotCountInputSchema,
+  kind: DrinkKind,
+  basePrice: MoneyFromCents,
+  availableMilks: Schema.Array(Milk),
+  availableTemperatures: Schema.Array(Temperature),
+  maxShots: ShotCountInput,
 }).pipe(
   Schema.encodeKeys({
     basePrice: "basePriceCents",
   }),
 );
 
-const CoffeeOrderItemViewModelSchema = Schema.Struct({
-  drinkId: DrinkIdSchema,
+const CoffeeOrderItemViewModel = Schema.Struct({
+  drinkId: DrinkId,
   drinkName: Schema.String,
-  size: DrinkSizeSchema,
-  milk: MilkSchema,
-  temperature: TemperatureSchema,
-  shots: ShotCountInputSchema,
-  notes: OptionalViewStringSchema,
-  quantity: QuantityInputSchema,
-  unitPrice: MoneyFromCentsSchema,
-  lineTotal: MoneyFromCentsSchema,
+  size: DrinkSize,
+  milk: Milk,
+  temperature: Temperature,
+  shots: ShotCountInput,
+  notes: OptionalViewString,
+  quantity: QuantityInput,
+  unitPrice: MoneyFromCents,
+  lineTotal: MoneyFromCents,
 }).pipe(
   Schema.encodeKeys({
     unitPrice: "unitPriceCents",
@@ -305,13 +291,13 @@ const CoffeeOrderItemViewModelSchema = Schema.Struct({
   }),
 );
 
-const CoffeeOrderViewModelSchema = Schema.Struct({
-  id: OrderIdSchema,
+const CoffeeOrderViewModel = Schema.Struct({
+  id: OrderId,
   customerName: Schema.String,
   ownerUserId: Schema.String,
-  items: Schema.NonEmptyArray(CoffeeOrderItemViewModelSchema),
-  status: OrderStatusSchema,
-  totalPrice: MoneyFromCentsSchema,
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewModel),
+  status: OrderStatus,
+  totalPrice: MoneyFromCents,
   createdAt: Schema.DateTimeUtcFromString,
 }).pipe(
   Schema.encodeKeys({
@@ -319,46 +305,46 @@ const CoffeeOrderViewModelSchema = Schema.Struct({
   }),
 );
 
-const OrderQuoteViewModelSchema = Schema.Struct({
-  items: Schema.NonEmptyArray(CoffeeOrderItemViewModelSchema),
-  totalPrice: MoneyFromCentsSchema,
+const OrderQuoteViewModel = Schema.Struct({
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewModel),
+  totalPrice: MoneyFromCents,
 }).pipe(
   Schema.encodeKeys({
     totalPrice: "totalPriceCents",
   }),
 );
 
-const OrderValidationViewModelSchema = Schema.Struct({
+const OrderValidationViewModel = Schema.Struct({
   valid: Schema.Literal(true),
-  items: Schema.NonEmptyArray(CoffeeOrderItemViewModelSchema),
-  totalPrice: MoneyFromCentsSchema,
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewModel),
+  totalPrice: MoneyFromCents,
 }).pipe(
   Schema.encodeKeys({
     totalPrice: "totalPriceCents",
   }),
 );
 
-const CartItemViewModelSchema = Schema.Struct({
-  cartItemId: CartItemIdSchema,
-  item: CoffeeOrderItemViewModelSchema,
+const CartItemViewModel = Schema.Struct({
+  cartItemId: CartItemId,
+  item: CoffeeOrderItemViewModel,
 });
 
-const CartViewModelSchema = Schema.Struct({
+const CartViewModel = Schema.Struct({
   ownerUserId: Schema.String,
-  items: Schema.Array(CartItemViewModelSchema),
-  totalPrice: MoneyFromCentsSchema,
+  items: Schema.Array(CartItemViewModel),
+  totalPrice: MoneyFromCents,
 }).pipe(
   Schema.encodeKeys({
     totalPrice: "totalPriceCents",
   }),
 );
 
-const CheckoutSessionViewModelSchema = Schema.Struct({
-  id: CheckoutSessionIdSchema,
+const CheckoutSessionViewModel = Schema.Struct({
+  id: CheckoutSessionId,
   ownerUserId: Schema.String,
-  status: CheckoutSessionStatusSchema,
-  items: Schema.NonEmptyArray(CoffeeOrderItemViewModelSchema),
-  totalPrice: MoneyFromCentsSchema,
+  status: CheckoutSessionStatus,
+  items: Schema.NonEmptyArray(CoffeeOrderItemViewModel),
+  totalPrice: MoneyFromCents,
   createdAt: Schema.DateTimeUtcFromString,
   updatedAt: Schema.DateTimeUtcFromString,
   expiresAt: Schema.DateTimeUtcFromString,
@@ -368,24 +354,24 @@ const CheckoutSessionViewModelSchema = Schema.Struct({
   }),
 );
 
-const ItemOptionsViewModelSchema = Schema.Struct({
-  item: MenuItemViewModelSchema,
-  availableSizes: Schema.Array(DrinkSizeSchema),
-  defaultSize: DrinkSizeSchema,
-  defaultMilk: MilkSchema,
-  defaultTemperature: TemperatureSchema,
-  defaultShots: ShotCountInputSchema,
-  defaultQuantity: QuantityInputSchema,
+const ItemOptionsViewModel = Schema.Struct({
+  item: MenuItemViewModel,
+  availableSizes: Schema.Array(DrinkSize),
+  defaultSize: DrinkSize,
+  defaultMilk: Milk,
+  defaultTemperature: Temperature,
+  defaultShots: ShotCountInput,
+  defaultQuantity: QuantityInput,
 });
 
-const encodeMenuItemView = Schema.encodeSync(MenuItemViewModelSchema);
-const encodeCoffeeOrderItemView = Schema.encodeSync(CoffeeOrderItemViewModelSchema);
-const encodeCoffeeOrderView = Schema.encodeSync(CoffeeOrderViewModelSchema);
-const encodeOrderQuoteView = Schema.encodeSync(OrderQuoteViewModelSchema);
-const encodeOrderValidationView = Schema.encodeSync(OrderValidationViewModelSchema);
-const encodeCartView = Schema.encodeSync(CartViewModelSchema);
-const encodeCheckoutSessionView = Schema.encodeSync(CheckoutSessionViewModelSchema);
-const encodeItemOptionsView = Schema.encodeSync(ItemOptionsViewModelSchema);
+const encodeMenuItemView = Schema.encodeSync(MenuItemViewModel);
+const encodeCoffeeOrderItemView = Schema.encodeSync(CoffeeOrderItemViewModel);
+const encodeCoffeeOrderView = Schema.encodeSync(CoffeeOrderViewModel);
+const encodeOrderQuoteView = Schema.encodeSync(OrderQuoteViewModel);
+const encodeOrderValidationView = Schema.encodeSync(OrderValidationViewModel);
+const encodeCartView = Schema.encodeSync(CartViewModel);
+const encodeCheckoutSessionView = Schema.encodeSync(CheckoutSessionViewModel);
+const encodeItemOptionsView = Schema.encodeSync(ItemOptionsViewModel);
 
 export const toMenuItemView = (item: MenuItem): MenuItemView => encodeMenuItemView(item);
 

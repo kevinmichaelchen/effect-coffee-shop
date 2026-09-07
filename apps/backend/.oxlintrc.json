@@ -1,7 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["oxc", "typescript", "unicorn", "node"],
-  "jsPlugins": ["@mpsuesser/oxlint-plugin-effect"],
   "options": {
     "typeAware": true,
     "typeCheck": true,
@@ -10,27 +9,6 @@
   "rules": {
     "no-bitwise": "error",
     "no-plusplus": "error",
-    "effect/avoid-any": "error",
-    "effect/avoid-direct-json": "error",
-    "effect/avoid-direct-tag-checks": "error",
-    "effect/avoid-non-null-assertion": "error",
-    "effect/avoid-object-type": "error",
-    "effect/avoid-option-getorthrow": "error",
-    "effect/avoid-process-env": "error",
-    "effect/avoid-sync-fs": "error",
-    "effect/avoid-try-catch": "error",
-    "effect/avoid-ts-ignore": "error",
-    "effect/avoid-untagged-errors": "error",
-    "effect/casting-awareness": "error",
-    "effect/context-tag-extends": "error",
-    "effect/effect-catchall-default": "error",
-    "effect/no-barrel-imports": "error",
-    "effect/prefer-namespace-imports": "error",
-    "effect/prefer-redacted-config": "error",
-    "effect/require-effect-concurrency": "error",
-    "effect/throw-in-effect-gen": "error",
-    "effect/use-console-service": "error",
-    "effect/use-filesystem-service": "error",
     "typescript/no-floating-promises": "error",
     "typescript/no-non-null-assertion": "error"
   },
@@ -38,15 +16,46 @@
     {
       "files": ["src/**/*.ts"],
       "rules": {
-        "complexity": ["error", { "max": 10 }],
-        "max-depth": ["error", { "max": 4 }],
-        "max-lines": ["error", { "max": 220, "skipBlankLines": true, "skipComments": true }],
+        "complexity": [
+          "error",
+          {
+            "max": 10
+          }
+        ],
+        "max-depth": [
+          "error",
+          {
+            "max": 4
+          }
+        ],
+        "max-lines": [
+          "error",
+          {
+            "max": 220,
+            "skipBlankLines": true,
+            "skipComments": true
+          }
+        ],
         "max-lines-per-function": [
           "error",
-          { "max": 75, "skipBlankLines": true, "skipComments": true }
+          {
+            "max": 75,
+            "skipBlankLines": true,
+            "skipComments": true
+          }
         ],
-        "max-params": ["error", { "max": 5 }],
-        "max-statements": ["error", { "max": 18 }],
+        "max-params": [
+          "error",
+          {
+            "max": 5
+          }
+        ],
+        "max-statements": [
+          "error",
+          {
+            "max": 18
+          }
+        ],
         "node/no-process-env": "error",
         "no-restricted-imports": [
           "error",
@@ -67,7 +76,12 @@
     {
       "files": ["test/**/*.ts"],
       "rules": {
-        "no-restricted-imports": ["error", { "patterns": ["../../src/*", "../src/*", "node:*"] }]
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["../../src/*", "../src/*", "node:*"]
+          }
+        ]
       }
     }
   ]

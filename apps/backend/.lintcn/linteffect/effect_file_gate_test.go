@@ -110,7 +110,7 @@ type Ignored = Effect.Effect<string>;
 		},
 		[]rule_tester.InvalidTestCase{
 			{
-				FileName: "src/presentation/assistant/handler.ts",
+				FileName: "src/presentation/mcp/handler.ts",
 				Code: `
 "effect";
 type CoffeeAppRunner = <A, E>(effect: Effect.Effect<A, E, CoffeeOrderApp>) => Promise<A>;

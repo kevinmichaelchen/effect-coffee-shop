@@ -5,11 +5,9 @@
  */
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
-import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import {
-  cloudflareAssistantGatewayId,
   cloudflareBindingNames,
   cloudflareEnvNames,
 } from "@effect-coffee-shop/coffee-runtime-cloudflare/env";
@@ -17,22 +15,25 @@ import {
   booleanWithDefault,
   numberBetweenWithDefault,
   optionalTrimmedRedacted,
-  optionalTrimmedString,
   stringWithDefault,
 } from "./config.ts";
 import { coffeeStackName } from "./shared.ts";
 
 const state = () =>
+  // oxlint-disable-next-line effect/avoid-process-env -- Alchemy state-backend bootstrap runs before the stack Effect or Config provider exists.
   process.env.ALCHEMY_LOCAL_STATE === "1" ? Alchemy.localState() : Cloudflare.state();
 
-class DeploySmokeCheckError extends Data.TaggedError("DeploySmokeCheckError")<{
-  readonly message: string;
-  readonly cause?: unknown;
-}> {}
+class DeploySmokeCheckError extends Schema.TaggedError<DeploySmokeCheckError>()(
+  "DeploySmokeCheckError",
+  {
+    message: Schema.String,
+    cause: Schema.optionalKey(Schema.Unknown),
+  },
+) {}
 
 const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
 
-const betterAuthSecret = Effect.gen(function* () {
+const betterAuthSecret = Effect.fn("Cloudflare.betterAuthSecret")(function* () {
   const provided = yield* optionalTrimmedRedacted(cloudflareEnvNames.betterAuthSecret);
 
   if (provided !== undefined) {
@@ -51,6 +52,7 @@ const fetchSmokeResponse = (input: {
   readonly url: string;
 }) =>
   Effect.tryPromise({
+    // oxlint-disable-next-line effect/avoid-native-fetch -- Native HTTP probe checks the deployed wire protocol; rejection is handled at this adapter boundary.
     try: () => fetch(input.url, input.init),
     catch: (cause) =>
       new DeploySmokeCheckError({
@@ -148,10 +150,8 @@ export default Alchemy.Stack(
     state: state(),
   },
   Effect.gen(function* () {
-    const aiGatewayEnabled = yield* booleanWithDefault("COFFEE_ASSISTANT_AI_GATEWAY", false);
     const deploySmokeChecksEnabled = yield* booleanWithDefault("COFFEE_DEPLOY_SMOKE_CHECKS", false);
     const deployMcpSmokeCheckEnabled = yield* booleanWithDefault("COFFEE_DEPLOY_SMOKE_MCP", false);
-    const assistantModel = yield* optionalTrimmedString(cloudflareEnvNames.coffeeAssistantModel);
     const observabilitySamplingRate = yield* numberBetweenWithDefault({
       defaultValue: 1,
       maximum: 1,
@@ -169,17 +169,9 @@ export default Alchemy.Stack(
         comment: "Better Auth signing secret for the Coffee Shop Cloudflare Worker.",
         name: cloudflareEnvNames.betterAuthSecret,
         store: secretsStore,
-        value: yield* betterAuthSecret,
+        value: yield* betterAuthSecret(),
       },
     );
-
-    const assistantGateway = aiGatewayEnabled
-      ? yield* Cloudflare.AI.Gateway(cloudflareAssistantGatewayId, {
-          authentication: true,
-          collectLogs: true,
-          id: cloudflareAssistantGatewayId,
-        })
-      : undefined;
 
     const website = yield* Cloudflare.Website.Vite("onion", {
       rootDir: "apps/ui",
@@ -206,20 +198,11 @@ export default Alchemy.Stack(
         workspaces: "auto",
       },
       assets: {
-        runWorkerFirst: ["/.well-known/agent-configuration", "/api", "/api/*", "/mcp", "/mcp/*"],
+        runWorkerFirst: ["/api", "/api/*", "/mcp", "/mcp/*"],
       },
       env: {
-        // Workers AI has no local emulator: Alchemy proxies the binding to the
-        // real Cloudflare API even under `alchemy dev`. Only attach it when an
-        // assistant model is configured so local stacks and `bun run cf:test`
-        // never reach a real account.
-        ...(assistantModel === undefined
-          ? {}
-          : { [cloudflareBindingNames.ai]: Cloudflare.Workers.AI(cloudflareBindingNames.ai) }),
         [cloudflareBindingNames.db]: coffeeDb,
-        [cloudflareEnvNames.aiGatewayId]: assistantGateway?.gatewayId ?? "",
         [cloudflareEnvNames.betterAuthSecret]: betterAuthStoreSecret,
-        [cloudflareEnvNames.coffeeAssistantModel]: assistantModel ?? "",
         [cloudflareEnvNames.coffeeStaffUserIds]: yield* stringWithDefault(
           cloudflareEnvNames.coffeeStaffUserIds,
           "",
@@ -234,7 +217,6 @@ export default Alchemy.Stack(
     });
 
     return {
-      assistantGateway: assistantGateway?.gatewayId ?? null,
       database: coffeeDb.databaseName,
       smoke,
       url: website.url,

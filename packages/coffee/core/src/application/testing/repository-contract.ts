@@ -5,9 +5,9 @@ import * as Schema from "effect/Schema";
 import { assert, describe, it } from "@effect/vitest";
 import { menuItems } from "../../domain/menu.ts";
 import { moneyFromCents } from "../../domain/money.ts";
-import { CartSchema } from "../../domain/cart.ts";
-import { CheckoutSessionSchema, type CheckoutSession } from "../../domain/checkout-session.ts";
-import { CoffeeOrderSchema, type CoffeeOrder } from "../../domain/order.ts";
+import { Cart } from "../../domain/cart.ts";
+import { CheckoutSession } from "../../domain/checkout-session.ts";
+import { CoffeeOrder } from "../../domain/order.ts";
 import type { PersistenceError } from "../errors.ts";
 import { CartRepository } from "../ports/CartRepository.ts";
 import { CheckoutSessionRepository } from "../ports/CheckoutSessionRepository.ts";
@@ -43,9 +43,9 @@ const utc = DateTime.makeUnsafe;
 const initialTime = utc("2026-01-01T10:00:00.000Z");
 const laterTime = utc("2026-01-01T10:05:00.000Z");
 const latestTime = utc("2026-01-01T10:10:00.000Z");
-const decodeCart = Schema.decodeUnknownSync(CartSchema);
-const decodeCheckoutSession = Schema.decodeUnknownSync(CheckoutSessionSchema);
-const decodeCoffeeOrder = Schema.decodeUnknownSync(CoffeeOrderSchema);
+const decodeCart = Schema.decodeUnknownSync(Cart);
+const decodeCheckoutSession = Schema.decodeUnknownSync(CheckoutSession);
+const decodeCoffeeOrder = Schema.decodeUnknownSync(CoffeeOrder);
 
 const makeOrder = ({ id, ...overrides }: CoffeeOrderOverrides): CoffeeOrder =>
   decodeCoffeeOrder({

@@ -1,3 +1,4 @@
+import * as Arr from "effect/Array";
 /**
  * Persists actor carts with Drizzle/Postgres.
  *
@@ -12,10 +13,10 @@ import type { Cart } from "@effect-coffee-shop/coffee-core/domain/cart";
 import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
 import { CartRepository } from "@effect-coffee-shop/coffee-core/application/ports/CartRepository";
 import { CoffeeDb } from "../db/Db.ts";
-import { DrizzleCartItemRowSchema, toCartItem, toCartItemInsert } from "../db/models.ts";
+import { DrizzleCartItemRow, toCartItem, toCartItemInsert } from "../db/models.ts";
 import { cartItemsTable, cartsTable } from "../db/schema.ts";
 
-const decodeCartItemRows = Schema.decodeUnknownEffect(Schema.Array(DrizzleCartItemRowSchema));
+const decodeCartItemRows = Schema.decodeUnknownEffect(Schema.Array(DrizzleCartItemRow));
 
 const emptyCart = (ownerUserId: string): Cart => ({
   ownerUserId,
@@ -59,7 +60,7 @@ export const DrizzleCartRepositoryLive = Layer.effect(
       ownerUserId: string,
     ) {
       const cart = yield* loadCart(ownerUserId);
-      return cart.items.length === 0 ? Option.none<Cart>() : Option.some(cart);
+      return Arr.isReadonlyArrayEmpty(cart.items) ? Option.none<Cart>() : Option.some(cart);
     });
 
     return CartRepository.of({

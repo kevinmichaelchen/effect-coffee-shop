@@ -25,7 +25,7 @@
     "packages/coffee/external/sqlite/src/bun/live.ts",
     "packages/coffee/external/sqlite/src/cloudflare/live.ts",
     "packages/coffee/runtime/aws/src/**/*.test.ts",
-    "packages/coffee/runtime/cloudflare/src/**/*.test.ts"
+    "packages/coffee/runtime/cloudflare/src/**/*.test.ts",
   ],
 
   "ignorePatterns": [
@@ -34,13 +34,10 @@
     "**/dist/**",
     "**/storybook-static/**",
     "packages/coffee/external/sqlite/src/sql/migrations/.generated/**",
-    "packages/coffee/external/sqlite/src/sql/queries/.generated/**"
+    "packages/coffee/external/sqlite/src/sql/queries/.generated/**",
   ],
 
-  "ignoreDependencies": [
-    "@mpsuesser/oxlint-plugin-effect",
-    "oxlint-tsgolint"
-  ],
+  "ignoreDependencies": ["@mpsuesser/oxlint-plugin-effect", "oxlint-tsgolint"],
 
   "rules": {
     "unresolved-imports": "error",
@@ -65,7 +62,7 @@
     "empty-catalog-groups": "warn",
     "unresolved-catalog-references": "error",
     "unused-dependency-overrides": "warn",
-    "misconfigured-dependency-overrides": "error"
+    "misconfigured-dependency-overrides": "error",
   },
 
   "duplicates": {
@@ -78,27 +75,27 @@
     "ignore": [
       "apps/ui/src/**/*.stories.tsx",
       "packages/coffee/external/drizzle-postgres/src/db/auth-schema.ts",
-      "packages/coffee/external/drizzle-postgres/src/db/schema.ts"
-    ]
+      "packages/coffee/external/drizzle-postgres/src/db/schema.ts",
+    ],
   },
 
   "health": {
     "maxCyclomatic": 20,
     "maxCognitive": 15,
     "maxCrap": 500,
-    "maxUnitSize": 60
+    "maxUnitSize": 60,
   },
 
   "typeAware": {
     "enabled": true,
     "projects": ["packages/coffee/core/tsconfig.json"],
-    "require": "best-effort"
+    "require": "best-effort",
   },
 
   "audit": {
     "gate": "new-only",
     "healthBaseline": ".fallow/health-baseline.json",
-    "typeAware": false
+    "typeAware": false,
   },
 
   "boundaries": {
@@ -109,70 +106,69 @@
           "**/*.test.ts",
           "**/test-support.ts",
           "apps/backend/scripts/**",
-          "apps/backend/test/**"
-        ]
+          "apps/backend/test/**",
+        ],
       },
       {
         "name": "infra",
-        "patterns": ["alchemy.run.ts"]
+        "patterns": ["alchemy.run.ts"],
       },
       {
         "name": "ui",
-        "patterns": ["apps/ui/**"]
+        "patterns": ["apps/ui/**"],
       },
       {
         "name": "backend-app",
-        "patterns": ["apps/backend/**"]
+        "patterns": ["apps/backend/**"],
       },
       {
         "name": "http-routing",
-        "patterns": ["packages/http-routing/**"]
+        "patterns": ["packages/http-routing/**"],
       },
       {
         "name": "backend-composition",
-        "patterns": ["packages/coffee/backend/**"]
+        "patterns": ["packages/coffee/backend/**"],
       },
       {
         "name": "runtime",
-        "patterns": ["packages/coffee/runtime/**"]
+        "patterns": ["packages/coffee/runtime/**"],
       },
       {
         "name": "domain",
-        "patterns": ["packages/coffee/core/src/domain/**"]
+        "patterns": ["packages/coffee/core/src/domain/**"],
       },
       {
         "name": "application",
-        "patterns": ["packages/coffee/core/src/application/**", "packages/coffee/core/src/index.ts"]
+        "patterns": [
+          "packages/coffee/core/src/application/**",
+          "packages/coffee/core/src/index.ts",
+        ],
       },
       {
         "name": "actions",
-        "patterns": ["packages/coffee/presentation/actions/**"]
-      },
-      {
-        "name": "assistant",
-        "patterns": ["packages/coffee/assistant/**"]
+        "patterns": ["packages/coffee/presentation/actions/**"],
       },
       {
         "name": "auth",
-        "patterns": ["packages/coffee/auth/**"]
+        "patterns": ["packages/coffee/auth/**"],
       },
       {
         "name": "external",
-        "patterns": ["packages/coffee/external/**"]
+        "patterns": ["packages/coffee/external/**"],
       },
       {
         "name": "presentation",
-        "patterns": ["packages/coffee/presentation/**"]
-      }
+        "patterns": ["packages/coffee/presentation/**"],
+      },
     ],
     "rules": [
       {
         "from": "infra",
-        "allow": ["backend-app", "ui", "external", "runtime"]
+        "allow": ["backend-app", "ui", "external", "runtime"],
       },
       {
         "from": "ui",
-        "allow": []
+        "allow": [],
       },
       {
         "from": "backend-app",
@@ -183,19 +179,18 @@
           "domain",
           "application",
           "actions",
-          "assistant",
           "auth",
           "external",
-          "presentation"
-        ]
+          "presentation",
+        ],
       },
       {
         "from": "http-routing",
-        "allow": []
+        "allow": [],
       },
       {
         "from": "backend-composition",
-        "allow": ["http-routing", "domain", "application", "external", "presentation"]
+        "allow": ["http-routing", "domain", "application", "external", "presentation"],
       },
       {
         "from": "runtime",
@@ -205,40 +200,35 @@
           "domain",
           "application",
           "actions",
-          "assistant",
           "auth",
           "external",
-          "presentation"
-        ]
+          "presentation",
+        ],
       },
       {
         "from": "domain",
-        "allow": []
+        "allow": [],
       },
       {
         "from": "application",
-        "allow": ["domain"]
+        "allow": ["domain"],
       },
       {
         "from": "actions",
-        "allow": ["domain", "application"]
-      },
-      {
-        "from": "assistant",
-        "allow": ["http-routing", "domain", "application", "actions"]
+        "allow": ["domain", "application"],
       },
       {
         "from": "auth",
-        "allow": ["http-routing", "domain", "application", "actions"]
+        "allow": ["http-routing", "domain", "application"],
       },
       {
         "from": "external",
-        "allow": ["domain", "application"]
+        "allow": ["domain", "application"],
       },
       {
         "from": "presentation",
-        "allow": ["http-routing", "domain", "application", "actions"]
-      }
-    ]
-  }
+        "allow": ["http-routing", "domain", "application", "actions"],
+      },
+    ],
+  },
 }

@@ -11,7 +11,7 @@ import {
 } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 import { checkoutSessionIdFromString } from "@effect-coffee-shop/coffee-core/domain/checkout-session";
 import { moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
-import { QuoteOrderRequestSchema } from "@effect-coffee-shop/coffee-core/application/contracts";
+import { QuoteOrderRequest } from "@effect-coffee-shop/coffee-core/application/contracts";
 import {
   addCartItem,
   checkoutCart,
@@ -28,7 +28,7 @@ import {
 } from "@effect-coffee-shop/coffee-core/application/use-cases/index";
 
 const provideSystemActor = Effect.provideService(CurrentActor, systemActor);
-const decodeQuoteOrderRequest = Schema.decodeUnknownSync(QuoteOrderRequestSchema);
+const decodeQuoteOrderRequest = Schema.decodeUnknownSync(QuoteOrderRequest);
 const checkoutSessionIdPattern = /^checkout_session_[0123456789abcdefghjkmnpqrstvwxyz]{26}$/;
 const averyActor: AppActor = {
   displayName: "Avery",

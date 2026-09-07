@@ -25,7 +25,7 @@ const emptyCart = (ownerUserId: string): Cart => ({
   items: [],
 });
 
-const makeSqlCartQueries = Effect.gen(function* () {
+const makeSqlCartQueries = Effect.fn("SqlCartRepository.makeSqlCartQueries")(function* () {
   const sqlClient = yield* SqlClient.SqlClient;
 
   const save = Effect.fn("SqlCartRepository.save")(function* (cart: Cart) {
@@ -75,7 +75,7 @@ const makeSqlCartQueries = Effect.gen(function* () {
 export const SqlCartRepositoryLive = Layer.effect(
   CartRepository,
   Effect.gen(function* () {
-    const queries = yield* makeSqlCartQueries;
+    const queries = yield* makeSqlCartQueries();
 
     return CartRepository.of({
       getByOwnerUserId: (ownerUserId) =>

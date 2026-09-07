@@ -4,7 +4,7 @@
 
 It owns the domain model, application use cases, application service tags, ports, errors, actor
 model, observability names, and repository contract helpers. It does not own transport protocols,
-runtime SDKs, database clients, assistant providers, or deployment wiring.
+runtime SDKs, database clients, or deployment wiring.
 
 ## Architecture
 
@@ -27,15 +27,15 @@ runtime SDKs, database clients, assistant providers, or deployment wiring.
 
 ### What Belongs In Core?
 
-Business behavior that should be true regardless of HTTP, MCP, CLI, assistant, database, or runtime.
+Business behavior that should be true regardless of HTTP, MCP, CLI, database, or runtime.
 If changing code here changes what Coffee orders mean or how Coffee workflows behave, it likely
 belongs in core.
 
 ### What Does Not Belong In Core?
 
-HTTP routes, MCP resources, assistant prompts, Agent Auth metadata, Better Auth setup, database
+HTTP routes, MCP resources, Better Auth setup, database
 client code, Cloudflare bindings, Bun servers, and AWS Lambda handlers belong outside core. See the
-[`presentation`](../presentation), [`assistant`](../assistant), [`auth`](../auth), and
+[`presentation`](../presentation), [`auth`](../auth), and
 [`external`](../external) package groups for those concerns.
 
 ### Where Do External Inputs Get Decoded?

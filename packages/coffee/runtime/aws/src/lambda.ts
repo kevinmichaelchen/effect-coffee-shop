@@ -28,26 +28,14 @@ const configuredBetterAuthSecret = Config.redacted(awsEnvNames.betterAuthSecret)
 );
 
 const runtimeEnvConfig = Config.all({
-  assistantWorkersAiAccountId: optionalVariableConfig(awsEnvNames.assistantWorkersAiAccountId),
-  assistantWorkersAiApiToken: optionalSecretConfig(awsEnvNames.assistantWorkersAiApiToken),
   betterAuthSecret: optionalSecretConfig(awsEnvNames.betterAuthSecret),
-  coffeeAssistantModel: optionalVariableConfig(awsEnvNames.coffeeAssistantModel),
-  coffeeAssistantOllamaUrl: optionalVariableConfig(awsEnvNames.coffeeAssistantOllamaUrl),
-  coffeeAssistantProvider: optionalVariableConfig(awsEnvNames.coffeeAssistantProvider),
   coffeePostgresUrl: requiredSecretConfig(awsEnvNames.coffeePostgresUrl),
   coffeeStaffUserIds: optionalVariableConfig(awsEnvNames.coffeeStaffUserIds),
-  ollamaHost: optionalVariableConfig(awsEnvNames.ollamaHost),
 }).pipe(
   Config.map((env): AwsLambdaEnv => ({
     BETTER_AUTH_SECRET: Redacted.value(env.betterAuthSecret),
-    CLOUDFLARE_ACCOUNT_ID: env.assistantWorkersAiAccountId,
-    CLOUDFLARE_API_TOKEN: Redacted.value(env.assistantWorkersAiApiToken),
-    COFFEE_ASSISTANT_MODEL: env.coffeeAssistantModel,
-    COFFEE_ASSISTANT_OLLAMA_URL: env.coffeeAssistantOllamaUrl,
-    COFFEE_ASSISTANT_PROVIDER: env.coffeeAssistantProvider,
     COFFEE_POSTGRES_URL: Redacted.value(env.coffeePostgresUrl),
     COFFEE_STAFF_USER_IDS: env.coffeeStaffUserIds,
-    OLLAMA_HOST: env.ollamaHost,
   })),
 );
 
@@ -63,31 +51,13 @@ export default class CoffeeApi extends AWS.Lambda.Function<CoffeeApi>()(
 
     return {
       env: {
-        [awsEnvNames.assistantWorkersAiAccountId]: yield* optionalVariableConfig(
-          awsEnvNames.assistantWorkersAiAccountId,
-        ).pipe(Effect.orDie),
-        [awsEnvNames.assistantWorkersAiApiToken]: yield* optionalSecretConfig(
-          awsEnvNames.assistantWorkersAiApiToken,
-        ).pipe(Effect.orDie),
         [awsEnvNames.betterAuthSecret]: betterAuthSecret,
-        [awsEnvNames.coffeeAssistantModel]: yield* optionalVariableConfig(
-          awsEnvNames.coffeeAssistantModel,
-        ).pipe(Effect.orDie),
-        [awsEnvNames.coffeeAssistantOllamaUrl]: yield* optionalVariableConfig(
-          awsEnvNames.coffeeAssistantOllamaUrl,
-        ).pipe(Effect.orDie),
-        [awsEnvNames.coffeeAssistantProvider]: yield* optionalVariableConfig(
-          awsEnvNames.coffeeAssistantProvider,
-        ).pipe(Effect.orDie),
         [awsEnvNames.coffeePostgresUrl]: yield* requiredSecretConfig(
           awsEnvNames.coffeePostgresUrl,
         ).pipe(Effect.orDie),
         [awsEnvNames.coffeeStaffUserIds]: yield* optionalVariableConfig(
           awsEnvNames.coffeeStaffUserIds,
         ).pipe(Effect.orDie),
-        [awsEnvNames.ollamaHost]: yield* optionalVariableConfig(awsEnvNames.ollamaHost).pipe(
-          Effect.orDie,
-        ),
       },
       main: import.meta.filename,
       runtime: "nodejs24.x",

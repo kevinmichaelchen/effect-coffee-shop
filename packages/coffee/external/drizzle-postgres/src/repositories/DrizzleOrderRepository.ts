@@ -18,17 +18,17 @@ import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/er
 import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
 import { CoffeeDb } from "../db/Db.ts";
 import {
-  DrizzleOrderItemRowSchema,
-  DrizzleOrderRowSchema,
+  DrizzleOrderItemRow,
+  DrizzleOrderRow,
   toCoffeeOrder,
   toOrderInsert,
   toOrderItemInsert,
 } from "../db/models.ts";
 import { orderItemsTable, ordersTable } from "../db/schema.ts";
 
-const decodeOrderRow = Schema.decodeUnknownEffect(DrizzleOrderRowSchema);
-const decodeOrderRows = Schema.decodeUnknownEffect(Schema.Array(DrizzleOrderRowSchema));
-const decodeOrderItemRows = Schema.decodeUnknownEffect(Schema.Array(DrizzleOrderItemRowSchema));
+const decodeOrderRow = Schema.decodeUnknownEffect(DrizzleOrderRow);
+const decodeOrderRows = Schema.decodeUnknownEffect(Schema.Array(DrizzleOrderRow));
+const decodeOrderItemRows = Schema.decodeUnknownEffect(Schema.Array(DrizzleOrderItemRow));
 
 const listWhere = (filters: ListOrdersFilters) =>
   and(
@@ -58,7 +58,7 @@ export const DrizzleOrderRepositoryLive = Layer.effect(
         .pipe(Effect.flatMap(decodeOrderItemRows));
     });
 
-    const hydrateOrder = Effect.fnUntraced(function* (order: typeof DrizzleOrderRowSchema.Type) {
+    const hydrateOrder = Effect.fnUntraced(function* (order: typeof DrizzleOrderRow.Type) {
       const items = yield* loadOrderItems(order.id);
       return toCoffeeOrder(order, items);
     });

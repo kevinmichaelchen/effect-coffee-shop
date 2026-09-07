@@ -9,17 +9,12 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { SqlClient } from "effect/unstable/sql";
 import {
-  CheckoutSessionIdSchema,
-  CheckoutSessionSchema,
-  CheckoutSessionStatusSchema,
-  type CheckoutSession,
-  type CheckoutSessionId,
+  CheckoutSessionId,
+  CheckoutSession,
+  CheckoutSessionStatus,
 } from "@effect-coffee-shop/coffee-core/domain/checkout-session";
-import { MoneyFromCentsSchema, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
-import {
-  CoffeeOrderItemSchema,
-  type CoffeeOrderItem,
-} from "@effect-coffee-shop/coffee-core/domain/order";
+import { MoneyFromCents, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
+import { CoffeeOrderItem } from "@effect-coffee-shop/coffee-core/domain/order";
 import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
 import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
 import { toPersistedCoffeeOrderItemFields } from "@effect-coffee-shop/coffee-core/application/ports/coffee-order-item-persistence";
@@ -31,15 +26,15 @@ import { listCheckoutSessionItems } from "./queries/.generated/list-checkout-ses
 import { saveCheckoutSession } from "./queries/.generated/save-checkout-session.sql.ts";
 import { saveCheckoutSessionItem } from "./queries/.generated/save-checkout-session-item.sql.ts";
 
-const NullableStringOptionSchema = Schema.OptionFromNullishOr(Schema.String, {
+const NullableStringOption = Schema.OptionFromNullishOr(Schema.String, {
   onNoneEncoding: null,
 });
 
-const CheckoutSessionRowSchema = Schema.Struct({
-  id: CheckoutSessionIdSchema,
+const CheckoutSessionRow = Schema.Struct({
+  id: CheckoutSessionId,
   ownerUserId: Schema.String,
-  status: CheckoutSessionStatusSchema,
-  totalPrice: MoneyFromCentsSchema,
+  status: CheckoutSessionStatus,
+  totalPrice: MoneyFromCents,
   createdAt: Schema.DateTimeUtcFromString,
   updatedAt: Schema.DateTimeUtcFromString,
   expiresAt: Schema.DateTimeUtcFromString,
@@ -53,8 +48,8 @@ const CheckoutSessionRowSchema = Schema.Struct({
   }),
 );
 
-const CheckoutSessionItemRowSchema = Schema.Struct({
-  sessionId: CheckoutSessionIdSchema,
+const CheckoutSessionItemRow = Schema.Struct({
+  sessionId: CheckoutSessionId,
   position: Schema.Int,
   drinkId: Schema.String,
   drinkName: Schema.String,
@@ -62,10 +57,10 @@ const CheckoutSessionItemRowSchema = Schema.Struct({
   milk: Schema.String,
   temperature: Schema.String,
   shots: Schema.Int,
-  notes: NullableStringOptionSchema,
+  notes: NullableStringOption,
   quantity: Schema.Int,
-  unitPrice: MoneyFromCentsSchema,
-  lineTotal: MoneyFromCentsSchema,
+  unitPrice: MoneyFromCents,
+  lineTotal: MoneyFromCents,
 }).pipe(
   Schema.encodeKeys({
     sessionId: "session_id",
@@ -76,15 +71,15 @@ const CheckoutSessionItemRowSchema = Schema.Struct({
   }),
 );
 
-type CheckoutSessionRow = typeof CheckoutSessionRowSchema.Type;
-type CheckoutSessionItemRow = typeof CheckoutSessionItemRowSchema.Type;
+type CheckoutSessionRow = typeof CheckoutSessionRow.Type;
+type CheckoutSessionItemRow = typeof CheckoutSessionItemRow.Type;
 
-const decodeCheckoutSessionRow = Schema.decodeUnknownEffect(CheckoutSessionRowSchema);
+const decodeCheckoutSessionRow = Schema.decodeUnknownEffect(CheckoutSessionRow);
 const decodeCheckoutSessionItemRows = Schema.decodeUnknownEffect(
-  Schema.Array(CheckoutSessionItemRowSchema),
+  Schema.Array(CheckoutSessionItemRow),
 );
-const decodeCheckoutSession = Schema.decodeUnknownEffect(Schema.toType(CheckoutSessionSchema));
-const decodeCoffeeOrderItem = Schema.decodeUnknownEffect(CoffeeOrderItemSchema);
+const decodeCheckoutSession = Schema.decodeUnknownEffect(Schema.toType(CheckoutSession));
+const decodeCoffeeOrderItem = Schema.decodeUnknownEffect(CoffeeOrderItem);
 const encodeDateTime = Schema.encodeSync(Schema.DateTimeUtcFromString);
 
 const toCoffeeOrderItem = (
@@ -123,6 +118,7 @@ const toCheckoutSession = Effect.fn("SqlCheckoutSessionRepository.toCheckoutSess
   });
 });
 
+// oxlint-disable-next-line effect/no-unknown-parameters -- Untrusted SQL row is decoded here with Schema before entering domain logic.
 const decodeOptionalCheckoutSessionRow = (row: unknown) =>
   Option.match(Option.fromNullishOr(row), {
     onNone: () => Effect.succeed(Option.none<CheckoutSessionRow>()),
@@ -149,7 +145,9 @@ const toSqlCheckoutSessionItemSave = (
   ...toPersistedCoffeeOrderItemFields(item),
 });
 
-const makeSqlCheckoutSessionQueries = Effect.gen(function* () {
+const makeSqlCheckoutSessionQueries = Effect.fn(
+  "SqlCheckoutSessionRepository.makeSqlCheckoutSessionQueries",
+)(function* () {
   const sqlClient = yield* SqlClient.SqlClient;
 
   const loadSession = Effect.fn("SqlCheckoutSessionRepository.loadSession")(function* (
@@ -222,7 +220,7 @@ const makeSqlCheckoutSessionQueries = Effect.gen(function* () {
 export const SqlCheckoutSessionRepositoryLive = Layer.effect(
   CheckoutSessionRepository,
   Effect.gen(function* () {
-    const queries = yield* makeSqlCheckoutSessionQueries;
+    const queries = yield* makeSqlCheckoutSessionQueries();
 
     return CheckoutSessionRepository.of({
       getById: (id) =>
