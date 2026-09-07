@@ -5,7 +5,7 @@ import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
 import { authorize } from "./auth.ts";
-import { artifactParts } from "./body.ts";
+import { artifactParts, discardRejectedBody } from "./body.ts";
 import { ArtifactMetadata, ByteLength, CacheError, Identifier, invalidRequest } from "./domain.ts";
 import { ArtifactStore, type StoredArtifact, type UploadedPart } from "./store.ts";
 
@@ -113,8 +113,11 @@ const route = Effect.fn("TurboCache.route")(function* (request: Request) {
 export const handleRequest = Effect.fn("TurboCache.handleRequest")((request: Request) =>
   route(request).pipe(
     Effect.catchTag("CacheError", (error) =>
-      Effect.succeed(
-        new Response(request.method === "HEAD" ? null : error.message, {
+      Effect.gen(function* () {
+        if (request.body !== null && !request.body.locked) {
+          yield* discardRejectedBody(request.body);
+        }
+        return new Response(request.method === "HEAD" ? null : error.message, {
           status: error.status,
           headers: {
             "cache-control": "no-store",
@@ -122,8 +125,8 @@ export const handleRequest = Effect.fn("TurboCache.handleRequest")((request: Req
             // peers to close that connection instead of pooling it.
             ...(request.body !== null ? { connection: "close" } : {}),
           },
-        }),
-      ),
+        });
+      }),
     ),
   ),
 );

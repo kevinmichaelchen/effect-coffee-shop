@@ -1,5 +1,25 @@
 import * as Stream from "effect/Stream";
+import * as Effect from "effect/Effect";
 import { CacheError, PART_BYTES } from "./domain.ts";
+
+// Finish small rejected requests before their connection can be reused. Larger
+// or stalled bodies are cancelled after a bounded amount of work.
+export function discardRejectedBody(body: ReadableStream<Uint8Array>) {
+  let consumed = 0;
+  return Stream.fromReadableStream({
+    evaluate: () => body,
+    onError: () => new CacheError({ status: 400, message: "Invalid artifact body" }),
+  }).pipe(
+    Stream.takeWhile((chunk) => {
+      consumed += chunk.byteLength;
+      return consumed <= 64 * 1024;
+    }),
+    Stream.runDrain,
+    Effect.timeoutOption("100 millis"),
+    Effect.asVoid,
+    Effect.catch(() => Effect.void),
+  );
+}
 
 // Web Streams boundary: pack arbitrary transport chunks into bounded S3/R2
 // multipart chunks. Errors and cancellation propagate to the upstream body.
