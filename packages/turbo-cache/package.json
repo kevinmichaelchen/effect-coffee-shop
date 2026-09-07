@@ -1,0 +1,30 @@
+{
+  "name": "@effect-coffee-shop/turbo-cache",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "bun --bun oxlint -c ../.oxlintrc.json --disable-nested-config .",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "alchemy": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@effect/vitest": "catalog:",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -12,7 +12,8 @@
       "packages/coffee/backend",
       "packages/coffee/external/*",
       "packages/coffee/presentation/*",
-      "packages/coffee/runtime/*"
+      "packages/coffee/runtime/*",
+      "packages/turbo-cache"
     ],
     "catalog": {
       "@better-auth/agent-auth": "0.6.2",
@@ -114,7 +115,7 @@
     "dev:local:api": "PORTLESS_STATE_DIR=/tmp/effect-coffee-shop-portless PORTLESS_PORT=1365 PORTLESS_HTTPS=0 PORTLESS_SYNC_HOSTS=0 portless api.coffee bash scripts/dev-local-api.sh",
     "dev:local:ui": "PORTLESS_STATE_DIR=/tmp/effect-coffee-shop-portless PORTLESS_PORT=1365 PORTLESS_HTTPS=0 PORTLESS_SYNC_HOSTS=0 portless coffee bash scripts/dev-local-ui.sh",
     "typecheck": "turbo run typecheck && bun run typecheck:infra",
-    "typecheck:infra": "tsc --noEmit -p infra/alchemy/tsconfig.json",
+    "typecheck:infra": "tsc --noEmit -p infra/alchemy/tsconfig.json && tsc --noEmit -p infra/turbo-cache/tsconfig.json",
     "lint": "turbo run lint",
     "lint:fix": "bun run --cwd apps/backend lint:fix",
     "lint:custom": "turbo run lint:custom",
@@ -148,12 +149,21 @@
     "fallow:ci": "fallow --ci",
     "fallow:health:baseline": "fallow health --save-baseline .fallow/health-baseline.json --baseline-mode identity",
     "ci:static": "turbo run typecheck lint fmt:check //#typecheck:infra",
-    "ci:backend": "turbo run test --concurrency=2 --filter=!@effect-coffee-shop/web && bun run cf:test",
-    "ci:ui": "turbo run test build --filter=@effect-coffee-shop/web"
+    "ci:backend": "turbo run test --concurrency=2 --filter=!@effect-coffee-shop/web && bun run cf:test && bun run cache:test",
+    "ci:ui": "turbo run test build --filter=@effect-coffee-shop/web",
+    "cache:dev": "alchemy dev ./infra/turbo-cache/cloudflare.ts",
+    "cache:deploy:cloudflare": "varlock run --path infra/turbo-cache/ -- alchemy deploy ./infra/turbo-cache/cloudflare.ts --stage prod",
+    "cache:deploy:aws": "varlock run --path infra/turbo-cache/ -- alchemy deploy ./infra/turbo-cache/aws.ts --stage prod",
+    "cache:test": "vitest run --config infra/turbo-cache/vitest.config.ts",
+    "cache:env": "varlock load --path infra/turbo-cache/",
+    "cache:destroy:cloudflare": "varlock run --path infra/turbo-cache/ -- alchemy destroy ./infra/turbo-cache/cloudflare.ts --stage prod",
+    "cache:destroy:aws": "varlock run --path infra/turbo-cache/ -- alchemy destroy ./infra/turbo-cache/aws.ts --stage prod",
+    "cache:run": "varlock run --path config/turbo-cache/ --"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
     "@effect-coffee-shop/coffee-runtime-cloudflare": "workspace:*",
+    "@effect-coffee-shop/turbo-cache": "workspace:*",
     "@effect/platform-bun": "catalog:",
     "@effect/platform-node": "catalog:",
     "@effect/tsgo": "0.41.0",
@@ -166,6 +176,7 @@
     "fallow": "catalog:",
     "turbo": "2.10.12",
     "typescript": "catalog:",
+    "varlock": "1.18.0",
     "vitest": "catalog:"
   },
   "packageManager": "bun@1.4.2",

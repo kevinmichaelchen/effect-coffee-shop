@@ -83,10 +83,14 @@
         "alchemy.run.ts",
         "packages/**/*.ts",
         "packages/**/tsconfig.json",
-        "packages/**/package.json"
+        "packages/**/package.json",
+        "infra/turbo-cache/**"
       ],
       "outputs": []
     }
   },
-  "globalDependencies": ["packages/.oxlintrc.json", "bunfig.toml", ".node-version"]
+  "globalDependencies": ["packages/.oxlintrc.json", "bunfig.toml", ".node-version"],
+  "remoteCache": {
+    "signature": true
+  }
 }
