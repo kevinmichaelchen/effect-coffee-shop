@@ -16,13 +16,18 @@ import {
   createCoffeeAgentAuthOptions,
   executeCoffeeAgentCapabilityEffect,
 } from "@effect-coffee-shop/coffee-auth/agent/options";
-import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
+import {
+  makeCloudflareCoffeeAppLive,
+  migrateCloudflareD1,
+} from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
 
 async function withTestDatabase<A>(effect: (db: D1Database) => Promise<A>): Promise<A> {
   const proxy = await getPlatformProxy<{ readonly DB: D1Database }>({
     bindings: [D1.local({ binding: "DB" })],
     name: "coffee-agent-auth-test",
   });
+
+  await Effect.runPromise(migrateCloudflareD1(proxy.env.DB));
 
   return effect(proxy.env.DB).finally(() => proxy.dispose());
 }

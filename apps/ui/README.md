@@ -28,6 +28,9 @@ bun run dev
 
 The UI runs on `http://localhost:5173` and proxies `/api/*` to `http://localhost:3000`.
 
+When Alchemy hosts Vite (`alchemy dev`, deploys, or `bun run cf:test`), the proxy is
+disabled and the emulated Cloudflare Worker serves `/api` and `/mcp` directly.
+
 ## Portless Subdomains
 
 Install `portless` globally once:

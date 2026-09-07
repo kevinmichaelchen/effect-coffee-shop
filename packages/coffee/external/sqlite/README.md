@@ -11,12 +11,13 @@ See [`coffee-core`](../../core) for the ports implemented by this package.
 
 ## Exports
 
-| Name                                                            | Description                                        |
-| --------------------------------------------------------------- | -------------------------------------------------- |
-| [`SqlCoffeeAppLive`](./src/bun/live.ts)                         | Bun SQLite Coffee application layer.               |
-| [`SqlCoffeeRepositoriesLive`](./src/sql/live.ts)                | Shared SQL-backed Coffee repositories and cart.    |
-| [`makeCloudflareCoffeeAppLive`](./src/cloudflare/live.ts)       | Builds the Cloudflare D1 Coffee application layer. |
-| [`makeCloudflareSqlCoffeeSchemaLive`](./src/cloudflare/live.ts) | Builds the Cloudflare D1 schema readiness layer.   |
+| Name                                                        | Description                                                                     |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| [`SqlCoffeeAppLive`](./src/bun/live.ts)                     | Bun SQLite Coffee application layer.                                            |
+| [`SqlCoffeeRepositoriesLive`](./src/sql/live.ts)            | Shared SQL-backed Coffee repositories and cart.                                 |
+| [`makeCloudflareCoffeeAppLive`](./src/cloudflare/live.ts)   | Builds the Cloudflare D1 Coffee application layer.                              |
+| [`CloudflareSqlCoffeeSchemaLive`](./src/cloudflare/live.ts) | Marks the D1 schema ready; Alchemy's D1 resource applies migrations at deploy.  |
+| [`migrateCloudflareD1`](./src/cloudflare/live.ts)           | Applies the checked-in migrations to an empty D1 binding for tests and tooling. |
 
 ## Commands
 

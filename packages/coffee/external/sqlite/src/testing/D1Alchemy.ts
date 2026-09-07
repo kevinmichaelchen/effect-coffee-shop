@@ -9,7 +9,7 @@ import { CartRepository } from "@effect-coffee-shop/coffee-core/application/port
 import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
 import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
 import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
-import { makeCloudflareSqlCoffeeSchemaLive } from "../cloudflare/live.ts";
+import { CloudflareSqlCoffeeSchemaLive, migrateCloudflareD1 } from "../cloudflare/live.ts";
 import { SqlCoffeeRepositoriesLive } from "../sql/live.ts";
 
 type RepositoryServices =
@@ -34,9 +34,10 @@ export const createSqlCoffeeRepositoriesTestHarness =
   async (): Promise<SqlCoffeeRepositoriesTestHarness> => {
     const proxy = await createD1AlchemyProxy();
     const db = proxy.env.DB;
+    await Effect.runPromise(migrateCloudflareD1(db));
     const repositoryLayer = SqlCoffeeRepositoriesLive.pipe(
       Layer.provide(D1Client.layer({ db })),
-      Layer.provide(makeCloudflareSqlCoffeeSchemaLive(db)),
+      Layer.provide(CloudflareSqlCoffeeSchemaLive),
     );
 
     const repositories = await Effect.runPromise(

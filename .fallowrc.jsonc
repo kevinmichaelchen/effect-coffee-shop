@@ -4,7 +4,6 @@
   "entry": [
     "alchemy.run.ts",
     "apps/backend/src/cloudflare/worker.ts",
-    "apps/backend/src/cloudflare/mcp-miniflare-worker.ts",
     "apps/backend/src/bun/*.ts",
     "apps/backend/scripts/*.ts",
     "apps/backend/src/**/*.test.ts",

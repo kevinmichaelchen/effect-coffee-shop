@@ -40,7 +40,7 @@ bun run --cwd apps/backend fmt:check
 
 ## Local Test Suite
 
-The backend tests are local-only. Cloudflare-shaped coverage runs through Miniflare, not a real
+The backend tests are local-only. Cloudflare-shaped coverage runs through Alchemy's local workerd emulation, not a real
 Cloudflare account, and assistant/model tests use fake local providers.
 
 Use the root full-local gate when you want unit, integration, Storybook browser, custom lint,

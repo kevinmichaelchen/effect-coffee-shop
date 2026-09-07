@@ -1,9 +1,13 @@
 import type { D1Database } from "@cloudflare/workers-types";
+import * as Effect from "effect/Effect";
 import { D1 } from "@alchemy.run/cloudflare-runtime/core/bindings";
 import { getPlatformProxy } from "@alchemy.run/cloudflare-runtime/core/platform-proxy";
 import { describe, expect, it } from "vitest";
 import { anonymousActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import { makeCloudflareCoffeeAppLive } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
+import {
+  makeCloudflareCoffeeAppLive,
+  migrateCloudflareD1,
+} from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
 import {
   createCloudflareAuth,
   resolveCloudflareActor,
@@ -19,6 +23,8 @@ async function withTestDatabase<A>(effect: (db: D1Database) => Promise<A>): Prom
     bindings: [D1.local({ binding: "DB" })],
     name: "coffee-better-auth-test",
   });
+
+  await Effect.runPromise(migrateCloudflareD1(proxy.env.DB));
 
   return effect(proxy.env.DB).finally(() => proxy.dispose());
 }

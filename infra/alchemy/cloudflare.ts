@@ -160,7 +160,7 @@ export default Alchemy.Stack(
     });
 
     const coffeeDb = yield* Cloudflare.D1.Database("coffee-db", {
-      migrationsDir: "./packages/coffee/external/sqlite/src/sql/migrations",
+      migrations: "./packages/coffee/external/sqlite/src/sql/migrations",
     });
     const secretsStore = yield* Cloudflare.SecretsStore.Store("coffee-secrets");
     const betterAuthStoreSecret = yield* Cloudflare.SecretsStore.Secret(
@@ -209,7 +209,13 @@ export default Alchemy.Stack(
         runWorkerFirst: ["/.well-known/agent-configuration", "/api", "/api/*", "/mcp", "/mcp/*"],
       },
       env: {
-        [cloudflareBindingNames.ai]: Cloudflare.Workers.AI(cloudflareBindingNames.ai),
+        // Workers AI has no local emulator: Alchemy proxies the binding to the
+        // real Cloudflare API even under `alchemy dev`. Only attach it when an
+        // assistant model is configured so local stacks and `bun run cf:test`
+        // never reach a real account.
+        ...(assistantModel === undefined
+          ? {}
+          : { [cloudflareBindingNames.ai]: Cloudflare.Workers.AI(cloudflareBindingNames.ai) }),
         [cloudflareBindingNames.db]: coffeeDb,
         [cloudflareEnvNames.aiGatewayId]: assistantGateway?.gatewayId ?? "",
         [cloudflareEnvNames.betterAuthSecret]: betterAuthStoreSecret,

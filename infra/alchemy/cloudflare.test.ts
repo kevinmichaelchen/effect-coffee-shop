@@ -12,6 +12,10 @@ import Stack from "./cloudflare.ts";
 const { afterAll, beforeAll, deploy, destroy, test } = Test.make({
   dev: true,
   providers: Cloudflare.providers(),
+  // Run the local providers in-process. Behind Alchemy's RPC sidecar the
+  // Vite-hosted Worker deploys and serves fine, but `destroy(Stack)` never
+  // returns, so the suite dies on the afterAll timeout.
+  sidecar: false,
   state: Alchemy.localState(),
 });
 
