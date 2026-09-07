@@ -148,7 +148,7 @@
     "fallow:ci": "fallow --ci",
     "fallow:health:baseline": "fallow health --save-baseline .fallow/health-baseline.json --baseline-mode identity",
     "ci:static": "turbo run typecheck lint fmt:check //#typecheck:infra",
-    "ci:backend": "turbo run test --filter=!@effect-coffee-shop/web && bun run cf:test",
+    "ci:backend": "turbo run test --concurrency=2 --filter=!@effect-coffee-shop/web && bun run cf:test",
     "ci:ui": "turbo run test build --filter=@effect-coffee-shop/web"
   },
   "devDependencies": {
