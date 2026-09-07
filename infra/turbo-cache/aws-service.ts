@@ -53,7 +53,14 @@ export default class CacheApi extends AWS.ECS.Service<CacheApi>()(
       desiredCount: 1,
       image: "oven/bun:1.4.2",
       loadBalancer: { domain, health: { "3000/http": { path: "/health" } } },
-      env: { CACHE_TEAM: config.team, CACHE_MAX_BYTES: String(config.maxBytes) },
+      env: {
+        CACHE_TEAM: config.team,
+        CACHE_MAX_BYTES: String(config.maxBytes),
+        // ECS resolves secret values at task startup. Version changes must
+        // change the task definition so a token rotation rolls the service.
+        CACHE_WRITE_TOKEN_VERSION: writeSecret.versionId,
+        CACHE_READ_TOKEN_VERSION: readSecret.versionId,
+      },
       secrets: { CACHE_WRITE_TOKEN: writeSecret.secretArn, CACHE_READ_TOKEN: readSecret.secretArn },
       logging: { retention: "2 weeks" },
     };
