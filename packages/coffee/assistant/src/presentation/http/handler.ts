@@ -6,15 +6,11 @@
 import { toServerSentEventsResponse } from "@tanstack/ai";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
+import * as Fiber from "effect/Fiber";
 import * as FiberSet from "effect/FiberSet";
 import * as Layer from "effect/Layer";
 import * as Context from "effect/Context";
-import * as Scope from "effect/Scope";
-import {
-  HttpObservabilityLive,
-  runHttpEffect,
-} from "@effect-coffee-shop/http-routing/observability";
+import { HttpObservabilityLive } from "@effect-coffee-shop/http-routing/observability";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/http-routing/request-services";
 import type { CoffeeAppRunner } from "@effect-coffee-shop/coffee-actions/execute";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
@@ -97,35 +93,35 @@ export async function handleAssistantRequest(
 
   const abortController = connectAbortSignal(request.signal);
   const queue = createAssistantChunkQueue<AssistantStreamChunk>(abortController.signal);
-
-  const assistantScope = Scope.makeUnsafe("parallel");
-  const runAssistant = Effect.runSync(
-    FiberSet.makeRuntimePromise<never, void, unknown>().pipe(
-      Effect.provideService(Scope.Scope, assistantScope),
-    ),
-  );
-  const closeAssistantScope = () => {
-    void Effect.runPromise(Scope.close(assistantScope, Exit.void));
+  const assistant = abortController.signal.aborted
+    ? Effect.void
+    : streamAssistantResponse({
+        actor: options.actor,
+        appLayer: options.appLayer,
+        body,
+        gatewayEnabled: options.gatewayEnabled ?? false,
+        model: options.model,
+        queue,
+      }).pipe(
+        Effect.provide(options.modelLayer),
+        Effect.provide(HttpObservabilityLive),
+        Effect.matchCauseEffect({
+          onFailure: (cause) => Effect.sync(() => queue.fail(Cause.squash(cause))),
+          onSuccess: () => Effect.void,
+        }),
+        Effect.scoped,
+      );
+  const fiber = Effect.runFork(assistant);
+  const interruptAssistant = () => {
+    Effect.runFork(Fiber.interrupt(fiber));
   };
-  abortController.signal.addEventListener("abort", closeAssistantScope, { once: true });
-
-  void runAssistant(
-    streamAssistantResponse({
-      actor: options.actor,
-      appLayer: options.appLayer,
-      body,
-      gatewayEnabled: options.gatewayEnabled ?? false,
-      model: options.model,
-      queue,
-    }).pipe(
-      Effect.provide(options.modelLayer),
-      Effect.provide(HttpObservabilityLive),
-      Effect.matchCauseEffect({
-        onFailure: (cause) => Effect.sync(() => queue.fail(Cause.squash(cause))),
-        onSuccess: () => Effect.void,
-      }),
-    ),
-  ).finally(closeAssistantScope);
+  abortController.signal.addEventListener("abort", interruptAssistant, { once: true });
+  if (abortController.signal.aborted) {
+    interruptAssistant();
+  }
+  fiber.addObserver(() => {
+    abortController.signal.removeEventListener("abort", interruptAssistant);
+  });
 
   return toServerSentEventsResponse(queue.stream, {
     abortController,
@@ -137,6 +133,8 @@ export async function handleAssistantRequest(
 
 function streamAssistantResponse(input: PreparedAssistantRequest) {
   return Effect.gen(function* () {
+    const activityFibers = yield* FiberSet.make<void, never>();
+    const runActivity = yield* FiberSet.runtime(activityFibers)<never>();
     const messageId = createAssistantStreamId("msg");
     const runId = createAssistantStreamId("chat");
     const runApp = createCoffeeAppRunner(input.appLayer, input.actor);
@@ -145,7 +143,7 @@ function streamAssistantResponse(input: PreparedAssistantRequest) {
     const emitActivity = (activity: AssistantToolActivity) => {
       toolCallCount += Number(activity.kind === "tool-call");
 
-      void runHttpEffect(
+      runActivity(
         logAssistantToolActivity({
           activity,
           actor: input.actor,
@@ -198,6 +196,7 @@ function streamAssistantResponse(input: PreparedAssistantRequest) {
     input.queue.push(createAssistantRunFinishedChunk(runId, input.model));
     input.queue.close();
 
+    yield* FiberSet.awaitEmpty(activityFibers);
     yield* logAssistantRunCompleted({
       actor: input.actor,
       durationMs: performance.now() - startedAt,
@@ -226,7 +225,11 @@ function createCoffeeAppRunner(
 
 function connectAbortSignal(signal: AbortSignal): AbortController {
   const abortController = new AbortController();
-  signal.addEventListener("abort", () => abortController.abort(), { once: true });
+  if (signal.aborted) {
+    abortController.abort();
+  } else {
+    signal.addEventListener("abort", () => abortController.abort(), { once: true });
+  }
   return abortController;
 }
 

@@ -37,7 +37,7 @@ export const AppErrorSchema = Schema.Union([
   StaffRoleRequiredError,
 ]).annotate({ identifier: "AppError" });
 
-export const EmptyActionInputSchema = Schema.Struct({});
+export const EmptyActionInputSchema = Schema.Record(Schema.String, Schema.Never);
 
 export const OrderIdActionInputSchema = Schema.Struct({
   orderId: OrderIdSchema.annotate({

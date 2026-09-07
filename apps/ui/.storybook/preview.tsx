@@ -43,8 +43,6 @@ const preview: Preview = {
           ["RetroUI", "Forms", "Feedback"],
           "Coffee Shop",
           ["Navigation", "Customer", "Barista", "Screens"],
-          "Assistant",
-          ["Blocks", "Screens"],
         ],
       },
     },

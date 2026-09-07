@@ -160,7 +160,7 @@ Environment examples live in:
 - [`.env.alchemy.example`](./.env.alchemy.example): Alchemy state and provider
   variables.
 
-Local Beanline assistant setup is documented in [`apps/ui`](./apps/ui) and
+Local assistant setup is documented in
 [`packages/coffee/assistant`](./packages/coffee/assistant).
 
 ## Deployment

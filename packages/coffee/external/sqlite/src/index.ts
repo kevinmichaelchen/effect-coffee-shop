@@ -4,7 +4,8 @@
  * @module
  */
 export {
+  CloudflareSqlCoffeeSchemaLive,
   makeCloudflareCoffeeAppLive,
-  makeCloudflareSqlCoffeeSchemaLive,
+  migrateCloudflareD1,
 } from "./cloudflare/live.ts";
 export { SqlCoffeeAppLive, SqlCoffeeRepositoriesLive } from "./sql/live.ts";

@@ -1,21 +1,11 @@
 import { NotFoundPage } from "#app/NotFoundPage.tsx";
-import { AssistantLandingPage } from "#features/assistant/components/AssistantLandingPage.tsx";
-import { AgentApprovalPage } from "#features/auth/components/AgentApprovalPage.tsx";
 import { CoffeeCustomerPage } from "#features/coffee-shop/components/CoffeeCustomerPage.tsx";
 import { CoffeeStaffPage } from "#features/coffee-shop/components/CoffeeStaffPage.tsx";
 import { appRoutes, isShopPath } from "#app/routes.ts";
 
 export default function App() {
   const pathname = window.location.pathname;
-  if (pathname === appRoutes.home) {
-    return <AssistantLandingPage />;
-  }
-
-  if (pathname === appRoutes.agentCapabilities) {
-    return <AgentApprovalPage />;
-  }
-
-  if (isShopPath(pathname)) {
+  if (pathname === appRoutes.home || isShopPath(pathname)) {
     return <CoffeeCustomerPage />;
   }
 

@@ -5,7 +5,6 @@
  */
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
@@ -32,6 +31,39 @@ export function decodeJsonTextEffect<
 
   return Schema.decodeUnknownEffect(Schema.fromJsonString(Schema.Unknown))(input.rawBody).pipe(
     Effect.flatMap(decodeResponse),
+    Effect.catchTag("SchemaError", () =>
+      Effect.fail(
+        new AssistantModelResponseDecodeError({
+          message: `${input.provider} returned an unexpected response body.`,
+          provider: input.provider,
+        }),
+      ),
+    ),
+  );
+}
+
+export function decodeJsonResponseEffect<
+  SchemaType extends Schema.ConstraintDecoder<unknown, never>,
+>(input: {
+  readonly provider: string;
+  readonly response: HttpClientResponse.HttpClientResponse;
+  readonly reportInput?: boolean;
+  readonly schema: SchemaType;
+}) {
+  const decodeResponse =
+    input.reportInput === true
+      ? HttpClientResponse.schemaBodyJson(input.schema, { reportInput: true })
+      : HttpClientResponse.schemaBodyJson(input.schema);
+
+  return decodeResponse(input.response).pipe(
+    Effect.catchTag("HttpClientError", () =>
+      Effect.fail(
+        new AssistantModelResponseDecodeError({
+          message: `${input.provider} returned an unexpected response body.`,
+          provider: input.provider,
+        }),
+      ),
+    ),
     Effect.catchTag("SchemaError", () =>
       Effect.fail(
         new AssistantModelResponseDecodeError({
@@ -94,7 +126,7 @@ function postJson(input: {
       HttpClientRequest.post(input.url).pipe(HttpClientRequest.bearerToken(bearerToken)),
   }).pipe(HttpClientRequest.acceptJson);
 
-  return HttpClientRequest.bodyJson(request, input.body).pipe(
+  return HttpClientRequest.schemaBodyJson(Schema.Unknown)(request, input.body).pipe(
     Effect.mapError(
       () =>
         new AssistantModelRequestError({
@@ -136,9 +168,11 @@ export function postJsonResponse<A, E>(input: {
       url: input.url,
     });
 
-    return yield* Match.value(response.status >= 200 && response.status < 300).pipe(
-      Match.when(true, () => input.onResponse(response)),
-      Match.orElse(() => input.onStatusError(response)),
+    return yield* HttpClientResponse.filterStatusOk(response).pipe(
+      Effect.matchEffect({
+        onFailure: () => input.onStatusError(response),
+        onSuccess: input.onResponse,
+      }),
     );
   });
 }

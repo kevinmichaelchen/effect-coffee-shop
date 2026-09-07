@@ -10,10 +10,7 @@ const meta = {
     activeOrders: 3,
     badgeLabel: "Coffee shop",
     footerLabel: "Workspace navigation and live queue summary",
-    navLinks: [
-      { href: "/", label: "Beanline Assistant", variant: "outline" },
-      { href: "/shop", label: "Customer workspace", variant: "outline" },
-    ],
+    navLinks: [{ href: "/staff", label: "Staff queue", variant: "outline" }],
     theme: "light",
     title: "Customer workspace",
     totalOrders: 9,

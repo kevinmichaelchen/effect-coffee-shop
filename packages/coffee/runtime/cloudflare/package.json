@@ -6,7 +6,6 @@
   "exports": {
     ".": "./src/worker.ts",
     "./env": "./src/env.ts",
-    "./mcp-miniflare-worker": "./src/mcp-miniflare-worker.ts",
     "./router": "./src/router.ts",
     "./worker": "./src/worker.ts"
   },
@@ -25,7 +24,6 @@
     "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-backend": "workspace:*",
     "@effect-coffee-shop/coffee-core": "workspace:*",
-    "@effect-coffee-shop/coffee-external-in-memory": "workspace:*",
     "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
     "@effect-coffee-shop/coffee-http": "workspace:*",
     "@effect-coffee-shop/coffee-mcp": "workspace:*",
@@ -34,8 +32,8 @@
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@alchemy.run/cloudflare-runtime": "catalog:",
     "lintcn": "catalog:",
-    "miniflare": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

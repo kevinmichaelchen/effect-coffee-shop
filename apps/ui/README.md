@@ -8,7 +8,6 @@ This repo uses Bun workspaces, so install dependencies once from the repo root w
 
 - React + Vite
 - RetroUI components from `retroui.dev`
-- TanStack AI React client over a same-origin Worker route
 - TanStack Query for API state
 - Better Auth passkey sign-in for customer and staff workspaces
 - strict `oxlint` + `lintcn` + ESLint checks with complexity, function-length, and size limits
@@ -28,6 +27,9 @@ bun run dev
 ```
 
 The UI runs on `http://localhost:5173` and proxies `/api/*` to `http://localhost:3000`.
+
+When Alchemy hosts Vite (`alchemy dev`, deploys, or `bun run cf:test`), the proxy is
+disabled and the emulated Cloudflare Worker serves `/api` and `/mcp` directly.
 
 ## Portless Subdomains
 
@@ -67,15 +69,6 @@ To override only the dev proxy target, set:
 ```bash
 VITE_COFFEE_PROXY_TARGET=http://api.coffee.localhost:1365
 ```
-
-For the assistant to work against the local Bun backend, also set:
-
-```bash
-CLOUDFLARE_ACCOUNT_ID=...
-CLOUDFLARE_API_TOKEN=...
-```
-
-The deployed Cloudflare Worker uses its `AI` binding instead and does not need those local REST credentials.
 
 If you want the local UI to exercise passkey auth through the Bun backend, also set:
 

@@ -56,8 +56,8 @@ export default Alchemy.Stack(
         lockfile: uiBuild.lockfile,
         output: uiBuild.output,
       },
-      router: {
-        instance: router,
+      domain: {
+        router,
       },
       invalidation: {
         paths: "all",
@@ -70,8 +70,8 @@ export default Alchemy.Stack(
 
     return {
       apiUrl,
-      assetVersion: website.files.version,
-      bucketName: website.bucket.bucketName,
+      assetVersion: website.files?.version,
+      bucketName: website.bucket?.bucketName,
       distributionId: router.distribution.distributionId,
       url: router.url,
     };

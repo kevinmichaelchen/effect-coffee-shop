@@ -1,5 +1,6 @@
 import type { D1Database } from "@cloudflare/workers-types";
-import { Miniflare } from "miniflare";
+import { D1 } from "@alchemy.run/cloudflare-runtime/core/bindings";
+import { getPlatformProxy } from "@alchemy.run/cloudflare-runtime/core/platform-proxy";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { D1Client } from "@effect/sql-d1";
@@ -8,7 +9,7 @@ import { CartRepository } from "@effect-coffee-shop/coffee-core/application/port
 import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
 import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
 import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
-import { makeCloudflareSqlCoffeeSchemaLive } from "../cloudflare/live.ts";
+import { CloudflareSqlCoffeeSchemaLive, migrateCloudflareD1 } from "../cloudflare/live.ts";
 import { SqlCoffeeRepositoriesLive } from "../sql/live.ts";
 
 type RepositoryServices =
@@ -23,22 +24,20 @@ export type SqlCoffeeRepositoriesTestHarness = {
   readonly dispose: () => Promise<void>;
 };
 
-const createD1Miniflare = () =>
-  new Miniflare({
-    modules: true,
-    d1Databases: {
-      DB: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    },
-    script: "",
+const createD1AlchemyProxy = () =>
+  getPlatformProxy<{ readonly DB: D1Database }>({
+    bindings: [D1.local({ binding: "DB" })],
+    name: "coffee-sql-repositories-test",
   });
 
 export const createSqlCoffeeRepositoriesTestHarness =
   async (): Promise<SqlCoffeeRepositoriesTestHarness> => {
-    const miniflare = createD1Miniflare();
-    const db: D1Database = await miniflare.getD1Database("DB");
+    const proxy = await createD1AlchemyProxy();
+    const db = proxy.env.DB;
+    await Effect.runPromise(migrateCloudflareD1(db));
     const repositoryLayer = SqlCoffeeRepositoriesLive.pipe(
       Layer.provide(D1Client.layer({ db })),
-      Layer.provide(makeCloudflareSqlCoffeeSchemaLive(db)),
+      Layer.provide(CloudflareSqlCoffeeSchemaLive),
     );
 
     const repositories = await Effect.runPromise(
@@ -64,19 +63,19 @@ export const createSqlCoffeeRepositoriesTestHarness =
 
     const reset = () =>
       db
-        .batch([
-          db.prepare("DELETE FROM checkout_session_items"),
-          db.prepare("DELETE FROM checkout_sessions"),
-          db.prepare("DELETE FROM cart_items"),
-          db.prepare("DELETE FROM carts"),
-          db.prepare("DELETE FROM order_items"),
-          db.prepare("DELETE FROM orders"),
-        ])
+        .exec(`
+          DELETE FROM checkout_session_items;
+          DELETE FROM checkout_sessions;
+          DELETE FROM cart_items;
+          DELETE FROM carts;
+          DELETE FROM order_items;
+          DELETE FROM orders;
+        `)
         .then(() => undefined);
 
     return {
       run,
       reset,
-      dispose: () => miniflare.dispose(),
+      dispose: () => proxy.dispose(),
     };
   };

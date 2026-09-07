@@ -8,10 +8,11 @@ import type {
   AiTextGenerationOutput,
   D1Database,
 } from "@cloudflare/workers-types";
+import { D1 } from "@alchemy.run/cloudflare-runtime/core/bindings";
+import { getPlatformProxy } from "@alchemy.run/cloudflare-runtime/core/platform-proxy";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as Effect from "effect/Effect";
-import { Miniflare } from "miniflare";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   readCloudflareRuntime,
@@ -35,24 +36,21 @@ const makeSecretBinding = (value: string): SecretValueBinding => ({
 });
 
 let database: D1Database;
-let disposeMiniflare: () => Promise<void>;
+let disposeAlchemy: () => Promise<void>;
 
 describe("cloudflare runtime config", () => {
   beforeAll(async () => {
-    const miniflare = new Miniflare({
-      d1Databases: {
-        DB: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      },
-      modules: true,
-      script: "",
+    const proxy = await getPlatformProxy<{ readonly DB: D1Database }>({
+      bindings: [D1.local({ binding: "DB" })],
+      name: "coffee-cloudflare-runtime-config-test",
     });
 
-    database = await miniflare.getD1Database("DB");
-    disposeMiniflare = async () => miniflare.dispose();
+    database = proxy.env.DB;
+    disposeAlchemy = proxy.dispose;
   });
 
   afterAll(async () => {
-    await disposeMiniflare();
+    await disposeAlchemy();
   });
 
   it("normalizes optional strings and staff ids", async () => {

@@ -21,6 +21,3 @@ storybook-static
 .sqlfu
 **/.sqlfu
 **/.prime
-
-# Fiberplane local issue tracking
-.fp/

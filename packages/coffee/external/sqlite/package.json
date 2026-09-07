@@ -36,10 +36,10 @@
     "sqlfu": "catalog:"
   },
   "devDependencies": {
+    "@alchemy.run/cloudflare-runtime": "catalog:",
     "@cloudflare/workers-types": "catalog:",
     "@types/bun": "catalog:",
     "lintcn": "catalog:",
-    "miniflare": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

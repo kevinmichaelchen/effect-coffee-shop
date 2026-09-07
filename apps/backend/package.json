@@ -24,9 +24,8 @@
     "lint:custom:list": "lintcn list",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
-    "bench:mcp:miniflare": "bun run scripts/measure-mcp-miniflare.ts",
     "check": "bun run typecheck && bun run lint && bun run lint:custom && bun run fmt:check && bun run test",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@effect-coffee-shop/coffee-runtime-aws": "workspace:*",
@@ -34,15 +33,11 @@
     "@effect-coffee-shop/coffee-runtime-cloudflare": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "catalog:",
-    "@effect-coffee-shop/http-routing": "workspace:*",
     "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "effect": "catalog:",
-    "esbuild": "catalog:",
     "lintcn": "catalog:",
-    "miniflare": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

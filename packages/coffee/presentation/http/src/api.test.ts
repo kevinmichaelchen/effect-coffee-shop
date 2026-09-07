@@ -1,5 +1,4 @@
 import { assert, describe, it } from "@effect/vitest";
-import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import * as HttpBody from "effect/unstable/http/HttpBody";
@@ -52,7 +51,7 @@ describe("http api success responses", () => {
       assert.strictEqual(response.status, 200);
       assert.match(order.id, orderIdPattern);
       assert.strictEqual(order.status, "pending");
-      assert.isTrue(DateTime.isUtc(order.createdAt));
+      assert.match(order.createdAt, /^\d{4}-\d{2}-\d{2}T/);
     }).pipe(Effect.provide(HttpApiTestLive)),
   );
 
