@@ -23,7 +23,7 @@ export default class CacheApi extends Cloudflare.Worker<CacheApi>()(
     const config = yield* cacheConfig;
     return {
       main: import.meta.filename,
-      compatibility: { flags: ["nodejs_compat"] },
+      compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
       env: {
         CACHE_TEAM: config.team,
         CACHE_WRITE_TOKEN: config.writeToken,
@@ -49,5 +49,5 @@ export default class CacheApi extends Cloudflare.Worker<CacheApi>()(
         );
       }),
     };
-  }).pipe(Effect.provide(Cloudflare.R2.ReadWriteBucketBinding)),
+  }).pipe(Effect.provide([Cloudflare.R2.ReadWriteBucketBinding, Cloudflare.Telemetry()])),
 ) {}

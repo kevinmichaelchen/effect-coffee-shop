@@ -175,10 +175,12 @@ Environment examples live in:
 Infrastructure is managed with Alchemy.
 
 ```bash
-bun run cf:configure
-bun run cf:login
-bun run infra:dev -- --profile default
-bun run infra:deploy -- --profile default
+bun run cf:profile:edit --profile default
+bun run infra:dev --profile default
+# Choose the deployment stage.
+export ALCHEMY_STAGE=dev_yourname
+bun run infra:plan --profile default
+bun run infra:deploy --profile default
 ```
 
 [`alchemy.run.ts`](./alchemy.run.ts) is the deploy-target selector. It exports
