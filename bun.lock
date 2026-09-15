@@ -6,21 +6,13 @@
       "name": "effect-coffee-shop",
       "devDependencies": {
         "@cloudflare/workers-types": "catalog:",
-        "@effect/platform-bun": "catalog:",
-        "@effect/platform-node": "catalog:",
         "@effect/tsgo": "0.41.0",
         "@j178/prek": "0.5.3",
-        "@mpsuesser/oxlint-plugin-effect": "catalog:",
-        "@types/bun": "catalog:",
-        "@types/node": "catalog:",
         "alchemy": "catalog:",
         "fallow": "catalog:",
         "knip": "6.35.1",
         "oxfmt": "catalog:",
-        "oxlint": "catalog:",
-        "oxlint-tsgolint": "catalog:",
         "turbo": "2.10.12",
-        "typescript": "catalog:",
         "varlock": "1.18.0",
       },
     },
@@ -38,7 +30,6 @@
         "@types/bun": "catalog:",
         "@types/node": "catalog:",
         "effect": "catalog:",
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -148,7 +139,6 @@
         "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
         "@mpsuesser/oxlint-plugin-effect": "catalog:",
         "@types/bun": "catalog:",
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -167,7 +157,6 @@
         "effect": "catalog:",
       },
       "devDependencies": {
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -179,14 +168,13 @@
       "name": "@effect-coffee-shop/coffee-core",
       "version": "0.1.0",
       "dependencies": {
-        "@effect/vitest": "catalog:",
         "@just-be/effect-typed-id": "0.5.0",
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@effect/vitest": "catalog:",
         "@mpsuesser/oxlint-plugin-effect": "catalog:",
         "@types/bun": "catalog:",
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -205,10 +193,10 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@effect-coffee-shop/coffee-testing": "workspace:*",
         "@electric-sql/pglite": "catalog:",
         "@types/bun": "catalog:",
         "drizzle-kit": "catalog:",
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -225,9 +213,9 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@effect-coffee-shop/coffee-testing": "workspace:*",
         "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -251,9 +239,9 @@
       "devDependencies": {
         "@alchemy.run/cloudflare-runtime": "catalog:",
         "@cloudflare/workers-types": "catalog:",
+        "@effect-coffee-shop/coffee-testing": "workspace:*",
         "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -272,7 +260,6 @@
         "@effect/vitest": "catalog:",
         "@mpsuesser/oxlint-plugin-effect": "catalog:",
         "@types/bun": "catalog:",
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -289,7 +276,6 @@
       },
       "devDependencies": {
         "@types/bun": "catalog:",
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -310,7 +296,6 @@
         "@effect/platform-node": "catalog:",
         "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -328,7 +313,6 @@
       },
       "devDependencies": {
         "@types/bun": "catalog:",
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -354,7 +338,6 @@
         "effect": "catalog:",
       },
       "devDependencies": {
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -378,7 +361,6 @@
       },
       "devDependencies": {
         "@types/bun": "catalog:",
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -404,7 +386,6 @@
       "devDependencies": {
         "@alchemy.run/cloudflare-runtime": "catalog:",
         "@effect/vitest": "catalog:",
-        "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -419,7 +400,23 @@
         "effect": "catalog:",
       },
       "devDependencies": {
-        "lintcn": "catalog:",
+        "oxfmt": "catalog:",
+        "oxlint": "catalog:",
+        "oxlint-tsgolint": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
+    "packages/coffee/testing": {
+      "name": "@effect-coffee-shop/coffee-testing",
+      "version": "0.1.0",
+      "dependencies": {
+        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "@effect/vitest": "catalog:",
+        "effect": "catalog:",
+      },
+      "devDependencies": {
+        "@types/bun": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -435,6 +432,19 @@
       },
       "devDependencies": {
         "@types/bun": "catalog:",
+        "oxfmt": "catalog:",
+        "oxlint": "catalog:",
+        "oxlint-tsgolint": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
+    "packages/tooling": {
+      "name": "@effect-coffee-shop/tooling",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@mpsuesser/oxlint-plugin-effect": "catalog:",
+        "@types/node": "catalog:",
         "lintcn": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
@@ -736,11 +746,15 @@
 
     "@effect-coffee-shop/coffee-runtime-shared": ["@effect-coffee-shop/coffee-runtime-shared@workspace:packages/coffee/runtime/shared"],
 
+    "@effect-coffee-shop/coffee-testing": ["@effect-coffee-shop/coffee-testing@workspace:packages/coffee/testing"],
+
     "@effect-coffee-shop/http-routing": ["@effect-coffee-shop/http-routing@workspace:packages/http-routing"],
 
     "@effect-coffee-shop/infra-alchemy": ["@effect-coffee-shop/infra-alchemy@workspace:infra/alchemy"],
 
     "@effect-coffee-shop/infra-turbo-cache": ["@effect-coffee-shop/infra-turbo-cache@workspace:infra/turbo-cache"],
+
+    "@effect-coffee-shop/tooling": ["@effect-coffee-shop/tooling@workspace:packages/tooling"],
 
     "@effect-coffee-shop/turbo-cache": ["@effect-coffee-shop/turbo-cache@workspace:packages/turbo-cache"],
 
@@ -2662,7 +2676,7 @@
 
     "unbash": ["unbash@4.0.11", "", {}, "sha512-FoSOKV7NEofQSkAefMVHam4ZPKYMxjAydxiV72UFEDNV/YofxjGfiZ2A9pZjdL/lRJzTjcu4PABo1JYJX8N5iQ=="],
 
-    "undici": ["undici@8.10.0", "", {}, "sha512-HvltHd7avK13QIw/oLe4qoOLyoVSoafqJ2jYOrtMRBkbYT31eiBQ8O0ehRKZiEZCMEyLFQNIADpgCWC5fALvYQ=="],
+    "undici": ["undici@7.29.0", "", {}, "sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw=="],
 
     "undici-types": ["undici-types@8.3.0", "", {}, "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="],
 
@@ -2762,6 +2776,8 @@
 
     "@better-auth/passkey/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
 
+    "@effect/platform-node/undici": ["undici@8.10.0", "", {}, "sha512-HvltHd7avK13QIw/oLe4qoOLyoVSoafqJ2jYOrtMRBkbYT31eiBQ8O0ehRKZiEZCMEyLFQNIADpgCWC5fALvYQ=="],
+
     "@effect/platform-node-shared/ws": ["ws@8.21.3", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw=="],
 
     "@effect/sql-d1/@cloudflare/workers-types": ["@cloudflare/workers-types@5.20260826.1", "", {}, "sha512-hyW0QHvJYKhsMTAx1YZkbhcXBr17Brl1xZwvVExYmB5pAExJCCzAEouKNGwag2H+yBlqLay3X3kZoiJoGu2DRw=="],
@@ -2821,8 +2837,6 @@
     "@types/ws/@types/node": ["@types/node@25.6.2", "", { "dependencies": { "undici-types": "~7.19.0" } }, "sha512-sokuT28dxf9JT5Kady1fsXOvI4HVpjZa95NKT5y9PNTIrs2AsobR4GFAA90ZG8M+nxVRLysCXsVj6eGC7Vbrlw=="],
 
     "@typescript-eslint/typescript-estree/semver": ["semver@7.8.5", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA=="],
-
-    "alchemy/undici": ["undici@7.29.0", "", {}, "sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw=="],
 
     "better-auth/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
 

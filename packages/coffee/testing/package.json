@@ -1,0 +1,30 @@
+{
+  "name": "@effect-coffee-shop/coffee-testing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./repository-contract": "./src/repository-contract.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "bun --bun oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "test": "vitest run --passWithNoTests",
+    "lint:custom": "bun run --cwd ../../tooling lint:custom:run --tsconfig ../coffee/testing/tsconfig.json"
+  },
+  "dependencies": {
+    "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect/vitest": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

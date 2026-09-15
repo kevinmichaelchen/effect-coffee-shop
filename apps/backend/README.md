@@ -63,3 +63,10 @@ bun run --cwd apps/backend db:check
 bun run --cwd apps/backend db:generate
 bun run --cwd apps/backend db:migrate
 ```
+
+## Shared custom lint rules
+
+The backend's Go rules live in [`packages/tooling/.lintcn`](../../packages/tooling/.lintcn).
+`bun run lint:custom:build` and `bun run lint:custom:list` at the repository root
+operate on that shared workspace. Backend and library lint scripts use it as
+the discovery directory; Turbo tracks the shared build dependency for cache invalidation.

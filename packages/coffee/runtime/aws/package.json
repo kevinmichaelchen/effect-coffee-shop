@@ -11,9 +11,9 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "bun --bun oxlint -c ../../../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
-    "lint:fix": "bun --bun oxlint -c ../../../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
-    "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/runtime/aws/tsconfig.json",
+    "lint": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "lint:fix": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
+    "lint:custom": "bun run --cwd ../../../tooling lint:custom:run --tsconfig ../coffee/runtime/aws/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run --passWithNoTests"
@@ -33,7 +33,6 @@
     "effect": "catalog:"
   },
   "devDependencies": {
-    "lintcn": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

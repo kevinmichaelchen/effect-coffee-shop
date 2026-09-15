@@ -107,13 +107,6 @@
           }
         ]
       }
-    },
-    {
-      "files": ["src/application/testing/repository-contract.ts"],
-      "rules": {
-        "vitest/valid-title": "off",
-        "vitest/expect-expect": "off"
-      }
     }
   ]
 }

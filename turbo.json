@@ -37,7 +37,8 @@
       "description": "Run workspace-specific custom lint rules.",
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
       "outputs": [],
-      "outputLogs": "new-only"
+      "outputLogs": "new-only",
+      "dependsOn": ["@effect-coffee-shop/tooling#lint:custom:build"]
     },
     "fmt": {
       "description": "Format workspace files in place.",
@@ -71,41 +72,27 @@
       "persistent": true,
       "interruptible": true
     },
-    "//#typecheck:tools": {
-      "inputs": [
-        "tsconfig.tools.json",
-        "packages/**/*.ts",
-        "packages/**/tsconfig.json",
-        "packages/**/package.json",
-        "packages/**/*.json",
-        "apps/backend/*.ts",
-        "apps/backend/*.json"
-      ],
-      "outputs": []
-    },
-    "//#lint:tools": {
-      "inputs": ["packages/oxlint.config.ts", "packages/.oxlintrc.json", "tsconfig.tools.json"],
-      "outputs": []
-    },
     "//#fmt:check:root": {
-      "inputs": [
-        "package.json",
-        "tsconfig.tools.json",
-        "knip.jsonc",
-        ".fallowrc.jsonc",
-        "turbo.json",
-        "packages/oxlint.config.ts",
-        "packages/.oxlintrc.json"
-      ],
+      "inputs": ["package.json", "knip.jsonc", ".fallowrc.jsonc", "turbo.json"],
       "outputs": []
+    },
+    "@effect-coffee-shop/tooling#lint:custom:build": {
+      "description": "Build shared Go lint rules; rule changes invalidate all custom lint tasks.",
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "@effect-coffee-shop/web#lint:custom": {
+      "description": "UI custom lint uses its own apps/ui/.lintcn rules, not the shared tooling build.",
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
     }
   },
   "globalDependencies": [
-    "packages/.oxlintrc.json",
+    "packages/tooling/.oxlintrc.json",
     "bunfig.toml",
     ".node-version",
-    "packages/oxlint.config.ts",
-    "tsconfig.tools.json"
+    "packages/tooling/oxlint.config.ts"
   ],
   "remoteCache": {
     "signature": true

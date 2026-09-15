@@ -14,11 +14,9 @@
     "exactOptionalPropertyTypes": true,
     "plugins": [
       {
-        "name": "@effect/language-service",
-        "allowedDuplicatedPackages": ["effect"]
+        "name": "@effect/language-service"
       }
-    ],
-    "resolveJsonModule": true
+    ]
   },
-  "include": ["src/**/*.ts", "*.ts"]
+  "include": ["src/**/*.ts"]
 }

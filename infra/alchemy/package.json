@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "bun --bun oxlint -c ../../packages/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "lint": "bun --bun oxlint -c ../../packages/tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run"

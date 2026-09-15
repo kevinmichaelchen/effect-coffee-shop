@@ -2,7 +2,7 @@ import * as Option from "effect/Option";
 import type { SqlCoffeeRepositoriesTestHarness } from "../testing/D1Alchemy.ts";
 import { createSqlCoffeeRepositoriesTestHarness } from "../testing/D1Alchemy.ts";
 import { afterAll, assert, beforeAll, beforeEach } from "vitest";
-import { defineRepositoryContract } from "@effect-coffee-shop/coffee-core/application/testing/repository-contract";
+import { defineRepositoryContract } from "@effect-coffee-shop/coffee-testing/repository-contract";
 
 let harness: Option.Option<SqlCoffeeRepositoriesTestHarness> = Option.none();
 

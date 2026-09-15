@@ -29,9 +29,9 @@
     "db:generate": "sqlfu --config src/sql/sqlfu.config.ts generate && oxfmt --write \"src/sql/**/*.ts\"",
     "db:migrate": "sqlfu --config src/sql/sqlfu.config.ts migrate",
     "typecheck": "tsc --noEmit",
-    "lint": "bun --bun oxlint -c ../../../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
-    "lint:fix": "bun --bun oxlint -c ../../../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
-    "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/external/sqlite/tsconfig.json",
+    "lint": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --ignore-pattern '**/.generated/**' --report-unused-disable-directives-severity error .",
+    "lint:fix": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --ignore-pattern '**/.generated/**' --report-unused-disable-directives-severity error --fix .",
+    "lint:custom": "bun run --cwd ../../../tooling lint:custom:run --tsconfig ../coffee/external/sqlite/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run --passWithNoTests"
@@ -49,9 +49,9 @@
   "devDependencies": {
     "@alchemy.run/cloudflare-runtime": "catalog:",
     "@cloudflare/workers-types": "catalog:",
+    "@effect-coffee-shop/coffee-testing": "workspace:*",
     "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
-    "lintcn": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

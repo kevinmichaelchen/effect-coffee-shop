@@ -3,16 +3,16 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { assert, describe, it } from "@effect/vitest";
-import { menuItems } from "../../domain/menu.ts";
-import { moneyFromCents } from "../../domain/money.ts";
-import { Cart } from "../../domain/cart.ts";
-import { CheckoutSession } from "../../domain/checkout-session.ts";
-import { CoffeeOrder } from "../../domain/order.ts";
-import type { PersistenceError } from "../errors.ts";
-import { CartRepository } from "../ports/CartRepository.ts";
-import { CheckoutSessionRepository } from "../ports/CheckoutSessionRepository.ts";
-import { MenuRepository } from "../ports/MenuRepository.ts";
-import { OrderRepository } from "../ports/OrderRepository.ts";
+import { menuItems } from "@effect-coffee-shop/coffee-core/domain/menu";
+import { moneyFromCents } from "@effect-coffee-shop/coffee-core/domain/money";
+import { Cart } from "@effect-coffee-shop/coffee-core/domain/cart";
+import { CheckoutSession } from "@effect-coffee-shop/coffee-core/domain/checkout-session";
+import { CoffeeOrder } from "@effect-coffee-shop/coffee-core/domain/order";
+import type { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
+import { CartRepository } from "@effect-coffee-shop/coffee-core/application/ports/CartRepository";
+import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
+import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
+import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
 
 export type RepositoryServices =
   | CartRepository

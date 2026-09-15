@@ -1,0 +1,26 @@
+{
+  "name": "@effect-coffee-shop/tooling",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "bun --bun oxlint -c oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "test": "vitest run --passWithNoTests",
+    "lint:custom:run": "lintcn lint",
+    "lint:custom:build": "lintcn build",
+    "lint:custom:list": "lintcn list"
+  },
+  "devDependencies": {
+    "@mpsuesser/oxlint-plugin-effect": "catalog:",
+    "@types/node": "catalog:",
+    "lintcn": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

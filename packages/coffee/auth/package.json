@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "bun --bun oxlint -c oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
     "lint:fix": "bun --bun oxlint -c oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
-    "lint:custom": "cd ../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/auth/tsconfig.json",
+    "lint:custom": "bun run --cwd ../../tooling lint:custom:run --tsconfig ../coffee/auth/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run --passWithNoTests"
@@ -31,7 +31,6 @@
     "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
     "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/bun": "catalog:",
-    "lintcn": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
