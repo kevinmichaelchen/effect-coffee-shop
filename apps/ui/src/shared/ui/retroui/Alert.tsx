@@ -11,10 +11,15 @@ const alertVariants = cva("relative w-full rounded border-2 p-4", {
       solid: "bg-black text-white",
     },
     status: {
-      error: "bg-red-300 text-red-800 border-red-800",
-      success: "bg-green-300 text-green-800 border-green-800",
-      warning: "bg-yellow-300 text-yellow-800 border-yellow-800",
-      info: "bg-blue-300 text-blue-800 border-blue-800",
+      error: "bg-alert-error text-alert-error-foreground border-alert-error-foreground",
+      success: "bg-alert-success text-alert-success-foreground border-alert-success-foreground",
+      warning: "bg-alert-warning text-alert-warning-foreground border-alert-warning-foreground",
+      info: "bg-alert-info text-alert-info-foreground border-alert-info-foreground",
+    },
+    surface: {
+      status: "",
+      card: "bg-card border-border",
+      background: "bg-background border-border",
     },
   },
   defaultVariants: {
@@ -24,8 +29,12 @@ const alertVariants = cva("relative w-full rounded border-2 p-4", {
 
 interface IAlertProps extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof alertVariants> {}
 
-const Alert = ({ className, variant, status, ...props }: IAlertProps) => (
-  <div role="alert" className={cn(alertVariants({ variant, status }), className)} {...props} />
+const Alert = ({ className, variant, status, surface, ...props }: IAlertProps) => (
+  <div
+    role="alert"
+    className={cn(alertVariants({ variant, status, surface }), className)}
+    {...props}
+  />
 );
 Alert.displayName = "Alert";
 

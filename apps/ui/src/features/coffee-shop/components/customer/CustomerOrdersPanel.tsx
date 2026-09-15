@@ -56,7 +56,7 @@ interface OrderGroupProps {
 
 function EmptyOrders({ message }: { message: string }) {
   return (
-    <Alert className="border-border bg-background" status="info">
+    <Alert surface="background" status="info">
       <Alert.Title>{message}</Alert.Title>
     </Alert>
   );

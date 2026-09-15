@@ -77,7 +77,8 @@
       "vaul": "^1.1.2",
       "vite": "^8.2.1",
       "vitest": "4.1.10",
-      "fallow": "3.14.0"
+      "fallow": "3.14.0",
+      "@shadcn/lint": "0.1.0"
     }
   },
   "type": "module",

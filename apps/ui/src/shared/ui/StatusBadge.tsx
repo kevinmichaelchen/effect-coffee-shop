@@ -5,10 +5,13 @@ import type { OrderStatus } from "#features/coffee-shop/lib/coffee.ts";
 
 const badgeClasses: Record<OrderStatus, string> = {
   pending: "bg-muted text-muted-foreground",
-  brewing: "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100",
-  ready: "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100",
+  brewing:
+    "bg-status-brewing text-status-brewing-foreground dark:bg-status-brewing-foreground/40 dark:text-status-brewing",
+  ready:
+    "bg-status-ready text-status-ready-foreground dark:bg-status-ready-foreground/40 dark:text-status-ready",
   "picked-up": "bg-primary text-primary-foreground",
-  cancelled: "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100",
+  cancelled:
+    "bg-status-cancelled text-status-cancelled-foreground dark:bg-status-cancelled-foreground/40 dark:text-status-cancelled",
 };
 
 interface StatusBadgeProps {
