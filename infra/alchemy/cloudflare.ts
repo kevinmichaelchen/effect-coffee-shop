@@ -6,6 +6,7 @@
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
+import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 import {
   cloudflareBindingNames,
@@ -17,7 +18,7 @@ import {
   optionalTrimmedRedacted,
   stringWithDefault,
 } from "./config.ts";
-import { coffeeStackName, repoPath } from "./shared.ts";
+import { coffeeStackName } from "./shared.ts";
 
 const state = () =>
   // oxlint-disable-next-line effect/avoid-process-env -- Alchemy state-backend bootstrap runs before the stack Effect or Config provider exists.
@@ -150,6 +151,12 @@ export default Alchemy.Stack(
     state: state(),
   },
   Effect.gen(function* () {
+    // Alchemy resolves relative paths against the working directory, which is
+    // the repository root for the `alchemy` CLI scripts but this workspace when
+    // Turbo runs the smoke test, so cross-workspace paths are anchored on the
+    // module location instead.
+    const path = yield* Path.Path;
+    const repoRoot = yield* path.fromFileUrl(new URL("../../", import.meta.url)).pipe(Effect.orDie);
     const deploySmokeChecksEnabled = yield* booleanWithDefault("COFFEE_DEPLOY_SMOKE_CHECKS", false);
     const deployMcpSmokeCheckEnabled = yield* booleanWithDefault("COFFEE_DEPLOY_SMOKE_MCP", false);
     const observabilitySamplingRate = yield* numberBetweenWithDefault({
@@ -160,7 +167,7 @@ export default Alchemy.Stack(
     });
 
     const coffeeDb = yield* Cloudflare.D1.Database("coffee-db", {
-      migrations: repoPath("packages/coffee/external/sqlite/src/sql/migrations"),
+      migrations: path.join(repoRoot, "packages/coffee/external/sqlite/src/sql/migrations"),
     });
     const secretsStore = yield* Cloudflare.SecretsStore.Store("coffee-secrets");
     const betterAuthStoreSecret = yield* Cloudflare.SecretsStore.Secret(
@@ -174,7 +181,7 @@ export default Alchemy.Stack(
     );
 
     const website = yield* Cloudflare.Website.Vite("onion", {
-      rootDir: repoPath("apps/ui"),
+      rootDir: path.join(repoRoot, "apps/ui"),
       compatibility: {
         flags: ["nodejs_compat"],
       },
