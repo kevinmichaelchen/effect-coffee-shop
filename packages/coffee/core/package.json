@@ -41,6 +41,7 @@
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/bun": "catalog:",
     "lintcn": "catalog:",
     "oxfmt": "catalog:",

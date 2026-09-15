@@ -112,6 +112,14 @@ language-service settings key, Bun-wrapped Oxlint binaries, ambient Cloudflare
 types, and externally installed Portless. Generated SQL stays in Knip's import
 graph, but unused generator-owned convenience files/exports are not cleanup
 candidates. Source-owned files and exports remain checked. Both Knip modes and
-full Fallow must pass before a push. Fallow explicitly recognizes the two React
-plugin dependencies because its Oxlint config discovery misses aliased JavaScript
-plugins; the UI lint command executes both plugins.
+full Fallow must pass before a push, and Knip treats configuration hints as
+errors. Fallow explicitly recognizes the two React plugin dependencies because
+its Oxlint config discovery misses aliased JavaScript plugins; the UI lint
+command executes both plugins. Workspaces whose `oxlint.config.ts` imports the
+Effect lint plugin declare it themselves through the catalog, so no Fallow
+exemption is needed for it. The Fallow policy detector is explicitly off because
+no rule packs are configured.
+
+prek, oxlint, oxfmt and oxlint-tsgolint are excluded from the 72-hour release-age
+policy in `bunfig.toml`, including every platform binding package, so they can be
+adopted as soon as they publish.

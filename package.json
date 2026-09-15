@@ -56,8 +56,8 @@
       "eslint-plugin-react-refresh": "^0.5.3",
       "lintcn": "^0.10.1",
       "lucide-react": "^1.30.0",
-      "oxfmt": "0.67.0",
-      "oxlint": "1.82.0",
+      "oxfmt": "0.68.0",
+      "oxlint": "1.83.0",
       "oxlint-tsgolint": "7.0.2001",
       "pglite-test": "^1.0.3",
       "playwright": "^1.62.1",
@@ -73,7 +73,8 @@
       "vaul": "^1.1.2",
       "vite": "^8.2.1",
       "vitest": "4.1.10",
-      "fallow": "3.25.0"
+      "fallow": "3.25.0",
+      "@mpsuesser/oxlint-plugin-effect": "0.5.0"
     }
   },
   "type": "module",
@@ -153,12 +154,12 @@
     "cache:destroy:aws": "varlock run --path infra/turbo-cache/ -- alchemy destroy ./infra/turbo-cache/aws.ts --stage prod",
     "cache:run": "varlock run --path config/turbo-cache/ --",
     "lint:infra": "bun --bun oxlint -c packages/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error infra alchemy.run.ts",
-    "knip": "knip --cache --include nsExports,nsTypes",
+    "knip": "knip --cache --treat-config-hints-as-errors --include nsExports,nsTypes",
     "typecheck:tools": "tsc --noEmit -p tsconfig.tools.json",
     "lint:tools": "bun --bun oxlint -c packages/oxlint.config.ts --disable-nested-config packages/oxlint.config.ts",
     "fmt:root": "oxfmt --write package.json tsconfig.tools.json knip.jsonc .fallowrc.jsonc turbo.json infra packages/oxlint.config.ts packages/.oxlintrc.json",
     "fmt:check:root": "oxfmt --check package.json tsconfig.tools.json knip.jsonc .fallowrc.jsonc turbo.json infra packages/oxlint.config.ts packages/.oxlintrc.json",
-    "knip:production": "knip --cache --strict --include nsExports,nsTypes"
+    "knip:production": "knip --cache --strict --treat-config-hints-as-errors --include nsExports,nsTypes"
   },
   "dependencies": {
     "@effect-coffee-shop/coffee-runtime-cloudflare": "workspace:*",
@@ -171,8 +172,8 @@
     "@effect/platform-bun": "catalog:",
     "@effect/platform-node": "catalog:",
     "@effect/tsgo": "0.41.0",
-    "@j178/prek": "0.5.2",
-    "@mpsuesser/oxlint-plugin-effect": "0.5.0",
+    "@j178/prek": "0.5.3",
+    "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "fallow": "catalog:",

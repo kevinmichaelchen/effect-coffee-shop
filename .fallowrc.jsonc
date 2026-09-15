@@ -36,7 +36,6 @@
   ],
   // Fallow does not discover the aliased React JavaScript plugins in Oxlint JSON.
   "ignoreDependencies": [
-    "@mpsuesser/oxlint-plugin-effect",
     "oxlint-tsgolint",
     "eslint-plugin-react-hooks",
     "eslint-plugin-react-refresh",
@@ -65,6 +64,8 @@
     "unresolved-catalog-references": "error",
     "unused-dependency-overrides": "warn",
     "misconfigured-dependency-overrides": "error",
+    // No rule packs are configured; state that the policy detector is intentionally unused.
+    "policy-violation": "off",
   },
   "duplicates": {
     "mode": "mild",
