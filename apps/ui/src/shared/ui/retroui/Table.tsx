@@ -30,7 +30,7 @@ const Table = forwardRef<HTMLTableElement, HTMLAttributes<HTMLTableElement>>(
     <div className="relative h-full w-full overflow-auto">
       <table
         ref={ref}
-        className={cn("w-full caption-bottom text-sm border-2 shadow-lg", className)}
+        className={cn("w-full caption-bottom text-sm border-2 shadow-lg bg-card", className)}
         {...props}
       />
     </div>

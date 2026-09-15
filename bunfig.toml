@@ -6,6 +6,8 @@ minimumReleaseAge = 259200
 # pglite-test and its constructive-io dependency chain publish faster than the
 # release-age window; all are from the same publisher.
 minimumReleaseAgeExcludes = [
+  # Explicitly adopted launch release; version pinned in the workspace catalog.
+  "@shadcn/lint",
   "alchemy",
   "effect",
   "@effect/platform-bun",

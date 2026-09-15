@@ -1,21 +1,22 @@
 import { cn } from "#shared/lib/utils.ts";
 import type { HTMLAttributes } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 
 interface ICardProps extends HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
 
-const Card = ({ className, ...props }: ICardProps) => {
-  return (
-    <div
-      className={cn(
-        "inline-block border-2 rounded shadow-md transition-all hover:shadow-none bg-card",
-        className,
-      )}
-      {...props}
-    />
-  );
+const cardVariants = cva(
+  "inline-block border-2 rounded shadow-md transition-all hover:shadow-none",
+  {
+    variants: { surface: { card: "bg-card", background: "bg-background" } },
+    defaultVariants: { surface: "card" },
+  },
+);
+
+const Card = ({ className, surface, ...props }: ICardProps & VariantProps<typeof cardVariants>) => {
+  return <div className={cn(cardVariants({ surface }), className)} {...props} />;
 };
 
 const CardHeader = ({ className, ...props }: ICardProps) => {

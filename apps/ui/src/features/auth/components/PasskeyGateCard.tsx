@@ -73,7 +73,7 @@ function PendingPasskeyNotice({
   pendingAction,
 }: Pick<PasskeyGateCardProps, "isPending" | "pendingAction">) {
   return isPending ? (
-    <Alert className="border-border bg-background" status="info">
+    <Alert surface="background" status="info">
       <Alert.Title>{getPendingLabel(pendingAction)}</Alert.Title>
       <Alert.Description>Use your device’s passkey prompt to continue.</Alert.Description>
     </Alert>

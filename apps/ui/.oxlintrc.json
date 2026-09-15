@@ -7,7 +7,9 @@
     "typeCheck": true,
     "maxWarnings": 0
   },
-  "env": { "builtin": true },
+  "env": {
+    "builtin": true
+  },
   "rules": {
     "no-bitwise": "error",
     "no-plusplus": "error",
@@ -41,23 +43,120 @@
         "message": "useEffect is banned in the UI workspace."
       }
     ],
-    "promise-function-async": "error"
+    "promise-function-async": "error",
+    "shadcn/no-raw-colors": "error",
+    "shadcn/no-arbitrary-values": "error",
+    "shadcn/no-inline-styles": "error",
+    "shadcn/no-unknown-classes": "error",
+    "shadcn/require-static-classes": "error",
+    "shadcn/no-restyle": [
+      "error",
+      {
+        "allow": ["layout"],
+        "contracts": [
+          {
+            "pattern": "^Text$",
+            "allow": ["layout", "typography", "color", "tracking-*"]
+          },
+          {
+            "pattern": "^CardComponent(Content|Header)$",
+            "allow": ["layout", "spacing", "border-border", "border-b", "grid-cols-order-composer"]
+          },
+          {
+            "pattern": "^CardComponent(Title|Description)$",
+            "allow": ["layout", "typography"]
+          },
+          {
+            "pattern": "^TableObjCell$",
+            "allow": ["layout", "spacing", "typography"]
+          },
+          {
+            "pattern": "^DrawerComponentContent$",
+            "allow": ["layout", "border-l", "border-border", "bg-card"]
+          },
+          {
+            "pattern": "^DrawerComponentHeader$",
+            "allow": ["layout", "spacing", "border-b", "border-border", "bg-card"]
+          },
+          {
+            "pattern": "^DialogComponentDescription$",
+            "allow": ["layout", "spacing", "typography", "text-muted-foreground"]
+          }
+        ]
+      }
+    ]
   },
   "overrides": [
     {
       "files": ["src/**/*.{ts,tsx}", "vite.config.ts"],
       "rules": {
-        "complexity": ["error", { "max": 6 }],
-        "max-depth": ["error", { "max": 3 }],
-        "max-lines": ["error", { "max": 180, "skipBlankLines": true, "skipComments": true }],
+        "complexity": [
+          "error",
+          {
+            "max": 6
+          }
+        ],
+        "max-depth": [
+          "error",
+          {
+            "max": 3
+          }
+        ],
+        "max-lines": [
+          "error",
+          {
+            "max": 180,
+            "skipBlankLines": true,
+            "skipComments": true
+          }
+        ],
         "max-lines-per-function": [
           "error",
-          { "max": 45, "skipBlankLines": true, "skipComments": true }
+          {
+            "max": 45,
+            "skipBlankLines": true,
+            "skipComments": true
+          }
         ],
-        "max-params": ["error", { "max": 4 }],
-        "max-statements": ["error", { "max": 12 }],
+        "max-params": [
+          "error",
+          {
+            "max": 4
+          }
+        ],
+        "max-statements": [
+          "error",
+          {
+            "max": 12
+          }
+        ],
         "react/jsx-key": "error"
       }
+    },
+    {
+      "files": ["src/shared/ui/**/*.{ts,tsx}"],
+      "rules": {
+        "shadcn/no-restyle": "off",
+        "shadcn/no-arbitrary-values": "off",
+        "shadcn/require-static-classes": "off"
+      }
+    },
+    {
+      "files": ["src/shared/ui/retroui/Progress.tsx"],
+      "rules": {
+        "shadcn/no-inline-styles": [
+          "error",
+          {
+            "allow": ["transform"]
+          }
+        ]
+      }
     }
-  ]
+  ],
+  "jsPlugins": ["@shadcn/lint"],
+  "settings": {
+    "shadcn": {
+      "ui": "#shared/ui/retroui"
+    }
+  }
 }

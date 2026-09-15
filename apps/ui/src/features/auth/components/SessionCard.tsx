@@ -25,7 +25,7 @@ function SessionIdentity({ viewer }: { viewer: AuthenticatedViewer }) {
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="size-2 rounded-full bg-emerald-500" />
+        <span className="size-2 rounded-full bg-status-online" />
         <Text as="p" className="text-sm text-muted-foreground">
           Signed in · {viewer.kind}
         </Text>
@@ -48,7 +48,7 @@ function UserIdRow(inputProps: {
 
   return (
     <div className="flex flex-wrap items-center gap-2 pt-1">
-      <Text as="p" className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+      <Text as="p" className="text-xs uppercase tracking-label text-muted-foreground">
         User ID
       </Text>
       <code className="rounded border border-border bg-muted px-2 py-1 font-mono text-xs">
