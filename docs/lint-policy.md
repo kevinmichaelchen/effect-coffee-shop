@@ -52,7 +52,14 @@ checks and integration tests; custom lint; full Fallow; and both Knip modes.
 These commands do not depend on GitHub Actions. The prepare script installs the
 hooks in ordinary checkouts and linked worktrees.
 
-Root infrastructure and tooling checks are explicit Turbo tasks. Tool
+Root infrastructure and tooling checks are explicit Turbo tasks, and the
+pre-push script invokes them through Turbo so unchanged inputs replay from the
+local cache. The Alchemy Cloudflare smoke test and the Turbo cache worker test
+are root Turbo tasks for the same reason; their inputs cover the infrastructure
+code plus the application and package sources they bundle. Explicit Turbo input
+globs hash gitignored files too, so these tasks exclude `.turbo` logs, build
+output, and Alchemy state. Otherwise oxlint's timing lines in the replayed logs
+would invalidate the infrastructure typecheck after every real execution. Tool
 configuration files use `tsconfig.tools.json`: the Effect lint plugin has its own
 Effect dependency, so only this tooling compiler project permits that duplicate
 package. Application compiler projects keep their original strict duplication

@@ -71,12 +71,6 @@
       "persistent": true,
       "interruptible": true
     },
-    "fallow": {
-      "description": "Run repo-level Fallow codebase intelligence checks.",
-      "inputs": ["$TURBO_DEFAULT$", ".fallowrc.jsonc", "!README.md"],
-      "outputs": [],
-      "outputLogs": "new-only"
-    },
     "//#typecheck:infra": {
       "inputs": [
         "infra/alchemy/**",
@@ -86,7 +80,12 @@
         "packages/**/package.json",
         "infra/turbo-cache/**",
         "apps/backend/**",
-        "apps/ui/**"
+        "apps/ui/**",
+        "!**/.turbo/**",
+        "!**/dist/**",
+        "!**/storybook-static/**",
+        "!**/.alchemy/**",
+        "!**/node_modules/**"
       ],
       "outputs": []
     },
@@ -129,6 +128,37 @@
         "packages/.oxlintrc.json"
       ],
       "outputs": []
+    },
+    "//#cf:test": {
+      "description": "Alchemy Cloudflare stack smoke test under local emulation.",
+      "inputs": [
+        "infra/alchemy/**",
+        "alchemy.run.ts",
+        "apps/backend/**",
+        "apps/ui/**",
+        "packages/**",
+        "!**/.turbo/**",
+        "!**/dist/**",
+        "!**/storybook-static/**",
+        "!**/.alchemy/**",
+        "!**/node_modules/**"
+      ],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "//#cache:test": {
+      "description": "Turbo remote-cache worker integration test under local emulation.",
+      "inputs": [
+        "infra/turbo-cache/**",
+        "packages/turbo-cache/**",
+        "!**/.turbo/**",
+        "!**/dist/**",
+        "!**/storybook-static/**",
+        "!**/.alchemy/**",
+        "!**/node_modules/**"
+      ],
+      "outputs": [],
+      "outputLogs": "new-only"
     }
   },
   "globalDependencies": [
