@@ -37,7 +37,8 @@
     "packages/coffee/external/sqlite/src/sql/queries/.generated/**",
   ],
 
-  "ignoreDependencies": ["@mpsuesser/oxlint-plugin-effect", "oxlint-tsgolint"],
+  // Oxlint loads these plugins through configuration rather than source imports.
+  "ignoreDependencies": ["@mpsuesser/oxlint-plugin-effect", "@shadcn/lint", "oxlint-tsgolint"],
 
   "rules": {
     "unresolved-imports": "error",
