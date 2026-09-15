@@ -8,7 +8,8 @@ architecture restrictions remain in each package's `.oxlintrc.json`.
 
 Run `bun run lint` for workspace and infrastructure lint, or `bun run ci:static`
 for the same checks with formatting and TypeScript/Effect diagnostics. Turbo
-tracks the shared configuration and caches infrastructure lint as its own task.
+tracks the shared configuration; the infrastructure workspaces lint like any
+other package.
 The React UI retains its separate policy; it does not inherit backend-only rules.
 
 ## Deliberate exceptions
@@ -46,25 +47,36 @@ Repository sorting uses Effect array/order helpers.
 
 Prek owns the quality gates. `bun run hooks:run:pre-commit` checks all configured
 workspace and root formatting, lint, and compiler projects. `bun run
-hooks:run:pre-push` runs affected workspace checks, tests and builds; infrastructure
-checks and integration tests; custom lint; full Fallow; and both Knip modes.
+hooks:run:pre-push` runs affected workspace checks, tests and builds, including
+the infrastructure workspaces' integration tests; root tooling checks; custom
+lint; full Fallow; and both Knip modes.
 `bun run check` runs the complete local suite without affected-file filtering.
 These commands do not depend on GitHub Actions. The prepare script installs the
 hooks in ordinary checkouts and linked worktrees.
 
-Root infrastructure and tooling checks are explicit Turbo tasks, and the
-pre-push script invokes them through Turbo so unchanged inputs replay from the
-local cache. The Alchemy Cloudflare smoke test and the Turbo cache worker test
-are root Turbo tasks for the same reason; their inputs cover the infrastructure
-code plus the application and package sources they bundle. Explicit Turbo input
-globs hash gitignored files too, so these tasks exclude `.turbo` logs, build
-output, and Alchemy state. Otherwise oxlint's timing lines in the replayed logs
-would invalidate the infrastructure typecheck after every real execution. Tool
-configuration files use `tsconfig.tools.json`: the Effect lint plugin has its own
-Effect dependency, so only this tooling compiler project permits that duplicate
-package. Application compiler projects keep their original strict duplication
-check. Generated SQL convenience files are explicitly included in the SQLite
-compiler project even when nothing imports them.
+The Alchemy stacks (`infra/alchemy`) and the Turbo cache deployment
+(`infra/turbo-cache`) are Bun workspaces, so their typecheck, lint, format and
+test tasks are ordinary per-package Turbo tasks with gitignore-aware default
+inputs. Cross-workspace coverage comes from the package graph rather than
+input globs: the Alchemy workspace depends on the backend, the Cloudflare
+runtime and the UI it bundles, and every `test` task depends on `typecheck`,
+which depends on `^typecheck`, so an edit in any bundled package changes the
+smoke test's hash. The UI dependency exists only for that edge; Fallow and
+Knip are told to ignore it because the stack builds the UI by path instead of
+importing it. The Alchemy stack anchors its cross-workspace paths at the
+repository root so it deploys from the root scripts and tests from the
+workspace directory alike. `bun run cf:test` and `bun run cache:test` are
+filtered aliases for the two workspace test tasks.
+
+The remaining root Turbo tasks cover only root-level tooling files: the
+tooling compiler project, the shared Oxlint policy, and root configuration
+formatting. Their inputs are a few explicit files, so they need no gitignore
+reconstruction. Tool configuration files use `tsconfig.tools.json`: the Effect
+lint plugin has its own Effect dependency, so only this tooling compiler
+project permits that duplicate package. Application compiler projects keep
+their original strict duplication check. Generated SQL convenience files are
+explicitly included in the SQLite compiler project even when nothing imports
+them.
 
 ## React and test safeguards
 
@@ -85,8 +97,8 @@ The shared repository-contract factory also permits parameterized test titles.
 
 Fallow requires every reachable file to belong to an architecture zone; unused
 files fail its dead-code check.
-Infrastructure and Turbo cache implementation have explicit zones; tool
-configuration and Storybook support form a tooling zone. Production/application
+The infrastructure workspaces and the Turbo cache implementation have explicit
+zones; tool configuration and Storybook support form a tooling zone. Production/application
 zones cannot import tooling. Semantic queries are configured for all compiler
 projects and require complete evidence. The push gate runs the full scan;
 `fallow:audit` remains available for a quick, syntactic changed-file review.
@@ -103,7 +115,9 @@ for a reviewed public contract, not a general unused-code suppression.
 `bun run knip` checks the development graph, including namespace exports and
 namespace types. `bun run knip:production` additionally uses strict production
 mode, requiring direct runtime dependency declarations in the owning workspace.
-Deployment entrypoints are explicit. Package export maps exclude test files;
+Deployment entrypoints are explicit in each infrastructure workspace, and the
+backend exports its Lambda and Worker entrypoints so the Alchemy workspace can
+declare that dependency. Package export maps exclude test files;
 the core package still exports its repository-test harness and therefore declares
 `@effect/vitest` as a dependency of that public API.
 

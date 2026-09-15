@@ -17,7 +17,7 @@ import {
   optionalTrimmedRedacted,
   stringWithDefault,
 } from "./config.ts";
-import { coffeeStackName } from "./shared.ts";
+import { coffeeStackName, repoPath } from "./shared.ts";
 
 const state = () =>
   // oxlint-disable-next-line effect/avoid-process-env -- Alchemy state-backend bootstrap runs before the stack Effect or Config provider exists.
@@ -160,7 +160,7 @@ export default Alchemy.Stack(
     });
 
     const coffeeDb = yield* Cloudflare.D1.Database("coffee-db", {
-      migrations: "./packages/coffee/external/sqlite/src/sql/migrations",
+      migrations: repoPath("packages/coffee/external/sqlite/src/sql/migrations"),
     });
     const secretsStore = yield* Cloudflare.SecretsStore.Store("coffee-secrets");
     const betterAuthStoreSecret = yield* Cloudflare.SecretsStore.Secret(
@@ -174,7 +174,7 @@ export default Alchemy.Stack(
     );
 
     const website = yield* Cloudflare.Website.Vite("onion", {
-      rootDir: "apps/ui",
+      rootDir: repoPath("apps/ui"),
       compatibility: {
         flags: ["nodejs_compat"],
       },

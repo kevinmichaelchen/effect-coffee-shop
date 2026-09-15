@@ -6,7 +6,7 @@
 import * as Alchemy from "alchemy";
 import * as AWS from "alchemy/AWS";
 import * as Effect from "effect/Effect";
-import CoffeeApi from "../../apps/backend/src/aws/lambda.ts";
+import CoffeeApi from "@effect-coffee-shop/backend/aws/lambda";
 import { optionalCsv, optionalTrimmedString } from "./config.ts";
 import { coffeeStackName, uiBuild } from "./shared.ts";
 

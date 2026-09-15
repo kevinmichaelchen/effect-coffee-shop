@@ -47,8 +47,12 @@ rotating it makes old remote artifacts unusable and causes rebuilds.
 ```sh
 bun run --cwd packages/turbo-cache test
 bun run cache:test
-bun run typecheck:infra
+bun run --cwd infra/turbo-cache typecheck
 ```
+
+`infra/turbo-cache` is a workspace (`@effect-coffee-shop/infra-turbo-cache`), so
+`cache:test` is a filtered alias for its Turbo `test` task and replays from the
+cache when neither the deployment code nor `packages/turbo-cache` changed.
 
 The unit suite covers authentication, multipart boundaries, interruption and
 cleanup, storage failures, redacted config errors, and S3 operation mapping.

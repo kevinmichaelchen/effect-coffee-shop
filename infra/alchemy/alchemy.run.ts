@@ -3,4 +3,4 @@
  *
  * @module
  */
-export { default } from "./infra/alchemy/cloudflare.ts";
+export { default } from "./cloudflare.ts";

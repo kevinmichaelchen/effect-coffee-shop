@@ -15,5 +15,5 @@
     "types": ["node"],
     "plugins": [{ "name": "@effect/language-service" }]
   },
-  "include": ["./*.ts", "../../alchemy.run.ts"]
+  "include": ["./*.ts"]
 }

@@ -1,7 +1,9 @@
 {
   "$schema": "./node_modules/fallow/schema.json",
   "entry": [
-    "alchemy.run.ts",
+    "infra/alchemy/alchemy.run.ts",
+    "infra/alchemy/aws.ts",
+    "infra/turbo-cache/aws.ts",
     "apps/backend/src/cloudflare/worker.ts",
     "apps/backend/src/bun/*.ts",
     "apps/backend/scripts/*.ts",
@@ -36,11 +38,14 @@
   ],
   // Fallow does not discover the aliased React JavaScript plugins in Oxlint JSON,
   // and @shadcn/lint is loaded by the UI Oxlint configuration rather than source imports.
+  // The Alchemy workspace builds the UI by path (`Cloudflare.Website.Vite`) rather than
+  // importing it; the dependency exists so Turbo hashes UI changes into the smoke test.
   "ignoreDependencies": [
     "oxlint-tsgolint",
     "@shadcn/lint",
     "eslint-plugin-react-hooks",
     "eslint-plugin-react-refresh",
+    "@effect-coffee-shop/web",
   ],
   "rules": {
     "unresolved-imports": "error",
@@ -146,7 +151,7 @@
       },
       {
         "name": "infra",
-        "patterns": ["alchemy.run.ts", "infra/**"],
+        "patterns": ["infra/**"],
       },
       {
         "name": "ui",

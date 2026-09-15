@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./aws/lambda": "./src/aws/lambda.ts",
+    "./cloudflare/worker": "./src/cloudflare/worker.ts"
+  },
   "scripts": {
     "dev": "bun run http",
     "http": "bun run src/bun/http-main.ts",

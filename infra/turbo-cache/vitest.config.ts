@@ -12,7 +12,7 @@ export default defineConfig({
       CACHE_READ_TOKEN: "test-read-token-not-a-real-secret-00002",
     },
     environment: "node",
-    include: ["infra/turbo-cache/cloudflare.test.ts"],
+    include: ["cloudflare.test.ts"],
     testTimeout: 120_000,
     fileParallelism: false,
   },

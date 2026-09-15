@@ -1,0 +1,26 @@
+{
+  "name": "@effect-coffee-shop/infra-turbo-cache",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "bun --bun oxlint -c ../../packages/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@effect-coffee-shop/turbo-cache": "workspace:*",
+    "alchemy": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
