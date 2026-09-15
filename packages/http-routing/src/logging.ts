@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 
 // oxlint-disable-next-line effect/prefer-option-over-null -- Structured JSON logs preserve null for missing transport headers.
-type StructuredLogValue = boolean | number | string | null;
+export type StructuredLogValue = boolean | number | string | null;
 export type StructuredLogRecord = Readonly<Record<string, StructuredLogValue>>;
 
 export const logStructuredEvent = (record: StructuredLogRecord) =>

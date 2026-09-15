@@ -4,7 +4,7 @@ import { Text } from "#shared/ui/retroui/Text.tsx";
 import { formatPrice } from "#features/coffee-shop/lib/coffee.ts";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 
-interface OrderPreviewProps {
+export interface OrderPreviewProps {
   draft: OrderDraft;
   item: MenuItem;
   pending: boolean;

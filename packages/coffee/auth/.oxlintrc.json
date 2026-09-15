@@ -1,10 +1,11 @@
 {
   "$schema": "../../../node_modules/oxlint/configuration_schema.json",
-  "plugins": ["oxc", "typescript", "unicorn", "node"],
+  "plugins": ["oxc", "typescript", "unicorn", "node", "vitest"],
   "options": {
     "typeAware": true,
     "typeCheck": true,
-    "maxWarnings": 0
+    "maxWarnings": 0,
+    "reportUnusedDisableDirectives": "error"
   },
   "rules": {
     "no-bitwise": "error",
@@ -23,6 +24,28 @@
           "@effect-coffee-shop/coffee-mcp/*"
         ]
       }
-    ]
-  }
+    ],
+    "vitest/no-focused-tests": "error",
+    "vitest/no-standalone-expect": [
+      "error",
+      {
+        "additionalTestBlockFunctions": ["it.effect", "it.live", "it.scoped", "it.scopedLive"]
+      }
+    ],
+    "vitest/expect-expect": "off"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/testing/**/*.ts", "**/test-support.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "only",
+            "message": "Focused tests must not be committed, including Effect test wrappers."
+          }
+        ]
+      }
+    }
+  ]
 }

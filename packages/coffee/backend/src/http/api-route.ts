@@ -16,12 +16,12 @@ import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-core/ap
 import { handleDirectHttpRequest } from "./direct-auth.ts";
 import type { CoffeeBackend } from "./backend.ts";
 
-interface CoffeeApiActorResolution {
+export interface CoffeeApiActorResolution {
   readonly actor: AppActor;
   readonly backend: CoffeeBackend<unknown>;
 }
 
-type CoffeeApiActorResolutionEffect = ReturnType<
+export type CoffeeApiActorResolutionEffect = ReturnType<
   typeof Effect.suspend<CoffeeApiActorResolution, unknown, never>
 >;
 

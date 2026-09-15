@@ -4,7 +4,7 @@ import { OrderFields } from "#features/coffee-shop/components/customer/OrderFiel
 import { OrderPreview } from "#features/coffee-shop/components/customer/OrderPreview.tsx";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 
-interface OrderComposerCardProps {
+export interface OrderComposerCardProps {
   draft: OrderDraft;
   item: MenuItem;
   menu: readonly MenuItem[];

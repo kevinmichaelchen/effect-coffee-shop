@@ -1,6 +1,5 @@
 {
   "$schema": "./node_modules/fallow/schema.json",
-
   "entry": [
     "alchemy.run.ts",
     "apps/backend/src/cloudflare/worker.ts",
@@ -27,7 +26,6 @@
     "packages/coffee/runtime/aws/src/**/*.test.ts",
     "packages/coffee/runtime/cloudflare/src/**/*.test.ts",
   ],
-
   "ignorePatterns": [
     "**/*.d.ts",
     "**/*.generated.ts",
@@ -36,9 +34,13 @@
     "packages/coffee/external/sqlite/src/sql/migrations/.generated/**",
     "packages/coffee/external/sqlite/src/sql/queries/.generated/**",
   ],
-
-  "ignoreDependencies": ["@mpsuesser/oxlint-plugin-effect", "oxlint-tsgolint"],
-
+  // Fallow does not discover the aliased React JavaScript plugins in Oxlint JSON.
+  "ignoreDependencies": [
+    "@mpsuesser/oxlint-plugin-effect",
+    "oxlint-tsgolint",
+    "eslint-plugin-react-hooks",
+    "eslint-plugin-react-refresh",
+  ],
   "rules": {
     "unresolved-imports": "error",
     "unlisted-dependencies": "error",
@@ -64,7 +66,6 @@
     "unused-dependency-overrides": "warn",
     "misconfigured-dependency-overrides": "error",
   },
-
   "duplicates": {
     "mode": "mild",
     "minTokens": 50,
@@ -78,26 +79,45 @@
       "packages/coffee/external/drizzle-postgres/src/db/schema.ts",
     ],
   },
-
   "health": {
     "maxCyclomatic": 20,
     "maxCognitive": 15,
     "maxCrap": 500,
     "maxUnitSize": 60,
   },
-
   "typeAware": {
     "enabled": true,
-    "projects": ["packages/coffee/core/tsconfig.json"],
-    "require": "best-effort",
+    "projects": [
+      "tsconfig.tools.json",
+      "apps/backend/tsconfig.json",
+      "apps/ui/tsconfig.app.json",
+      "apps/ui/tsconfig.node.json",
+      "packages/turbo-cache/tsconfig.json",
+      "packages/http-routing/tsconfig.json",
+      "packages/coffee/core/tsconfig.json",
+      "packages/coffee/auth/tsconfig.json",
+      "packages/coffee/backend/tsconfig.json",
+      "packages/coffee/presentation/mcp/tsconfig.json",
+      "packages/coffee/presentation/cli/tsconfig.json",
+      "packages/coffee/presentation/http/tsconfig.json",
+      "packages/coffee/presentation/actions/tsconfig.json",
+      "packages/coffee/external/sqlite/tsconfig.json",
+      "packages/coffee/external/drizzle-postgres/tsconfig.json",
+      "packages/coffee/external/in-memory/tsconfig.json",
+      "packages/coffee/runtime/cloudflare/tsconfig.json",
+      "packages/coffee/runtime/shared/tsconfig.json",
+      "packages/coffee/runtime/bun/tsconfig.json",
+      "packages/coffee/runtime/aws/tsconfig.json",
+      "infra/alchemy/tsconfig.json",
+      "infra/turbo-cache/tsconfig.json",
+    ],
+    "require": "complete",
   },
-
   "audit": {
     "gate": "new-only",
     "healthBaseline": ".fallow/health-baseline.json",
     "typeAware": false,
   },
-
   "boundaries": {
     "zones": [
       {
@@ -110,8 +130,20 @@
         ],
       },
       {
+        "name": "tooling",
+        "patterns": [
+          "**/oxlint.config.ts",
+          "**/vitest.config.ts",
+          "**/vitest.setup.ts",
+          "apps/ui/vite*.ts",
+          "**/drizzle.config.ts",
+          "**/sqlfu.config.ts",
+          "apps/ui/.storybook/**",
+        ],
+      },
+      {
         "name": "infra",
-        "patterns": ["alchemy.run.ts"],
+        "patterns": ["alchemy.run.ts", "infra/**"],
       },
       {
         "name": "ui",
@@ -160,11 +192,15 @@
         "name": "presentation",
         "patterns": ["packages/coffee/presentation/**"],
       },
+      {
+        "name": "turbo-cache",
+        "patterns": ["packages/turbo-cache/**"],
+      },
     ],
     "rules": [
       {
         "from": "infra",
-        "allow": ["backend-app", "ui", "external", "runtime"],
+        "allow": ["backend-app", "ui", "external", "runtime", "turbo-cache"],
       },
       {
         "from": "ui",
@@ -229,6 +265,17 @@
         "from": "presentation",
         "allow": ["http-routing", "domain", "application", "actions"],
       },
+      {
+        "from": "tooling",
+        "allow": ["ui"],
+      },
+      {
+        "from": "turbo-cache",
+        "allow": [],
+      },
     ],
+    "coverage": {
+      "requireAllFiles": true,
+    },
   },
 }

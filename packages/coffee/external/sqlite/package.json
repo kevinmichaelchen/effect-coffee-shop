@@ -7,7 +7,19 @@
     ".": "./src/index.ts",
     "./bun": "./src/bun/live.ts",
     "./cloudflare": "./src/cloudflare/live.ts",
-    "./sql/*": "./src/sql/*.ts"
+    "./sql/CartItemIdGenerator": "./src/sql/CartItemIdGenerator.ts",
+    "./sql/CheckoutSessionIdGenerator": "./src/sql/CheckoutSessionIdGenerator.ts",
+    "./sql/OrderIdGenerator": "./src/sql/OrderIdGenerator.ts",
+    "./sql/SqlCartRepository": "./src/sql/SqlCartRepository.ts",
+    "./sql/SqlCheckoutSessionRepository": "./src/sql/SqlCheckoutSessionRepository.ts",
+    "./sql/SqlMenuRepository": "./src/sql/SqlMenuRepository.ts",
+    "./sql/SqlOrderRepository": "./src/sql/SqlOrderRepository.ts",
+    "./sql/better-auth-schema": "./src/sql/better-auth-schema.ts",
+    "./sql/live": "./src/sql/live.ts",
+    "./sql/models": "./src/sql/models.ts",
+    "./sql/persistence": "./src/sql/persistence.ts",
+    "./sql/schema-ready": "./src/sql/schema-ready.ts",
+    "./sql/sqlfu.config": "./src/sql/sqlfu.config.ts"
   },
   "scripts": {
     "auth:schema": "cd src/sql && bunx @better-auth/cli generate --config better-auth-schema.ts --yes",

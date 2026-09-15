@@ -11,7 +11,7 @@ const badgeClasses: Record<OrderStatus, string> = {
   cancelled: "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100",
 };
 
-interface StatusBadgeProps {
+export interface StatusBadgeProps {
   status: OrderStatus;
 }
 

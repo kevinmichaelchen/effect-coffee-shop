@@ -14,7 +14,7 @@ import {
   type CoffeeWebHandler,
 } from "@effect-coffee-shop/coffee-http/web-handler";
 
-type CoffeeWebHandlerInput = Parameters<typeof createCoffeeWebHandler>;
+export type CoffeeWebHandlerInput = Parameters<typeof createCoffeeWebHandler>;
 
 export type CoffeeRoutesLayer = CoffeeWebHandlerInput[0];
 export type CoffeeAppLayer = CoffeeWebHandlerInput[1];

@@ -65,7 +65,7 @@ describe("cloudflare better-auth wiring", () => {
           request: new Request("http://example.com/api/auth/session"),
           secret: "   ",
         }),
-      ).toThrow();
+      ).toThrowError("Expected a value with a length of at least 1");
     });
   });
 

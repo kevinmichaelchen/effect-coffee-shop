@@ -6,7 +6,7 @@ import { formatOrderTime } from "#features/coffee-shop/lib/coffee.ts";
 import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
-interface QueueTableProps {
+export interface QueueTableProps {
   orders: readonly CoffeeOrder[];
   pendingOrderId: string | null;
   onAction: (orderId: string, action: OrderAction) => void;

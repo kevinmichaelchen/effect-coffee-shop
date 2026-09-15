@@ -22,8 +22,8 @@ export const AppActor = Schema.Union([AnonymousActor, AuthenticatedActor]).annot
 });
 
 export type AppActor = typeof AppActor.Type;
-type AnonymousActor = typeof AnonymousActor.Type;
-type AuthenticatedActor = typeof AuthenticatedActor.Type;
+export type AnonymousActor = typeof AnonymousActor.Type;
+export type AuthenticatedActor = typeof AuthenticatedActor.Type;
 
 export const anonymousActor: AnonymousActor = {
   kind: "anonymous",

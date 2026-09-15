@@ -2,7 +2,8 @@
 
 import { Toaster as Sonner } from "sonner";
 
-type ToasterProps = React.ComponentProps<typeof Sonner>;
+/** @public Named type used by an exported component or request contract. */
+export type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
   return (

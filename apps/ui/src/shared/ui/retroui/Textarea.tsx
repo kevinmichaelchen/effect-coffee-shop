@@ -1,7 +1,7 @@
 import type { TextareaHTMLAttributes } from "react";
 import { cn } from "#shared/lib/utils.ts";
 
-interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   className?: string;
 }
 

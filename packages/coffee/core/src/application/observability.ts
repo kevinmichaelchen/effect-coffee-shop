@@ -8,8 +8,8 @@ import * as Metric from "effect/Metric";
 import * as Option from "effect/Option";
 import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
 
-type ObservabilityValue = boolean | number | string;
-type ObservabilityAttributes = Readonly<Record<string, ObservabilityValue>>;
+export type ObservabilityValue = boolean | number | string;
+export type ObservabilityAttributes = Readonly<Record<string, ObservabilityValue>>;
 type MetricAttributes = Readonly<Record<string, string>>;
 
 const orderActionsTotal = Metric.counter("coffee_order_actions_total", {
@@ -17,7 +17,7 @@ const orderActionsTotal = Metric.counter("coffee_order_actions_total", {
   incremental: true,
 });
 
-type ActorAttributes =
+export type ActorAttributes =
   | { readonly actor_kind: "anonymous" }
   | { readonly actor_kind: Exclude<AppActor["kind"], "anonymous">; readonly actor_user_id: string };
 

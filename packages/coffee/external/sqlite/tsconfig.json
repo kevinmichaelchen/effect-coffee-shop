@@ -13,7 +13,15 @@
     "types": ["bun"],
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    "plugins": [{ "name": "@effect/language-service" }]
+    "plugins": [
+      {
+        "name": "@effect/language-service"
+      }
+    ]
   },
-  "include": ["src/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/sql/queries/.generated/**/*.ts",
+    "src/sql/migrations/.generated/**/*.ts"
+  ]
 }

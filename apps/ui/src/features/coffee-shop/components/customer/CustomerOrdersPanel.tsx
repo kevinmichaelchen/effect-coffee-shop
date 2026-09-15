@@ -6,7 +6,7 @@ import { formatOrderTime, formatPrice } from "#features/coffee-shop/lib/coffee.t
 import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";
 
-interface CustomerOrdersPanelProps {
+export interface CustomerOrdersPanelProps {
   activeOrders: readonly CoffeeOrder[];
   historyOrders: readonly CoffeeOrder[];
   isRefreshing: boolean;

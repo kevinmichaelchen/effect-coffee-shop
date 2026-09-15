@@ -12,7 +12,8 @@ import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/por
 import { CloudflareSqlCoffeeSchemaLive, migrateCloudflareD1 } from "../cloudflare/live.ts";
 import { SqlCoffeeRepositoriesLive } from "../sql/live.ts";
 
-type RepositoryServices =
+/** @public Service union in the exported test harness contract. */
+export type RepositoryServices =
   | CartRepository
   | CheckoutSessionRepository
   | MenuRepository

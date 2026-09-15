@@ -84,7 +84,9 @@
         "packages/**/*.ts",
         "packages/**/tsconfig.json",
         "packages/**/package.json",
-        "infra/turbo-cache/**"
+        "infra/turbo-cache/**",
+        "apps/backend/**",
+        "apps/ui/**"
       ],
       "outputs": []
     },
@@ -98,13 +100,43 @@
         "packages/**/package.json"
       ],
       "outputs": []
+    },
+    "//#typecheck:tools": {
+      "inputs": [
+        "tsconfig.tools.json",
+        "packages/**/*.ts",
+        "packages/**/tsconfig.json",
+        "packages/**/package.json",
+        "packages/**/*.json",
+        "apps/backend/*.ts",
+        "apps/backend/*.json"
+      ],
+      "outputs": []
+    },
+    "//#lint:tools": {
+      "inputs": ["packages/oxlint.config.ts", "packages/.oxlintrc.json", "tsconfig.tools.json"],
+      "outputs": []
+    },
+    "//#fmt:check:root": {
+      "inputs": [
+        "package.json",
+        "tsconfig.tools.json",
+        "knip.jsonc",
+        ".fallowrc.jsonc",
+        "turbo.json",
+        "infra/**",
+        "packages/oxlint.config.ts",
+        "packages/.oxlintrc.json"
+      ],
+      "outputs": []
     }
   },
   "globalDependencies": [
     "packages/.oxlintrc.json",
     "bunfig.toml",
     ".node-version",
-    "packages/oxlint.config.ts"
+    "packages/oxlint.config.ts",
+    "tsconfig.tools.json"
   ],
   "remoteCache": {
     "signature": true
