@@ -183,9 +183,9 @@ bun run infra:plan --profile default
 bun run infra:deploy --profile default
 ```
 
-[`alchemy.run.ts`](./alchemy.run.ts) is the deploy-target selector. It exports
-the Cloudflare stack by default. Swap that single export to
-`./infra/alchemy/aws.ts` for AWS.
+[`infra/alchemy/alchemy.run.ts`](./infra/alchemy/alchemy.run.ts) is the
+deploy-target selector. It exports the Cloudflare stack by default. Swap that
+single export to `./aws.ts` for AWS.
 
 The AWS stack expects `COFFEE_POSTGRES_URL` at deploy time and uses Alchemy's AWS
 Lambda and Website resources for the runtime and static site. The `infra:*`

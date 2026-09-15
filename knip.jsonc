@@ -7,18 +7,23 @@
   "ignoreBinaries": ["portless"],
   "workspaces": {
     ".": {
-      "entry": [
-        "alchemy.run.ts!",
-        "infra/alchemy/{aws,cloudflare}.ts!",
-        "infra/turbo-cache/{aws,cloudflare}.ts!",
-        "packages/oxlint.config.ts",
-      ],
-      "project": ["*.ts!", "infra/**/*.ts!", "!infra/**/*.test.ts!", "!infra/**/vitest.config.ts!"],
+      "entry": ["packages/oxlint.config.ts"],
       // Ambient Cloudflare declarations used by the deployment toolchain.
       "ignoreDependencies": ["@cloudflare/workers-types"],
     },
+    "infra/alchemy": {
+      "entry": ["alchemy.run.ts!", "aws.ts!", "cloudflare.ts!"],
+      "project": ["*.ts!", "!*.test.ts!", "!vitest.config.ts!"],
+      // The UI is built by path (`Cloudflare.Website.Vite`), not imported; the dependency
+      // gives Turbo the workspace edge that hashes UI changes into the smoke test.
+      "ignoreDependencies": ["@effect-coffee-shop/web"],
+    },
+    "infra/turbo-cache": {
+      "entry": ["aws.ts!", "cloudflare.ts!"],
+      "project": ["*.ts!", "!*.test.ts!", "!vitest.config.ts!"],
+    },
     "apps/backend": {
-      "entry": ["src/bun/*-main.ts!", "src/aws/lambda.ts!", "src/cloudflare/worker.ts!"],
+      "entry": ["src/bun/*-main.ts!"],
       "project": ["src/**/*.ts!", "*.ts"],
     },
     "apps/ui": {

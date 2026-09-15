@@ -72,7 +72,7 @@ test(
         'import { mkdirSync, copyFileSync, appendFileSync } from "node:fs"; mkdirSync("dist", {recursive:true}); copyFileSync("input.bin", "dist/output.bin"); appendFileSync("executions", "built\\n");',
       ),
     );
-    const turbo = resolve("node_modules/.bin/turbo");
+    const turbo = resolve(import.meta.dirname, "../../node_modules/.bin/turbo");
     const run = () =>
       Effect.promise((signal) =>
         execute(turbo, ["run", "build", "--cache=remote:rw", "--preflight"], {

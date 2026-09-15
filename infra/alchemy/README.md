@@ -3,6 +3,13 @@
 This directory holds deployment graphs, not application composition roots. Keep application behavior in
 `apps/` and `packages/`; keep cloud resource wiring here.
 
+It is the `@effect-coffee-shop/infra-alchemy` workspace. `alchemy.run.ts` selects the default stack for
+the root `infra:*` scripts; `cloudflare.ts` and `aws.ts` back the `cf:*` and `aws:*` scripts. The root
+scripts run the `alchemy` CLI from the repository root, and the stacks resolve cross-workspace paths
+(the UI root and the D1 migrations directory) from their own location, so the same files work under
+`bun run cf:test`, which Turbo runs from this directory. The workspace depends on the backend, the
+Cloudflare runtime and the UI so Turbo re-runs the smoke test when any bundled source changes.
+
 ## Custom Infrastructure Glue
 
 If this workspace needs infrastructure that Alchemy does not model yet, implement it with the same

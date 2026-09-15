@@ -20,7 +20,7 @@ export default defineConfig({
   test: {
     env: localOnlyCloudflareEnv,
     environment: "node",
-    include: ["infra/alchemy/cloudflare.test.ts"],
+    include: ["cloudflare.test.ts"],
     testTimeout: 300_000,
   },
 });
