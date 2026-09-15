@@ -104,8 +104,8 @@ export const SqlCartItemModel = Schema.Struct({
 
 type SqlOrder = typeof SqlOrderModel.Type;
 type SqlOrderItem = typeof SqlOrderItemModel.Type;
-type SqlCartItem = typeof SqlCartItemModel.Type;
-type SqlMenuItem = typeof SqlMenuItemModel.Type;
+export type SqlCartItem = typeof SqlCartItemModel.Type;
+export type SqlMenuItem = typeof SqlMenuItemModel.Type;
 
 const decodeCartItem = Schema.decodeUnknownEffect(CartItem);
 const decodeCoffeeOrderType = Schema.decodeUnknownEffect(Schema.toType(CoffeeOrder));

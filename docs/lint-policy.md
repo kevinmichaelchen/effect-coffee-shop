@@ -41,3 +41,85 @@ without a `Schema` suffix. Optional domain values use
 `Option`; schema codecs retain external storage and transport encodings. Pure
 Effect tests use `@effect/vitest`; effectful test traversals specify concurrency.
 Repository sorting uses Effect array/order helpers.
+
+## Local enforcement
+
+Prek owns the quality gates. `bun run hooks:run:pre-commit` checks all configured
+workspace and root formatting, lint, and compiler projects. `bun run
+hooks:run:pre-push` runs affected workspace checks, tests and builds; infrastructure
+checks and integration tests; custom lint; full Fallow; and both Knip modes.
+`bun run check` runs the complete local suite without affected-file filtering.
+These commands do not depend on GitHub Actions. The prepare script installs the
+hooks in ordinary checkouts and linked worktrees.
+
+Root infrastructure and tooling checks are explicit Turbo tasks, and the
+pre-push script invokes them through Turbo so unchanged inputs replay from the
+local cache. The Alchemy Cloudflare smoke test and the Turbo cache worker test
+are root Turbo tasks for the same reason; their inputs cover the infrastructure
+code plus the application and package sources they bundle. Explicit Turbo input
+globs hash gitignored files too, so these tasks exclude `.turbo` logs, build
+output, and Alchemy state. Otherwise oxlint's timing lines in the replayed logs
+would invalidate the infrastructure typecheck after every real execution. Tool
+configuration files use `tsconfig.tools.json`: the Effect lint plugin has its own
+Effect dependency, so only this tooling compiler project permits that duplicate
+package. Application compiler projects keep their original strict duplication
+check. Generated SQL convenience files are explicitly included in the SQLite
+compiler project even when nothing imports them.
+
+## React and test safeguards
+
+The UI runs native Oxlint checks plus the React Hooks `rules-of-hooks` and React
+Refresh `only-export-components` JavaScript-plugin rules. The obsolete ESLint
+configuration was removed: its TypeScript-ESLint parser does not support the
+pinned TypeScript 7 compiler. React Refresh permits constant exports, matching the
+Vite preset. Unused disable directives fail UI lint as they do backend lint.
+
+Vitest's focused-test rule is enabled. Test files and helpers additionally forbid
+`.only` property access, covering wrappers such as `it.effect.only` that the
+native Vitest call recognizer misses. The standalone-expect rule recognizes
+Effect and Alchemy test blocks. Assertion-discovery heuristics are disabled for backend tests:
+Effect smoke tests can assert success by executing without a failed effect.
+The shared repository-contract factory also permits parameterized test titles.
+
+## Fallow and Knip
+
+Fallow requires every reachable file to belong to an architecture zone; unused
+files fail its dead-code check.
+Infrastructure and Turbo cache implementation have explicit zones; tool
+configuration and Storybook support form a tooling zone. Production/application
+zones cannot import tooling. Semantic queries are configured for all compiler
+projects and require complete evidence. The push gate runs the full scan;
+`fallow:audit` remains available for a quick, syntactic changed-file review.
+The health analysis runs syntactically: with type-aware analysis enabled it
+otherwise issues an advisory type-coupling query that scans every project for
+about fifty seconds and reports partial evidence, which the complete gate
+rejects. Complexity thresholds need no semantic evidence.
+
+Public signatures expose their named types. A small number of transitive type
+aliases carry `@public` because Knip does not see an external reference through
+the enclosing public type; Fallow checks the signature relationship. This tag is
+for a reviewed public contract, not a general unused-code suppression.
+
+`bun run knip` checks the development graph, including namespace exports and
+namespace types. `bun run knip:production` additionally uses strict production
+mode, requiring direct runtime dependency declarations in the owning workspace.
+Deployment entrypoints are explicit. Package export maps exclude test files;
+the core package still exports its repository-test harness and therefore declares
+`@effect/vitest` as a dependency of that public API.
+
+Knip configuration comments explain the limited exceptions: the embedded Effect
+language-service settings key, Bun-wrapped Oxlint binaries, ambient Cloudflare
+types, and externally installed Portless. Generated SQL stays in Knip's import
+graph, but unused generator-owned convenience files/exports are not cleanup
+candidates. Source-owned files and exports remain checked. Both Knip modes and
+full Fallow must pass before a push, and Knip treats configuration hints as
+errors. Fallow explicitly recognizes the two React plugin dependencies because
+its Oxlint config discovery misses aliased JavaScript plugins; the UI lint
+command executes both plugins. Workspaces whose `oxlint.config.ts` imports the
+Effect lint plugin declare it themselves through the catalog, so no Fallow
+exemption is needed for it. The Fallow policy detector is explicitly off because
+no rule packs are configured.
+
+prek, oxlint, oxfmt and oxlint-tsgolint are excluded from the 72-hour release-age
+policy in `bunfig.toml`, including every platform binding package, so they can be
+adopted as soon as they publish.

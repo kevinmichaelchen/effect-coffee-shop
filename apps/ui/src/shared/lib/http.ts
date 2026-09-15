@@ -14,14 +14,17 @@ class HttpResponseDecodeError extends Schema.TaggedError<HttpResponseDecodeError
   },
 ) {}
 
-interface JsonRequestInputBase<SuccessSchema extends Schema.ConstraintDecoder<unknown, never>> {
+/** @public Named type used by an exported component or request contract. */
+export interface JsonRequestInputBase<
+  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
+> {
   readonly errorMessage?: string;
   readonly init?: RequestInit;
   readonly path: string;
   readonly schema: SuccessSchema;
 }
 
-interface JsonRequestInputWithError<
+export interface JsonRequestInputWithError<
   SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
   ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
 > extends JsonRequestInputBase<SuccessSchema> {
@@ -29,14 +32,14 @@ interface JsonRequestInputWithError<
   readonly readErrorMessage: (error: ErrorSchema["Type"]) => string;
 }
 
-interface JsonRequestInputWithoutError<
+export interface JsonRequestInputWithoutError<
   SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
 > extends JsonRequestInputBase<SuccessSchema> {
   readonly errorSchema?: undefined;
   readonly readErrorMessage?: undefined;
 }
 
-type JsonRequestInput<
+export type JsonRequestInput<
   SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
   ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
 > =

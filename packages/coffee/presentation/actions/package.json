@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@effect/vitest": "catalog:",
+    "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/bun": "catalog:",
     "lintcn": "catalog:",
     "oxfmt": "catalog:",

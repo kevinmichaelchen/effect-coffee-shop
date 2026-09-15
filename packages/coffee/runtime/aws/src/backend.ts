@@ -60,7 +60,7 @@ const makeAwsBackend = () => {
   };
 };
 
-type AwsCoffeeBackend = ReturnType<typeof makeAwsBackend>;
+export type AwsCoffeeBackend = ReturnType<typeof makeAwsBackend>;
 
 let cachedBackend = Option.none<AwsCoffeeBackend>();
 

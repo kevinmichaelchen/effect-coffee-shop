@@ -1,0 +1,48 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  // Effect-tsgo embeds the language service; this name configures its built-in diagnostics.
+  // Knip does not credit oxlint/tsgolint invoked via our Bun interpreter wrapper.
+  "ignoreDependencies": ["@effect/language-service", "oxlint", "oxlint-tsgolint"],
+  // Portless is a developer-installed local reverse proxy, not application code.
+  "ignoreBinaries": ["portless"],
+  "workspaces": {
+    ".": {
+      "entry": [
+        "alchemy.run.ts!",
+        "infra/alchemy/{aws,cloudflare}.ts!",
+        "infra/turbo-cache/{aws,cloudflare}.ts!",
+        "packages/oxlint.config.ts",
+      ],
+      "project": ["*.ts!", "infra/**/*.ts!", "!infra/**/*.test.ts!", "!infra/**/vitest.config.ts!"],
+      // Ambient Cloudflare declarations used by the deployment toolchain.
+      "ignoreDependencies": ["@cloudflare/workers-types"],
+    },
+    "apps/backend": {
+      "entry": ["src/bun/*-main.ts!", "src/aws/lambda.ts!", "src/cloudflare/worker.ts!"],
+      "project": ["src/**/*.ts!", "*.ts"],
+    },
+    "apps/ui": {
+      "project": [
+        "src/**/*.{ts,tsx,css,mdx}!",
+        "!src/**/*.stories.tsx!",
+        "!src/**/*StoryData.ts!",
+        "*.ts",
+        ".storybook/**/*.{ts,tsx}",
+      ],
+    },
+    "packages/**": {
+      "project": [
+        "**/*.{ts,tsx,js,jsx}!",
+        "!**/*.test.ts!",
+        "!**/testing/**!",
+        "!**/test-support.ts!",
+      ],
+    },
+  },
+  // Retain explicitly documented types required by exported signatures.
+  "tags": ["-public"],
+  // Keep generated imports in the graph; generator-owned convenience exports may be unused.
+  "ignoreIssues": {
+    "packages/coffee/external/sqlite/src/sql/**/.generated/**": ["files", "exports", "types"],
+  },
+}

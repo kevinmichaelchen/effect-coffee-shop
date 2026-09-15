@@ -15,7 +15,7 @@ import type {
 const menuQueryKey = ["menu"] as const;
 export const ordersQueryKey = ["orders"] as const;
 
-interface OrdersQueryOptions {
+export interface OrdersQueryOptions {
   enabled?: boolean;
 }
 

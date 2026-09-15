@@ -16,8 +16,8 @@ const BetterAuthSecret = Schema.Trim.pipe(Schema.check(Schema.isNonEmpty()));
 const decodeResolvedActor = Schema.decodeUnknownSync(AppActor);
 const decodeBetterAuthSecret = Schema.decodeUnknownSync(BetterAuthSecret);
 const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
-type BetterAuthOptions = Parameters<typeof betterAuth>[0];
-type BetterAuthDatabase = BetterAuthOptions["database"];
+export type BetterAuthOptions = Parameters<typeof betterAuth>[0];
+export type BetterAuthDatabase = BetterAuthOptions["database"];
 export type CoffeeAuthDatabase = BetterAuthDatabase;
 
 export interface CoffeeAuthInput {

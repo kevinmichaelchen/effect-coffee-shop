@@ -4,7 +4,7 @@ import { Text } from "#shared/ui/retroui/Text.tsx";
 import { QueueTable } from "#features/coffee-shop/components/barista/QueueTable.tsx";
 import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
-interface QueueBoardCardProps {
+export interface QueueBoardCardProps {
   orders: readonly CoffeeOrder[];
   pendingOrderId: string | null;
   onAction: (orderId: string, action: OrderAction) => void;

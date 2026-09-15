@@ -1,16 +1,31 @@
 {
   "$schema": "../node_modules/oxlint/configuration_schema.json",
-  "plugins": ["oxc", "typescript", "unicorn", "node"],
+  "plugins": ["oxc", "typescript", "unicorn", "node", "vitest"],
   "options": {
     "typeAware": true,
     "typeCheck": true,
-    "maxWarnings": 0
+    "maxWarnings": 0,
+    "reportUnusedDisableDirectives": "error"
   },
   "rules": {
     "no-bitwise": "error",
     "no-plusplus": "error",
     "typescript/no-floating-promises": "error",
-    "typescript/no-non-null-assertion": "error"
+    "typescript/no-non-null-assertion": "error",
+    "vitest/no-focused-tests": "error",
+    "vitest/no-standalone-expect": [
+      "error",
+      {
+        "additionalTestBlockFunctions": [
+          "it.effect",
+          "it.live",
+          "it.scoped",
+          "it.scopedLive",
+          "test"
+        ]
+      }
+    ],
+    "vitest/expect-expect": "off"
   },
   "overrides": [
     {
@@ -33,6 +48,18 @@
               "**/apps/backend/src/cloudflare/**",
               "**/src/cloudflare/**"
             ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/testing/**/*.ts", "**/test-support.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "only",
+            "message": "Focused tests must not be committed, including Effect test wrappers."
           }
         ]
       }

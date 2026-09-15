@@ -13,11 +13,11 @@ import { systemActor } from "@effect-coffee-shop/coffee-core/application/Current
 import { createCoffeeRequestServices } from "@effect-coffee-shop/coffee-backend/http/backend";
 import { createCoffeeWebHandler } from "@effect-coffee-shop/coffee-http/web-handler";
 
-type CoffeeWebHandlerInput = Parameters<typeof createCoffeeWebHandler>;
-type CoffeeRoutesLayer = CoffeeWebHandlerInput[0];
-type CoffeeAppLayer = CoffeeWebHandlerInput[1];
+export type CoffeeWebHandlerInput = Parameters<typeof createCoffeeWebHandler>;
+export type CoffeeRoutesLayer = CoffeeWebHandlerInput[0];
+export type CoffeeAppLayer = CoffeeWebHandlerInput[1];
 // oxlint-disable-next-line effect/prefer-option-over-null -- Native environment adapter accepts/emits undefined; decoded runtime configuration uses Option.
-type CoffeeBunEnv = Record<string, string | undefined>;
+export type CoffeeBunEnv = Record<string, string | undefined>;
 
 export type BunHttpRoute = HttpRoute<CoffeeBunEnv>;
 

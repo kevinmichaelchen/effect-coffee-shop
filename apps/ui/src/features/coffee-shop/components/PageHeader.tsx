@@ -6,7 +6,7 @@ import { Text } from "#shared/ui/retroui/Text.tsx";
 import { ThemeToggle } from "#shared/ui/ThemeToggle.tsx";
 import type { ThemePreference } from "#shared/hooks/useThemePreference.ts";
 
-interface PageHeaderProps {
+export interface PageHeaderProps {
   activeOrders: number;
   badgeLabel: string;
   footerLabel: string;

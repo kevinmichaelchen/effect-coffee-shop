@@ -6,8 +6,10 @@ export const temperatures = ["hot", "iced", "extra-hot"] as const;
 export const orderStatuses = ["pending", "brewing", "ready", "picked-up", "cancelled"] as const;
 
 export type DrinkSize = (typeof drinkSizes)[number];
-type Milk = (typeof milks)[number];
-type Temperature = (typeof temperatures)[number];
+/** @public Named type used by an exported component or request contract. */
+export type Milk = (typeof milks)[number];
+/** @public Named type used by an exported component or request contract. */
+export type Temperature = (typeof temperatures)[number];
 export type OrderStatus = (typeof orderStatuses)[number];
 export type OrderAction = "start-brewing" | "mark-ready" | "pick-up" | "cancel";
 
@@ -21,9 +23,9 @@ export interface OrderDraft {
   notes: string;
 }
 
-export type { CoffeeApiError, CoffeeOrder, MenuItem, PlaceOrderRequest } from "./coffee-schemas.ts";
+export type { CoffeeOrder, MenuItem, PlaceOrderRequest } from "./coffee-schemas.ts";
 
-interface OrderActionOption {
+export interface OrderActionOption {
   action: OrderAction;
   label: string;
 }

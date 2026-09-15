@@ -1,11 +1,12 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "ignorePatterns": ["dist/**"],
-  "plugins": ["typescript", "unicorn", "oxc", "react", "jsx-a11y", "import", "promise"],
+  "plugins": ["typescript", "unicorn", "oxc", "react", "jsx-a11y", "import", "promise", "vitest"],
   "options": {
     "typeAware": true,
     "typeCheck": true,
-    "maxWarnings": 0
+    "maxWarnings": 0,
+    "reportUnusedDisableDirectives": "error"
   },
   "env": {
     "builtin": true
@@ -44,6 +45,20 @@
       }
     ],
     "promise-function-async": "error",
+    "vitest/no-focused-tests": "error",
+    "react-hooks-js/rules-of-hooks": "error",
+    "react-refresh-js/only-export-components": [
+      "error",
+      {
+        "allowConstantExport": true
+      }
+    ],
+    "vitest/no-standalone-expect": [
+      "error",
+      {
+        "additionalTestBlockFunctions": ["it.effect", "it.live", "it.scoped", "it.scopedLive"]
+      }
+    ],
     "shadcn/no-raw-colors": "error",
     "shadcn/no-arbitrary-values": "error",
     "shadcn/no-inline-styles": "error",
@@ -134,6 +149,18 @@
       }
     },
     {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/testing/**/*.ts", "**/test-support.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "only",
+            "message": "Focused tests must not be committed, including Effect test wrappers."
+          }
+        ]
+      }
+    },
+    {
       "files": ["src/shared/ui/**/*.{ts,tsx}"],
       "rules": {
         "shadcn/no-restyle": "off",
@@ -153,7 +180,17 @@
       }
     }
   ],
-  "jsPlugins": ["@shadcn/lint"],
+  "jsPlugins": [
+    {
+      "name": "react-hooks-js",
+      "specifier": "eslint-plugin-react-hooks"
+    },
+    {
+      "name": "react-refresh-js",
+      "specifier": "eslint-plugin-react-refresh"
+    },
+    "@shadcn/lint"
+  ],
   "settings": {
     "shadcn": {
       "ui": "#shared/ui/retroui"

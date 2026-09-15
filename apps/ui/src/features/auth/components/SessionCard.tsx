@@ -4,7 +4,7 @@ import { Text } from "#shared/ui/retroui/Text.tsx";
 import type { AuthenticatedViewer } from "#features/auth/lib/viewer.ts";
 import { useState } from "react";
 
-interface SessionCardProps {
+export interface SessionCardProps {
   viewer: AuthenticatedViewer;
   isPending: boolean;
   onSignOut: () => Promise<void>;

@@ -4,7 +4,7 @@ import { TextAreaField } from "#shared/ui/TextAreaField.tsx";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 import { CustomizationFields } from "./CustomizationFields.tsx";
 
-interface OrderFieldsProps {
+export interface OrderFieldsProps {
   draft: OrderDraft;
   item: MenuItem;
   menu: readonly MenuItem[];

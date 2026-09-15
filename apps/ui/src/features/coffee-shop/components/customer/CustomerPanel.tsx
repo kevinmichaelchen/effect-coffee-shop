@@ -3,7 +3,7 @@ import { Text } from "#shared/ui/retroui/Text.tsx";
 import { OrderComposerCard } from "#features/coffee-shop/components/customer/OrderComposerCard.tsx";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 
-interface CustomerPanelProps {
+export interface CustomerPanelProps {
   draft: OrderDraft | null;
   menu: readonly MenuItem[];
   pending: boolean;

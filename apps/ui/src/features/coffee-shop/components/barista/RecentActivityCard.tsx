@@ -5,7 +5,7 @@ import { formatOrderTime, formatPrice } from "#features/coffee-shop/lib/coffee.t
 import { formatOrderItems } from "#features/coffee-shop/lib/order-display.ts";
 import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";
 
-interface RecentActivityCardProps {
+export interface RecentActivityCardProps {
   orders: readonly CoffeeOrder[];
   onInspect: (orderId: string) => void;
 }

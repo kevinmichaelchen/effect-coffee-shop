@@ -6,7 +6,7 @@ import { formatOrderTime, formatPrice, getOrderActions } from "#features/coffee-
 import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
-interface OrderDetailsDrawerProps {
+export interface OrderDetailsDrawerProps {
   order: CoffeeOrder | null;
   pending: boolean;
   onAction: (orderId: string, action: OrderAction) => void;

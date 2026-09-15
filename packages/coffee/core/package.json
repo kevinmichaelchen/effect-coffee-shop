@@ -9,8 +9,22 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./domain/*": "./src/domain/*.ts",
-    "./application/*": "./src/application/*.ts"
+    "./domain/cart": "./src/domain/cart.ts",
+    "./domain/checkout-session": "./src/domain/checkout-session.ts",
+    "./domain/errors": "./src/domain/errors.ts",
+    "./domain/menu": "./src/domain/menu.ts",
+    "./domain/money": "./src/domain/money.ts",
+    "./domain/order-primitives": "./src/domain/order-primitives.ts",
+    "./domain/order": "./src/domain/order.ts",
+    "./domain/typed-id": "./src/domain/typed-id.ts",
+    "./application/CoffeeOrderApp": "./src/application/CoffeeOrderApp.ts",
+    "./application/CurrentActor": "./src/application/CurrentActor.ts",
+    "./application/contracts": "./src/application/contracts.ts",
+    "./application/errors": "./src/application/errors.ts",
+    "./application/observability": "./src/application/observability.ts",
+    "./application/ports/*": "./src/application/ports/*.ts",
+    "./application/testing/*": "./src/application/testing/*.ts",
+    "./application/use-cases/*": "./src/application/use-cases/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -22,11 +36,12 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@effect/vitest": "catalog:",
     "@just-be/effect-typed-id": "0.5.0",
     "effect": "catalog:"
   },
   "devDependencies": {
-    "@effect/vitest": "catalog:",
+    "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/bun": "catalog:",
     "lintcn": "catalog:",
     "oxfmt": "catalog:",

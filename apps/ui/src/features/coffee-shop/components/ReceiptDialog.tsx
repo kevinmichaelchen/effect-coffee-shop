@@ -6,7 +6,7 @@ import { formatOrderTime, formatPrice } from "#features/coffee-shop/lib/coffee.t
 import { formatOrderItems } from "#features/coffee-shop/lib/order-display.ts";
 import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";
 
-interface ReceiptDialogProps {
+export interface ReceiptDialogProps {
   actionLabel: string;
   order: CoffeeOrder | null;
   onClose: () => void;

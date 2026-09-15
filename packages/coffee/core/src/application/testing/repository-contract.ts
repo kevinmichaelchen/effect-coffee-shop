@@ -14,12 +14,14 @@ import { CheckoutSessionRepository } from "../ports/CheckoutSessionRepository.ts
 import { MenuRepository } from "../ports/MenuRepository.ts";
 import { OrderRepository } from "../ports/OrderRepository.ts";
 
-type RepositoryServices =
+export type RepositoryServices =
   | CartRepository
   | CheckoutSessionRepository
   | MenuRepository
   | OrderRepository;
-type RunTest = <A>(effect: Effect.Effect<A, PersistenceError, RepositoryServices>) => Promise<A>;
+export type RunTest = <A>(
+  effect: Effect.Effect<A, PersistenceError, RepositoryServices>,
+) => Promise<A>;
 type CoffeeOrderOverrides = {
   readonly id: string;
   readonly createdAt?: CoffeeOrder["createdAt"];

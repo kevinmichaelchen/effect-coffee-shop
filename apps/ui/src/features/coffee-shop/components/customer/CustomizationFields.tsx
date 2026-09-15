@@ -4,7 +4,7 @@ import { TextField } from "#shared/ui/TextField.tsx";
 import { drinkSizes } from "#features/coffee-shop/lib/coffee.ts";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 
-interface CustomizationFieldsProps {
+export interface CustomizationFieldsProps {
   draft: OrderDraft;
   item: MenuItem;
   onUpdateDraft: <K extends keyof OrderDraft>(key: K, value: OrderDraft[K]) => void;

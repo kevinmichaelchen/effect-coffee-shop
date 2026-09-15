@@ -5,7 +5,7 @@ import { Input } from "#shared/ui/retroui/Input.tsx";
 import { Label } from "#shared/ui/retroui/Label.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 
-interface PasskeyGateCardProps {
+export interface PasskeyGateCardProps {
   displayName: string;
   errorMessage: string | null;
   isPending: boolean;

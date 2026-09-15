@@ -3,7 +3,7 @@ import { QueueBoardCard } from "#features/coffee-shop/components/barista/QueueBo
 import { RecentActivityCard } from "#features/coffee-shop/components/barista/RecentActivityCard.tsx";
 import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
-interface BaristaPanelProps {
+export interface BaristaPanelProps {
   activeOrders: readonly CoffeeOrder[];
   historyOrders: readonly CoffeeOrder[];
   pendingOrderId: string | null;

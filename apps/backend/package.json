@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "@effect/vitest": "catalog:",
+    "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "effect": "catalog:",

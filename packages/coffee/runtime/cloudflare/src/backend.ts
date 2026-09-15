@@ -29,7 +29,7 @@ const makeCloudflareBackend = (db: D1Database) => {
   });
 };
 
-type CloudflareCoffeeBackend = ReturnType<typeof makeCloudflareBackend>;
+export type CloudflareCoffeeBackend = ReturnType<typeof makeCloudflareBackend>;
 
 type CachedCloudflareBackend = {
   readonly backend: CloudflareCoffeeBackend;

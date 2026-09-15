@@ -2,12 +2,13 @@ import { Label } from "#shared/ui/retroui/Label.tsx";
 import { Select } from "#shared/ui/retroui/Select.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 
-interface SelectOption<TValue extends string> {
+/** @public Named type used by an exported component or request contract. */
+export interface SelectOption<TValue extends string> {
   label: string;
   value: TValue;
 }
 
-interface SelectFieldProps<TValue extends string> {
+export interface SelectFieldProps<TValue extends string> {
   label: string;
   value: TValue;
   options: readonly SelectOption<TValue>[];

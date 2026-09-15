@@ -2,7 +2,7 @@ import type { PropsWithChildren } from "react";
 import { AppProviders } from "#app/AppProviders.tsx";
 import type { ThemePreference } from "#shared/hooks/useThemePreference.ts";
 
-interface StorybookShellProps extends PropsWithChildren {
+export interface StorybookShellProps extends PropsWithChildren {
   theme: ThemePreference;
 }
 

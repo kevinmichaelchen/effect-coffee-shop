@@ -3,7 +3,7 @@ import { Label } from "#shared/ui/retroui/Label.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 import { Textarea } from "#shared/ui/retroui/Textarea.tsx";
 
-interface TextAreaFieldProps {
+export interface TextAreaFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;

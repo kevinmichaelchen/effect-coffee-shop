@@ -2,7 +2,7 @@ import { Button } from "#shared/ui/retroui/Button.tsx";
 import { getOrderActions } from "#features/coffee-shop/lib/coffee.ts";
 import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
-interface QueueRowActionsProps {
+export interface QueueRowActionsProps {
   order: CoffeeOrder;
   pending: boolean;
   onAction: (orderId: string, action: OrderAction) => void;

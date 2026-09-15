@@ -2,7 +2,7 @@ import { Input } from "#shared/ui/retroui/Input.tsx";
 import { Label } from "#shared/ui/retroui/Label.tsx";
 import { Text } from "#shared/ui/retroui/Text.tsx";
 
-interface TextFieldProps {
+export interface TextFieldProps {
   label: string;
   value: string | number;
   onChange: (value: string) => void;

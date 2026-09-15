@@ -21,7 +21,7 @@ const textVariants = cva("font-head", {
   },
 });
 
-interface TextProps
+export interface TextProps
   extends Omit<HTMLAttributes<HTMLElement>, "className">, VariantProps<typeof textVariants> {
   className?: string;
 }

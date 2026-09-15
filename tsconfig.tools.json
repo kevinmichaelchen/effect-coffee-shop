@@ -1,0 +1,19 @@
+{
+  "extends": "./packages/coffee/core/tsconfig.json",
+  "include": [
+    "packages/oxlint.config.ts",
+    "packages/**/oxlint.config.ts",
+    "apps/*/oxlint.config.ts",
+    "apps/backend/vitest*.ts",
+    "packages/**/vitest.config.ts"
+  ],
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "allowedDuplicatedPackages": ["effect"]
+      }
+    ],
+    "resolveJsonModule": true
+  }
+}
