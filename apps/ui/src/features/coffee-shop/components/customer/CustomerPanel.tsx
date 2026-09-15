@@ -20,7 +20,7 @@ export function CustomerPanel(inputProps: CustomerPanelProps) {
 
   if (draft === null || selectedItem === undefined) {
     return (
-      <Alert className="border-border bg-card" status="info">
+      <Alert surface="card" status="info">
         <Alert.Title>Loading customer tools</Alert.Title>
         <Text as="p" className="text-sm text-muted-foreground">
           Waiting for the menu to arrive from the backend.

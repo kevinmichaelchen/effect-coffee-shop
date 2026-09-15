@@ -5,6 +5,23 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  --color-status-online: var(--color-emerald-500);
+  --color-status-brewing: var(--color-amber-100);
+  --color-status-brewing-foreground: var(--color-amber-900);
+  --color-status-ready: var(--color-emerald-100);
+  --color-status-ready-foreground: var(--color-emerald-900);
+  --color-status-cancelled: var(--color-red-100);
+  --color-status-cancelled-foreground: var(--color-red-900);
+  --color-alert-error: var(--color-red-300);
+  --color-alert-error-foreground: var(--color-red-800);
+  --color-alert-success: var(--color-green-300);
+  --color-alert-success-foreground: var(--color-green-800);
+  --color-alert-warning: var(--color-yellow-300);
+  --color-alert-warning-foreground: var(--color-yellow-800);
+  --color-alert-info: var(--color-blue-300);
+  --color-alert-info-foreground: var(--color-blue-800);
+  --tracking-label: 0.12em;
+
   --font-head: "Archivo Black", sans-serif;
   --font-sans: "Space Grotesk", sans-serif;
   --radius: 0px;
@@ -159,4 +176,13 @@ textarea {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Named application layouts retain the responsive preview/sidebar proportions. */
+@utility grid-cols-order-composer {
+  grid-template-columns: minmax(0, 1fr) 18rem;
+}
+
+@utility grid-cols-customer-workspace {
+  grid-template-columns: minmax(0, 1fr) 26rem;
 }

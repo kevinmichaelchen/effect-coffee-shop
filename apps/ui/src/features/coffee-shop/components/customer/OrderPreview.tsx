@@ -16,7 +16,7 @@ export function OrderPreview(inputProps: OrderPreviewProps) {
   const { draft, item, pending, priceCents, onSubmit } = inputProps;
 
   return (
-    <Card className="bg-background">
+    <Card surface="background">
       <Card.Content className="grid gap-4 p-4">
         <div className="grid gap-2">
           <Text as="p" className="text-xs text-muted-foreground">

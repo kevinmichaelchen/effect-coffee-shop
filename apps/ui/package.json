@@ -48,6 +48,7 @@
     "vaul": "catalog:"
   },
   "devDependencies": {
+    "@shadcn/lint": "catalog:",
     "@storybook/addon-a11y": "catalog:",
     "@storybook/addon-docs": "catalog:",
     "@storybook/addon-vitest": "catalog:",

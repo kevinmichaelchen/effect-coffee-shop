@@ -52,7 +52,7 @@ function CustomerWorkspacePanels(inputProps: {
   } = inputProps;
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_26rem]">
+    <div className="grid gap-5 xl:grid-cols-customer-workspace">
       <CustomerPanel
         draft={draftState.draft}
         menu={menu}

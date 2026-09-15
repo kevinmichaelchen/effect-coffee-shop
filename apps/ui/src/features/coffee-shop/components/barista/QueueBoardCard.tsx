@@ -24,7 +24,7 @@ export function QueueBoardCard(inputProps: QueueBoardCardProps) {
       </Card.Header>
       <Card.Content>
         {orders.length === 0 ? (
-          <Alert className="border-border bg-card" status="info">
+          <Alert surface="card" status="info">
             <Alert.Title>No active tickets</Alert.Title>
             <Alert.Description>
               Fresh orders will appear here as soon as they are placed.

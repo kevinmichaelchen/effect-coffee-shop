@@ -34,9 +34,11 @@
     "packages/coffee/external/sqlite/src/sql/migrations/.generated/**",
     "packages/coffee/external/sqlite/src/sql/queries/.generated/**",
   ],
-  // Fallow does not discover the aliased React JavaScript plugins in Oxlint JSON.
+  // Fallow does not discover the aliased React JavaScript plugins in Oxlint JSON,
+  // and @shadcn/lint is loaded by the UI Oxlint configuration rather than source imports.
   "ignoreDependencies": [
     "oxlint-tsgolint",
+    "@shadcn/lint",
     "eslint-plugin-react-hooks",
     "eslint-plugin-react-refresh",
   ],

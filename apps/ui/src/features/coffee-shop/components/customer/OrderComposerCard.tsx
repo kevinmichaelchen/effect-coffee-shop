@@ -27,7 +27,7 @@ export function OrderComposerCard(inputProps: OrderComposerCardProps) {
           Menu constraints come from the backend.
         </Text>
       </Card.Header>
-      <Card.Content className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <Card.Content className="grid gap-5 lg:grid-cols-order-composer">
         <OrderFields
           draft={draft}
           item={item}

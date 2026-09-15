@@ -17,7 +17,7 @@ export function QueueTable(inputProps: QueueTableProps) {
   const { orders, pendingOrderId, onAction, onInspect } = inputProps;
 
   return (
-    <Table className="bg-card">
+    <Table>
       <Table.Header>
         <Table.Row>
           <Table.Head>Ticket</Table.Head>
