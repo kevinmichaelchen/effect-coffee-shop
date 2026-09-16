@@ -1,5 +1,5 @@
-import { Alert } from "#shared/ui/retroui/Alert.tsx";
-import { Text } from "#shared/ui/retroui/Text.tsx";
+import { Alert } from "@effect-coffee-shop/ui-kit/components/retroui/Alert";
+import { Text } from "@effect-coffee-shop/ui-kit/components/retroui/Text";
 import { OrderComposerCard } from "#features/coffee-shop/components/customer/OrderComposerCard.tsx";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 

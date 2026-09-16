@@ -1,5 +1,5 @@
-import { Card } from "#shared/ui/retroui/Card.tsx";
-import { Text } from "#shared/ui/retroui/Text.tsx";
+import { Card } from "@effect-coffee-shop/ui-kit/components/retroui/Card";
+import { Text } from "@effect-coffee-shop/ui-kit/components/retroui/Text";
 import { OrderFields } from "#features/coffee-shop/components/customer/OrderFields.tsx";
 import { OrderPreview } from "#features/coffee-shop/components/customer/OrderPreview.tsx";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";

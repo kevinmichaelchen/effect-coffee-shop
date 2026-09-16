@@ -85,7 +85,19 @@
       "description": "UI custom lint uses its own apps/ui/.lintcn rules, not the shared tooling build.",
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
       "outputs": [],
-      "outputLogs": "new-only"
+      "outputLogs": "new-only",
+      "dependsOn": ["@effect-coffee-shop/web#lint:custom:build"]
+    },
+    "@effect-coffee-shop/ui-kit#lint:custom": {
+      "dependsOn": ["@effect-coffee-shop/web#lint:custom:build"],
+      "outputs": []
+    },
+    "@effect-coffee-shop/web#lint:custom:build": {
+      "outputs": []
+    },
+    "@effect-coffee-shop/ui-kit#lint": {
+      "description": "Kit design-system lint also reads the consuming app theme tokens.",
+      "inputs": ["$TURBO_DEFAULT$", "!README.md", "$TURBO_ROOT$/apps/ui/src/index.css"]
     }
   },
   "globalDependencies": [

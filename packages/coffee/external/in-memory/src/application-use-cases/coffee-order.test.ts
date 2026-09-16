@@ -3,10 +3,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "../index.ts";
-import {
-  CurrentActor,
-  systemActor,
-} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { CurrentActor, systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import {
   getOrder,
   listOrders,
@@ -14,7 +11,7 @@ import {
   pickUpOrder,
   placeOrder,
   startBrewing,
-} from "@effect-coffee-shop/coffee-core/application/use-cases/index";
+} from "@effect-coffee-shop/coffee-application/use-cases/index";
 
 const provideSystemActor = Effect.provideService(CurrentActor, systemActor);
 const orderIdPattern = /^order_[0123456789abcdefghjkmnpqrstvwxyz]{26}$/;

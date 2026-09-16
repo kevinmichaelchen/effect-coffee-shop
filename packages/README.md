@@ -8,7 +8,9 @@ under `packages/coffee`, while shared HTTP routing utilities stay directly under
 
 - [`http-routing`](./http-routing): runtime-agnostic HTTP route dispatch,
   request logging, request-scoped services, and JSON encoding helpers.
-- [`coffee/core`](./coffee/core): Coffee bounded-context Onion Core.
+- [`coffee/domain`](./coffee/domain): pure Coffee models with no workspace dependencies.
+- [`coffee/application`](./coffee/application): Coffee use cases, ports, actors, and contracts.
+- [`ui-kit`](./ui-kit): reusable UI primitives, fields, theme controls, and stories.
 - [`coffee/testing`](./coffee/testing): shared repository contract tests for external adapters.
 - [`tooling`](./tooling): shared Oxlint policy and Go custom lint rules.
 - [`coffee/backend`](./coffee/backend): Coffee-specific backend composition that adapts
@@ -33,7 +35,8 @@ under `packages/coffee`, while shared HTTP routing utilities stay directly under
 
 ## Layer Placement
 
-Domain and application Layers stay in [`coffee/core`](./coffee/core) when they
+Domain models stay in [`coffee/domain`](./coffee/domain); application Layers stay in
+[`coffee/application`](./coffee/application) when they
 assemble pure application services from ports. External implementation Layers
 stay with their owning External package, such as
 [`coffee/external/sqlite`](./coffee/external/sqlite).

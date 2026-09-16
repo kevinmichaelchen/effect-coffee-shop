@@ -5,7 +5,7 @@
  */
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { menuItems } from "@effect-coffee-shop/coffee-core/domain/menu";
+import { menuItems } from "@effect-coffee-shop/coffee-domain/menu";
 import { CoffeeDb } from "./Db.ts";
 import { DrizzlePostgresSchemaReady } from "./schema-ready.ts";
 import { toMenuItemSeed } from "./models.ts";

@@ -2,12 +2,9 @@ import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "../index.ts";
-import {
-  CurrentActor,
-  systemActor,
-} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import type { PlaceOrderRequest } from "@effect-coffee-shop/coffee-core/application/contracts";
-import { placeOrder } from "@effect-coffee-shop/coffee-core/application/use-cases/index";
+import { CurrentActor, systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
+import type { PlaceOrderRequest } from "@effect-coffee-shop/coffee-application/contracts";
+import { placeOrder } from "@effect-coffee-shop/coffee-application/use-cases/index";
 
 const baseOrderRequest = {
   customerName: "Avery",

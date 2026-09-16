@@ -38,7 +38,8 @@
   },
   "dependencies": {
     "@better-auth/passkey": "catalog:",
-    "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect-coffee-shop/coffee-application": "workspace:*",
+    "@effect-coffee-shop/coffee-domain": "workspace:*",
     "@effect/platform-bun": "catalog:",
     "@effect/sql-d1": "catalog:",
     "@effect/sql-sqlite-bun": "catalog:",

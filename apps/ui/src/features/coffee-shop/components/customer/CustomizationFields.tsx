@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { SelectField } from "#shared/ui/SelectField.tsx";
-import { TextField } from "#shared/ui/TextField.tsx";
+import { SelectField } from "@effect-coffee-shop/ui-kit/components/SelectField";
+import { TextField } from "@effect-coffee-shop/ui-kit/components/TextField";
 import { drinkSizes } from "#features/coffee-shop/lib/coffee.ts";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 

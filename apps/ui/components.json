@@ -13,11 +13,11 @@
   "iconLibrary": "lucide",
   "rtl": false,
   "aliases": {
-    "components": "#shared/ui",
-    "utils": "#shared/lib/utils.ts",
-    "ui": "#shared/ui/retroui",
-    "lib": "#shared/lib",
-    "hooks": "#shared/hooks"
+    "components": "@effect-coffee-shop/ui-kit/components",
+    "utils": "@effect-coffee-shop/ui-kit/lib/utils",
+    "ui": "@effect-coffee-shop/ui-kit/components/retroui",
+    "lib": "@effect-coffee-shop/ui-kit/lib",
+    "hooks": "@effect-coffee-shop/ui-kit/hooks"
   },
   "menuColor": "default",
   "menuAccent": "subtle",

@@ -61,7 +61,9 @@ Editable sources live in [`docs/architecture`](./docs/architecture).
 
 | Layer                | Workspace                                                                        | Owns                                                                                     |
 | -------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Domain/application   | [`packages/coffee/core`](./packages/coffee/core)                                 | Coffee domain model, use cases, ports, actors, contracts, and repository contract tests. |
+| Domain               | [`packages/coffee/domain`](./packages/coffee/domain) | Pure Coffee models, IDs, and errors. |
+| UI kit               | [`packages/ui-kit`](./packages/ui-kit) | Shared React primitives, fields, and theme controls. |
+| Application          | [`packages/coffee/application`](./packages/coffee/application)                                 | Coffee use cases, ports, actors, and contracts. |
 | Presentation         | [`packages/coffee/presentation`](./packages/coffee/presentation)                 | HTTP, CLI, and MCP protocol adapters over the application service.                       |
 | Presentation support | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions) | Coffee tool names, descriptions, and schemas used by Effect MCP.                         |
 | Auth                 | [`packages/coffee/auth`](./packages/coffee/auth)                                 | Better Auth passkey setup and actor resolution.                                          |
@@ -72,8 +74,8 @@ Editable sources live in [`docs/architecture`](./docs/architecture).
 
 ## Why Coffee Actions Exists
 
-[`coffee-core`](./packages/coffee/core) owns the real Coffee behavior: domain
-rules, use cases, ports, and typed errors. HTTP and CLI use those application contracts directly, while MCP publishes them as tools.
+[`coffee-domain`](./packages/coffee/domain) owns the pure domain model.
+[`coffee-application`](./packages/coffee/application) owns Coffee workflows, use cases, ports, and typed errors. HTTP and CLI use those application contracts directly, while MCP publishes them as tools.
 
 [`coffee-actions`](./packages/coffee/presentation/actions) gives each MCP-callable Coffee capability
 one stable name, description, and input/output schema.
@@ -81,7 +83,7 @@ one stable name, description, and input/output schema.
 resources, and prompts without duplicating business behavior.
 
 It is not a fifth onion layer, and it is not a second business layer. If the behavior changes,
-change `coffee-core`. If one surface needs a private helper, keep that helper in the surface
+change `coffee-application`. If one surface needs a private helper, keep that helper in the surface
 package. Add or change `coffee-actions` when multiple external surfaces need the same Coffee use
 case in a protocol-neutral shape.
 
@@ -92,7 +94,7 @@ case in a protocol-neutral shape.
 | Run or change backend runtime composition | [`apps/backend/README.md`](./apps/backend/README.md)                                           |
 | Work on the browser UI                    | [`apps/ui/README.md`](./apps/ui/README.md)                                                     |
 | Understand package boundaries             | [`packages/README.md`](./packages/README.md)                                                   |
-| Add or change Coffee business behavior    | [`packages/coffee/core`](./packages/coffee/core)                                               |
+| Add or change Coffee business behavior    | [`packages/coffee/application`](./packages/coffee/application)                                               |
 | Add a shared tool/capability action       | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions)               |
 | Change HTTP, CLI, or MCP surfaces         | [`packages/coffee/presentation`](./packages/coffee/presentation)                               |
 | Change passkey auth                       | [`packages/coffee/auth`](./packages/coffee/auth)                                               |

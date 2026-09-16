@@ -1,7 +1,7 @@
-import { Button } from "#shared/ui/retroui/Button.tsx";
-import { Dialog } from "#shared/ui/retroui/Dialog.tsx";
-import { Text } from "#shared/ui/retroui/Text.tsx";
-import { StatusBadge } from "#shared/ui/StatusBadge.tsx";
+import { Button } from "@effect-coffee-shop/ui-kit/components/retroui/Button";
+import { Dialog } from "@effect-coffee-shop/ui-kit/components/retroui/Dialog";
+import { Text } from "@effect-coffee-shop/ui-kit/components/retroui/Text";
+import { StatusBadge } from "#features/coffee-shop/components/StatusBadge.tsx";
 import { formatOrderTime, formatPrice } from "#features/coffee-shop/lib/coffee.ts";
 import { formatOrderItems } from "#features/coffee-shop/lib/order-display.ts";
 import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";

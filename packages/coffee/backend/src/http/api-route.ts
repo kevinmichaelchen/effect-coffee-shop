@@ -11,8 +11,8 @@ import {
   rewriteRequestPathPrefix,
   type HttpRoute,
 } from "@effect-coffee-shop/http-routing/route";
-import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-core/application/observability";
+import type { AppActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
+import { actorObservabilityAttributes } from "@effect-coffee-shop/coffee-application/observability";
 import { handleDirectHttpRequest } from "./direct-auth.ts";
 import type { CoffeeBackend } from "./backend.ts";
 

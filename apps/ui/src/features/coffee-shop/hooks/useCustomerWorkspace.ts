@@ -9,7 +9,7 @@ import {
 } from "#features/coffee-shop/hooks/useCoffeeQueries.ts";
 import { useOrderDraft } from "#features/coffee-shop/hooks/useOrderDraft.ts";
 import { isActiveOrder, toPlaceOrderRequest } from "#features/coffee-shop/lib/coffee.ts";
-import { useThemePreference } from "#shared/hooks/useThemePreference.ts";
+import { useThemePreference } from "@effect-coffee-shop/ui-kit/hooks/useThemePreference";
 import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";
 
 const emptyOrders: readonly CoffeeOrder[] = [];

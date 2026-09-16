@@ -12,7 +12,7 @@ import {
 } from "#features/coffee-shop/hooks/useCoffeeQueries.ts";
 import { getQueueLoad, isActiveOrder } from "#features/coffee-shop/lib/coffee.ts";
 import { getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
-import { useThemePreference } from "#shared/hooks/useThemePreference.ts";
+import { useThemePreference } from "@effect-coffee-shop/ui-kit/hooks/useThemePreference";
 import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
 const emptyOrders: readonly CoffeeOrder[] = [];

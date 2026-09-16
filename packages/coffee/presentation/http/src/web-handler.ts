@@ -10,7 +10,7 @@ import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as HttpServer from "effect/unstable/http/HttpServer";
 import { HttpObservabilityLive } from "@effect-coffee-shop/http-routing/observability";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/http-routing/request-services";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 
 export interface CoffeeWebHandler {
   readonly dispose: () => Promise<void>;

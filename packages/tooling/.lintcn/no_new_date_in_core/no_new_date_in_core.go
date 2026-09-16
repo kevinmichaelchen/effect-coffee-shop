@@ -25,8 +25,8 @@ func isCoreApplicationOrDomainFile(fileName string) bool {
 		return false
 	}
 
-	return strings.Contains(normalized, "packages/coffee/core/src/application/") ||
-		strings.Contains(normalized, "packages/coffee/core/src/domain/") ||
+	return strings.Contains(normalized, "packages/coffee/application/src/") ||
+		strings.Contains(normalized, "packages/coffee/domain/src/") ||
 		strings.HasPrefix(normalized, "src/application/") ||
 		strings.HasPrefix(normalized, "src/domain/")
 }

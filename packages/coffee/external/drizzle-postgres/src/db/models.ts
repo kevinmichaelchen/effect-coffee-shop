@@ -6,12 +6,12 @@
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { createSelectSchema } from "drizzle-orm/effect-schema";
-import { CartItemId, CartItem } from "@effect-coffee-shop/coffee-core/domain/cart";
+import { CartItemId, CartItem } from "@effect-coffee-shop/coffee-domain/cart";
 import {
   CheckoutSessionId,
   CheckoutSession,
   CheckoutSessionStatus,
-} from "@effect-coffee-shop/coffee-core/domain/checkout-session";
+} from "@effect-coffee-shop/coffee-domain/checkout-session";
 import {
   DrinkId,
   DrinkKind,
@@ -19,15 +19,15 @@ import {
   MenuItem,
   Milk,
   Temperature,
-} from "@effect-coffee-shop/coffee-core/domain/menu";
-import { MoneyFromCents, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
+} from "@effect-coffee-shop/coffee-domain/menu";
+import { MoneyFromCents, moneyToCents } from "@effect-coffee-shop/coffee-domain/money";
 import {
   CoffeeOrderItem,
   CoffeeOrder,
   OrderId,
   OrderStatus,
-} from "@effect-coffee-shop/coffee-core/domain/order";
-import { toPersistedCoffeeOrderItemFields } from "@effect-coffee-shop/coffee-core/application/ports/coffee-order-item-persistence";
+} from "@effect-coffee-shop/coffee-domain/order";
+import { toPersistedCoffeeOrderItemFields } from "@effect-coffee-shop/coffee-application/ports/coffee-order-item-persistence";
 import {
   cartItemsTable,
   checkoutSessionItemsTable,

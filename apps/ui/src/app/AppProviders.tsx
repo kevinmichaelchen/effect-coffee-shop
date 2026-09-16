@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { PropsWithChildren } from "react";
-import { Toaster } from "#shared/ui/retroui/Sonner.tsx";
+import { Toaster } from "@effect-coffee-shop/ui-kit/components/retroui/Sonner";
 
 const queryClient = new QueryClient({
   defaultOptions: {

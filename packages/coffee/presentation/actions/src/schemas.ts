@@ -9,8 +9,8 @@ import {
   InvalidOrderInputError,
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
-} from "@effect-coffee-shop/coffee-core/domain/errors";
-import { OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
+} from "@effect-coffee-shop/coffee-domain/errors";
+import { OrderId } from "@effect-coffee-shop/coffee-domain/order";
 import {
   CartItemIdRequest,
   CheckoutCartRequest,
@@ -20,12 +20,12 @@ import {
   PlaceOrderRequest,
   QuoteOrderRequest,
   UpdateCartItemRequest,
-} from "@effect-coffee-shop/coffee-core/application/contracts";
+} from "@effect-coffee-shop/coffee-application/contracts";
 import {
   AuthenticationRequiredError,
   StaffRoleRequiredError,
-} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import { InternalAppError } from "@effect-coffee-shop/coffee-core/application/errors";
+} from "@effect-coffee-shop/coffee-application/CurrentActor";
+import { InternalAppError } from "@effect-coffee-shop/coffee-application/errors";
 
 export const AppError = Schema.Union([
   AuthenticationRequiredError,

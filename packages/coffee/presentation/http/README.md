@@ -18,7 +18,7 @@ bindings or core business behavior.
 HTTP paths, HTTP payload decoding, response schemas, and HTTP handler composition belong here.
 Request actor resolution, concrete persistence, and Bun server wiring are provided
 by runtime shells such as [`apps/backend`](../../../../apps/backend). Business behavior stays in
-[`coffee-core`](../../core).
+[`coffee-application`](../../application).
 
 ## Commands
 

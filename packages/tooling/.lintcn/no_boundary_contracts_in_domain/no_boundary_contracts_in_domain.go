@@ -34,7 +34,7 @@ func isDomainFile(fileName string) bool {
 		return false
 	}
 
-	return strings.Contains(normalized, "/src/domain/")
+	return strings.Contains(normalized, "packages/coffee/domain/src/")
 }
 
 func isBoundaryContractName(name string) bool {
@@ -60,7 +60,7 @@ func reportIfBoundaryContract(ctx rule.RuleContext, node *ast.Node, name string)
 	ctx.ReportNode(node, rule.RuleMessage{
 		Id:          "moveBoundaryContractOutOfDomain",
 		Description: "Domain files must not declare transport boundary contracts.",
-		Help:        "Move request, response, query, and payload contracts into src/application/contracts.ts or a presentation boundary module so the domain stays focused on validated business types.",
+		Help:        "Move request, response, query, and payload contracts into packages/coffee/application/src/contracts.ts or a presentation boundary module so the domain stays focused on validated business types.",
 	})
 }
 

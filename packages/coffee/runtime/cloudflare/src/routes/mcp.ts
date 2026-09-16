@@ -11,7 +11,7 @@ import {
   type HttpRoute,
 } from "@effect-coffee-shop/http-routing/route";
 import { createCloudflareRequestServices, getCloudflareRuntimeBackend } from "../backend.ts";
-import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 
 const isMcpRequest = (request: Request): boolean => requestPathIsOrStartsWith(request, "/mcp");
 

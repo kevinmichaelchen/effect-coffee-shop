@@ -3,7 +3,7 @@
 `@effect-coffee-shop/coffee-external-drizzle-postgres` provides a Postgres-backed implementation of
 the Coffee application ports.
 
-See [`coffee-core`](../../core) for the ports implemented by this package.
+See [`coffee-application`](../../application) for the ports implemented by this package.
 
 ## Exports
 

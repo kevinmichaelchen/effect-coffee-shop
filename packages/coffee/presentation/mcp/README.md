@@ -25,7 +25,7 @@ projection.
 
 Resources expose readable Coffee state such as menu or order data. Prompts provide reusable MCP
 prompt templates. Tools perform actions through
-[`CoffeeOrderApp`](../../core/src/application/CoffeeOrderApp.ts), such as listing orders or updating
+[`CoffeeOrderApp`](../../application/src/CoffeeOrderApp.ts), such as listing orders or updating
 order status.
 
 ### What Does Not Belong Here?

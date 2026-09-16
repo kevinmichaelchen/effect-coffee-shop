@@ -12,12 +12,12 @@ import {
   CheckoutSessionId,
   CheckoutSession,
   CheckoutSessionStatus,
-} from "@effect-coffee-shop/coffee-core/domain/checkout-session";
-import { MoneyFromCents, moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
-import { CoffeeOrderItem } from "@effect-coffee-shop/coffee-core/domain/order";
-import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
-import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
-import { toPersistedCoffeeOrderItemFields } from "@effect-coffee-shop/coffee-core/application/ports/coffee-order-item-persistence";
+} from "@effect-coffee-shop/coffee-domain/checkout-session";
+import { MoneyFromCents, moneyToCents } from "@effect-coffee-shop/coffee-domain/money";
+import { CoffeeOrderItem } from "@effect-coffee-shop/coffee-domain/order";
+import { PersistenceError } from "@effect-coffee-shop/coffee-application/errors";
+import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-application/ports/CheckoutSessionRepository";
+import { toPersistedCoffeeOrderItemFields } from "@effect-coffee-shop/coffee-application/ports/coffee-order-item-persistence";
 import { deleteCheckoutSessionItemsBySessionId } from "./queries/.generated/delete-checkout-session-items-by-session-id.sql.ts";
 import { deleteCurrentCheckoutSessionByOwner } from "./queries/.generated/delete-current-checkout-session-by-owner.sql.ts";
 import { findCheckoutSessionById } from "./queries/.generated/find-checkout-session-by-id.sql.ts";

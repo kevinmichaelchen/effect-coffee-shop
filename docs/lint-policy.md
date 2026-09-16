@@ -86,8 +86,8 @@ directory and has no rules-directory flag. The UI keeps its separate rules in
 dependency that every other custom lint task carries: edits to the shared Go
 rules invalidate backend and library lint results but not the UI's. The build uses lintcn's own
 content-addressed cache outside the checkout; generated Go module files and
-`.tsgolint` links are ignored, never committed. The core path checks still target
-`packages/coffee/core/src/domain` and `src/application` regardless of rule location.
+`.tsgolint` links are ignored, never committed. The core path checks target
+`packages/coffee/domain/src` and `packages/coffee/application/src` regardless of rule location.
 
 ## React and test safeguards
 
@@ -152,3 +152,14 @@ no rule packs are configured.
 prek, oxlint, oxfmt and oxlint-tsgolint are excluded from the 72-hour release-age
 policy in `bunfig.toml`, including every platform binding package, so they can be
 adopted as soon as they publish.
+
+TypeScript patching resolves the compiler from the tooling workspace explicitly,
+so isolated installs do not require a root TypeScript dependency.
+
+The domain and application are separate Bun workspaces. Domain has no workspace
+dependencies; application depends on domain. Fallow enforces the same direction.
+The UI kit has its own UI lint policy and a zone allowing no app imports; the app
+may import the kit. The app hosts all Storybook tests, including kit stories. Both
+UI custom-lint tasks depend on the app custom-rule build for cache invalidation.
+The kit lint task retains `$TURBO_DEFAULT$` and adds the single app theme CSS
+file it reads, preserving gitignore handling while invalidating token checks.

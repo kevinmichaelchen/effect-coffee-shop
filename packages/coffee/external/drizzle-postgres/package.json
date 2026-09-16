@@ -20,7 +20,8 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect-coffee-shop/coffee-application": "workspace:*",
+    "@effect-coffee-shop/coffee-domain": "workspace:*",
     "@effect/sql-pg": "catalog:",
     "@effect/sql-pglite": "catalog:",
     "drizzle-orm": "catalog:",

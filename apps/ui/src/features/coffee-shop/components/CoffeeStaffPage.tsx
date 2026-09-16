@@ -13,7 +13,7 @@ import {
   isStaffViewer,
   type AuthenticatedViewer,
 } from "#features/auth/lib/viewer.ts";
-import { Alert } from "#shared/ui/retroui/Alert.tsx";
+import { Alert } from "@effect-coffee-shop/ui-kit/components/retroui/Alert";
 
 function StaffAccessWarning() {
   return (

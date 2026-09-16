@@ -11,13 +11,10 @@ import {
 import { InMemoryCartItemIdGeneratorLive } from "@effect-coffee-shop/coffee-external-in-memory/in-memory/InMemoryCartItemIdGenerator";
 import { InMemoryCartRepositoryLive } from "@effect-coffee-shop/coffee-external-in-memory/in-memory/InMemoryCartRepository";
 import { InMemoryOrderIdGeneratorLive } from "@effect-coffee-shop/coffee-external-in-memory/in-memory/InMemoryOrderIdGenerator";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
-import {
-  CurrentActor,
-  systemActor,
-} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
-import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
+import { CurrentActor, systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
+import { PersistenceError } from "@effect-coffee-shop/coffee-application/errors";
+import { OrderRepository } from "@effect-coffee-shop/coffee-application/ports/OrderRepository";
 import { CoffeeHttpApiLive } from "./api.ts";
 
 export const HttpApiTestLive = HttpRouter.serve(CoffeeHttpApiLive, {

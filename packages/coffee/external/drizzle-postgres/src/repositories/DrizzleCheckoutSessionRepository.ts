@@ -11,9 +11,9 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import type {
   CheckoutSession,
   CheckoutSessionId,
-} from "@effect-coffee-shop/coffee-core/domain/checkout-session";
-import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
-import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
+} from "@effect-coffee-shop/coffee-domain/checkout-session";
+import { PersistenceError } from "@effect-coffee-shop/coffee-application/errors";
+import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-application/ports/CheckoutSessionRepository";
 import { CoffeeDb } from "../db/Db.ts";
 import {
   DrizzleCheckoutSessionItemRow,

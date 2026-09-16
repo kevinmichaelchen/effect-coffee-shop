@@ -4,7 +4,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { logStructuredEvent } from "@effect-coffee-shop/http-routing/logging";
 import { runHttpEffect } from "@effect-coffee-shop/http-routing/observability";
-import { AppActor, anonymousActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { AppActor, anonymousActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import {
   createProvisionalUser,
   createRegisteredUser,

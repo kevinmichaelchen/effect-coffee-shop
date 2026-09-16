@@ -12,9 +12,9 @@ import type {
   CoffeeOrder,
   ListOrdersFilters,
   OrderId,
-} from "@effect-coffee-shop/coffee-core/domain/order";
-import { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
-import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
+} from "@effect-coffee-shop/coffee-domain/order";
+import { PersistenceError } from "@effect-coffee-shop/coffee-application/errors";
+import { OrderRepository } from "@effect-coffee-shop/coffee-application/ports/OrderRepository";
 import {
   SqlOrderItemModel,
   SqlOrderModel,

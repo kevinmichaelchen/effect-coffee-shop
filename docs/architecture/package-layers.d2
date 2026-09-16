@@ -35,7 +35,11 @@ actions: "presentation/actions\nshared capability catalog" {
   class: presentation
 }
 
-core: "coffee-core\nbusiness behavior" {
+core: "coffee-application\nuse cases and ports" {
+  class: application
+}
+
+domain: "coffee-domain\npure business types" {
   class: domain
 }
 
@@ -47,3 +51,4 @@ app -> presentation: "mount surfaces"
 presentation -> actions: "project tools/capabilities"
 actions -> core: "run use cases"
 external -> core: "implement ports"
+core -> domain: "uses domain types"

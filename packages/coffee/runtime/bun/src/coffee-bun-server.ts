@@ -9,7 +9,7 @@ import * as Schema from "effect/Schema";
 import { createHttpRouter } from "@effect-coffee-shop/http-routing/router";
 import { routeResponse, type HttpRoute } from "@effect-coffee-shop/http-routing/route";
 import { runHttpEffect } from "@effect-coffee-shop/http-routing/observability";
-import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import { createCoffeeRequestServices } from "@effect-coffee-shop/coffee-backend/http/backend";
 import { createCoffeeWebHandler } from "@effect-coffee-shop/coffee-http/web-handler";
 

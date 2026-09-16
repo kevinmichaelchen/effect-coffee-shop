@@ -6,13 +6,13 @@
 import * as Effect from "effect/Effect";
 import * as McpSchema from "effect/unstable/ai/McpSchema";
 import * as McpServer from "effect/unstable/ai/McpServer";
-import { OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
+import { OrderId } from "@effect-coffee-shop/coffee-domain/order";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import {
   toCoffeeOrderView,
   toCoffeeOrdersView,
   toMenuView,
-} from "@effect-coffee-shop/coffee-core/application/contracts";
+} from "@effect-coffee-shop/coffee-application/contracts";
 import { prettyJson } from "./json.ts";
 
 export const MenuResource = McpServer.resource({

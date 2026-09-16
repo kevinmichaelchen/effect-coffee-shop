@@ -20,6 +20,6 @@ Coffee-agnostic.
 
 Keep platform details out of this directory. Bun, Cloudflare, and AWS bindings belong in
 [`../../../runtime`](../../../runtime); Coffee domain behavior belongs in
-[`../../../core`](../../../core).
+[`../../../application`](../../../application).
 
 [mdn-fetch]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API

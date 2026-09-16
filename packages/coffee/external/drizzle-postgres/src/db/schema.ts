@@ -4,7 +4,7 @@
  * @module
  */
 import { index, integer, jsonb, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
-import type { Milk, Temperature } from "@effect-coffee-shop/coffee-core/domain/menu";
+import type { Milk, Temperature } from "@effect-coffee-shop/coffee-domain/menu";
 import { authSchema } from "./auth-schema.ts";
 
 export const menuItemsTable = pgTable(

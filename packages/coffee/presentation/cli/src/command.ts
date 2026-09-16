@@ -3,19 +3,14 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Command from "effect/unstable/cli/Command";
 import * as Flag from "effect/unstable/cli/Flag";
-import {
-  drinkIds,
-  drinkSizes,
-  milks,
-  temperatures,
-} from "@effect-coffee-shop/coffee-core/domain/menu";
-import { orderIdFromString, orderStatuses } from "@effect-coffee-shop/coffee-core/domain/order";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
+import { drinkIds, drinkSizes, milks, temperatures } from "@effect-coffee-shop/coffee-domain/menu";
+import { orderIdFromString, orderStatuses } from "@effect-coffee-shop/coffee-domain/order";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import {
   toCoffeeOrderView,
   toCoffeeOrdersView,
   toMenuView,
-} from "@effect-coffee-shop/coffee-core/application/contracts";
+} from "@effect-coffee-shop/coffee-application/contracts";
 import { prettyJson } from "./json.ts";
 
 const customerName = Flag.string("customer-name").pipe(
