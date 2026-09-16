@@ -3,7 +3,7 @@
 `@effect-coffee-shop/coffee-core` is the Coffee bounded-context core.
 
 It owns the domain model, application use cases, application service tags, ports, errors, actor
-model, observability names, and repository contract helpers. It does not own transport protocols,
+model and observability names. It does not own transport protocols,
 runtime SDKs, database clients, or deployment wiring.
 
 ## Architecture
@@ -20,8 +20,9 @@ runtime SDKs, database clients, or deployment wiring.
   authorization errors.
 - [`src/application/contracts.ts`](./src/application/contracts.ts): boundary schemas and view models
   shared by adapters.
-- [`src/application/testing`](./src/application/testing): reusable repository contract tests for
-  external adapters.
+
+Reusable repository contract tests for external adapters live in
+[`coffee-testing`](../testing).
 
 ## FAQ
 

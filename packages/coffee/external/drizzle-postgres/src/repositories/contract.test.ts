@@ -11,7 +11,7 @@ import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/appli
 import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
 import { OrderIdGenerator } from "@effect-coffee-shop/coffee-core/application/ports/OrderIdGenerator";
 import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
-import { defineRepositoryContract } from "@effect-coffee-shop/coffee-core/application/testing/repository-contract";
+import { defineRepositoryContract } from "@effect-coffee-shop/coffee-testing/repository-contract";
 import { CoffeeDb } from "../db/Db.ts";
 import { DrizzlePostgresSchemaLive } from "../db/migrate.ts";
 import { DrizzlePostgresSchemaReady } from "../db/schema-ready.ts";

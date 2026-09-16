@@ -7,9 +7,14 @@
   "ignoreBinaries": ["portless"],
   "workspaces": {
     ".": {
-      "entry": ["packages/oxlint.config.ts"],
       // Ambient Cloudflare declarations used by the deployment toolchain.
       "ignoreDependencies": ["@cloudflare/workers-types"],
+    },
+    "packages/tooling": {
+      "project": ["*.ts"],
+    },
+    "packages/coffee/testing": {
+      "project": ["src/**/*.ts!"],
     },
     "infra/alchemy": {
       "entry": ["alchemy.run.ts!", "aws.ts!", "cloudflare.ts!"],

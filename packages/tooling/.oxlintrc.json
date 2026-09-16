@@ -1,5 +1,5 @@
 {
-  "$schema": "../node_modules/oxlint/configuration_schema.json",
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["oxc", "typescript", "unicorn", "node", "vitest"],
   "options": {
     "typeAware": true,
@@ -53,7 +53,13 @@
       }
     },
     {
-      "files": ["**/*.test.ts", "**/*.test.tsx", "**/testing/**/*.ts", "**/test-support.ts"],
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/testing/**/*.ts",
+        "**/test-support.ts",
+        "**/repository-contract.ts"
+      ],
       "rules": {
         "no-restricted-properties": [
           "error",
@@ -62,6 +68,12 @@
             "message": "Focused tests must not be committed, including Effect test wrappers."
           }
         ]
+      }
+    },
+    {
+      "files": ["**/repository-contract.ts"],
+      "rules": {
+        "vitest/valid-title": "off"
       }
     }
   ],

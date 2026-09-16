@@ -96,7 +96,8 @@
   "typeAware": {
     "enabled": true,
     "projects": [
-      "tsconfig.tools.json",
+      "packages/tooling/tsconfig.json",
+      "packages/coffee/testing/tsconfig.json",
       "apps/backend/tsconfig.json",
       "apps/ui/tsconfig.app.json",
       "apps/ui/tsconfig.node.json",
@@ -140,6 +141,7 @@
       {
         "name": "tooling",
         "patterns": [
+          "packages/tooling/**",
           "**/oxlint.config.ts",
           "**/vitest.config.ts",
           "**/vitest.setup.ts",
@@ -148,6 +150,10 @@
           "**/sqlfu.config.ts",
           "apps/ui/.storybook/**",
         ],
+      },
+      {
+        "name": "testing",
+        "patterns": ["packages/coffee/testing/**"],
       },
       {
         "name": "infra",
@@ -206,6 +212,10 @@
       },
     ],
     "rules": [
+      {
+        "from": "testing",
+        "allow": ["domain", "application"],
+      },
       {
         "from": "infra",
         "allow": ["backend-app", "ui", "external", "runtime", "turbo-cache"],

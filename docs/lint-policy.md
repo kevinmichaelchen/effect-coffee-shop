@@ -48,7 +48,7 @@ Repository sorting uses Effect array/order helpers.
 Prek owns the quality gates. `bun run hooks:run:pre-commit` checks all configured
 workspace and root formatting, lint, and compiler projects. `bun run
 hooks:run:pre-push` runs affected workspace checks, tests and builds, including
-the infrastructure workspaces' integration tests; root tooling checks; custom
+the infrastructure workspaces' integration tests; root formatting; custom
 lint; full Fallow; and both Knip modes.
 `bun run check` runs the complete local suite without affected-file filtering.
 These commands do not depend on GitHub Actions. The prepare script installs the
@@ -68,15 +68,26 @@ repository root so it deploys from the root scripts and tests from the
 workspace directory alike. `bun run cf:test` and `bun run cache:test` are
 filtered aliases for the two workspace test tasks.
 
-The remaining root Turbo tasks cover only root-level tooling files: the
-tooling compiler project, the shared Oxlint policy, and root configuration
-formatting. Their inputs are a few explicit files, so they need no gitignore
-reconstruction. Tool configuration files use `tsconfig.tools.json`: the Effect
-lint plugin has its own Effect dependency, so only this tooling compiler
-project permits that duplicate package. Application compiler projects keep
-their original strict duplication check. Generated SQL convenience files are
-explicitly included in the SQLite compiler project even when nothing imports
-them.
+The shared Oxlint policy and Go custom rules live in `packages/tooling`, an
+ordinary Bun workspace. Its compiler checks only its own configuration; each
+workspace checks its own Oxlint and Vitest configuration files. The compiler
+projects that import the Effect lint plugin permit its bundled duplicate
+`effect` package; other compiler projects retain the strict duplication check.
+Generated SQL convenience files remain explicitly included in the SQLite project.
+SQLite lint scripts exclude `.generated` via a workspace-relative CLI pattern,
+because Oxlint config ignore patterns cannot reach outside the config directory.
+Root configuration formatting is the only root Turbo task, with four explicit
+inputs: `package.json`, `turbo.json`, `knip.jsonc`, and `.fallowrc.jsonc`.
+
+Backend and library `lint:custom` scripts invoke the tooling workspace via
+`bun run --cwd`, because lintcn 0.10.1 discovers `.lintcn` from its working
+directory and has no rules-directory flag. The UI keeps its separate rules in
+`apps/ui/.lintcn`, so its Turbo task overrides away the shared build
+dependency that every other custom lint task carries: edits to the shared Go
+rules invalidate backend and library lint results but not the UI's. The build uses lintcn's own
+content-addressed cache outside the checkout; generated Go module files and
+`.tsgolint` links are ignored, never committed. The core path checks still target
+`packages/coffee/core/src/domain` and `src/application` regardless of rule location.
 
 ## React and test safeguards
 
@@ -117,9 +128,13 @@ namespace types. `bun run knip:production` additionally uses strict production
 mode, requiring direct runtime dependency declarations in the owning workspace.
 Deployment entrypoints are explicit in each infrastructure workspace, and the
 backend exports its Lambda and Worker entrypoints so the Alchemy workspace can
-declare that dependency. Package export maps exclude test files;
-the core package still exports its repository-test harness and therefore declares
-`@effect/vitest` as a dependency of that public API.
+declare that dependency. Package export maps exclude test files.
+The shared repository contract harness lives in `@effect-coffee-shop/coffee-testing`,
+which owns its runtime `@effect/vitest` dependency. External adapter tests declare
+that package as a dev dependency; core uses `@effect/vitest` only for its own tests.
+The `testing` architecture zone may import domain and application code, while
+production zones cannot import it. Knip explicitly analyzes the testing workspace's
+source, including in strict production mode.
 
 Knip configuration comments explain the limited exceptions: the embedded Effect
 language-service settings key, Bun-wrapped Oxlint binaries, ambient Cloudflare

@@ -12,9 +12,9 @@
     "db:migrate": "drizzle-kit migrate --config drizzle.config.ts",
     "db:studio": "drizzle-kit studio --config drizzle.config.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "bun --bun oxlint -c ../../../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
-    "lint:fix": "bun --bun oxlint -c ../../../oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
-    "lint:custom": "cd ../../../../apps/backend && lintcn lint --tsconfig ../../packages/coffee/external/drizzle-postgres/tsconfig.json",
+    "lint": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "lint:fix": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
+    "lint:custom": "bun run --cwd ../../../tooling lint:custom:run --tsconfig ../coffee/external/drizzle-postgres/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run --passWithNoTests"
@@ -27,10 +27,10 @@
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@effect-coffee-shop/coffee-testing": "workspace:*",
     "@electric-sql/pglite": "catalog:",
     "@types/bun": "catalog:",
     "drizzle-kit": "catalog:",
-    "lintcn": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
