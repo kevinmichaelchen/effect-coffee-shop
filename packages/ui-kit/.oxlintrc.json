@@ -178,6 +178,26 @@
           }
         ]
       }
+    },
+    {
+      "files": [
+        "src/components/retroui/Card.tsx",
+        "src/components/retroui/Dialog.tsx",
+        "src/components/retroui/Drawer.tsx",
+        "src/components/retroui/Table.tsx",
+        "src/components/retroui/Alert.tsx",
+        "src/components/retroui/Select.tsx"
+      ],
+      "rules": {
+        "react-refresh-js/only-export-components": [
+          "error",
+          {
+            "allowConstantExport": true,
+            "allowCompoundComponents": true,
+            "extraHOCs": ["assign"]
+          }
+        ]
+      }
     }
   ],
   "jsPlugins": [
