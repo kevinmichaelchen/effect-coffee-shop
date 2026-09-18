@@ -58,7 +58,7 @@ export interface CloudflareRuntime {
 }
 
 const cloudflareConfig = Config.all({
-  coffeeStaffUserIds: Config.string("coffeeStaffUserIds").pipe(Config.withDefault("")),
+  coffeeStaffUserIds: Config.String("coffeeStaffUserIds").pipe(Config.withDefault("")),
 });
 
 const trimBetterAuthSecret = (secret: string): Option.Option<Redacted.Redacted<string>> =>

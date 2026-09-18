@@ -18,19 +18,19 @@ import {
 } from "@effect-coffee-shop/coffee-core/application/contracts";
 import { prettyJson } from "./json.ts";
 
-const customerName = Flag.string("customer-name").pipe(
+const customerName = Flag.String("customer-name").pipe(
   Flag.withAlias("c"),
   Flag.withDescription("Customer display name"),
 );
 
 const createOrder = Command.make("create", {
   customerName,
-  drink: Flag.choice("drink", drinkIds).pipe(Flag.withDescription("Drink identifier")),
-  size: Flag.choice("size", drinkSizes).pipe(Flag.withDefault("medium")),
-  milk: Flag.choice("milk", milks).pipe(Flag.optional),
-  temperature: Flag.choice("temperature", temperatures).pipe(Flag.optional),
-  shots: Flag.integer("shots").pipe(Flag.optional),
-  notes: Flag.string("notes").pipe(Flag.optional),
+  drink: Flag.Literals("drink", drinkIds).pipe(Flag.withDescription("Drink identifier")),
+  size: Flag.Literals("size", drinkSizes).pipe(Flag.withDefault("medium")),
+  milk: Flag.Literals("milk", milks).pipe(Flag.optional),
+  temperature: Flag.Literals("temperature", temperatures).pipe(Flag.optional),
+  shots: Flag.Int("shots").pipe(Flag.optional),
+  notes: Flag.String("notes").pipe(Flag.optional),
 }).pipe(
   Command.withDescription("Create a new coffee order"),
   Command.withHandler(
@@ -66,7 +66,7 @@ const createOrder = Command.make("create", {
 );
 
 const getOrderCommand = Command.make("get", {
-  orderId: Flag.string("order-id").pipe(Flag.withAlias("i")),
+  orderId: Flag.String("order-id").pipe(Flag.withAlias("i")),
 }).pipe(
   Command.withDescription("Fetch an order by id"),
   Command.withHandler(
@@ -79,7 +79,7 @@ const getOrderCommand = Command.make("get", {
 );
 
 const listOrdersCommand = Command.make("list", {
-  status: Flag.choice("status", orderStatuses).pipe(Flag.optional),
+  status: Flag.Literals("status", orderStatuses).pipe(Flag.optional),
 }).pipe(
   Command.withDescription("List orders"),
   Command.withHandler(
@@ -94,7 +94,7 @@ const listOrdersCommand = Command.make("list", {
 );
 
 const cancelOrderCommand = Command.make("cancel", {
-  orderId: Flag.string("order-id").pipe(Flag.withAlias("i")),
+  orderId: Flag.String("order-id").pipe(Flag.withAlias("i")),
 }).pipe(
   Command.withDescription("Cancel an order"),
   Command.withHandler(
@@ -128,7 +128,7 @@ const menu = Command.make("menu").pipe(
 );
 
 const startCommand = Command.make("start", {
-  orderId: Flag.string("order-id").pipe(Flag.withAlias("i")),
+  orderId: Flag.String("order-id").pipe(Flag.withAlias("i")),
 }).pipe(
   Command.withDescription("Move an order into brewing"),
   Command.withHandler(
@@ -141,7 +141,7 @@ const startCommand = Command.make("start", {
 );
 
 const readyCommand = Command.make("ready", {
-  orderId: Flag.string("order-id").pipe(Flag.withAlias("i")),
+  orderId: Flag.String("order-id").pipe(Flag.withAlias("i")),
 }).pipe(
   Command.withDescription("Mark an order as ready"),
   Command.withHandler(
@@ -154,7 +154,7 @@ const readyCommand = Command.make("ready", {
 );
 
 const pickupCommand = Command.make("pickup", {
-  orderId: Flag.string("order-id").pipe(Flag.withAlias("i")),
+  orderId: Flag.String("order-id").pipe(Flag.withAlias("i")),
 }).pipe(
   Command.withDescription("Mark an order as picked up"),
   Command.withHandler(

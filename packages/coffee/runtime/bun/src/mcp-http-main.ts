@@ -18,7 +18,7 @@ import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
 
 const CoffeeMcpHttpServerLive = Layer.unwrap(
   Effect.gen(function* () {
-    const port = yield* Config.number("COFFEE_MCP_HTTP_PORT").pipe(Config.withDefault(3001));
+    const port = yield* Config.Number("COFFEE_MCP_HTTP_PORT").pipe(Config.withDefault(3001));
     return HttpRouter.serve(CoffeeMcpHttpLive).pipe(
       Layer.provide(Layer.succeed(CurrentActor)(systemActor)),
       Layer.provide(CoffeeAppLive),
