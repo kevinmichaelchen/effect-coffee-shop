@@ -33,3 +33,25 @@ export const SignedIn: Story = {
     await expect(args.onSignOut).toHaveBeenCalledTimes(1);
   },
 };
+
+export const Customer: Story = {
+  args: { viewer: { displayName: "Morgan Rivera", kind: "customer", userId: "customer-morgan" } },
+};
+
+export const SigningOut: Story = {
+  args: { isPending: true },
+  play: async ({ args, canvasElement }) => {
+    const button = within(canvasElement).getByRole("button", { name: "Sign out" });
+    await expect(button).toBeDisabled();
+    await userEvent.click(button);
+    await expect(args.onSignOut).not.toHaveBeenCalled();
+  },
+};
+
+export const LongName: Story = {
+  args: { viewer: { ...meta.args.viewer, displayName: "Alexandra Montgomery-Rivera" } },
+};
+
+export const Mobile: Story = {
+  globals: { viewport: { value: "mobile", isRotated: false } },
+};

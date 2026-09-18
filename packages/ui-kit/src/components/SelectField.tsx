@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Label } from "#ui/components/retroui/Label.tsx";
 import { Select } from "#ui/components/retroui/Select.tsx";
 import { Text } from "#ui/components/retroui/Text.tsx";
@@ -25,11 +26,20 @@ export function SelectField<TValue extends string>(inputProps: SelectFieldProps<
       ? { value, onValueChange: onChange }
       : { disabled, value, onValueChange: onChange };
 
+  const fieldId = useId();
+  const helperId = `${fieldId}-help`;
+
   return (
     <div className="grid gap-2">
-      <Label className="font-head text-sm uppercase tracking-[0.08em]">{label}</Label>
+      <Label htmlFor={fieldId} className="font-head text-sm uppercase tracking-[0.08em]">
+        {label}
+      </Label>
       <Select {...selectProps}>
-        <Select.Trigger className="w-full">
+        <Select.Trigger
+          id={fieldId}
+          aria-describedby={helperText === undefined ? undefined : helperId}
+          className="w-full"
+        >
           <Select.Value placeholder={placeholder} />
         </Select.Trigger>
         <Select.Content>
@@ -41,7 +51,7 @@ export function SelectField<TValue extends string>(inputProps: SelectFieldProps<
         </Select.Content>
       </Select>
       {helperText !== undefined ? (
-        <Text as="p" className="text-sm text-muted-foreground">
+        <Text as="p" id={helperId} className="text-sm text-muted-foreground">
           {helperText}
         </Text>
       ) : null}
