@@ -1,15 +1,30 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Eq from "effect/Equal";
+import * as Schema from "effect/Schema";
 import {
   addMoney,
   moneyFromCents,
   moneyToCents,
   multiplyMoney,
+  MinorUnitsInput,
   scaleMoney,
   sumMoney,
 } from "./money.ts";
 
 describe("money domain", () => {
+  const cents = MinorUnitsInput.check(Schema.isLessThanOrEqualTo(1_000_000));
+
+  it.prop("round-trips cents without losing precision", { cents }, ({ cents }) => {
+    assert.strictEqual(moneyToCents(moneyFromCents(cents)), cents);
+  });
+
+  it.prop("money addition is associative", { a: cents, b: cents, c: cents }, ({ a, b, c }) => {
+    const left = addMoney(addMoney(moneyFromCents(a), moneyFromCents(b)), moneyFromCents(c));
+    const right = addMoney(moneyFromCents(a), addMoney(moneyFromCents(b), moneyFromCents(c)));
+    assert.ok(Eq.equals(left, right));
+    assert.strictEqual(moneyToCents(left), a + b + c);
+  });
+
   it("keeps cents at the boundary of the Money value", () => {
     const money = moneyFromCents(450);
 

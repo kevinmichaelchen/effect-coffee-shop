@@ -11,7 +11,7 @@ import * as Schema from "effect/Schema";
 import * as Str from "effect/String";
 
 export const booleanWithDefault = (name: string, defaultValue: boolean) =>
-  Config.boolean(name).pipe(Config.withDefault(defaultValue), Effect.orDie);
+  Config.Boolean(name).pipe(Config.withDefault(defaultValue), Effect.orDie);
 
 export const numberBetweenWithDefault = (input: {
   readonly defaultValue: number;
@@ -30,10 +30,10 @@ export const numberBetweenWithDefault = (input: {
   ).pipe(Config.withDefault(input.defaultValue), Effect.orDie);
 
 const optionalString = (name: string) =>
-  Config.string(name).pipe(Config.option, Config.map(Option.getOrUndefined), Effect.orDie);
+  Config.String(name).pipe(Config.option, Config.map(Option.getOrUndefined), Effect.orDie);
 
 export const stringWithDefault = (name: string, defaultValue: string) =>
-  Config.string(name).pipe(Config.withDefault(defaultValue), Effect.orDie);
+  Config.String(name).pipe(Config.withDefault(defaultValue), Effect.orDie);
 
 export const optionalTrimmedString = (name: string) =>
   optionalString(name).pipe(
@@ -45,7 +45,7 @@ export const optionalTrimmedString = (name: string) =>
   );
 
 export const optionalTrimmedRedacted = (name: string) =>
-  Config.redacted(name).pipe(
+  Config.Redacted(name).pipe(
     Config.option,
     Config.map(
       Option.flatMap((redacted) => {
