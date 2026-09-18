@@ -17,8 +17,8 @@ export class CacheConfig extends Context.Service<
 >()("TurboCache/Config") {}
 
 const token = (name: string) =>
-  Config.redacted(name).pipe(
-    Config.mapOrFail((value) =>
+  Config.Redacted(name).pipe(
+    Config.mapEffect((value) =>
       /^[a-zA-Z0-9_-]{32,256}$/.test(Redacted.value(value))
         ? Effect.succeed(value)
         : Effect.fail(
@@ -37,7 +37,7 @@ export const cacheConfig = Config.all({
   readToken: token("CACHE_READ_TOKEN"),
   maxBytes: Config.schema(ByteLength, "CACHE_MAX_BYTES").pipe(Config.withDefault(64 * 1024 * 1024)),
 }).pipe(
-  Config.mapOrFail((config) =>
+  Config.mapEffect((config) =>
     Redacted.value(config.readToken) === Redacted.value(config.writeToken)
       ? Effect.fail(
           new Config.ConfigError(

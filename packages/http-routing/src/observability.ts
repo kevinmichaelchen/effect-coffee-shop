@@ -48,10 +48,10 @@ const resolveOtelServiceName = (serviceName: Option.Option<string>): string =>
 
 const OtlpObservabilityLive = Layer.unwrap(
   Effect.gen(function* () {
-    const endpoint = yield* Config.option(Config.string("OTEL_EXPORTER_OTLP_ENDPOINT")).pipe(
+    const endpoint = yield* Config.option(Config.String("OTEL_EXPORTER_OTLP_ENDPOINT")).pipe(
       Effect.map(nonBlankString),
     );
-    const serviceName = yield* Config.option(Config.string("OTEL_SERVICE_NAME")).pipe(
+    const serviceName = yield* Config.option(Config.String("OTEL_SERVICE_NAME")).pipe(
       Effect.map(resolveOtelServiceName),
     );
 

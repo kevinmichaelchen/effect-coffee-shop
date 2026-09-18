@@ -34,8 +34,8 @@ export interface AwsRuntime {
 }
 
 const awsRuntimeConfig = Config.all({
-  betterAuthSecret: Config.option(Config.redacted("betterAuthSecret")),
-  coffeeStaffUserIds: Config.string("coffeeStaffUserIds").pipe(Config.withDefault("")),
+  betterAuthSecret: Config.option(Config.Redacted("betterAuthSecret")),
+  coffeeStaffUserIds: Config.String("coffeeStaffUserIds").pipe(Config.withDefault("")),
 });
 
 // oxlint-disable-next-line effect/no-unknown-parameters -- AWS environment boundary forwards unknown input to the Config decoder.

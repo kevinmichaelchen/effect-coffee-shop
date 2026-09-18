@@ -14,14 +14,14 @@ import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import { routeAwsRequest } from "./router.ts";
 import { awsEnvNames, type AwsLambdaEnv } from "./env.ts";
 
-const optionalVariableConfig = (name: string) => Config.string(name).pipe(Config.withDefault(""));
+const optionalVariableConfig = (name: string) => Config.String(name).pipe(Config.withDefault(""));
 
 const optionalSecretConfig = (name: string) =>
-  Config.redacted(name).pipe(Config.withDefault(Redacted.make("", { label: name })));
+  Config.Redacted(name).pipe(Config.withDefault(Redacted.make("", { label: name })));
 
-const requiredSecretConfig = (name: string) => Config.redacted(name);
+const requiredSecretConfig = (name: string) => Config.Redacted(name);
 
-const configuredBetterAuthSecret = Config.redacted(awsEnvNames.betterAuthSecret).pipe(
+const configuredBetterAuthSecret = Config.Redacted(awsEnvNames.betterAuthSecret).pipe(
   Config.option,
   Config.map(Option.getOrUndefined),
   Effect.orDie,

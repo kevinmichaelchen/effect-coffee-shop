@@ -14,7 +14,7 @@ import * as Layer from "effect/Layer";
 import * as PgDrizzle from "drizzle-orm/effect-postgres";
 
 export const PgCoffeeClientLive = PgClient.layerConfig({
-  url: Config.redacted("COFFEE_POSTGRES_URL"),
+  url: Config.Redacted("COFFEE_POSTGRES_URL"),
 });
 
 export class CoffeeDb extends Context.Service<CoffeeDb, PgDrizzle.EffectPgDatabase>()(

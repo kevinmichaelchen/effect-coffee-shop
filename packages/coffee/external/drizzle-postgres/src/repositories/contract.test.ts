@@ -2,6 +2,7 @@ import * as Option from "effect/Option";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
+import * as DateTime from "effect/DateTime";
 import { sql } from "drizzle-orm";
 import { afterAll, assert, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { PersistenceError } from "@effect-coffee-shop/coffee-application/errors";
@@ -13,6 +14,7 @@ import { OrderIdGenerator } from "@effect-coffee-shop/coffee-application/ports/O
 import { OrderRepository } from "@effect-coffee-shop/coffee-application/ports/OrderRepository";
 import { defineRepositoryContract } from "@effect-coffee-shop/coffee-testing/repository-contract";
 import { CoffeeDb } from "../db/Db.ts";
+import { usersTable } from "../db/auth-schema.ts";
 import { DrizzlePostgresSchemaLive } from "../db/migrate.ts";
 import { DrizzlePostgresSchemaReady } from "../db/schema-ready.ts";
 import { DrizzlePostgresCoffeeAppLive } from "../live.ts";
@@ -60,6 +62,7 @@ const resetDatabase = Effect.fn("contract.test.resetDatabase")(function* () {
   yield* db.execute(sql`delete from carts`);
   yield* db.execute(sql`delete from order_items`);
   yield* db.execute(sql`delete from orders`);
+  yield* db.execute(sql`delete from "user" where id = 'native-driver-timestamp-test'`);
 });
 
 const orderIdPattern = /^order_[0123456789abcdefghjkmnpqrstvwxyz]{26}$/;
@@ -103,6 +106,30 @@ describeWithPostgres("Drizzle Postgres coffee repositories", () => {
         expect(first).toMatch(orderIdPattern);
         expect(second).toMatch(orderIdPattern);
         expect(first).not.toBe(second);
+      }),
+    );
+  });
+
+  it("round-trips auth timestamps through the native PostgreSQL driver", async () => {
+    await run(
+      Effect.gen(function* () {
+        const db = yield* CoffeeDb;
+        const createdAt = DateTime.toDateUtc(DateTime.makeUnsafe("2026-09-12T12:34:56.789Z"));
+        const rows = yield* db
+          .insert(usersTable)
+          .values({
+            id: "native-driver-timestamp-test",
+            name: "Native driver test",
+            email: "native-driver@example.test",
+            emailVerified: false,
+            createdAt,
+            updatedAt: createdAt,
+          })
+          .returning();
+
+        expect(rows).toHaveLength(1);
+        expect(rows[0]?.createdAt).toEqual(createdAt);
+        expect(rows[0]?.updatedAt).toEqual(createdAt);
       }),
     );
   });
