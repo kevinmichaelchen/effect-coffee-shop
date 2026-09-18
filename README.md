@@ -139,6 +139,10 @@ bun run hooks:run:pre-push
 
 CI pins Node.js via `.node-version` alongside Bun: Vitest and Cloudflare tooling
 use Node and require modern JavaScript resource-management syntax.
+Backend/package tests use Vitest 5 to match `@effect/vitest`. The UI workspace
+pins Vitest 4.1.11 and matching browser packages because Storybook 10.6
+requires Vitest 3 or 4. Upgrade that group together when Storybook supports 5.
+
 CI runs three jobs in parallel on every PR and push to `main`:
 
 | Command              | Coverage                                                                                               |

@@ -71,6 +71,7 @@ function buildCoffeeAuthOptions(input: CoffeeAuthInput): BetterAuthOptions {
                 onSome: async (userId) => {
                   await ctx.context.internalAdapter.createUser(
                     createRegisteredUser({ context, userId }),
+                    { method: "passkey" },
                   );
                   return { userId };
                 },

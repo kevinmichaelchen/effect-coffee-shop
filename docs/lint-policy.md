@@ -163,3 +163,8 @@ may import the kit. The app hosts all Storybook tests, including kit stories. Bo
 UI custom-lint tasks depend on the app custom-rule build for cache invalidation.
 The kit lint task retains `$TURBO_DEFAULT$` and adds the single app theme CSS
 file it reads, preserving gitignore handling while invalidating token checks.
+
+The UI kit config explicitly recognizes the existing RetroUI compound components
+for `eslint-plugin-react-refresh`: object exports use `allowCompoundComponents`,
+and the six compound primitive modules recognize `Object.assign` via `extraHOCs`.
+The component-only export rule remains enabled.

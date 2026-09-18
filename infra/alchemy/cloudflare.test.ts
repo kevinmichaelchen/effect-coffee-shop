@@ -93,3 +93,26 @@ test(
     { concurrency: 1, discard: true },
   ),
 );
+
+// Exercise auth inside workerd: host-side D1 RPC proxies do not preserve the
+// property-presence and prepared-statement semantics used by Better Auth.
+test(
+  "serves passkey registration options with the migrated D1 auth schema",
+  Effect.gen(function* () {
+    const { url } = yield* deployed;
+    const registrationUrl = new URL("/api/auth/passkey/generate-register-options", url);
+    registrationUrl.searchParams.set("context", '{"displayName":"Schema Smoke Test"}');
+    const response = yield* HttpClient.get(registrationUrl);
+    const options = yield* HttpClientResponse.schemaBodyJson(
+      Schema.Struct({
+        challenge: Schema.NonEmptyString,
+        rp: Schema.Struct({ name: Schema.String }),
+        user: Schema.Struct({ displayName: Schema.String }),
+      }),
+    )(response);
+
+    expect(response.status).toBe(200);
+    expect(options.rp.name).toBe("Effect Coffee Shop");
+    expect(options.user.displayName).toBe("Schema Smoke Test");
+  }),
+);
