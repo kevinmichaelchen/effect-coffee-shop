@@ -41,7 +41,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const trigger = canvas.getByRole("combobox");
+    const trigger = canvas.getByRole("combobox", { name: "Size" });
     await userEvent.click(trigger);
     await userEvent.click(await screen.findByText("Large"));
     await expect(trigger).toHaveTextContent("Large");

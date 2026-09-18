@@ -87,3 +87,33 @@ bun run fallow
 bun run test
 bun run build
 ```
+
+## Storybook workshop
+
+Run `bun run storybook` from the repository root and open `http://localhost:6006`.
+Stories run locally with fixed sample data and callback spies; no backend or
+passkey registration is needed. Use the toolbar to switch light/dark themes and
+mobile/tablet/desktop viewports. The `Mobile` stories pin the narrow viewport.
+
+Useful starting points:
+
+- **Coffee Shop / Screens / BaristaWorkflow / Playground**: start, ready, pick up,
+  or cancel tickets. Inspect tickets in the drawer and find closed tickets in
+  recent activity. Remount the story to reset the local queue.
+- **Coffee Shop / Customer / OrderComposerCard**: change drinks and customizations,
+  inspect tea constraints, edit quantities and notes, and try the pending state.
+  Submission is a spy visible in Storybook; it does not create a real order.
+- **Coffee Shop / Customer / ReceiptDialog**: single/group receipts, long names,
+  mobile layout, navigation, dismissal, and reopening.
+- **Coffee Shop / Barista**: empty/busy queues, updates scoped to one ticket,
+  status-specific drawer actions, and recent activity.
+- **Coffee Shop / Customer / CustomerOrdersPanel**: first visit, active/history
+  tickets, and background refreshing with existing content retained.
+- **Auth / Passkey** and **Auth / Session**: registration/sign-in callbacks,
+  pending and error states, customer/staff identities, and mobile examples.
+
+Stories with `play` functions demonstrate and assert interactions automatically;
+the Interactions panel shows their steps. Use `bun run test:storybook` to run
+all stories in Chromium in both themes, or `bun run build-storybook` to build the
+static workshop. Shared field stories also verify that inputs can be found by
+their visible labels.

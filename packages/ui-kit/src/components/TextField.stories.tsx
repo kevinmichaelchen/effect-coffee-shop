@@ -37,7 +37,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const input = canvas.getByPlaceholderText("Taylor");
+    const input = canvas.getByRole("textbox", { name: "Customer name" });
     await userEvent.type(input, "Morgan");
     await expect(input).toHaveValue("Morgan");
   },
