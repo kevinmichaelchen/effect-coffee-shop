@@ -3,7 +3,7 @@ import { mergeConfig } from "vite";
 import { sharedViteConfig } from "../vite.shared.ts";
 
 const config: StorybookConfig = {
-  stories: ["../src/**/*.stories.@(ts|tsx)"],
+  stories: ["../src/**/*.stories.@(ts|tsx)", "../../../packages/ui-kit/src/**/*.stories.@(ts|tsx)"],
   addons: ["@storybook/addon-docs", "@storybook/addon-a11y", "@storybook/addon-vitest"],
   framework: {
     name: "@storybook/react-vite",

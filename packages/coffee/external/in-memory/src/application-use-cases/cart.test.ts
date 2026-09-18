@@ -8,10 +8,10 @@ import {
   CurrentActor,
   type AppActor,
   systemActor,
-} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
-import { checkoutSessionIdFromString } from "@effect-coffee-shop/coffee-core/domain/checkout-session";
-import { moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
-import { QuoteOrderRequest } from "@effect-coffee-shop/coffee-core/application/contracts";
+} from "@effect-coffee-shop/coffee-application/CurrentActor";
+import { checkoutSessionIdFromString } from "@effect-coffee-shop/coffee-domain/checkout-session";
+import { moneyToCents } from "@effect-coffee-shop/coffee-domain/money";
+import { QuoteOrderRequest } from "@effect-coffee-shop/coffee-application/contracts";
 import {
   addCartItem,
   checkoutCart,
@@ -25,7 +25,7 @@ import {
   removeCartItem,
   updateCartItem,
   validateOrder,
-} from "@effect-coffee-shop/coffee-core/application/use-cases/index";
+} from "@effect-coffee-shop/coffee-application/use-cases/index";
 
 const provideSystemActor = Effect.provideService(CurrentActor, systemActor);
 const decodeQuoteOrderRequest = Schema.decodeUnknownSync(QuoteOrderRequest);

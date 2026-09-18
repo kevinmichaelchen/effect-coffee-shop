@@ -1,4 +1,4 @@
-import { Button } from "#shared/ui/retroui/Button.tsx";
+import { Button } from "@effect-coffee-shop/ui-kit/components/retroui/Button";
 import { getOrderActions } from "#features/coffee-shop/lib/coffee.ts";
 import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 

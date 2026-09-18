@@ -21,7 +21,7 @@ import {
   PlaceOrderRequest,
   QuoteOrderRequest,
   UpdateCartItemRequest,
-} from "@effect-coffee-shop/coffee-core/application/contracts";
+} from "@effect-coffee-shop/coffee-application/contracts";
 import * as Schema from "effect/Schema";
 import { AppError, EmptyActionInput, OrderIdActionInput } from "./schemas.ts";
 

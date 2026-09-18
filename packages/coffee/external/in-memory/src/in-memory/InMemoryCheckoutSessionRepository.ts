@@ -14,8 +14,8 @@ import * as Ref from "effect/Ref";
 import type {
   CheckoutSession,
   CheckoutSessionId,
-} from "@effect-coffee-shop/coffee-core/domain/checkout-session";
-import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
+} from "@effect-coffee-shop/coffee-domain/checkout-session";
+import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-application/ports/CheckoutSessionRepository";
 
 export const InMemoryCheckoutSessionRepositoryLive = Layer.effect(
   CheckoutSessionRepository,

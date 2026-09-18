@@ -1,0 +1,104 @@
+/**
+ * Implements staff order status transitions for the Coffee queue.
+ *
+ * @module
+ */
+import * as Effect from "effect/Effect";
+import {
+  InvalidOrderStatusTransitionError,
+  OrderNotFoundError,
+} from "@effect-coffee-shop/coffee-domain/errors";
+import {
+  canTransitionTo,
+  type CoffeeOrder,
+  type OrderId,
+  type OrderStatus,
+} from "@effect-coffee-shop/coffee-domain/order";
+import {
+  AuthenticationRequiredError,
+  CurrentActor,
+  StaffRoleRequiredError,
+  requireStaffActor,
+} from "@effect-coffee-shop/coffee-application/CurrentActor";
+import {
+  InternalAppError,
+  internalAppErrorFromPersistence,
+} from "@effect-coffee-shop/coffee-application/errors";
+import {
+  actorObservabilityAttributes,
+  annotateObservabilitySpan,
+  logInfoWithAttributes,
+  recordOrderAction,
+} from "@effect-coffee-shop/coffee-application/observability";
+import { OrderRepository } from "../ports/OrderRepository.ts";
+
+type UpdateOrderStatusError =
+  | AuthenticationRequiredError
+  | InvalidOrderStatusTransitionError
+  | OrderNotFoundError
+  | StaffRoleRequiredError
+  | InternalAppError;
+
+const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* (
+  orderId: OrderId,
+  to: OrderStatus,
+): Effect.fn.Return<CoffeeOrder, UpdateOrderStatusError, CurrentActor | OrderRepository> {
+  const actor = yield* requireStaffActor();
+  const orderRepository = yield* OrderRepository;
+  const observabilityAttributes = {
+    ...actorObservabilityAttributes(actor),
+    next_order_status: to,
+    order_action: "change-status",
+    order_id: orderId,
+  };
+
+  yield* annotateObservabilitySpan(observabilityAttributes);
+
+  const order = yield* orderRepository.getById(orderId).pipe(
+    Effect.mapError(internalAppErrorFromPersistence("Unable to update order status right now")),
+    Effect.flatMap((order) => Effect.fromOption(order, () => new OrderNotFoundError({ orderId }))),
+  );
+
+  if (!canTransitionTo(order.status, to)) {
+    return yield* new InvalidOrderStatusTransitionError({
+      orderId,
+      from: order.status,
+      to,
+    });
+  }
+
+  const updatedOrder = yield* orderRepository
+    .save({
+      ...order,
+      status: to,
+    })
+    .pipe(
+      Effect.mapError(internalAppErrorFromPersistence("Unable to update order status right now")),
+    );
+
+  yield* logInfoWithAttributes("updated coffee order status", {
+    ...observabilityAttributes,
+    order_status: updatedOrder.status,
+    previous_order_status: order.status,
+  });
+  yield* recordOrderAction({
+    action: "change-status",
+    actor,
+    result: "success",
+    status: updatedOrder.status,
+  });
+
+  return updatedOrder;
+});
+
+const makeOrderStatusUpdater = (name: string, status: OrderStatus) =>
+  Effect.fn(name)(function* (
+    orderId: OrderId,
+  ): Effect.fn.Return<CoffeeOrder, UpdateOrderStatusError, CurrentActor | OrderRepository> {
+    return yield* updateOrderStatus(orderId, status);
+  });
+
+export const startBrewing = makeOrderStatusUpdater("CoffeeOrders.startBrewing", "brewing");
+export const markReady = makeOrderStatusUpdater("CoffeeOrders.markReady", "ready");
+export const pickUpOrder = makeOrderStatusUpdater("CoffeeOrders.pickUpOrder", "picked-up");
+export const cancelOrder = makeOrderStatusUpdater("CoffeeOrders.cancelOrder", "cancelled");

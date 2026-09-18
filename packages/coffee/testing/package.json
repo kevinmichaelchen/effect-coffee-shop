@@ -15,7 +15,8 @@
     "lint:custom": "bun run --cwd ../../tooling lint:custom:run --tsconfig ../coffee/testing/tsconfig.json"
   },
   "dependencies": {
-    "@effect-coffee-shop/coffee-core": "workspace:*",
+    "@effect-coffee-shop/coffee-application": "workspace:*",
+    "@effect-coffee-shop/coffee-domain": "workspace:*",
     "@effect/vitest": "catalog:",
     "effect": "catalog:"
   },

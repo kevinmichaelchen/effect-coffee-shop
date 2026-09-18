@@ -1,10 +1,7 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import { CoffeeAppLive as InMemoryCoffeeAppLive } from "../index.ts";
-import {
-  CurrentActor,
-  systemActor,
-} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { CurrentActor, systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import {
   cancelOrder,
   listOrders,
@@ -12,7 +9,7 @@ import {
   pickUpOrder,
   placeOrder,
   startBrewing,
-} from "@effect-coffee-shop/coffee-core/application/use-cases/index";
+} from "@effect-coffee-shop/coffee-application/use-cases/index";
 
 const baseOrderRequest = {
   customerName: "Avery",

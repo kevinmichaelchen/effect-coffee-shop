@@ -5,10 +5,7 @@
  */
 import * as Context from "effect/Context";
 import { emptyWebHandlerServices } from "@effect-coffee-shop/http-routing/request-services";
-import {
-  CurrentActor,
-  type AppActor,
-} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { CurrentActor, type AppActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import {
   createCoffeeWebHandler,
   type CoffeeWebHandler,

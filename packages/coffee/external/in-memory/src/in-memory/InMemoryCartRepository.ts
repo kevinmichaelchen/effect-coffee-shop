@@ -7,8 +7,8 @@ import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
-import type { Cart } from "@effect-coffee-shop/coffee-core/domain/cart";
-import { CartRepository } from "@effect-coffee-shop/coffee-core/application/ports/CartRepository";
+import type { Cart } from "@effect-coffee-shop/coffee-domain/cart";
+import { CartRepository } from "@effect-coffee-shop/coffee-application/ports/CartRepository";
 
 type CartOwnerUserId = Cart["ownerUserId"];
 

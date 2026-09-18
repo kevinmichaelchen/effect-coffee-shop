@@ -159,25 +159,6 @@
           }
         ]
       }
-    },
-    {
-      "files": ["src/shared/ui/**/*.{ts,tsx}"],
-      "rules": {
-        "shadcn/no-restyle": "off",
-        "shadcn/no-arbitrary-values": "off",
-        "shadcn/require-static-classes": "off"
-      }
-    },
-    {
-      "files": ["src/shared/ui/retroui/Progress.tsx"],
-      "rules": {
-        "shadcn/no-inline-styles": [
-          "error",
-          {
-            "allow": ["transform"]
-          }
-        ]
-      }
     }
   ],
   "jsPlugins": [
@@ -193,7 +174,7 @@
   ],
   "settings": {
     "shadcn": {
-      "ui": "#shared/ui/retroui"
+      "ui": "@effect-coffee-shop/ui-kit/components/retroui"
     }
   }
 }

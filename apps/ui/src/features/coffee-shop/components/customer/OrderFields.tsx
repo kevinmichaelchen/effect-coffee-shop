@@ -1,6 +1,6 @@
-import { Button } from "#shared/ui/retroui/Button.tsx";
-import { SelectField } from "#shared/ui/SelectField.tsx";
-import { TextAreaField } from "#shared/ui/TextAreaField.tsx";
+import { Button } from "@effect-coffee-shop/ui-kit/components/retroui/Button";
+import { SelectField } from "@effect-coffee-shop/ui-kit/components/SelectField";
+import { TextAreaField } from "@effect-coffee-shop/ui-kit/components/TextAreaField";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 import { CustomizationFields } from "./CustomizationFields.tsx";
 

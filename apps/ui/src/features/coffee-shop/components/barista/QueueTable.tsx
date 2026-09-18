@@ -1,6 +1,6 @@
-import { Button } from "#shared/ui/retroui/Button.tsx";
-import { Table } from "#shared/ui/retroui/Table.tsx";
-import { StatusBadge } from "#shared/ui/StatusBadge.tsx";
+import { Button } from "@effect-coffee-shop/ui-kit/components/retroui/Button";
+import { Table } from "@effect-coffee-shop/ui-kit/components/retroui/Table";
+import { StatusBadge } from "#features/coffee-shop/components/StatusBadge.tsx";
 import { QueueRowActions } from "#features/coffee-shop/components/barista/QueueRowActions.tsx";
 import { formatOrderTime } from "#features/coffee-shop/lib/coffee.ts";
 import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";

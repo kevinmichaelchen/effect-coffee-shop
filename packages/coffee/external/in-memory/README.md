@@ -7,7 +7,7 @@ It is useful for local development, tests, and adapter contracts that do not
 need durable storage. The composition root chooses whether to use this package
 or a durable external layer.
 
-See [`coffee-core`](../../core) for the ports implemented by this package.
+See [`coffee-application`](../../application) for the ports implemented by this package.
 
 ## Exports
 

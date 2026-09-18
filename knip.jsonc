@@ -10,6 +10,12 @@
       // Ambient Cloudflare declarations used by the deployment toolchain.
       "ignoreDependencies": ["@cloudflare/workers-types"],
     },
+    "packages/coffee/domain": { "project": ["src/**/*.ts!", "!src/**/*.test.ts!", "*.ts"] },
+    "packages/coffee/application": { "project": ["src/**/*.ts!", "!src/**/*.test.ts!", "*.ts"] },
+    "packages/ui-kit": {
+      "entry": ["src/**/*.stories.tsx"],
+      "project": ["src/**/*.{ts,tsx}!", "!src/**/*.stories.tsx!"],
+    },
     "packages/tooling": {
       "project": ["*.ts"],
     },

@@ -1,6 +1,6 @@
-import { Card } from "#shared/ui/retroui/Card.tsx";
-import { Progress } from "#shared/ui/retroui/Progress.tsx";
-import { Text } from "#shared/ui/retroui/Text.tsx";
+import { Card } from "@effect-coffee-shop/ui-kit/components/retroui/Card";
+import { Progress } from "@effect-coffee-shop/ui-kit/components/retroui/Progress";
+import { Text } from "@effect-coffee-shop/ui-kit/components/retroui/Text";
 
 export interface WorkspaceMetric {
   label: string;

@@ -1,0 +1,199 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": ["dist/**"],
+  "plugins": ["typescript", "unicorn", "oxc", "react", "jsx-a11y", "import", "promise", "vitest"],
+  "options": {
+    "typeAware": true,
+    "typeCheck": true,
+    "maxWarnings": 0,
+    "reportUnusedDisableDirectives": "error"
+  },
+  "env": {
+    "builtin": true
+  },
+  "rules": {
+    "no-bitwise": "error",
+    "no-plusplus": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/no-unsafe-argument": "error",
+    "typescript/no-unsafe-assignment": "error",
+    "typescript/no-unsafe-call": "error",
+    "typescript/no-unsafe-member-access": "error",
+    "typescript/no-unsafe-return": "error",
+    "typescript/no-unsafe-type-assertion": "error",
+    "typescript/no-unnecessary-type-assertion": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "react",
+            "importNames": ["useEffect"],
+            "message": "useEffect is banned in the UI workspace. Model effects at the boundary or use event/query state instead."
+          }
+        ]
+      }
+    ],
+    "no-restricted-properties": [
+      "error",
+      {
+        "object": "React",
+        "property": "useEffect",
+        "message": "useEffect is banned in the UI workspace."
+      }
+    ],
+    "promise-function-async": "error",
+    "vitest/no-focused-tests": "error",
+    "react-hooks-js/rules-of-hooks": "error",
+    "react-refresh-js/only-export-components": [
+      "error",
+      {
+        "allowConstantExport": true
+      }
+    ],
+    "vitest/no-standalone-expect": [
+      "error",
+      {
+        "additionalTestBlockFunctions": ["it.effect", "it.live", "it.scoped", "it.scopedLive"]
+      }
+    ],
+    "shadcn/no-raw-colors": "error",
+    "shadcn/no-arbitrary-values": "error",
+    "shadcn/no-inline-styles": "error",
+    "shadcn/no-unknown-classes": "error",
+    "shadcn/require-static-classes": "error",
+    "shadcn/no-restyle": [
+      "error",
+      {
+        "allow": ["layout"],
+        "contracts": [
+          {
+            "pattern": "^Text$",
+            "allow": ["layout", "typography", "color", "tracking-*"]
+          },
+          {
+            "pattern": "^CardComponent(Content|Header)$",
+            "allow": ["layout", "spacing", "border-border", "border-b", "grid-cols-order-composer"]
+          },
+          {
+            "pattern": "^CardComponent(Title|Description)$",
+            "allow": ["layout", "typography"]
+          },
+          {
+            "pattern": "^TableObjCell$",
+            "allow": ["layout", "spacing", "typography"]
+          },
+          {
+            "pattern": "^DrawerComponentContent$",
+            "allow": ["layout", "border-l", "border-border", "bg-card"]
+          },
+          {
+            "pattern": "^DrawerComponentHeader$",
+            "allow": ["layout", "spacing", "border-b", "border-border", "bg-card"]
+          },
+          {
+            "pattern": "^DialogComponentDescription$",
+            "allow": ["layout", "spacing", "typography", "text-muted-foreground"]
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.{ts,tsx}", "vite.config.ts"],
+      "rules": {
+        "complexity": [
+          "error",
+          {
+            "max": 6
+          }
+        ],
+        "max-depth": [
+          "error",
+          {
+            "max": 3
+          }
+        ],
+        "max-lines": [
+          "error",
+          {
+            "max": 180,
+            "skipBlankLines": true,
+            "skipComments": true
+          }
+        ],
+        "max-lines-per-function": [
+          "error",
+          {
+            "max": 45,
+            "skipBlankLines": true,
+            "skipComments": true
+          }
+        ],
+        "max-params": [
+          "error",
+          {
+            "max": 4
+          }
+        ],
+        "max-statements": [
+          "error",
+          {
+            "max": 12
+          }
+        ],
+        "react/jsx-key": "error"
+      }
+    },
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/testing/**/*.ts", "**/test-support.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "only",
+            "message": "Focused tests must not be committed, including Effect test wrappers."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/components/**/*.{ts,tsx}"],
+      "rules": {
+        "shadcn/no-restyle": "off",
+        "shadcn/no-arbitrary-values": "off",
+        "shadcn/require-static-classes": "off"
+      }
+    },
+    {
+      "files": ["src/components/retroui/Progress.tsx"],
+      "rules": {
+        "shadcn/no-inline-styles": [
+          "error",
+          {
+            "allow": ["transform"]
+          }
+        ]
+      }
+    }
+  ],
+  "jsPlugins": [
+    {
+      "name": "react-hooks-js",
+      "specifier": "eslint-plugin-react-hooks"
+    },
+    {
+      "name": "react-refresh-js",
+      "specifier": "eslint-plugin-react-refresh"
+    },
+    "@shadcn/lint"
+  ],
+  "settings": {
+    "shadcn": {
+      "ui": "#ui/components/retroui"
+    }
+  }
+}

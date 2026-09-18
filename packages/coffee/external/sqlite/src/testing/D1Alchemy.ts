@@ -4,11 +4,11 @@ import { getPlatformProxy } from "@alchemy.run/cloudflare-runtime/core/platform-
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { D1Client } from "@effect/sql-d1";
-import type { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
-import { CartRepository } from "@effect-coffee-shop/coffee-core/application/ports/CartRepository";
-import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
-import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
-import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
+import type { PersistenceError } from "@effect-coffee-shop/coffee-application/errors";
+import { CartRepository } from "@effect-coffee-shop/coffee-application/ports/CartRepository";
+import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-application/ports/CheckoutSessionRepository";
+import { MenuRepository } from "@effect-coffee-shop/coffee-application/ports/MenuRepository";
+import { OrderRepository } from "@effect-coffee-shop/coffee-application/ports/OrderRepository";
 import { CloudflareSqlCoffeeSchemaLive, migrateCloudflareD1 } from "../cloudflare/live.ts";
 import { SqlCoffeeRepositoriesLive } from "../sql/live.ts";
 

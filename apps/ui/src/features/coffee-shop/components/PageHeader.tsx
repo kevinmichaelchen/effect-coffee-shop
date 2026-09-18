@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
-import { Button } from "#shared/ui/retroui/Button.tsx";
-import { Drawer } from "#shared/ui/retroui/Drawer.tsx";
-import { Text } from "#shared/ui/retroui/Text.tsx";
-import { ThemeToggle } from "#shared/ui/ThemeToggle.tsx";
-import type { ThemePreference } from "#shared/hooks/useThemePreference.ts";
+import { Button } from "@effect-coffee-shop/ui-kit/components/retroui/Button";
+import { Drawer } from "@effect-coffee-shop/ui-kit/components/retroui/Drawer";
+import { Text } from "@effect-coffee-shop/ui-kit/components/retroui/Text";
+import { ThemeToggle } from "@effect-coffee-shop/ui-kit/components/ThemeToggle";
+import type { ThemePreference } from "@effect-coffee-shop/ui-kit/hooks/useThemePreference";
 
 export interface PageHeaderProps {
   activeOrders: number;

@@ -3,16 +3,16 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { assert, describe, it } from "@effect/vitest";
-import { menuItems } from "@effect-coffee-shop/coffee-core/domain/menu";
-import { moneyFromCents } from "@effect-coffee-shop/coffee-core/domain/money";
-import { Cart } from "@effect-coffee-shop/coffee-core/domain/cart";
-import { CheckoutSession } from "@effect-coffee-shop/coffee-core/domain/checkout-session";
-import { CoffeeOrder } from "@effect-coffee-shop/coffee-core/domain/order";
-import type { PersistenceError } from "@effect-coffee-shop/coffee-core/application/errors";
-import { CartRepository } from "@effect-coffee-shop/coffee-core/application/ports/CartRepository";
-import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-core/application/ports/CheckoutSessionRepository";
-import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
-import { OrderRepository } from "@effect-coffee-shop/coffee-core/application/ports/OrderRepository";
+import { menuItems } from "@effect-coffee-shop/coffee-domain/menu";
+import { moneyFromCents } from "@effect-coffee-shop/coffee-domain/money";
+import { Cart } from "@effect-coffee-shop/coffee-domain/cart";
+import { CheckoutSession } from "@effect-coffee-shop/coffee-domain/checkout-session";
+import { CoffeeOrder } from "@effect-coffee-shop/coffee-domain/order";
+import type { PersistenceError } from "@effect-coffee-shop/coffee-application/errors";
+import { CartRepository } from "@effect-coffee-shop/coffee-application/ports/CartRepository";
+import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-application/ports/CheckoutSessionRepository";
+import { MenuRepository } from "@effect-coffee-shop/coffee-application/ports/MenuRepository";
+import { OrderRepository } from "@effect-coffee-shop/coffee-application/ports/OrderRepository";
 
 export type RepositoryServices =
   | CartRepository

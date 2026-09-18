@@ -9,7 +9,7 @@ import {
   routeResponse,
   type HttpRoute,
 } from "@effect-coffee-shop/http-routing/route";
-import { systemActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import { createAwsRequestServices, getAwsRuntimeBackend } from "../backend.ts";
 import type { AwsRuntime } from "../env.ts";
 

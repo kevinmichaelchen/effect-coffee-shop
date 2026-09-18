@@ -8,9 +8,9 @@ import {
   InvalidOrderInputError,
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
-} from "@effect-coffee-shop/coffee-core/domain/errors";
-import { OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
-import { InternalAppError } from "@effect-coffee-shop/coffee-core/application/errors";
+} from "@effect-coffee-shop/coffee-domain/errors";
+import { OrderId } from "@effect-coffee-shop/coffee-domain/order";
+import { InternalAppError } from "@effect-coffee-shop/coffee-application/errors";
 import { HttpApiPersistenceFailureTestLive, HttpApiTestLive } from "./test-support.ts";
 import { CoffeeHttpApi } from "./api.ts";
 

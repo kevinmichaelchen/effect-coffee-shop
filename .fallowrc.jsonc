@@ -16,8 +16,9 @@
     "apps/ui/vite.shared.ts",
     "apps/ui/vitest.config.ts",
     "packages/http-routing/src/index.ts",
-    "packages/coffee/core/src/index.ts",
-    "packages/coffee/core/src/**/*.test.ts",
+    "packages/coffee/domain/src/**/*.test.ts",
+    "packages/coffee/application/src/**/*.test.ts",
+    "packages/ui-kit/src/**/*.stories.tsx",
     "packages/coffee/backend/src/index.ts",
     "packages/coffee/presentation/actions/src/index.ts",
     "packages/coffee/presentation/actions/src/**/*.test.ts",
@@ -83,6 +84,7 @@
     "ignoreImports": true,
     "ignore": [
       "apps/ui/src/**/*.stories.tsx",
+      "packages/ui-kit/src/**/*.stories.tsx",
       "packages/coffee/external/drizzle-postgres/src/db/auth-schema.ts",
       "packages/coffee/external/drizzle-postgres/src/db/schema.ts",
     ],
@@ -103,7 +105,9 @@
       "apps/ui/tsconfig.node.json",
       "packages/turbo-cache/tsconfig.json",
       "packages/http-routing/tsconfig.json",
-      "packages/coffee/core/tsconfig.json",
+      "packages/coffee/domain/tsconfig.json",
+      "packages/coffee/application/tsconfig.json",
+      "packages/ui-kit/tsconfig.json",
       "packages/coffee/auth/tsconfig.json",
       "packages/coffee/backend/tsconfig.json",
       "packages/coffee/presentation/mcp/tsconfig.json",
@@ -160,6 +164,10 @@
         "patterns": ["infra/**"],
       },
       {
+        "name": "ui-kit",
+        "patterns": ["packages/ui-kit/**"],
+      },
+      {
         "name": "ui",
         "patterns": ["apps/ui/**"],
       },
@@ -181,14 +189,11 @@
       },
       {
         "name": "domain",
-        "patterns": ["packages/coffee/core/src/domain/**"],
+        "patterns": ["packages/coffee/domain/**"],
       },
       {
         "name": "application",
-        "patterns": [
-          "packages/coffee/core/src/application/**",
-          "packages/coffee/core/src/index.ts",
-        ],
+        "patterns": ["packages/coffee/application/**"],
       },
       {
         "name": "actions",
@@ -221,8 +226,12 @@
         "allow": ["backend-app", "ui", "external", "runtime", "turbo-cache"],
       },
       {
-        "from": "ui",
+        "from": "ui-kit",
         "allow": [],
+      },
+      {
+        "from": "ui",
+        "allow": ["ui-kit"],
       },
       {
         "from": "backend-app",
@@ -285,7 +294,7 @@
       },
       {
         "from": "tooling",
-        "allow": ["ui"],
+        "allow": ["ui", "ui-kit"],
       },
       {
         "from": "turbo-cache",

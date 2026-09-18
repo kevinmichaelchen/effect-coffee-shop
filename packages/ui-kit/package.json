@@ -1,0 +1,68 @@
+{
+  "name": "@effect-coffee-shop/ui-kit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#ui/*": "./src/*"
+  },
+  "exports": {
+    "./components/TextField": "./src/components/TextField.tsx",
+    "./components/ThemeToggle": "./src/components/ThemeToggle.tsx",
+    "./components/SelectField": "./src/components/SelectField.tsx",
+    "./components/TextAreaField": "./src/components/TextAreaField.tsx",
+    "./hooks/useThemePreference": "./src/hooks/useThemePreference.ts",
+    "./lib/utils": "./src/lib/utils.ts",
+    "./components/retroui/Card": "./src/components/retroui/Card.tsx",
+    "./components/retroui/Progress": "./src/components/retroui/Progress.tsx",
+    "./components/retroui/Label": "./src/components/retroui/Label.tsx",
+    "./components/retroui/Sonner": "./src/components/retroui/Sonner.tsx",
+    "./components/retroui/Drawer": "./src/components/retroui/Drawer.tsx",
+    "./components/retroui/Alert": "./src/components/retroui/Alert.tsx",
+    "./components/retroui/Dialog": "./src/components/retroui/Dialog.tsx",
+    "./components/retroui/Badge": "./src/components/retroui/Badge.tsx",
+    "./components/retroui/Table": "./src/components/retroui/Table.tsx",
+    "./components/retroui/Button": "./src/components/retroui/Button.tsx",
+    "./components/retroui/Text": "./src/components/retroui/Text.tsx",
+    "./components/retroui/Select": "./src/components/retroui/Select.tsx",
+    "./components/retroui/Textarea": "./src/components/retroui/Textarea.tsx",
+    "./components/retroui/Input": "./src/components/retroui/Input.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "bun --bun oxlint -c .oxlintrc.json .",
+    "lint:custom": "bun run --cwd ../../apps/ui lint:custom:run --tsconfig ../../packages/ui-kit/tsconfig.json",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "catalog:",
+    "@radix-ui/react-label": "catalog:",
+    "@radix-ui/react-progress": "catalog:",
+    "@radix-ui/react-select": "catalog:",
+    "@radix-ui/react-slot": "catalog:",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "lucide-react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "sonner": "catalog:",
+    "tailwind-merge": "catalog:",
+    "vaul": "catalog:"
+  },
+  "devDependencies": {
+    "@shadcn/lint": "catalog:",
+    "@storybook/react-vite": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
+    "eslint-plugin-react-refresh": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "storybook": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

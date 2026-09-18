@@ -2,7 +2,7 @@
 
 - [Package Layers](./package-layers.svg) shows the onion-style package dependency direction.
   Dependencies point inward. `coffee-actions` lives under presentation as shared capability
-  metadata that dispatches into `coffee-core`; `backend-host` is reusable runtime plumbing, not a
+  metadata that dispatches into `coffee-application`; `backend-host` is reusable runtime plumbing, not a
   Coffee onion layer.
 - [Backend Runtime Surfaces](./backend-runtime-surfaces.svg) shows how deployable runtimes expose
   HTTP, MCP, auth, and assets through the Fetch host.

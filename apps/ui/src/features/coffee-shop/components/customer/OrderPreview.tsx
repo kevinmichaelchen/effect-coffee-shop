@@ -1,6 +1,6 @@
-import { Button } from "#shared/ui/retroui/Button.tsx";
-import { Card } from "#shared/ui/retroui/Card.tsx";
-import { Text } from "#shared/ui/retroui/Text.tsx";
+import { Button } from "@effect-coffee-shop/ui-kit/components/retroui/Button";
+import { Card } from "@effect-coffee-shop/ui-kit/components/retroui/Card";
+import { Text } from "@effect-coffee-shop/ui-kit/components/retroui/Text";
 import { formatPrice } from "#features/coffee-shop/lib/coffee.ts";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
 

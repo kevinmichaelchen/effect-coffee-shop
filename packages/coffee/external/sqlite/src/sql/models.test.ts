@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { describe, expect } from "vitest";
-import { moneyToCents } from "@effect-coffee-shop/coffee-core/domain/money";
+import { moneyToCents } from "@effect-coffee-shop/coffee-domain/money";
 import {
   SqlCartItemModel,
   SqlMenuItemModel,

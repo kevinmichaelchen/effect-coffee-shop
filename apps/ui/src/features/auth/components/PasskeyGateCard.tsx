@@ -1,9 +1,9 @@
-import { Alert } from "#shared/ui/retroui/Alert.tsx";
-import { Button } from "#shared/ui/retroui/Button.tsx";
-import { Card } from "#shared/ui/retroui/Card.tsx";
-import { Input } from "#shared/ui/retroui/Input.tsx";
-import { Label } from "#shared/ui/retroui/Label.tsx";
-import { Text } from "#shared/ui/retroui/Text.tsx";
+import { Alert } from "@effect-coffee-shop/ui-kit/components/retroui/Alert";
+import { Button } from "@effect-coffee-shop/ui-kit/components/retroui/Button";
+import { Card } from "@effect-coffee-shop/ui-kit/components/retroui/Card";
+import { Input } from "@effect-coffee-shop/ui-kit/components/retroui/Input";
+import { Label } from "@effect-coffee-shop/ui-kit/components/retroui/Label";
+import { Text } from "@effect-coffee-shop/ui-kit/components/retroui/Text";
 
 export interface PasskeyGateCardProps {
   displayName: string;

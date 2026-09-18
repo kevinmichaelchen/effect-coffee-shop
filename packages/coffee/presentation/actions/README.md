@@ -2,7 +2,7 @@
 
 `@effect-coffee-shop/coffee-actions` contains the Coffee tool names, descriptions,
 input/output schemas, and error schemas used by Effect MCP. It is presentation
-support over [`coffee-core`](../../core), not a separate business layer.
+support over [`coffee-application`](../../application), not a separate business layer.
 
 - [`src/specs.ts`](./src/specs.ts) defines the tool catalog.
 - [`src/schemas.ts`](./src/schemas.ts) defines shared boundary schemas.

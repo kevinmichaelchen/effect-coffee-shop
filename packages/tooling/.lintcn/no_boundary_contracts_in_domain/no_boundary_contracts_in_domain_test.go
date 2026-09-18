@@ -21,21 +21,21 @@ func TestNoBoundaryContractsInDomain(t *testing.T) {
 
 var validCases = []rule_tester.ValidTestCase{
 	{
-		FileName: "src/domain/order.ts",
+		FileName: "packages/coffee/domain/src/order.ts",
 		Code: `
 export const CoffeeOrderSchema = Schema.Struct({});
 export type CoffeeOrder = typeof CoffeeOrderSchema.Type;
 		`,
 	},
 	{
-		FileName: "src/application/contracts.ts",
+		FileName: "packages/coffee/application/src/contracts.ts",
 		Code: `
 export const PlaceOrderRequestSchema = Schema.Struct({});
 export type PlaceOrderRequest = typeof PlaceOrderRequestSchema.Type;
 		`,
 	},
 	{
-		FileName: "src/domain/errors.ts",
+		FileName: "packages/coffee/domain/src/errors.ts",
 		Code: `
 export class InvalidOrderInputError extends Error {}
 		`,
@@ -44,7 +44,7 @@ export class InvalidOrderInputError extends Error {}
 
 var invalidCases = []rule_tester.InvalidTestCase{
 	{
-		FileName: "src/domain/order.ts",
+		FileName: "packages/coffee/domain/src/order.ts",
 		Code: `
 export const PlaceOrderRequestSchema = Schema.Struct({});
 		`,
@@ -53,7 +53,7 @@ export const PlaceOrderRequestSchema = Schema.Struct({});
 		},
 	},
 	{
-		FileName: "src/domain/order.ts",
+		FileName: "packages/coffee/domain/src/order.ts",
 		Code: `
 export type ListOrdersRequest = {};
 		`,
@@ -62,7 +62,7 @@ export type ListOrdersRequest = {};
 		},
 	},
 	{
-		FileName: "src/domain/http.ts",
+		FileName: "packages/coffee/domain/src/http.ts",
 		Code: `
 export interface OrderResponse {}
 		`,
@@ -71,7 +71,7 @@ export interface OrderResponse {}
 		},
 	},
 	{
-		FileName: "src/domain/order.ts",
+		FileName: "packages/coffee/domain/src/order.ts",
 		Code: `
 const placeOrderPayload = {};
 export const SubmitOrderPayloadSchema = Schema.Struct(placeOrderPayload);

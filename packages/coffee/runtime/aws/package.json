@@ -20,9 +20,9 @@
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "catalog:",
+    "@effect-coffee-shop/coffee-application": "workspace:*",
     "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-backend": "workspace:*",
-    "@effect-coffee-shop/coffee-core": "workspace:*",
     "@effect-coffee-shop/coffee-external-drizzle-postgres": "workspace:*",
     "@effect-coffee-shop/coffee-http": "workspace:*",
     "@effect-coffee-shop/coffee-mcp": "workspace:*",
@@ -33,6 +33,7 @@
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@types/bun": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

@@ -7,8 +7,8 @@ import * as Cache from "effect/Cache";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import { menuItems } from "@effect-coffee-shop/coffee-core/domain/menu";
-import { MenuRepository } from "@effect-coffee-shop/coffee-core/application/ports/MenuRepository";
+import { menuItems } from "@effect-coffee-shop/coffee-domain/menu";
+import { MenuRepository } from "@effect-coffee-shop/coffee-application/ports/MenuRepository";
 
 export const InMemoryMenuRepositoryLive = Layer.effect(
   MenuRepository,

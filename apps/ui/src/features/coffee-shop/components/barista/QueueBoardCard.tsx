@@ -1,6 +1,6 @@
-import { Alert } from "#shared/ui/retroui/Alert.tsx";
-import { Card } from "#shared/ui/retroui/Card.tsx";
-import { Text } from "#shared/ui/retroui/Text.tsx";
+import { Alert } from "@effect-coffee-shop/ui-kit/components/retroui/Alert";
+import { Card } from "@effect-coffee-shop/ui-kit/components/retroui/Card";
+import { Text } from "@effect-coffee-shop/ui-kit/components/retroui/Text";
 import { QueueTable } from "#features/coffee-shop/components/barista/QueueTable.tsx";
 import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 

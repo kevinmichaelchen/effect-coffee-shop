@@ -16,9 +16,9 @@ import {
   InvalidOrderInputError,
   InvalidOrderStatusTransitionError,
   OrderNotFoundError,
-} from "@effect-coffee-shop/coffee-core/domain/errors";
-import { OrderId } from "@effect-coffee-shop/coffee-core/domain/order";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
+} from "@effect-coffee-shop/coffee-domain/errors";
+import { OrderId } from "@effect-coffee-shop/coffee-domain/order";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import {
   type AppActor,
   AuthenticationRequiredError,
@@ -26,7 +26,7 @@ import {
   StaffRoleRequiredError,
   anonymousActor,
   isAuthenticatedActor,
-} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+} from "@effect-coffee-shop/coffee-application/CurrentActor";
 import {
   CoffeeOrderView,
   CoffeeOrdersView,
@@ -36,8 +36,8 @@ import {
   toCoffeeOrderView,
   toCoffeeOrdersView,
   toMenuView,
-} from "@effect-coffee-shop/coffee-core/application/contracts";
-import { InternalAppError } from "@effect-coffee-shop/coffee-core/application/errors";
+} from "@effect-coffee-shop/coffee-application/contracts";
+import { InternalAppError } from "@effect-coffee-shop/coffee-application/errors";
 
 const HealthStatus = Schema.Struct({
   status: Schema.Literal("ok"),

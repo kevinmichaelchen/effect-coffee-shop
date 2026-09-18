@@ -7,11 +7,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as McpServer from "effect/unstable/ai/McpServer";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-core/application/CoffeeOrderApp";
-import {
-  CurrentActor,
-  systemActor,
-} from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
+import { CurrentActor, systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import {
   type NoCheckoutSessionView,
   toCartView,
@@ -22,7 +19,7 @@ import {
   toMenuView,
   toOrderQuoteView,
   toOrderValidationView,
-} from "@effect-coffee-shop/coffee-core/application/contracts";
+} from "@effect-coffee-shop/coffee-application/contracts";
 import { CoffeeActionToolkit } from "./action-toolkit.ts";
 
 const noCheckoutSessionView: NoCheckoutSessionView = {

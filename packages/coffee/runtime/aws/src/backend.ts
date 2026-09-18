@@ -20,7 +20,7 @@ import {
   makeCoffeeBackend,
 } from "@effect-coffee-shop/coffee-backend/http/backend";
 import type { CoffeeAuthDatabase } from "@effect-coffee-shop/coffee-auth/better-auth/shared";
-import type { AppActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import type { AppActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";
 import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
 

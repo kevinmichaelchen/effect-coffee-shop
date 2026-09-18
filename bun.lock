@@ -16,6 +16,7 @@
         "varlock": "1.18.0",
       },
     },
+
     "apps/backend": {
       "name": "@effect-coffee-shop/backend",
       "version": "0.1.0",
@@ -42,24 +43,16 @@
       "version": "0.0.0",
       "dependencies": {
         "@better-auth/passkey": "catalog:",
-        "@radix-ui/react-dialog": "catalog:",
-        "@radix-ui/react-label": "catalog:",
-        "@radix-ui/react-progress": "catalog:",
-        "@radix-ui/react-select": "catalog:",
-        "@radix-ui/react-slot": "catalog:",
+        "@effect-coffee-shop/ui-kit": "workspace:*",
         "@tanstack/react-query": "catalog:",
         "better-auth": "catalog:",
-        "class-variance-authority": "catalog:",
-        "clsx": "catalog:",
         "effect": "catalog:",
         "lucide-react": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:",
         "sonner": "catalog:",
-        "tailwind-merge": "catalog:",
         "tailwindcss": "catalog:",
         "tw-animate-css": "catalog:",
-        "vaul": "catalog:",
       },
       "devDependencies": {
         "@shadcn/lint": "catalog:",
@@ -123,13 +116,32 @@
         "vitest": "catalog:",
       },
     },
+    "packages/coffee/application": {
+      "name": "@effect-coffee-shop/coffee-application",
+      "version": "0.1.0",
+      "dependencies": {
+        "@effect-coffee-shop/coffee-domain": "workspace:*",
+        "effect": "catalog:",
+      },
+      "devDependencies": {
+        "@effect/vitest": "catalog:",
+        "@just-be/effect-typed-id": "0.5.0",
+        "@mpsuesser/oxlint-plugin-effect": "catalog:",
+        "@types/bun": "catalog:",
+        "oxfmt": "catalog:",
+        "oxlint": "catalog:",
+        "oxlint-tsgolint": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
     "packages/coffee/auth": {
       "name": "@effect-coffee-shop/coffee-auth",
       "version": "0.1.0",
       "dependencies": {
         "@better-auth/passkey": "catalog:",
         "@cloudflare/workers-types": "catalog:",
-        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "@effect-coffee-shop/coffee-application": "workspace:*",
         "@effect-coffee-shop/http-routing": "workspace:*",
         "better-auth": "catalog:",
         "effect": "catalog:",
@@ -150,13 +162,14 @@
       "name": "@effect-coffee-shop/coffee-backend",
       "version": "0.1.0",
       "dependencies": {
-        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "@effect-coffee-shop/coffee-application": "workspace:*",
         "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
         "@effect-coffee-shop/coffee-http": "workspace:*",
         "@effect-coffee-shop/http-routing": "workspace:*",
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@types/bun": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -164,8 +177,8 @@
         "vitest": "catalog:",
       },
     },
-    "packages/coffee/core": {
-      "name": "@effect-coffee-shop/coffee-core",
+    "packages/coffee/domain": {
+      "name": "@effect-coffee-shop/coffee-domain",
       "version": "0.1.0",
       "dependencies": {
         "@just-be/effect-typed-id": "0.5.0",
@@ -186,7 +199,8 @@
       "name": "@effect-coffee-shop/coffee-external-drizzle-postgres",
       "version": "0.1.0",
       "dependencies": {
-        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "@effect-coffee-shop/coffee-application": "workspace:*",
+        "@effect-coffee-shop/coffee-domain": "workspace:*",
         "@effect/sql-pg": "catalog:",
         "@effect/sql-pglite": "catalog:",
         "drizzle-orm": "catalog:",
@@ -209,7 +223,8 @@
       "name": "@effect-coffee-shop/coffee-external-in-memory",
       "version": "0.1.0",
       "dependencies": {
-        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "@effect-coffee-shop/coffee-application": "workspace:*",
+        "@effect-coffee-shop/coffee-domain": "workspace:*",
         "effect": "catalog:",
       },
       "devDependencies": {
@@ -228,7 +243,8 @@
       "version": "0.1.0",
       "dependencies": {
         "@better-auth/passkey": "catalog:",
-        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "@effect-coffee-shop/coffee-application": "workspace:*",
+        "@effect-coffee-shop/coffee-domain": "workspace:*",
         "@effect/platform-bun": "catalog:",
         "@effect/sql-d1": "catalog:",
         "@effect/sql-sqlite-bun": "catalog:",
@@ -253,7 +269,8 @@
       "name": "@effect-coffee-shop/coffee-actions",
       "version": "0.1.0",
       "dependencies": {
-        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "@effect-coffee-shop/coffee-application": "workspace:*",
+        "@effect-coffee-shop/coffee-domain": "workspace:*",
         "effect": "catalog:",
       },
       "devDependencies": {
@@ -271,7 +288,8 @@
       "name": "@effect-coffee-shop/coffee-cli",
       "version": "0.1.0",
       "dependencies": {
-        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "@effect-coffee-shop/coffee-application": "workspace:*",
+        "@effect-coffee-shop/coffee-domain": "workspace:*",
         "effect": "catalog:",
       },
       "devDependencies": {
@@ -287,7 +305,8 @@
       "name": "@effect-coffee-shop/coffee-http",
       "version": "0.1.0",
       "dependencies": {
-        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "@effect-coffee-shop/coffee-application": "workspace:*",
+        "@effect-coffee-shop/coffee-domain": "workspace:*",
         "@effect-coffee-shop/http-routing": "workspace:*",
         "effect": "catalog:",
       },
@@ -308,7 +327,8 @@
       "version": "0.1.0",
       "dependencies": {
         "@effect-coffee-shop/coffee-actions": "workspace:*",
-        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "@effect-coffee-shop/coffee-application": "workspace:*",
+        "@effect-coffee-shop/coffee-domain": "workspace:*",
         "effect": "catalog:",
       },
       "devDependencies": {
@@ -325,9 +345,9 @@
       "version": "0.1.0",
       "dependencies": {
         "@better-auth/drizzle-adapter": "catalog:",
+        "@effect-coffee-shop/coffee-application": "workspace:*",
         "@effect-coffee-shop/coffee-auth": "workspace:*",
         "@effect-coffee-shop/coffee-backend": "workspace:*",
-        "@effect-coffee-shop/coffee-core": "workspace:*",
         "@effect-coffee-shop/coffee-external-drizzle-postgres": "workspace:*",
         "@effect-coffee-shop/coffee-http": "workspace:*",
         "@effect-coffee-shop/coffee-mcp": "workspace:*",
@@ -338,6 +358,7 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@types/bun": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -349,9 +370,9 @@
       "name": "@effect-coffee-shop/coffee-runtime-bun",
       "version": "0.1.0",
       "dependencies": {
+        "@effect-coffee-shop/coffee-application": "workspace:*",
         "@effect-coffee-shop/coffee-backend": "workspace:*",
         "@effect-coffee-shop/coffee-cli": "workspace:*",
-        "@effect-coffee-shop/coffee-core": "workspace:*",
         "@effect-coffee-shop/coffee-external-in-memory": "workspace:*",
         "@effect-coffee-shop/coffee-http": "workspace:*",
         "@effect-coffee-shop/coffee-mcp": "workspace:*",
@@ -373,9 +394,9 @@
       "version": "0.1.0",
       "dependencies": {
         "@cloudflare/workers-types": "catalog:",
+        "@effect-coffee-shop/coffee-application": "workspace:*",
         "@effect-coffee-shop/coffee-auth": "workspace:*",
         "@effect-coffee-shop/coffee-backend": "workspace:*",
-        "@effect-coffee-shop/coffee-core": "workspace:*",
         "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
         "@effect-coffee-shop/coffee-http": "workspace:*",
         "@effect-coffee-shop/coffee-mcp": "workspace:*",
@@ -386,6 +407,7 @@
       "devDependencies": {
         "@alchemy.run/cloudflare-runtime": "catalog:",
         "@effect/vitest": "catalog:",
+        "@types/bun": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -400,6 +422,7 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@types/bun": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -411,7 +434,8 @@
       "name": "@effect-coffee-shop/coffee-testing",
       "version": "0.1.0",
       "dependencies": {
-        "@effect-coffee-shop/coffee-core": "workspace:*",
+        "@effect-coffee-shop/coffee-application": "workspace:*",
+        "@effect-coffee-shop/coffee-domain": "workspace:*",
         "@effect/vitest": "catalog:",
         "effect": "catalog:",
       },
@@ -467,6 +491,39 @@
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
+    "packages/ui-kit": {
+      "name": "@effect-coffee-shop/ui-kit",
+      "version": "0.1.0",
+      "dependencies": {
+        "@radix-ui/react-dialog": "catalog:",
+        "@radix-ui/react-label": "catalog:",
+        "@radix-ui/react-progress": "catalog:",
+        "@radix-ui/react-select": "catalog:",
+        "@radix-ui/react-slot": "catalog:",
+        "class-variance-authority": "catalog:",
+        "clsx": "catalog:",
+        "lucide-react": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+        "sonner": "catalog:",
+        "tailwind-merge": "catalog:",
+        "vaul": "catalog:",
+      },
+      "devDependencies": {
+        "@shadcn/lint": "catalog:",
+        "@storybook/react-vite": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "eslint-plugin-react-hooks": "catalog:",
+        "eslint-plugin-react-refresh": "catalog:",
+        "oxfmt": "catalog:",
+        "oxlint": "catalog:",
+        "oxlint-tsgolint": "catalog:",
+        "storybook": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:",
       },
@@ -727,13 +784,15 @@
 
     "@effect-coffee-shop/coffee-actions": ["@effect-coffee-shop/coffee-actions@workspace:packages/coffee/presentation/actions"],
 
+    "@effect-coffee-shop/coffee-application": ["@effect-coffee-shop/coffee-application@workspace:packages/coffee/application"],
+
     "@effect-coffee-shop/coffee-auth": ["@effect-coffee-shop/coffee-auth@workspace:packages/coffee/auth"],
 
     "@effect-coffee-shop/coffee-backend": ["@effect-coffee-shop/coffee-backend@workspace:packages/coffee/backend"],
 
     "@effect-coffee-shop/coffee-cli": ["@effect-coffee-shop/coffee-cli@workspace:packages/coffee/presentation/cli"],
 
-    "@effect-coffee-shop/coffee-core": ["@effect-coffee-shop/coffee-core@workspace:packages/coffee/core"],
+    "@effect-coffee-shop/coffee-domain": ["@effect-coffee-shop/coffee-domain@workspace:packages/coffee/domain"],
 
     "@effect-coffee-shop/coffee-external-drizzle-postgres": ["@effect-coffee-shop/coffee-external-drizzle-postgres@workspace:packages/coffee/external/drizzle-postgres"],
 
@@ -764,6 +823,8 @@
     "@effect-coffee-shop/tooling": ["@effect-coffee-shop/tooling@workspace:packages/tooling"],
 
     "@effect-coffee-shop/turbo-cache": ["@effect-coffee-shop/turbo-cache@workspace:packages/turbo-cache"],
+
+    "@effect-coffee-shop/ui-kit": ["@effect-coffee-shop/ui-kit@workspace:packages/ui-kit"],
 
     "@effect-coffee-shop/web": ["@effect-coffee-shop/web@workspace:apps/ui"],
 

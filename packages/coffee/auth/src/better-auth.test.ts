@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import { D1 } from "@alchemy.run/cloudflare-runtime/core/bindings";
 import { getPlatformProxy } from "@alchemy.run/cloudflare-runtime/core/platform-proxy";
 import { describe, expect, it } from "vitest";
-import { anonymousActor } from "@effect-coffee-shop/coffee-core/application/CurrentActor";
+import { anonymousActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import { migrateCloudflareD1 } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
 import {
   createCloudflareAuth,

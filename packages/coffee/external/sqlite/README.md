@@ -7,7 +7,7 @@ The SQL definitions, generated queries, and migrations live under
 [`src/sql`](./src/sql). Runtime-specific layers adapt Bun SQLite or Cloudflare
 D1 into the shared SQL repository layer.
 
-See [`coffee-core`](../../core) for the ports implemented by this package.
+See [`coffee-application`](../../application) for the ports implemented by this package.
 
 ## Exports
 
