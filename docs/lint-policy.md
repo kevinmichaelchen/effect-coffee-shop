@@ -123,9 +123,10 @@ aliases carry `@public` because Knip does not see an external reference through
 the enclosing public type; Fallow checks the signature relationship. This tag is
 for a reviewed public contract, not a general unused-code suppression.
 
-`bun run knip` checks the development graph, including namespace exports and
-namespace types. `bun run knip:production` additionally uses strict production
-mode, requiring direct runtime dependency declarations in the owning workspace.
+`bun run knip` checks the development graph, including namespace exports,
+namespace types, and circular dependencies (including dynamic imports).
+`bun run knip:production` additionally uses strict production mode, requiring
+direct runtime dependency declarations in the owning workspace.
 Deployment entrypoints are explicit in each infrastructure workspace, and the
 backend exports its Lambda and Worker entrypoints so the Alchemy workspace can
 declare that dependency. Package export maps exclude test files.

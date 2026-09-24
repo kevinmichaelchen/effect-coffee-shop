@@ -160,10 +160,10 @@
     "cache:destroy:cloudflare": "varlock run --path infra/turbo-cache/ -- alchemy destroy ./infra/turbo-cache/cloudflare.ts --stage prod",
     "cache:destroy:aws": "varlock run --path infra/turbo-cache/ -- alchemy destroy ./infra/turbo-cache/aws.ts --stage prod",
     "cache:run": "varlock run --path config/turbo-cache/ --",
-    "knip": "knip --cache --treat-config-hints-as-errors --include nsExports,nsTypes",
+    "knip": "knip --cache --treat-config-hints-as-errors --include nsExports,nsTypes --cycles",
     "fmt:root": "oxfmt --write package.json knip.jsonc .fallowrc.jsonc turbo.json",
     "fmt:check:root": "oxfmt --check package.json knip.jsonc .fallowrc.jsonc turbo.json",
-    "knip:production": "knip --cache --strict --treat-config-hints-as-errors --include nsExports,nsTypes"
+    "knip:production": "knip --cache --strict --treat-config-hints-as-errors --include nsExports,nsTypes --cycles"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",

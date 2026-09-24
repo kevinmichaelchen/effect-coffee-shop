@@ -57,6 +57,8 @@
   },
   // Retain explicitly documented types required by exported signatures.
   "tags": ["-public"],
+  // Include dynamic imports when checking for circular dependencies.
+  "cycles": { "dynamicImports": true },
   // Keep generated imports in the graph; generator-owned convenience exports may be unused.
   "ignoreIssues": {
     "packages/coffee/external/sqlite/src/sql/**/.generated/**": ["files", "exports", "types"],
