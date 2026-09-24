@@ -41,6 +41,7 @@
     "tw-animate-css": "catalog:"
   },
   "devDependencies": {
+    "@rolldown/plugin-babel": "catalog:",
     "@shadcn/lint": "catalog:",
     "@storybook/addon-a11y": "catalog:",
     "@storybook/addon-docs": "catalog:",
@@ -53,6 +54,7 @@
     "@vitejs/plugin-react": "catalog:",
     "@vitest/browser": "catalog:",
     "@vitest/browser-playwright": "catalog:",
+    "babel-plugin-react-compiler": "catalog:",
     "eslint-plugin-react-hooks": "catalog:",
     "eslint-plugin-react-refresh": "catalog:",
     "lintcn": "catalog:",

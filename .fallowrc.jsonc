@@ -42,6 +42,8 @@
   // The Alchemy workspace builds the UI by path (`Cloudflare.Website.Vite`) rather than
   // importing it; the dependency exists so Turbo hashes UI changes into the smoke test.
   "ignoreDependencies": [
+    // Loaded indirectly by @vitejs/plugin-react's reactCompilerPreset in vite.shared.ts.
+    "babel-plugin-react-compiler",
     "oxlint-tsgolint",
     "@shadcn/lint",
     "eslint-plugin-react-hooks",
