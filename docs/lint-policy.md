@@ -12,6 +12,13 @@ tracks the shared configuration; the infrastructure workspaces lint like any
 other package.
 The React UI retains its separate policy; it does not inherit backend-only rules.
 
+Every Oxlint policy used by the workspaces enables `options.typeAware` and
+`options.typeCheck`. The former runs rules that need TypeScript types; the latter
+also reports TypeScript compiler diagnostics. We still run each workspace's
+`tsc --noEmit` task: the repository patches that compiler with Effect diagnostics,
+and the separate Turbo task preserves compiler checks in the dependency graph.
+The UI task checks both its app and Node configuration projects.
+
 ## Deliberate exceptions
 
 This is not an unconditional pass of every upstream rule:
