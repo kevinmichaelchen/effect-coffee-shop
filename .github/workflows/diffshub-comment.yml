@@ -1,0 +1,22 @@
+name: DiffsHub PR link
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  issues: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment with DiffsHub link
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          diffshub_url="${PR_URL/github.com/diffshub.com}"
+          gh pr comment "$PR_NUMBER" --repo "$REPOSITORY" --body "View this PR on DiffsHub: $diffshub_url"
