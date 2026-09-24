@@ -18,9 +18,12 @@ function readInitialTheme(): ThemePreference {
     return "light";
   }
 
-  const theme = readStoredTheme();
-  applyTheme(theme);
-  return theme;
+  return readStoredTheme();
+}
+
+/** Apply the saved preference at the browser entry point, before React renders. */
+export function initializeTheme(): void {
+  applyTheme(readInitialTheme());
 }
 
 export function useThemePreference() {

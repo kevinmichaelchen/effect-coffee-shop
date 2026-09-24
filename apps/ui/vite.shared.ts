@@ -1,4 +1,6 @@
 import tailwindcss from "@tailwindcss/vite";
+import babel from "@rolldown/plugin-babel";
+import { reactCompilerPreset } from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
 
 const coffeeProxyTarget = process.env.VITE_COFFEE_PROXY_TARGET ?? "http://localhost:3000";
@@ -26,7 +28,7 @@ const coffeeProxy = {
 } satisfies NonNullable<NonNullable<UserConfig["server"]>["proxy"]>;
 
 export const sharedViteConfig = {
-  plugins: [tailwindcss()],
+  plugins: [tailwindcss(), babel({ presets: [reactCompilerPreset()] })],
   server: {
     allowedHosts: [".localhost"],
     ...(alchemyHostsVite ? {} : { proxy: coffeeProxy }),
