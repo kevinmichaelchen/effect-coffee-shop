@@ -12,11 +12,13 @@ import type { Cart } from "@effect-coffee-shop/coffee-domain/cart";
 import { PersistenceError } from "@effect-coffee-shop/coffee-application/errors";
 import { CartRepository } from "@effect-coffee-shop/coffee-application/ports/CartRepository";
 import { SqlCartItemModel, toCartItem, toSqlCartItemSave } from "./models.ts";
-import { deleteCartByOwner } from "./queries/.generated/delete-cart-by-owner.sql.ts";
-import { deleteCartItemsByOwner } from "./queries/.generated/delete-cart-items-by-owner.sql.ts";
-import { insertCart } from "./queries/.generated/insert-cart.sql.ts";
-import { listCartItems } from "./queries/.generated/list-cart-items.sql.ts";
-import { saveCartItem } from "./queries/.generated/save-cart-item.sql.ts";
+import {
+  deleteCartByOwner,
+  deleteCartItemsByOwner,
+  insertCart,
+  listCartItems,
+  saveCartItem,
+} from "./queries/carts.ts";
 
 const decodeSqlCartItems = Schema.decodeUnknownEffect(Schema.Array(SqlCartItemModel));
 

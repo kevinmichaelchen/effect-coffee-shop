@@ -71,7 +71,6 @@
       "react": "^19.3.0",
       "react-dom": "^19.3.0",
       "sonner": "^2.0.8",
-      "sqlfu": "0.1.1",
       "storybook": "^10.6.0",
       "tailwind-merge": "^3.7.0",
       "tailwindcss": "^4.3.3",
@@ -184,7 +183,6 @@
   "packageManager": "bun@1.4.2",
   "patchedDependencies": {
     "@just-be/effect-typed-id@0.5.0": "patches/@just-be%2Feffect-typed-id@0.5.0.patch",
-    "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch",
-    "sqlfu@0.1.1": "patches/sqlfu@0.1.1.patch"
+    "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch"
   }
 }

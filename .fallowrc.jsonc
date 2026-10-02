@@ -29,14 +29,7 @@
     "packages/coffee/runtime/aws/src/**/*.test.ts",
     "packages/coffee/runtime/cloudflare/src/**/*.test.ts",
   ],
-  "ignorePatterns": [
-    "**/*.d.ts",
-    "**/*.generated.ts",
-    "**/dist/**",
-    "**/storybook-static/**",
-    "packages/coffee/external/sqlite/src/sql/migrations/.generated/**",
-    "packages/coffee/external/sqlite/src/sql/queries/.generated/**",
-  ],
+  "ignorePatterns": ["**/*.d.ts", "**/*.generated.ts", "**/dist/**", "**/storybook-static/**"],
   // Fallow does not discover the aliased React JavaScript plugins in Oxlint JSON,
   // and @shadcn/lint is loaded by the UI Oxlint configuration rather than source imports.
   // The Alchemy workspace builds the UI by path (`Cloudflare.Website.Vite`) rather than
@@ -153,7 +146,6 @@
           "**/vitest.setup.ts",
           "apps/ui/vite*.ts",
           "**/drizzle.config.ts",
-          "**/sqlfu.config.ts",
           "apps/ui/.storybook/**",
         ],
       },

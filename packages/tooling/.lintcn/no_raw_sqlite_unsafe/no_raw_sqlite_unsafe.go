@@ -1,5 +1,5 @@
 // lintcn:name no-raw-sqlite-unsafe
-// lintcn:description Handwritten SQLite SQL code should use SQLFU generated query wrappers instead of sqlClient.unsafe.
+// lintcn:description SQLite SQL code should use Effect SQL tagged templates instead of sqlClient.unsafe.
 
 package no_raw_sqlite_unsafe
 
@@ -19,7 +19,8 @@ func isHandwrittenSqliteSqlFile(fileName string) bool {
 	normalized := normalizedFileName(fileName)
 	if strings.Contains(normalized, "/vendor/") ||
 		strings.Contains(normalized, "/node_modules/") ||
-		strings.Contains(normalized, "/queries/.generated/") ||
+		// The migration runner executes reviewed migration files verbatim.
+		strings.HasSuffix(normalized, "/src/sql/migrate.ts") ||
 		strings.HasSuffix(normalized, ".test.ts") ||
 		strings.HasSuffix(normalized, ".spec.ts") {
 		return false
@@ -53,8 +54,8 @@ var NoRawSqliteUnsafeRule = rule.Rule{
 
 				ctx.ReportNode(node, rule.RuleMessage{
 					Id:          "noRawSqliteUnsafe",
-					Description: "Use SQLFU query files and generated wrappers instead of raw .unsafe calls in handwritten SQLite SQL code.",
-					Help:        "Add a .sql file under src/sql/queries and call the generated wrapper from src/sql/queries/.generated.",
+					Description: "Use Effect SQL tagged templates instead of raw .unsafe calls in SQLite SQL code.",
+					Help:        "Add a query to src/sql/queries written as sql`...` so parameters stay bound.",
 				})
 			},
 		}

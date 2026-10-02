@@ -1,4 +1,5 @@
 import type { D1Database } from "@cloudflare/workers-types";
+import * as NodeServices from "@effect/platform-node/NodeServices";
 import * as Effect from "effect/Effect";
 import { D1 } from "@alchemy.run/cloudflare-runtime/core/bindings";
 import { getPlatformProxy } from "@alchemy.run/cloudflare-runtime/core/platform-proxy";
@@ -22,7 +23,9 @@ async function withTestDatabase<A>(effect: (db: D1Database) => Promise<A>): Prom
   });
 
   // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
-  await Effect.runPromise(migrateCloudflareD1(proxy.env.DB));
+  await Effect.runPromise(
+    migrateCloudflareD1(proxy.env.DB).pipe(Effect.provide(NodeServices.layer)),
+  );
 
   return effect(proxy.env.DB).finally(() => proxy.dispose());
 }

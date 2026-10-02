@@ -76,6 +76,5 @@
         "vitest/valid-title": "off"
       }
     }
-  ],
-  "ignorePatterns": ["**/.generated/**"]
+  ]
 }

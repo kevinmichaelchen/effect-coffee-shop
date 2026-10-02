@@ -22,15 +22,17 @@ import {
   toSqlOrderItemSave,
   toSqlOrderSave,
 } from "./models.ts";
-import { deleteOrderItemsByOrderId } from "./queries/.generated/delete-order-items-by-order-id.sql.ts";
-import { findOrderById } from "./queries/.generated/find-order-by-id.sql.ts";
-import { listOrderItems } from "./queries/.generated/list-order-items.sql.ts";
-import { listOrders } from "./queries/.generated/list-orders.sql.ts";
-import { listOrdersByOwner } from "./queries/.generated/list-orders-by-owner.sql.ts";
-import { listOrdersByOwnerAndStatus } from "./queries/.generated/list-orders-by-owner-and-status.sql.ts";
-import { listOrdersByStatus } from "./queries/.generated/list-orders-by-status.sql.ts";
-import { saveOrder } from "./queries/.generated/save-order.sql.ts";
-import { saveOrderItem } from "./queries/.generated/save-order-item.sql.ts";
+import {
+  deleteOrderItemsByOrderId,
+  findOrderById,
+  listOrderItems,
+  listOrders,
+  listOrdersByOwner,
+  listOrdersByOwnerAndStatus,
+  listOrdersByStatus,
+  saveOrder,
+  saveOrderItem,
+} from "./queries/orders.ts";
 
 const decodeSqlOrders = Schema.decodeUnknownEffect(Schema.Array(SqlOrderModel));
 const decodeSqlOrderItems = Schema.decodeUnknownEffect(Schema.Array(SqlOrderItemModel));

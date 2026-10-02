@@ -29,6 +29,7 @@
   "devDependencies": {
     "@alchemy.run/cloudflare-runtime": "catalog:",
     "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
+    "@effect/platform-node": "catalog:",
     "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/bun": "catalog:",
     "oxfmt": "catalog:",

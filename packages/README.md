@@ -17,8 +17,8 @@ under `packages/coffee`, while shared HTTP routing utilities stay directly under
   presentation layers, auth context, and application layers to Web HTTP handlers.
 - [`coffee/external/in-memory`](./coffee/external/in-memory): in-memory Coffee
   External Layer.
-- [`coffee/external/sqlite`](./coffee/external/sqlite): SQLFU-backed SQLite/D1
-  Coffee External Layer.
+- [`coffee/external/sqlite`](./coffee/external/sqlite): SQLite/D1 Coffee
+  External Layer.
 - [`coffee/external/drizzle-postgres`](./coffee/external/drizzle-postgres):
   Drizzle-backed Postgres Coffee External Layer.
 - [`coffee/presentation/actions`](./coffee/presentation/actions):

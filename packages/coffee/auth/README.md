@@ -11,6 +11,6 @@ HTTP logging; it does not execute Coffee capabilities or own an application laye
 - [`src/better-auth/users.ts`](./src/better-auth/users.ts) handles passkey-first user registration.
 
 Agent Auth is no longer registered, and its execution and discovery routes are
-removed. Historical database migrations and SQLFu's legacy table definitions are
-retained so this code change does not delete existing data; no runtime capability
-code uses those tables. Any physical cleanup needs a separate reviewed migration.
+removed. Historical database migrations are retained so this code change does
+not delete existing data; no runtime capability code uses those tables. Any
+physical cleanup needs a separate reviewed migration.

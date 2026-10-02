@@ -59,9 +59,7 @@ Database helper commands proxy to the
 [`SQLite external package`](../../packages/coffee/external/sqlite):
 
 ```bash
-bun run --cwd apps/backend db:check
-bun run --cwd apps/backend db:generate
-bun run --cwd apps/backend db:migrate
+bun run --cwd apps/backend db:auth:schema
 ```
 
 ## Shared custom lint rules

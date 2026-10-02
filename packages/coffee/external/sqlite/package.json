@@ -18,19 +18,13 @@
     "./sql/live": "./src/sql/live.ts",
     "./sql/models": "./src/sql/models.ts",
     "./sql/persistence": "./src/sql/persistence.ts",
-    "./sql/schema-ready": "./src/sql/schema-ready.ts",
-    "./sql/sqlfu.config": "./src/sql/sqlfu.config.ts"
+    "./sql/schema-ready": "./src/sql/schema-ready.ts"
   },
   "scripts": {
-    "auth:schema": "cd src/sql && bunx @better-auth/cli generate --config better-auth-schema.ts --yes",
-    "db:check": "sqlfu --config src/sql/sqlfu.config.ts check",
-    "db:draft": "sqlfu --config src/sql/sqlfu.config.ts draft",
-    "db:format": "sqlfu --config src/sql/sqlfu.config.ts format \"src/sql/**/*.sql\"",
-    "db:generate": "sqlfu --config src/sql/sqlfu.config.ts generate && oxfmt --write \"src/sql/**/*.ts\"",
-    "db:migrate": "sqlfu --config src/sql/sqlfu.config.ts migrate",
+    "auth:schema": "cd src/sql && bunx --bun @better-auth/cli generate --config better-auth-schema.ts --output better-auth.sql --yes",
     "typecheck": "tsc --noEmit",
-    "lint": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --ignore-pattern '**/.generated/**' --report-unused-disable-directives-severity error .",
-    "lint:fix": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --ignore-pattern '**/.generated/**' --report-unused-disable-directives-severity error --fix .",
+    "lint": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "lint:fix": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
     "lint:custom": "bun run --cwd ../../../tooling lint:custom:run --tsconfig ../coffee/external/sqlite/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
@@ -44,13 +38,13 @@
     "@effect/sql-d1": "catalog:",
     "@effect/sql-sqlite-bun": "catalog:",
     "better-auth": "catalog:",
-    "effect": "catalog:",
-    "sqlfu": "catalog:"
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@alchemy.run/cloudflare-runtime": "catalog:",
     "@cloudflare/workers-types": "catalog:",
     "@effect-coffee-shop/coffee-testing": "workspace:*",
+    "@effect/platform-node": "catalog:",
     "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
     "oxfmt": "catalog:",

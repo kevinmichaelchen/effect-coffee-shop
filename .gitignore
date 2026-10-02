@@ -18,9 +18,8 @@ coverage
 **/.turbo
 storybook-static
 .wrangler
-.sqlfu
-**/.sqlfu
 **/.prime
 
 !infra/turbo-cache/.env.schema
 !config/turbo-cache/.env.schema
+packages/coffee/external/sqlite/src/sql/better-auth.sql
