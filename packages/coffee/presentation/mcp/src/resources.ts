@@ -4,8 +4,8 @@
  * @module
  */
 import * as Effect from "effect/Effect";
-import * as McpSchema from "effect/unstable/ai/McpSchema";
-import * as McpServer from "effect/unstable/ai/McpServer";
+import * as McpSchema from "effect/ai/McpSchema";
+import * as McpServer from "effect/ai/McpServer";
 import { OrderId } from "@effect-coffee-shop/coffee-domain/order";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import {

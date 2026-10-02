@@ -4,8 +4,8 @@
  * @module
  */
 import * as Layer from "effect/Layer";
-import * as McpProtocol from "effect/unstable/ai/McpProtocol";
-import * as McpServer from "effect/unstable/ai/McpServer";
+import * as McpProtocol from "effect/ai/McpProtocol";
+import * as McpServer from "effect/ai/McpServer";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { CoffeeActionToolsLive } from "./action-tools.ts";
 import { MenuResource, OpenOrdersResource, OrderResource } from "./resources.ts";

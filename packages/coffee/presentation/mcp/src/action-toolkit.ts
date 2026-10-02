@@ -3,8 +3,8 @@
  *
  * @module
  */
-import * as Tool from "effect/unstable/ai/Tool";
-import * as Toolkit from "effect/unstable/ai/Toolkit";
+import * as Tool from "effect/ai/Tool";
+import * as Toolkit from "effect/ai/Toolkit";
 import { coffeeActionSpecs } from "@effect-coffee-shop/coffee-actions/specs";
 
 export const ListMenuTool = Tool.make("list_menu", coffeeActionSpecs.list_menu);

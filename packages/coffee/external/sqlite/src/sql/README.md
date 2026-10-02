@@ -44,7 +44,9 @@ export default defineConfig({
 `runtime: "effect-v4-unstable"` makes generated query functions return
 `Effect` values and read `SqlClient.SqlClient` from the Effect environment.
 That matches the current Bun and Cloudflare runtime layers, which already
-provide `effect/unstable/sql` clients.
+provide `effect/sql` clients. sqlfu 0.1.1 still emits the pre-stable
+`effect/unstable/sql` import for this runtime, so
+`patches/sqlfu@0.1.1.patch` rewrites it to `effect/sql`.
 
 ## Intended Boundaries
 

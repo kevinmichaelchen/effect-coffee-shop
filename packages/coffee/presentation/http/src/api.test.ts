@@ -1,9 +1,9 @@
 import { assert, describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
-import * as HttpBody from "effect/unstable/http/HttpBody";
-import * as HttpClient from "effect/unstable/http/HttpClient";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpBody from "effect/http/HttpBody";
+import * as HttpClient from "effect/http/HttpClient";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import {
   InvalidOrderInputError,
   InvalidOrderStatusTransitionError,

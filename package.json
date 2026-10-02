@@ -22,15 +22,15 @@
     "catalog": {
       "@better-auth/drizzle-adapter": "1.7.5",
       "@better-auth/passkey": "^1.7.5",
-      "@alchemy.run/cloudflare-runtime": "2.0.0-beta.79",
+      "@alchemy.run/cloudflare-runtime": "2.0.0-beta.80",
       "@cloudflare/workers-types": "5.20260924.1",
-      "@effect/platform-bun": "4.0.0-rc.117",
-      "@effect/platform-node": "4.0.0-rc.117",
-      "@effect/sql-d1": "4.0.0-rc.117",
-      "@effect/sql-pg": "4.0.0-rc.117",
-      "@effect/sql-pglite": "4.0.0-rc.117",
-      "@effect/sql-sqlite-bun": "4.0.0-rc.117",
-      "@effect/vitest": "4.0.0-rc.117",
+      "@effect/platform-bun": "4.0.0",
+      "@effect/platform-node": "4.0.0",
+      "@effect/sql-d1": "4.0.0",
+      "@effect/sql-pg": "4.0.0",
+      "@effect/sql-pglite": "4.0.0",
+      "@effect/sql-sqlite-bun": "4.0.0",
+      "@effect/vitest": "4.0.0",
       "@electric-sql/pglite": "^0.5.4",
       "@radix-ui/react-dialog": "^1.1.23",
       "@radix-ui/react-label": "^2.1.15",
@@ -51,14 +51,14 @@
       "@vitejs/plugin-react": "^6.1.1",
       "@vitest/browser": "^4.1.10",
       "@vitest/browser-playwright": "^4.1.10",
-      "alchemy": "2.0.0-beta.79",
+      "alchemy": "2.0.0-beta.80",
       "babel-plugin-react-compiler": "^1.0.0",
       "better-auth": "^1.7.5",
       "class-variance-authority": "^0.7.1",
       "clsx": "^2.1.1",
       "drizzle-kit": "1.0.0-rc.4",
       "drizzle-orm": "1.0.0-rc.4",
-      "effect": "4.0.0-rc.117",
+      "effect": "4.0.0",
       "eslint-plugin-react-hooks": "^7.1.1",
       "eslint-plugin-react-refresh": "^0.5.3",
       "lintcn": "^0.10.1",
@@ -177,13 +177,14 @@
     "varlock": "1.20.0"
   },
   "overrides": {
-    "@effect/sql-d1": "4.0.0-rc.117",
-    "@effect/sql-sqlite-do": "4.0.0-rc.117",
-    "@effect/vitest": "4.0.0-rc.117"
+    "@effect/sql-d1": "4.0.0",
+    "@effect/sql-sqlite-do": "4.0.0",
+    "@effect/vitest": "4.0.0"
   },
   "packageManager": "bun@1.4.2",
   "patchedDependencies": {
     "@just-be/effect-typed-id@0.5.0": "patches/@just-be%2Feffect-typed-id@0.5.0.patch",
-    "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch"
+    "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch",
+    "sqlfu@0.1.1": "patches/sqlfu@0.1.1.patch"
   }
 }

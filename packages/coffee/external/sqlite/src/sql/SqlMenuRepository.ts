@@ -7,7 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { SqlClient } from "effect/unstable/sql";
+import { SqlClient } from "effect/sql";
 import type { MenuItem } from "@effect-coffee-shop/coffee-domain/menu";
 import { PersistenceError } from "@effect-coffee-shop/coffee-application/errors";
 import { MenuRepository } from "@effect-coffee-shop/coffee-application/ports/MenuRepository";

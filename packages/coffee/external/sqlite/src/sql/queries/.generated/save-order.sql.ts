@@ -1,5 +1,5 @@
 import * as Effect from "effect/Effect";
-import { SqlClient } from "effect/unstable/sql";
+import { SqlClient } from "effect/sql";
 
 const sql = `
 insert into

@@ -1,0 +1,13 @@
+diff --git a/dist/typegen/index.js b/dist/typegen/index.js
+index 049fa09e7584e9837378bf8fcfa4f5d176d3551f..7fce66ee9ea4cdfe7e353bee461befbc66d6a003 100644
+--- a/dist/typegen/index.js
++++ b/dist/typegen/index.js
+@@ -251,7 +251,7 @@ function isEffectSqlRuntime(runtime) {
+     return runtime === 'effect-v3' || runtime === 'effect-v4-unstable';
+ }
+ function effectSqlImportSpecifier(runtime) {
+-    return runtime === 'effect-v4-unstable' ? 'effect/unstable/sql' : '@effect/sql';
++    return runtime === 'effect-v4-unstable' ? 'effect/sql' : '@effect/sql';
+ }
+ function isNativeSqliteRuntime(runtime) {
+     return (runtime === 'node:sqlite' ||

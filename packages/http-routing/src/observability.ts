@@ -5,8 +5,8 @@ import * as Logger from "effect/Logger";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Metric from "effect/Metric";
 import * as Option from "effect/Option";
-import { FetchHttpClient } from "effect/unstable/http";
-import { Otlp } from "effect/unstable/observability";
+import { FetchHttpClient } from "effect/http";
+import { Otlp } from "effect/observability";
 
 const defaultServiceName = "http-routing";
 const nonBlankString = Option.filter((value: string) => value.trim() !== "");

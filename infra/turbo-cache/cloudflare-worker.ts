@@ -1,7 +1,7 @@
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
-import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
-import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
+import * as HttpServerRequest from "effect/http/HttpServerRequest";
+import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import { CacheConfig, cacheConfig } from "@effect-coffee-shop/turbo-cache/config";
 import { makeR2Store } from "@effect-coffee-shop/turbo-cache/adapters/r2";
 import { handleRequest } from "@effect-coffee-shop/turbo-cache/handler";

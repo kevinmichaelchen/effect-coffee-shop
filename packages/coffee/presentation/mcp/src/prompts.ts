@@ -5,7 +5,7 @@
  */
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
-import * as McpServer from "effect/unstable/ai/McpServer";
+import * as McpServer from "effect/ai/McpServer";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { toCoffeeOrdersView, toMenuView } from "@effect-coffee-shop/coffee-application/contracts";
 import { prettyJson } from "./json.ts";
