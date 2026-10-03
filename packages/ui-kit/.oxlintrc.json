@@ -12,6 +12,7 @@
     "builtin": true
   },
   "rules": {
+    "typescript/no-generated-empty-object-type": "error",
     "no-bitwise": "error",
     "no-plusplus": "error",
     "typescript/no-explicit-any": "error",
