@@ -59,7 +59,11 @@ describe("HTTP wide events", () => {
     );
 
     return Effect.gen(function* () {
-      assert.strictEqual(yield* route(request(), undefined), response);
+      const routed = yield* route(request(), undefined);
+      assert.strictEqual(routed.body, response.body);
+      assert.strictEqual(routed.status, response.status);
+      assert.strictEqual(routed.headers.get("x-coffee"), "latte");
+      assert.strictEqual(response.bodyUsed, false);
       const events = yield* readEvents(captured);
       assert.strictEqual(events.length, 1);
       assert.deepStrictEqual(
@@ -73,9 +77,30 @@ describe("HTTP wide events", () => {
         [{ status: "ok", http_status: 201, route_kind: "api", outcome: "ok", cache_hit: true }],
       );
       assert.match(events[0]?.requestId ?? "", /^[0-9a-f-]{36}$/);
+      assert.strictEqual(routed.headers.get("x-request-id"), events[0]?.requestId);
       assert.strictEqual(yield* Effect.promise(() => response.text()), "coffee");
     }).pipe(Effect.provide(WideEventLogger.Capture(captured)));
   });
+
+  it.effect(
+    "adds a correlation header to immutable responses while retaining redirect headers",
+    () => {
+      const captured = MutableRef.make<Array<LogEvent>>([]);
+      const response = Response.redirect("https://coffee.example/menu", 302);
+      return Effect.gen(function* () {
+        const routed = yield* makeRouter(() => Effect.succeed(routeResponse(response)))(
+          request(),
+          undefined,
+        );
+        const events = yield* readEvents(captured);
+        assert.strictEqual(events.length, 1);
+        assert.strictEqual(routed.headers.get("x-request-id"), events[0]?.requestId);
+        assert.strictEqual(routed.status, 302);
+        assert.strictEqual(routed.headers.get("location"), response.headers.get("location"));
+        assert.strictEqual(response.headers.has("x-request-id"), false);
+      }).pipe(Effect.provide(WideEventLogger.Capture(captured)));
+    },
+  );
 
   it.effect("logs unmatched requests once and retains the 404 response", () => {
     const captured = MutableRef.make<Array<LogEvent>>([]);
@@ -104,13 +129,12 @@ describe("HTTP wide events", () => {
         (status) =>
           Effect.gen(function* () {
             const response = new Response("denied", { status });
-            assert.strictEqual(
-              yield* makeRouter(() => Effect.succeed(routeResponse(response)))(
-                request(),
-                undefined,
-              ),
-              response,
+            const routed = yield* makeRouter(() => Effect.succeed(routeResponse(response)))(
+              request(),
+              undefined,
             );
+            assert.strictEqual(routed.status, response.status);
+            assert.strictEqual(routed.body, response.body);
           }),
         { concurrency: 1 },
       );

@@ -39,10 +39,15 @@ to emit one `http_routing.request` event when a request effect finishes, includi
 defects, and interruption. Auth, API, MCP, assets, and unmatched requests share this boundary.
 Emission completes before the effect returns; streamed response bodies are not consumed or timed.
 The inner Coffee Fetch handler keeps Effect's HTTP request logger disabled.
+Lambda starts the same request scope before converting the incoming request or reading runtime
+configuration. Its router reuses that scope, so setup failures emit once and routed requests do
+not acquire a second event boundary.
 
 `HttpObservabilityLive` supplies a single flat JSON console logger, runtime metrics, and optional
 OTLP export. Bun and Cloudflare run the router through `runHttpEffect`; Lambda provides the same
 layer within its invocation scope. Independent application/auth diagnostic logs can still appear.
+When OTLP is enabled, its logger explicitly inherits the JSON logger; both sinks receive the event
+without restoring Effect's default pretty console logger.
 Lambda maps failed causes with Effect's native HTTP response mapper after emission, preserving
 Alchemy's responses while avoiding its additional raw-cause fallback log.
 
@@ -51,7 +56,10 @@ Events include `service`, `method`, a locally generated `requestId`, `route_kind
 include `http_status` and `outcome`: `ok` below 400, `warning` for 4xx, and `domain_error` for 5xx.
 A returned HTTP error response is still a successful Effect exit. All boundary events use the
 upstream default Info level. This replaces the former `.complete`/`.error` events and snake-case
-method, path, duration, and request ID fields.
+method, path, duration, and request ID fields. Responses include the same generated ID in
+`x-request-id`, including Lambda responses for failures before routing. Adding this header copies
+response headers without reading or buffering the body, and supports immutable asset/redirect
+responses.
 
 URLs (including path segments), request/response headers and bodies, environment bindings, and raw
 error values are excluded. Failure details use fixed `Failure`, `Defect`, or `Interrupted` labels

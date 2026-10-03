@@ -22,17 +22,22 @@ const makeOtlpObservabilityLayer = (input: {
 }) =>
   Otlp.layerJson({
     baseUrl: input.baseUrl,
+    loggerMergeWithExisting: true,
     resource: {
       serviceName: input.serviceName,
     },
-  }).pipe(Layer.provide(FetchHttpClient.layer));
+  }).pipe(
+    Layer.provide(FetchHttpClient.layer),
+    // Build OTLP with the JSON logger already installed, then retain both outputs.
+    Layer.provideMerge(ConsoleObservabilityLive),
+  );
 
 const resolveOtlpObservabilityLayer = (input: {
   readonly endpoint: Option.Option<string>;
   readonly serviceName: string;
 }) =>
   Option.match(input.endpoint, {
-    onNone: () => Layer.empty,
+    onNone: () => ConsoleObservabilityLive,
     onSome: (baseUrl) =>
       makeOtlpObservabilityLayer({
         baseUrl,
@@ -46,7 +51,7 @@ const resolveOtelServiceName = (serviceName: Option.Option<string>): string =>
     onSome: (value) => value,
   });
 
-const OtlpObservabilityLive = Layer.unwrap(
+export const HttpObservabilityLive = Layer.unwrap(
   Effect.gen(function* () {
     const endpoint = yield* Config.option(Config.String("OTEL_EXPORTER_OTLP_ENDPOINT")).pipe(
       Effect.map(nonBlankString),
@@ -57,11 +62,6 @@ const OtlpObservabilityLive = Layer.unwrap(
 
     return resolveOtlpObservabilityLayer({ endpoint, serviceName });
   }),
-);
-
-export const HttpObservabilityLive = Layer.mergeAll(
-  ConsoleObservabilityLive,
-  OtlpObservabilityLive,
 );
 
 const HttpObservabilityRuntime = ManagedRuntime.make(HttpObservabilityLive);

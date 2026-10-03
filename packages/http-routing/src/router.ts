@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import { WideEvent } from "effect-wide-event";
-import { annotateHttpResponse, withHttpWideEvent } from "./logging.ts";
+import { annotateHttpResponse, withHttpWideEvent, withResponseRequestId } from "./logging.ts";
 import type {
   HttpRoute,
   HttpRouteResult,
@@ -43,7 +43,7 @@ export const createHttpRouter =
         onSome: (route) => route.name,
       });
       const startedAt = performance.now();
-      yield* WideEvent.set({ route_kind: routeKind });
+      yield* WideEvent.setOptional({ route_kind: routeKind });
 
       return yield* Option.match(route, {
         onNone: () => {
@@ -56,7 +56,7 @@ export const createHttpRouter =
         Effect.tap(({ logFields, response }) =>
           annotateHttpResponse({ extraFields: logFields ?? {}, response, routeKind }),
         ),
-        Effect.map(({ response }) => response),
+        Effect.flatMap(({ response }) => withResponseRequestId(response)),
         Effect.onExit((exit) => {
           const durationMs = performance.now() - startedAt;
           return Exit.isSuccess(exit)
