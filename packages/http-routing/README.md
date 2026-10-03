@@ -44,16 +44,17 @@ configuration. Its router reuses that scope, so setup failures emit once and rou
 not acquire a second event boundary.
 
 `HttpObservabilityLive` supplies a single flat JSON console logger, runtime metrics, and optional
-OTLP export. Bun and Cloudflare run the router through `runHttpEffect`; Lambda provides the same
+OTLP export. Bun and Cloudflare run the router through `runHttpRequest`; Lambda provides the same
 layer within its invocation scope. Independent application/auth diagnostic logs can still appear.
 When OTLP is enabled, its logger explicitly inherits the JSON logger; both sinks receive the event
 without restoring Effect's default pretty console logger.
-Lambda maps failed causes with Effect's native HTTP response mapper after emission, preserving
-Alchemy's responses while avoiding its additional raw-cause fallback log.
+Bun, Cloudflare, and Lambda map failed causes with Effect's native HTTP response mapper after
+emission. Their entry points return a response with `x-request-id` instead of rejecting with raw
+errors, preventing additional runtime error logs. Lambda retains Alchemy's HTTP response mapping.
 
 Events include `service`, `method`, a locally generated `requestId`, `route_kind`, `durationMs`,
-`timestamp`, `traceId`, `spanId`, and Effect exit `status` (`ok` or `error`). Returned responses also
-include `http_status` and `outcome`: `ok` below 400, `warning` for 4xx, and `domain_error` for 5xx.
+`timestamp`, `traceId`, `spanId`, and Effect exit `status` (`ok` or `error`). Effects that return a
+response also record `http_status` and `outcome`: `ok` below 400, `warning` for 4xx, and `domain_error` for 5xx.
 A returned HTTP error response is still a successful Effect exit. All boundary events use the
 upstream default Info level. This replaces the former `.complete`/`.error` events and snake-case
 method, path, duration, and request ID fields. Responses include the same generated ID in
@@ -66,10 +67,15 @@ error values are excluded. Failure details use fixed `Failure`, `Defect`, or `In
 and messages. Request spans also omit raw paths. Use `route_kind` for the selected route branch
 and trace IDs for correlation; incoming transport IDs are not copied into logs.
 
-Route `logFields` can add trusted, non-sensitive scalar metadata to the event. Code executing in
-the router's Effect context can also use `WideEvent.setOptional` to enrich it. The separate inner
-Fetch runtime does not inherit this accumulator. Keep credentials and personal data out of both
-extensions; do not add another wide-event boundary to an inner HTTP handler.
+Route `logFields` can add trusted scalar metadata to the event. Signed-in API requests include
+`actor_kind` and the pseudonymous application user ID `actor_user_id`; anonymous requests include
+only `actor_kind`. These IDs support correlation and are not anonymous data: restrict log access
+and retention accordingly.
+
+Code executing in the router's Effect context can also use `WideEvent.setOptional` to enrich it.
+The separate inner Fetch runtime does not inherit this accumulator. Keep credentials and directly
+identifying data (such as names, email addresses, and phone numbers) out of both extensions; do not
+add another wide-event boundary to an inner HTTP handler.
 
 ## Commands
 

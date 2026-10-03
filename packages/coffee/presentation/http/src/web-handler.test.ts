@@ -5,7 +5,7 @@ import * as Schema from "effect/Schema";
 import { CoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import { createHttpRouter } from "@effect-coffee-shop/http-routing/router";
 import { routeResponse } from "@effect-coffee-shop/http-routing/route";
-import { runHttpEffect } from "@effect-coffee-shop/http-routing/observability";
+import { runHttpRequest } from "@effect-coffee-shop/http-routing/observability";
 import { CoffeeHttpApiLive } from "./api.ts";
 import { createCoffeeWebHandler } from "./web-handler.ts";
 
@@ -38,10 +38,9 @@ it.live("writes exactly one flat JSON event through the composed Fetch boundary"
                   Effect.promise(() => backend.handler(request)).pipe(Effect.map(routeResponse)),
               },
             ]);
+            const request = new Request("https://coffee.example/health?token=secret");
             const response = yield* Effect.promise(() =>
-              runHttpEffect(
-                route(new Request("https://coffee.example/health?token=secret"), undefined),
-              ),
+              runHttpRequest(request, route(request, undefined)),
             );
             assert.strictEqual(response.status, 200);
             const body = yield* Effect.promise(() => response.text());

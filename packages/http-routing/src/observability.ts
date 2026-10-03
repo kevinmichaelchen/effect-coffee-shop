@@ -6,7 +6,10 @@ import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Metric from "effect/Metric";
 import * as Option from "effect/Option";
 import { FetchHttpClient } from "effect/http";
+import * as HttpServerError from "effect/http/HttpServerError";
+import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import { Otlp } from "effect/observability";
+import { withHttpWideEvent } from "./logging.ts";
 
 const defaultServiceName = "http-routing";
 const nonBlankString = Option.filter((value: string) => value.trim() !== "");
@@ -84,6 +87,27 @@ const requestDurationMs = Metric.histogram("http_routing_request_duration_ms", {
 type MetricAttributes = Readonly<Record<string, string>>;
 
 export const runHttpEffect = HttpObservabilityRuntime.runPromise;
+
+/** Consume request failures after emission so native servers never receive a raw rejection. */
+export const runHttpRequest = <E>(request: Request, effect: Effect.Effect<Response, E>) =>
+  HttpObservabilityRuntime.runPromise(
+    Effect.suspend(() => {
+      const requestId = crypto.randomUUID();
+      return effect.pipe(
+        withHttpWideEvent({ method: request.method, requestId }),
+        Effect.catchCause((cause) =>
+          HttpServerError.causeResponse(cause).pipe(
+            Effect.map(([response]) =>
+              HttpServerResponse.toWeb(
+                HttpServerResponse.setHeader(response, "x-request-id", requestId),
+                { withoutBody: request.method === "HEAD" },
+              ),
+            ),
+          ),
+        ),
+      );
+    }),
+  );
 
 export const recordHttpRequestCompleted = (input: {
   readonly durationMs: number;
