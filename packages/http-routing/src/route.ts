@@ -19,6 +19,7 @@ export interface HttpRequestContext<TEnv> {
 
 export interface HttpRouteResult {
   readonly response: Response;
+  /** Trusted scalar metadata; pseudonymous app IDs are allowed, credentials and direct identifiers are not. */
   readonly logFields?: StructuredLogRecord;
 }
 

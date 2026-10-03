@@ -59,6 +59,7 @@
       "drizzle-kit": "1.0.0-rc.4",
       "drizzle-orm": "1.0.0-rc.4",
       "effect": "4.0.0",
+      "effect-wide-event": "0.6.0",
       "eslint-plugin-react-hooks": "^7.1.1",
       "eslint-plugin-react-refresh": "0.5.4",
       "lintcn": "^0.10.1",

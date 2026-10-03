@@ -361,6 +361,7 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
@@ -456,9 +457,12 @@
       "version": "0.1.0",
       "dependencies": {
         "effect": "catalog:",
+        "effect-wide-event": "catalog:",
       },
       "devDependencies": {
+        "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
+        "@types/node": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -583,6 +587,7 @@
     "drizzle-kit": "1.0.0-rc.4",
     "drizzle-orm": "1.0.0-rc.4",
     "effect": "4.0.0",
+    "effect-wide-event": "0.6.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "0.5.4",
     "fallow": "3.30.0",
@@ -1779,6 +1784,8 @@
     "effect": ["effect@4.0.0", "", {}, "sha512-ooc1TG5t+FfzgYnFz2ff6BBKyZ7EwBRVXC7c4RhQUAD6/TZ2gTXXMeb4WX7a19ozQo4J73/QW+S00YAIresoMQ=="],
 
     "effect-oxlint": ["effect-oxlint@0.3.3", "", { "dependencies": { "@oxlint/plugins": "^1.66.0" }, "peerDependencies": { "effect": "^4.0.0-beta.100" } }, "sha512-J1+0nr0S4mOkPq54Lj2jNpq2iu9UKB+ChhxfT9HANKHKiQaOqjycZqaq8iiZHRGqT36Ir+Lv02LoVLsuA+NfGA=="],
+
+    "effect-wide-event": ["effect-wide-event@0.6.0", "", { "peerDependencies": { "effect": ">=4.0.0" } }, "sha512-Eh3ncGkrdDEW+zbAXwVhtb2pkd4TRtZv4JuSqAiXi8WJ/Wrbp8OhNR7raxwn2ItwH0jngE2HBOs/4ZO9VlsWHg=="],
 
     "electron-to-chromium": ["electron-to-chromium@1.5.329", "", {}, "sha512-/4t+AS1l4S3ZC0Ja7PHFIWeBIxGA3QGqV8/yKsP36v7NcyUCl+bIcmw6s5zVuMIECWwBrAK/6QLzTmbJChBboQ=="],
 

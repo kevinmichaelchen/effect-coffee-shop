@@ -12,6 +12,7 @@
     "skipLibCheck": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
+    "types": ["bun", "node"],
     "plugins": [
       {
         "name": "@effect/language-service",

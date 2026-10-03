@@ -1,7 +1,9 @@
 import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
+import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
-import { logRequestCompleted, logRequestFailed } from "./logging.ts";
+import { WideEvent } from "effect-wide-event";
+import { annotateHttpResponse, withHttpWideEvent, withResponseRequestId } from "./logging.ts";
 import type {
   HttpRoute,
   HttpRouteResult,
@@ -33,71 +35,40 @@ const findMatchingRoute = <TEnv>(
 
 export const createHttpRouter =
   <TEnv>(routes: ReadonlyArray<HttpRoute<TEnv>>) =>
-  (request: Request, env: TEnv, runtime: HttpRuntimeContext = {}) => {
-    const route = findMatchingRoute(routes, request);
-    const routeKind = Option.match(route, {
-      onNone: () => "unmatched",
-      onSome: (route) => route.name,
-    });
-    const startedAt = performance.now();
+  (request: Request, env: TEnv, runtime: HttpRuntimeContext = {}) =>
+    Effect.gen(function* () {
+      const route = findMatchingRoute(routes, request);
+      const routeKind = Option.match(route, {
+        onNone: () => "unmatched",
+        onSome: (route) => route.name,
+      });
+      const startedAt = performance.now();
+      yield* WideEvent.setOptional({ route_kind: routeKind });
 
-    return Effect.gen(function* () {
-      const { logFields, response } = yield* Option.match(route, {
+      return yield* Option.match(route, {
         onNone: () => {
           const result: HttpRouteResult = { response: notFoundResponse() };
           return Effect.succeed(result);
         },
         onSome: (matchingRoute) =>
-          matchingRoute.handle(createRequestContext(request, env, runtime)),
-      });
-      const durationMs = performance.now() - startedAt;
-
-      yield* recordHttpRequestCompleted({
-        durationMs,
-        method: request.method,
-        routeKind,
-        status: response.status,
-      });
-
-      yield* Option.match(Option.fromUndefinedOr(logFields), {
-        onNone: () =>
-          logRequestCompleted({
-            durationMs,
-            request,
-            response,
-            routeKind,
-          }),
-        onSome: (extraFields) =>
-          logRequestCompleted({
-            durationMs,
-            extraFields,
-            request,
-            response,
-            routeKind,
-          }),
-      });
-
-      return response;
-    }).pipe(
-      Effect.tapError((error) => {
-        const durationMs = performance.now() - startedAt;
-
-        return recordHttpRequestFailed({
-          durationMs,
-          method: request.method,
-          routeKind,
-        }).pipe(
-          Effect.andThen(
-            logRequestFailed({
-              durationMs,
-              error,
-              request,
-              routeKind,
-            }),
-          ),
-        );
-      }),
-      Effect.withSpan("http_routing.request"),
-      Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
-    );
-  };
+          Effect.suspend(() => matchingRoute.handle(createRequestContext(request, env, runtime))),
+      }).pipe(
+        Effect.tap(({ logFields, response }) =>
+          annotateHttpResponse({ extraFields: logFields ?? {}, response, routeKind }),
+        ),
+        Effect.flatMap(({ response }) => withResponseRequestId(response)),
+        Effect.onExit((exit) => {
+          const durationMs = performance.now() - startedAt;
+          return Exit.isSuccess(exit)
+            ? recordHttpRequestCompleted({
+                durationMs,
+                method: request.method,
+                routeKind,
+                status: exit.value.status,
+              })
+            : recordHttpRequestFailed({ durationMs, method: request.method, routeKind });
+        }),
+        Effect.withSpan("http_routing.request"),
+        Effect.annotateSpans(requestSpanAttributes({ request, routeKind })),
+      );
+    }).pipe(withHttpWideEvent(request));

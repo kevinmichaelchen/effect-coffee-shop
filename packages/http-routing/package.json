@@ -22,10 +22,13 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "effect": "catalog:"
+    "effect": "catalog:",
+    "effect-wide-event": "catalog:"
   },
   "devDependencies": {
+    "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
+    "@types/node": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
