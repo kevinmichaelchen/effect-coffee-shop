@@ -66,7 +66,7 @@ Editable sources live in [`docs/architecture`](./docs/architecture).
 | Application          | [`packages/coffee/application`](./packages/coffee/application)                                 | Coffee use cases, ports, actors, and contracts. |
 | Presentation         | [`packages/coffee/presentation`](./packages/coffee/presentation)                 | HTTP, CLI, and MCP protocol adapters over the application service.                       |
 | Presentation support | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions) | Coffee tool names, descriptions, and schemas used by Effect MCP.                         |
-| Auth                 | [`packages/coffee/auth`](./packages/coffee/auth)                                 | Better Auth passkey setup and actor resolution.                                          |
+| Auth                 | [`packages/coffee/auth`](./packages/coffee/auth)                                 | Better Auth passkeys with Yielded Auth identity and credential compatibility boundaries.                                          |
 | External adapters    | [`packages/coffee/external`](./packages/coffee/external)                         | In-memory, SQLite/D1, and Drizzle/Postgres implementations of Coffee ports.              |
 | Host utilities       | [`packages/backend-host`](./packages/backend-host)                               | Runtime-agnostic Fetch host primitives, mounts, logging, and request-scoped services.    |
 | Runtime shell        | [`apps/backend`](./apps/backend)                                                 | Bun, Cloudflare, and AWS composition roots that choose concrete Layers.                  |

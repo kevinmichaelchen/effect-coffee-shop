@@ -144,15 +144,22 @@
         "@cloudflare/workers-types": "catalog:",
         "@effect-coffee-shop/coffee-application": "workspace:*",
         "@effect-coffee-shop/http-routing": "workspace:*",
+        "@yielded/auth": "catalog:",
         "better-auth": "catalog:",
         "effect": "catalog:",
       },
       "devDependencies": {
         "@alchemy.run/cloudflare-runtime": "catalog:",
+        "@better-auth/drizzle-adapter": "catalog:",
+        "@effect-coffee-shop/coffee-external-drizzle-postgres": "workspace:*",
         "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
         "@effect/platform-node": "catalog:",
+        "@effect/vitest": "catalog:",
+        "@electric-sql/pglite": "catalog:",
+        "@levischuck/tiny-cbor": "0.2.11",
         "@mpsuesser/oxlint-plugin-effect": "catalog:",
         "@types/bun": "catalog:",
+        "drizzle-orm": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -574,6 +581,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "@vitest/browser": "5.0.2",
     "@vitest/browser-playwright": "5.0.2",
+    "@yielded/auth": "0.1.0-beta.14",
     "alchemy": "2.0.0-beta.80",
     "babel-plugin-react-compiler": "^1.0.0",
     "better-auth": "^1.7.6",
@@ -1628,6 +1636,8 @@
     "@vitest/utils": ["@vitest/utils@5.0.2", "", { "dependencies": { "@vitest/pretty-format": "5.0.2", "convert-source-map": "^2.0.0", "tinyrainbow": "^3.1.1" } }, "sha512-mgpUtxFhKeOKVaArBVHNJGdYHAeRh135o59l13uVmPUCS1OUtis5pBqXEgE25iqRgFqEBwXvJlkhknRsYnMeqg=="],
 
     "@webcontainer/env": ["@webcontainer/env@1.1.1", "", {}, "sha512-6aN99yL695Hi9SuIk1oC88l9o0gmxL1nGWWQ/kNy81HigJ0FoaoTXpytCj6ItzgyCEwA9kF1wixsTuv5cjsgng=="],
+
+    "@yielded/auth": ["@yielded/auth@0.1.0-beta.14", "", { "peerDependencies": { "effect": "^4.0.0" } }, "sha512-E1gBXbEFFVwWLE98wO+lo3U3ZIGp4MVQ4vaCLOgw9qhvYm06jrLKMks2K50PU5+YCHTPrvFmM8NhBK/UVxqN7A=="],
 
     "accepts": ["accepts@2.0.0", "", { "dependencies": { "mime-types": "^3.0.0", "negotiator": "^1.0.0" } }, "sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng=="],
 

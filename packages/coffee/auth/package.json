@@ -7,7 +7,9 @@
     ".": "./src/index.ts",
     "./better-auth/cloudflare": "./src/better-auth/cloudflare.ts",
     "./better-auth/shared": "./src/better-auth/shared.ts",
-    "./better-auth/users": "./src/better-auth/users.ts"
+    "./better-auth/users": "./src/better-auth/users.ts",
+    "./yielded/identity": "./src/yielded/identity.ts",
+    "./yielded/better-auth": "./src/yielded/better-auth.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -23,15 +25,22 @@
     "@cloudflare/workers-types": "catalog:",
     "@effect-coffee-shop/coffee-application": "workspace:*",
     "@effect-coffee-shop/http-routing": "workspace:*",
+    "@yielded/auth": "catalog:",
     "better-auth": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {
     "@alchemy.run/cloudflare-runtime": "catalog:",
+    "@better-auth/drizzle-adapter": "catalog:",
+    "@effect-coffee-shop/coffee-external-drizzle-postgres": "workspace:*",
     "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
     "@effect/platform-node": "catalog:",
+    "@effect/vitest": "catalog:",
+    "@electric-sql/pglite": "catalog:",
+    "@levischuck/tiny-cbor": "0.2.11",
     "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/bun": "catalog:",
+    "drizzle-orm": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

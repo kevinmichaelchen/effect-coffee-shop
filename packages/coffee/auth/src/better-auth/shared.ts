@@ -1,10 +1,13 @@
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
+import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { logStructuredEvent } from "@effect-coffee-shop/http-routing/logging";
 import { runHttpEffect } from "@effect-coffee-shop/http-routing/observability";
-import { AppActor, anonymousActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
+import { type AppActor, anonymousActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
+import { actorFromIdentity } from "../yielded/identity.ts";
+import { identityFromVerifiedBetterAuthUser } from "../yielded/better-auth.ts";
 import {
   createProvisionalUser,
   createRegisteredUser,
@@ -13,7 +16,6 @@ import {
 } from "./users.ts";
 
 const BetterAuthSecret = Schema.Trim.pipe(Schema.check(Schema.isNonEmpty()));
-const decodeResolvedActor = Schema.decodeUnknownSync(AppActor);
 const decodeBetterAuthSecret = Schema.decodeUnknownSync(BetterAuthSecret);
 const decodeTrimmedString = Schema.decodeUnknownSync(Schema.Trim);
 export type BetterAuthOptions = Parameters<typeof betterAuth>[0];
@@ -124,19 +126,11 @@ export async function resolveCoffeeActor(input: CoffeeActorResolutionInput): Pro
         return Option.match(Option.fromNullishOr(session?.user), {
           onNone: () => anonymousActor,
           onSome: (user) =>
-            decodeResolvedActor({
-              displayName: decodeTrimmedString(user.name) || user.email,
-              kind: Option.match(
-                Option.some(user.id).pipe(
-                  Option.filter((userId) => input.staffUserIds.has(userId)),
-                ),
-                {
-                  onNone: () => "customer",
-                  onSome: () => "staff",
-                },
+            runHttpEffect(
+              identityFromVerifiedBetterAuthUser(user).pipe(
+                Effect.flatMap((identity) => actorFromIdentity(identity, input.staffUserIds)),
               ),
-              userId: user.id,
-            }),
+            ),
         });
       },
     },
