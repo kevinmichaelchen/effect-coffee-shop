@@ -9,11 +9,11 @@ import {
   OrderNotFoundError,
 } from "@effect-coffee-shop/coffee-domain/errors";
 import {
-  canTransitionTo,
   type CoffeeOrder,
   type OrderId,
   type OrderStatus,
 } from "@effect-coffee-shop/coffee-domain/order";
+import { transitionOrderStatus } from "@effect-coffee-shop/coffee-domain/order-fulfillment";
 import {
   AuthenticationRequiredError,
   CurrentActor,
@@ -59,18 +59,31 @@ const updateOrderStatus = Effect.fn("CoffeeOrders.updateOrderStatus")(function* 
     Effect.flatMap((order) => Effect.fromOption(order, () => new OrderNotFoundError({ orderId }))),
   );
 
-  if (!canTransitionTo(order.status, to)) {
-    return yield* new InvalidOrderStatusTransitionError({
-      orderId,
-      from: order.status,
-      to,
-    });
-  }
+  const nextStatus = yield* transitionOrderStatus(order.status, to).pipe(
+    Effect.mapError(
+      (cause) =>
+        new InternalAppError({
+          message: "Unable to update order status right now",
+          cause,
+        }),
+    ),
+    Effect.flatMap((status) =>
+      Effect.fromOption(
+        status,
+        () =>
+          new InvalidOrderStatusTransitionError({
+            orderId,
+            from: order.status,
+            to,
+          }),
+      ),
+    ),
+  );
 
   const updatedOrder = yield* orderRepository
     .save({
       ...order,
-      status: to,
+      status: nextStatus,
     })
     .pipe(
       Effect.mapError(internalAppErrorFromPersistence("Unable to update order status right now")),
