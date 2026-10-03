@@ -75,7 +75,13 @@ describe("cloudflare better-auth wiring", () => {
     await withTestDatabase(async (db) => {
       const origin = "http://localhost";
       const secret = "coffee-auth-test-secret-at-least-32-characters";
-      const auth = createCloudflareAuth({ db, request: new Request(origin), secret });
+      // Older bindings need only these methods. Optional D1 APIs may be absent.
+      const authDb = {
+        prepare: db.prepare.bind(db),
+        batch: db.batch.bind(db),
+        exec: db.exec.bind(db),
+      };
+      const auth = createCloudflareAuth({ db: authDb, request: new Request(origin), secret });
       const client = makeAuthClient(auth, origin);
       const context = encodeURIComponent('{"displayName":"  Alice Example  "}');
       const begun = await client.send(`/passkey/generate-register-options?context=${context}`);
@@ -96,7 +102,7 @@ describe("cloudflare better-auth wiring", () => {
       );
       const resolve = (staffUserIds: ReadonlySet<string> = new Set()) =>
         resolveCloudflareActor({
-          db,
+          db: authDb,
           secret,
           request: client.request(),
           staffUserIds,

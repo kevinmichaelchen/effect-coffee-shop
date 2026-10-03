@@ -1,62 +1,58 @@
 /* oxlint-disable effect/avoid-native-object-helpers -- Actor resolution requires the runtime's native ReadonlySet. */
-import { drizzleAdapter } from "@better-auth/drizzle-adapter";
-import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
+import { PGlite } from "@electric-sql/pglite";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Schema from "effect/Schema";
 import { describe, expect, it } from "vitest";
 import {
-  authSchema,
   DrizzlePgliteSchemaLive,
   makePgliteCoffeeDbLayer,
 } from "@effect-coffee-shop/coffee-external-drizzle-postgres";
 import { anonymousActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
-import { createCoffeeAuth, resolveCoffeeActor } from "./better-auth/shared.ts";
-import { decodeBetterAuthPasskeyMaterial } from "./yielded/better-auth.ts";
-import { makeTestPasskey } from "./testing/passkey.ts";
+import {
+  createCoffeeAuth,
+  resolveCoffeeActor,
+} from "@effect-coffee-shop/coffee-auth/better-auth/shared";
+import { decodeBetterAuthPasskeyMaterial } from "@effect-coffee-shop/coffee-auth/yielded/better-auth";
+import { makeTestPasskey } from "../../../auth/src/testing/passkey.ts";
 import {
   AuthenticationOptions,
   RegistrationOptions,
   RegisteredPasskey,
   makeAuthClient,
-} from "./testing/auth-client.ts";
+} from "../../../auth/src/testing/auth-client.ts";
 
-describe("Postgres credential and session compatibility", () => {
+import { AwsAuthDatabase, AwsAuthDrizzle } from "./auth-database.ts";
+
+describe("AWS Postgres credential and session compatibility", () => {
   it("preserves credentials and actors using the committed Postgres tables", async () => {
     const pg = new PGlite();
     const migrations = ManagedRuntime.make(
-      DrizzlePgliteSchemaLive.pipe(Layer.provide(makePgliteCoffeeDbLayer(pg))),
+      AwsAuthDatabase.layer.pipe(
+        Layer.provide(
+          Layer.mergeAll(
+            DrizzlePgliteSchemaLive.pipe(Layer.provide(makePgliteCoffeeDbLayer(pg))),
+            Layer.succeed(AwsAuthDrizzle, drizzle({ client: pg })),
+          ),
+        ),
+      ),
     );
-    await migrations.context();
-
-    // Better Auth's adapter is Promise-based and addresses models by these names.
-    // This checks the persisted Postgres contract without pretending that an
-    // Effect Drizzle client is an asynchronous Better Auth query client.
-    const database = drizzleAdapter(drizzle({ client: pg }), {
-      provider: "pg",
-      schema: {
-        user: authSchema.usersTable,
-        session: authSchema.sessionsTable,
-        account: authSchema.accountsTable,
-        passkey: authSchema.passkeysTable,
-        verification: authSchema.verificationTable,
-      },
-    });
-    const origin = "http://localhost";
-    const secret = "coffee-auth-test-secret-at-least-32-characters";
-    const auth = createCoffeeAuth({ database, request: new Request(origin), secret });
-    const client = makeAuthClient(auth, origin);
-    const resolve = () =>
-      resolveCoffeeActor({
-        database,
-        secret,
-        request: client.request(),
-        staffUserIds: new Set(),
-      });
-
     const check = async () => {
+      const database = await migrations.runPromise(AwsAuthDatabase);
+      const origin = "http://localhost";
+      const secret = "coffee-auth-test-secret-at-least-32-characters";
+      const auth = createCoffeeAuth({ database, request: new Request(origin), secret });
+      const client = makeAuthClient(auth, origin);
+      const resolve = () =>
+        resolveCoffeeActor({
+          database,
+          secret,
+          request: client.request(),
+          staffUserIds: new Set(),
+        });
+
       const begun = await client.send(
         "/passkey/generate-register-options?context=%7B%22displayName%22%3A%22Alice%22%7D",
       );

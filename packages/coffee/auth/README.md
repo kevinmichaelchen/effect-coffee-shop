@@ -22,7 +22,9 @@ Existing passkeys, signed cookies, registration/sign-in endpoints, synthetic ema
 and historical migrations remain in use.
 
 Run `bun run --cwd packages/coffee/auth test` for cryptographic passkey and session
-regressions on local D1 and in-process Postgres, plus Effect boundary tests.
+regressions on local D1, plus Effect boundary tests. Run
+`bun run --cwd packages/coffee/runtime/aws test` for the actual AWS auth factory
+against the committed Postgres migrations on PGlite.
 
 Agent Auth is no longer registered, and its execution and discovery routes are
 removed. Historical database migrations are retained so this code change does

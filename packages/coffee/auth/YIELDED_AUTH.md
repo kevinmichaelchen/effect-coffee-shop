@@ -13,9 +13,10 @@ still points to `0.1.0-beta.1`. Install the exact catalog version rather than
 implicitly selecting `latest`. The beta.14 tarball declares `effect: ^4.0.0`
 as its only peer dependency and has no runtime dependencies. Its identity/passkey
 API is exercised against this repository's pinned Effect `4.0.0`.
-The dependency has a package-specific release-age exception in `bunfig.toml`
-because this explicitly selected beta was published within the normal three-day
-window. Other dependencies keep their existing release-age policy.
+There is no release-age exemption for Yielded. `bun install --frozen-lockfile`
+installs the inspected, exact beta from the committed lockfile. Until beta.14
+passes the normal three-day window, Bun rejects dependency re-resolution that
+selects it again; future Yielded versions remain subject to the same policy.
 
 Research used the [official passkey guide](https://yielded.dev/auth/guide/passkeys),
 [session guide](https://yielded.dev/auth/guide/sessions),
@@ -107,15 +108,27 @@ Local D1's RPC proxy emits index-introspection batch errors from Miniflare;
 Better Auth falls back and the credential/session assertions still pass. This is
 not a claim that D1 supports interactive registration transactions.
 
-The Postgres regression applies the repository's committed migrations to PGlite
-and uses a native Promise-based Drizzle adapter to test signup, passkey sign-in,
-material decoding, actor mapping, revocation and expiry. Effect tests cover exact
-opaque IDs, role escalation attempts, name fallback and malformed input.
+The AWS regression applies the repository's committed Postgres migrations to
+PGlite and calls the actual `makeBetterAuthDatabase` factory used by `backend.ts`.
+The test supplies PGlite-backed async Drizzle and committed-migration layers;
+the auth factory is unchanged.
+It tests signup, passkey sign-in, material decoding, actor mapping, revocation
+and expiry. Before the fix, the same test reproduced missing model tables; fixing
+only the model names then reproduced HTTP 500 (`res.map is not a function`)
+because Better Auth awaited Effect queries.
 
-This does not claim deployed AWS or browser-device verification. The existing AWS
-composition passes an Effect Drizzle client and table-export names to Better Auth's
-Promise-based adapter; the regression explicitly supplies a native async client
-and Better Auth model names. Auditing that existing runtime adapter is required
-before a production cutover. Cloudflare/AWS share the changed actor boundary.
+AWS now supplies a Promise-based `drizzle-orm/node-postgres` service and explicit
+`user`/`session`/`account`/`passkey`/`verification` schema keys. Auth owns a scoped
+`pg` pool with at most two connections, using the same `COFFEE_POSTGRES_URL` as the
+Effect application pools; auth runtime disposal closes its pool. Schema readiness
+still comes from the existing migration layer. No tables, credentials or sessions
+are rewritten. Effect tests cover exact opaque IDs, role escalation attempts,
+name fallback and malformed input.
+
+This does not claim deployed AWS, a networked Postgres server or browser-device
+verification. Cloudflare/AWS share the changed actor boundary. The D1 wrapper
+forwards only `prepare`, `batch` and `exec`, preserving receivers without requiring
+optional `withSession` or deprecated `dump`; the credential/session test exercises
+a binding with only those three methods.
 Bun's current HTTP entrypoints compose application HTTP routes without mounting
 the `/api/auth` endpoints; this PR does not silently change that topology.

@@ -3,17 +3,13 @@
  *
  * @module
  */
-import { drizzleAdapter } from "@better-auth/drizzle-adapter";
-import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Option from "effect/Option";
 import {
-  authSchema,
   CoffeeDb,
   DrizzlePostgresCoffeeAppLive,
   DrizzlePostgresSchemaLive,
-  DrizzlePostgresSchemaReady,
 } from "@effect-coffee-shop/coffee-external-drizzle-postgres";
 import {
   createCoffeeRequestServices,
@@ -23,30 +19,28 @@ import type { CoffeeAuthDatabase } from "@effect-coffee-shop/coffee-auth/better-
 import type { AppActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";
 import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
+import { AwsAuthDatabase, AwsAuthDrizzle } from "./auth-database.ts";
 
-const AwsAuthPersistenceLive = DrizzlePostgresSchemaLive.pipe(Layer.provideMerge(CoffeeDb.layer));
+const AwsAuthPersistenceLive = AwsAuthDatabase.layer.pipe(
+  Layer.provide(
+    Layer.mergeAll(
+      DrizzlePostgresSchemaLive.pipe(Layer.provide(CoffeeDb.layer)),
+      AwsAuthDrizzle.layer,
+    ),
+  ),
+);
 const AwsCoffeeRoutesLive = Layer.mergeAll(CoffeeHttpApiLive, CoffeeMcpHttpLive);
-
-const makeBetterAuthDatabase = Effect.fn("backend.makeBetterAuthDatabase")(function* () {
-  yield* DrizzlePostgresSchemaReady;
-  const db = yield* CoffeeDb;
-
-  return drizzleAdapter(db, {
-    provider: "pg",
-    schema: authSchema,
-  });
-});
 
 const makeAwsBackend = () => {
   const persistenceRuntime = ManagedRuntime.make(AwsAuthPersistenceLive);
   const backend = makeCoffeeBackend({
     appLayer: DrizzlePostgresCoffeeAppLive,
     ensureAuthPersistence: async () => {
-      await persistenceRuntime.runPromise(DrizzlePostgresSchemaReady);
+      await persistenceRuntime.runPromise(AwsAuthDatabase);
     },
     persistence: {
       authDatabase: async (): Promise<CoffeeAuthDatabase> =>
-        persistenceRuntime.runPromise(makeBetterAuthDatabase()),
+        persistenceRuntime.runPromise(AwsAuthDatabase),
     },
     routes: AwsCoffeeRoutesLive,
   });

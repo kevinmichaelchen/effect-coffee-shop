@@ -150,16 +150,12 @@
       },
       "devDependencies": {
         "@alchemy.run/cloudflare-runtime": "catalog:",
-        "@better-auth/drizzle-adapter": "catalog:",
-        "@effect-coffee-shop/coffee-external-drizzle-postgres": "workspace:*",
         "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
         "@effect/platform-node": "catalog:",
         "@effect/vitest": "catalog:",
-        "@electric-sql/pglite": "catalog:",
         "@levischuck/tiny-cbor": "0.2.11",
         "@mpsuesser/oxlint-plugin-effect": "catalog:",
         "@types/bun": "catalog:",
-        "drizzle-orm": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -365,9 +361,12 @@
         "alchemy": "catalog:",
         "drizzle-orm": "catalog:",
         "effect": "catalog:",
+        "pg": "8.22.0",
       },
       "devDependencies": {
+        "@electric-sql/pglite": "catalog:",
         "@types/bun": "catalog:",
+        "@types/pg": "^8.20.0",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -1560,6 +1559,8 @@
     "@types/mdx": ["@types/mdx@2.0.13", "", {}, "sha512-+OWZQfAYyio6YkJb3HLxDrvnx6SWWDbC0zVPfBRzUk0/nqoDyf6dNxQi3eArPe8rJ473nobTMQ/8Zk+LxJ+Yuw=="],
 
     "@types/node": ["@types/node@26.6.3", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-dsqMQQoeTLqu9wynDD00q573mNzso3IdQOAfHRJqLCcmCFPoGo9A1bDpUcv/9tnKpErQWv9uKeGfl37EIS02Yg=="],
+
+    "@types/pg": ["@types/pg@8.23.1", "", { "dependencies": { "@types/node": "*", "pg-protocol": "*", "pg-types": "^2.2.0" } }, "sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A=="],
 
     "@types/react": ["@types/react@19.3.0", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg=="],
 
