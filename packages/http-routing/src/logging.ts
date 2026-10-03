@@ -1,56 +1,55 @@
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
+import { WideEvent, withWideEvent } from "effect-wide-event";
 
-// oxlint-disable-next-line effect/prefer-option-over-null -- Structured JSON logs preserve null for missing transport headers.
+// oxlint-disable-next-line effect/prefer-option-over-null -- Trusted structured log fields may explicitly include JSON null.
 export type StructuredLogValue = boolean | number | string | null;
 export type StructuredLogRecord = Readonly<Record<string, StructuredLogValue>>;
 
 export const logStructuredEvent = (record: StructuredLogRecord) =>
   Effect.logInfo("structured event").pipe(Effect.annotateLogs(record));
 
-export const logStructuredError = (record: StructuredLogRecord) =>
-  Effect.logError("structured event").pipe(Effect.annotateLogs(record));
+// Error payloads can contain credentials, SQL parameters, or request bodies.
+// Classify the cause without serializing any of its values.
+const extractRequestError = (cause: Cause.Cause<unknown>) => {
+  if (Cause.hasDies(cause)) {
+    return { errorType: "Defect", errorMessage: "HTTP request defect" };
+  }
+  if (Cause.hasFails(cause)) {
+    return { errorType: "Failure", errorMessage: "HTTP request failed" };
+  }
+  return { errorType: "Interrupted", errorMessage: "HTTP request interrupted" };
+};
 
-export function logRequestCompleted(input: {
-  readonly durationMs: number;
+export const withHttpWideEvent =
+  (request: Request) =>
+  <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+    Effect.suspend(() =>
+      withWideEvent(effect, {
+        service: "http-routing",
+        method: request.method,
+        // Omit URLs: even path segments can carry password-reset tokens.
+        // Generate locally rather than accepting arbitrary transport header values.
+        requestId: crypto.randomUUID(),
+        envelope: { event: "http_routing.request", route_kind: "unmatched" },
+        extractError: extractRequestError,
+      }),
+    );
+
+export const annotateHttpResponse = (input: {
   readonly extraFields?: StructuredLogRecord;
-  readonly request: Request;
   readonly response: Response;
   readonly routeKind: string;
-}) {
-  return logStructuredEvent({
-    event: "http_routing.request.complete",
-    ...requestLogFields(input.request, input.routeKind),
+}) =>
+  WideEvent.set({
     ...input.extraFields,
-    duration_ms: roundDurationMs(input.durationMs),
+    event: "http_routing.request",
+    route_kind: input.routeKind,
     http_status: input.response.status,
+    outcome:
+      input.response.status >= 500
+        ? "domain_error"
+        : input.response.status >= 400
+          ? "warning"
+          : "ok",
   });
-}
-
-export function logRequestFailed(input: {
-  readonly durationMs: number;
-  readonly error: unknown;
-  readonly extraFields?: StructuredLogRecord;
-  readonly request: Request;
-  readonly routeKind: string;
-}) {
-  return logStructuredError({
-    event: "http_routing.request.error",
-    ...requestLogFields(input.request, input.routeKind),
-    ...input.extraFields,
-    duration_ms: roundDurationMs(input.durationMs),
-    error_message: String(input.error),
-  });
-}
-
-function requestLogFields(request: Request, routeKind: string) {
-  return {
-    http_method: request.method,
-    http_path: new URL(request.url).pathname,
-    request_id: request.headers.get("cf-ray") ?? request.headers.get("x-amzn-trace-id"),
-    route_kind: routeKind,
-  } satisfies StructuredLogRecord;
-}
-
-export function roundDurationMs(durationMs: number): number {
-  return Number(durationMs.toFixed(2));
-}

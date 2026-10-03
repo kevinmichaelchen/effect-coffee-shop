@@ -11,6 +11,8 @@ import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
+import { HttpObservabilityLive } from "@effect-coffee-shop/http-routing/observability";
+import { toLambdaHttpResponse } from "./http-response.ts";
 import { routeAwsRequest } from "./router.ts";
 import { awsEnvNames, type AwsLambdaEnv } from "./env.ts";
 
@@ -72,6 +74,6 @@ export default class CoffeeApi extends AWS.Lambda.Function<CoffeeApi>()(
       const response = yield* routeAwsRequest(webRequest, env).pipe(Effect.orDie);
 
       return HttpServerResponse.fromWeb(response);
-    }),
+    }).pipe(Effect.provide(HttpObservabilityLive), Effect.orDie, toLambdaHttpResponse),
   }),
 ) {}

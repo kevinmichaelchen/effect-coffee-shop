@@ -13,7 +13,7 @@ request-scoped services over standard Web [`Request` and `Response`][mdn-fetch] 
 - [`src/route.ts`](./src/route.ts) defines route contracts and request path helpers.
 - [`src/request-services.ts`](./src/request-services.ts) creates the base request service context
   supplied to web handlers.
-- [`src/logging.ts`](./src/logging.ts) writes structured request logs from generic log fields.
+- [`src/logging.ts`](./src/logging.ts) defines the wide-event boundary and safe request fields.
 - [`src/observability.ts`](./src/observability.ts) wires console logging, runtime metrics, and
   optional OTLP export. Set `OTEL_SERVICE_NAME` to choose the exported service name.
 - [`src/json.ts`](./src/json.ts) contains shared JSON encoding helpers.
@@ -31,6 +31,37 @@ define Coffee domain/application behavior. Runtime composition belongs in
 Web HTTP requests, while platform adapters decide how those requests arrive. The exported
 `HttpRoute` contract is an Effect-based route branch; `createHttpRouter` turns a route list into the
 single request handler used by Bun, Cloudflare, AWS, and tests.
+
+## Request Logging
+
+`createHttpRouter` uses [`effect-wide-event`](https://github.com/cevr/effect-wide-event) 0.6.0
+to emit one `http_routing.request` event when a request effect finishes, including failures,
+defects, and interruption. Auth, API, MCP, assets, and unmatched requests share this boundary.
+Emission completes before the effect returns; streamed response bodies are not consumed or timed.
+The inner Coffee Fetch handler keeps Effect's HTTP request logger disabled.
+
+`HttpObservabilityLive` supplies a single flat JSON console logger, runtime metrics, and optional
+OTLP export. Bun and Cloudflare run the router through `runHttpEffect`; Lambda provides the same
+layer within its invocation scope. Independent application/auth diagnostic logs can still appear.
+Lambda maps failed causes with Effect's native HTTP response mapper after emission, preserving
+Alchemy's responses while avoiding its additional raw-cause fallback log.
+
+Events include `service`, `method`, a locally generated `requestId`, `route_kind`, `durationMs`,
+`timestamp`, `traceId`, `spanId`, and Effect exit `status` (`ok` or `error`). Returned responses also
+include `http_status` and `outcome`: `ok` below 400, `warning` for 4xx, and `domain_error` for 5xx.
+A returned HTTP error response is still a successful Effect exit. All boundary events use the
+upstream default Info level. This replaces the former `.complete`/`.error` events and snake-case
+method, path, duration, and request ID fields.
+
+URLs (including path segments), request/response headers and bodies, environment bindings, and raw
+error values are excluded. Failure details use fixed `Failure`, `Defect`, or `Interrupted` labels
+and messages. Request spans also omit raw paths. Use `route_kind` for the selected route branch
+and trace IDs for correlation; incoming transport IDs are not copied into logs.
+
+Route `logFields` can add trusted, non-sensitive scalar metadata to the event. Code executing in
+the router's Effect context can also use `WideEvent.setOptional` to enrich it. The separate inner
+Fetch runtime does not inherit this accumulator. Keep credentials and personal data out of both
+extensions; do not add another wide-event boundary to an inner HTTP handler.
 
 ## Commands
 

@@ -19,6 +19,7 @@ export interface HttpRequestContext<TEnv> {
 
 export interface HttpRouteResult {
   readonly response: Response;
+  /** Trusted, non-sensitive scalar metadata added to the request's wide event. */
   readonly logFields?: StructuredLogRecord;
 }
 

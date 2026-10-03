@@ -1,7 +1,7 @@
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Logger from "effect/Logger";
+import { WideEventLogger } from "effect-wide-event";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Metric from "effect/Metric";
 import * as Option from "effect/Option";
@@ -12,7 +12,7 @@ const defaultServiceName = "http-routing";
 const nonBlankString = Option.filter((value: string) => value.trim() !== "");
 
 const ConsoleObservabilityLive = Layer.mergeAll(
-  Logger.layer([Logger.consoleJson], { mergeWithExisting: true }),
+  WideEventLogger.Json,
   Metric.enableRuntimeMetricsLayer,
 );
 
@@ -126,11 +126,8 @@ export function requestSpanAttributes(input: {
   readonly request: Request;
   readonly routeKind: string;
 }) {
-  const url = new URL(input.request.url);
-
   return {
     http_method: input.request.method,
-    http_path: url.pathname,
     route_kind: input.routeKind,
   };
 }
