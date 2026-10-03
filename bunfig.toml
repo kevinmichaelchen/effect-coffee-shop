@@ -40,6 +40,16 @@ minimumReleaseAgeExcludes = [
   "@effect/sql-sqlite-bun",
   "@effect/sql-sqlite-do",
   "@effect/vitest",
+  # The Effect language service ships each platform binary as a separate
+  # exact-version package, so every binding must be listed.
+  "@effect/tsgo",
+  "@effect/tsgo-darwin-arm64",
+  "@effect/tsgo-darwin-x64",
+  "@effect/tsgo-linux-arm",
+  "@effect/tsgo-linux-arm64",
+  "@effect/tsgo-linux-x64",
+  "@effect/tsgo-win32-arm64",
+  "@effect/tsgo-win32-x64",
   "pglite-test",
   "@pgpmjs/core",
   "@pgpmjs/env",

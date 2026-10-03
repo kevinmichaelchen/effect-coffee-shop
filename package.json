@@ -166,7 +166,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
-    "@effect/tsgo": "0.45.0",
+    "@effect/tsgo": "0.48.0",
     "@j178/prek": "0.5.3",
     "alchemy": "catalog:",
     "fallow": "catalog:",

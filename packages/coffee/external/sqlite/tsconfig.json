@@ -15,7 +15,8 @@
     "exactOptionalPropertyTypes": true,
     "plugins": [
       {
-        "name": "@effect/language-service"
+        "name": "@effect/language-service",
+        "allowedUnstableApis": ["@effect/sql-d1", "effect/sql"]
       }
     ]
   },

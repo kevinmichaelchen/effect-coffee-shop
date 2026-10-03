@@ -26,6 +26,11 @@ This is not an unconditional pass of every upstream rule:
 - `effect/effect-promise-vs-trypromise` is disabled in the shared preset wrappers.
   `AGENTS.md` explicitly prefers `Effect.promise` for defects and reserves
   `Effect.tryPromise` for translating failures into typed domain errors.
+- The Effect language service warns on APIs Effect marks `@stability unstable`.
+  Each workspace's `tsconfig.json` allows only the unstable module subtrees it
+  owns through `allowedUnstableApis`, for example `effect/http` in HTTP
+  adapters and `effect/sql` in the SQLite adapter. Domain and application
+  workspaces allow none.
 - Individual source lines document required interoperability: native HTTP/SDK
   optional fields, SQL NULL encoding, arbitrary input at schema decoders,
   serialization, cryptographic APIs, native integration probes, and runtime or
