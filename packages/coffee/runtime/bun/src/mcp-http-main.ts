@@ -8,7 +8,7 @@ import * as BunRuntime from "@effect/platform-bun/BunRuntime";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
+import * as HttpRouter from "effect/http/HttpRouter";
 import { CoffeeAppLive } from "@effect-coffee-shop/coffee-backend/app-layer";
 import { CurrentActor, systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";

@@ -26,8 +26,11 @@ This is not an unconditional pass of every upstream rule:
 - `effect/effect-promise-vs-trypromise` is disabled in the shared preset wrappers.
   `AGENTS.md` explicitly prefers `Effect.promise` for defects and reserves
   `Effect.tryPromise` for translating failures into typed domain errors.
-- Generated SQL files under `.generated` are excluded from authored-code lint.
-  They remain part of type checking and repository contract tests.
+- The Effect language service warns on APIs Effect marks `@stability unstable`.
+  Each workspace's `tsconfig.json` allows only the unstable module subtrees it
+  owns through `allowedUnstableApis`, for example `effect/http` in HTTP
+  adapters and `effect/sql` in the SQLite adapter. Domain and application
+  workspaces allow none.
 - Individual source lines document required interoperability: native HTTP/SDK
   optional fields, SQL NULL encoding, arbitrary input at schema decoders,
   serialization, cryptographic APIs, native integration probes, and runtime or
@@ -80,9 +83,6 @@ ordinary Bun workspace. Its compiler checks only its own configuration; each
 workspace checks its own Oxlint and Vitest configuration files. The compiler
 projects that import the Effect lint plugin permit its bundled duplicate
 `effect` package; other compiler projects retain the strict duplication check.
-Generated SQL convenience files remain explicitly included in the SQLite project.
-SQLite lint scripts exclude `.generated` via a workspace-relative CLI pattern,
-because Oxlint config ignore patterns cannot reach outside the config directory.
 Root configuration formatting is the only root Turbo task, with four explicit
 inputs: `package.json`, `turbo.json`, `knip.jsonc`, and `.fallowrc.jsonc`.
 

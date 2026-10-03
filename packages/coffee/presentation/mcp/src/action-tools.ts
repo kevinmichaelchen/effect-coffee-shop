@@ -6,7 +6,7 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import * as McpServer from "effect/unstable/ai/McpServer";
+import * as McpServer from "effect/ai/McpServer";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { CurrentActor, systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import {

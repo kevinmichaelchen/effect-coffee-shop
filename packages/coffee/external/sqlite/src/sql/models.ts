@@ -137,6 +137,10 @@ export interface SqlOrderItemSave {
   readonly lineTotalCents: number;
 }
 
+export interface SqlCheckoutSessionItemSave extends Omit<SqlOrderItemSave, "orderId"> {
+  readonly sessionId: string;
+}
+
 export interface SqlCartItemSave {
   readonly ownerUserId: string;
   readonly id: string;

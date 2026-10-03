@@ -13,7 +13,9 @@
     "types": ["bun"],
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    "plugins": [{ "name": "@effect/language-service" }]
+    "plugins": [
+      { "name": "@effect/language-service", "allowedUnstableApis": ["@effect/sql-pglite"] }
+    ]
   },
   "include": ["src/**/*.ts", "drizzle.config.ts"]
 }

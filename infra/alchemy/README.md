@@ -36,7 +36,7 @@ using it in a production stack.
 Drizzle-backed paths such as the Postgres adapter or future Neon/Planetscale experiments.
 
 Do not apply `Drizzle.Schema` to the current Cloudflare D1 path by default. The D1 deployment uses
-the checked-in SQL/sqlfu migrations under
+the checked-in SQL migrations under
 `packages/coffee/external/sqlite/src/sql/migrations`, and mixing deploy-time Drizzle generation into
 that path would create two migration authorities.
 

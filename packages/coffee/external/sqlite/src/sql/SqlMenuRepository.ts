@@ -7,20 +7,19 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { SqlClient } from "effect/unstable/sql";
+import { SqlClient } from "effect/sql";
+import type * as SqlConnection from "effect/sql/SqlConnection";
 import type { MenuItem } from "@effect-coffee-shop/coffee-domain/menu";
 import { PersistenceError } from "@effect-coffee-shop/coffee-application/errors";
 import { MenuRepository } from "@effect-coffee-shop/coffee-application/ports/MenuRepository";
-import { findMenuItemById } from "./queries/.generated/find-menu-item-by-id.sql.ts";
-import { listMenuItems } from "./queries/.generated/list-menu-items.sql.ts";
+import { findMenuItemById, listMenuItems } from "./queries/menu.ts";
 import { SqlMenuItemModel, toMenuItem } from "./models.ts";
 
 const decodeSqlMenuItems = Schema.decodeUnknownEffect(Schema.Array(SqlMenuItemModel));
 const decodeSqlMenuItem = Schema.decodeUnknownEffect(SqlMenuItemModel);
 
-// oxlint-disable-next-line effect/no-unknown-parameters -- Untrusted SQL row is decoded here with Schema before entering domain logic.
-const decodeOptionalSqlMenuItem = (row: unknown) =>
-  Option.match(Option.fromNullishOr(row), {
+const decodeOptionalSqlMenuItem = (row: Option.Option<SqlConnection.Row>) =>
+  Option.match(row, {
     onNone: () => Effect.succeed(Option.none<MenuItem>()),
     onSome: (row) =>
       decodeSqlMenuItem(row).pipe(Effect.flatMap(toMenuItem), Effect.map(Option.some)),

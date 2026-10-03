@@ -3,6 +3,7 @@ import { D1 } from "@alchemy.run/cloudflare-runtime/core/bindings";
 import { getPlatformProxy } from "@alchemy.run/cloudflare-runtime/core/platform-proxy";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as NodeServices from "@effect/platform-node/NodeServices";
 import { D1Client } from "@effect/sql-d1";
 import type { PersistenceError } from "@effect-coffee-shop/coffee-application/errors";
 import { CartRepository } from "@effect-coffee-shop/coffee-application/ports/CartRepository";
@@ -36,7 +37,7 @@ export const createSqlCoffeeRepositoriesTestHarness =
     const proxy = await createD1AlchemyProxy();
     const db = proxy.env.DB;
     // oxlint-disable-next-line effect/effect-run-in-body -- Shared repository contract exposes a Promise runner to the native test harness.
-    await Effect.runPromise(migrateCloudflareD1(db));
+    await Effect.runPromise(migrateCloudflareD1(db).pipe(Effect.provide(NodeServices.layer)));
     const repositoryLayer = SqlCoffeeRepositoriesLive.pipe(
       Layer.provide(D1Client.layer({ db })),
       Layer.provide(CloudflareSqlCoffeeSchemaLive),

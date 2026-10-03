@@ -7,7 +7,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { SqlClient } from "effect/unstable/sql";
+import { SqlClient } from "effect/sql";
+import type * as SqlConnection from "effect/sql/SqlConnection";
 import {
   CheckoutSessionId,
   CheckoutSession,
@@ -18,13 +19,15 @@ import { CoffeeOrderItem } from "@effect-coffee-shop/coffee-domain/order";
 import { PersistenceError } from "@effect-coffee-shop/coffee-application/errors";
 import { CheckoutSessionRepository } from "@effect-coffee-shop/coffee-application/ports/CheckoutSessionRepository";
 import { toPersistedCoffeeOrderItemFields } from "@effect-coffee-shop/coffee-application/ports/coffee-order-item-persistence";
-import { deleteCheckoutSessionItemsBySessionId } from "./queries/.generated/delete-checkout-session-items-by-session-id.sql.ts";
-import { deleteCurrentCheckoutSessionByOwner } from "./queries/.generated/delete-current-checkout-session-by-owner.sql.ts";
-import { findCheckoutSessionById } from "./queries/.generated/find-checkout-session-by-id.sql.ts";
-import { findCurrentCheckoutSessionByOwner } from "./queries/.generated/find-current-checkout-session-by-owner.sql.ts";
-import { listCheckoutSessionItems } from "./queries/.generated/list-checkout-session-items.sql.ts";
-import { saveCheckoutSession } from "./queries/.generated/save-checkout-session.sql.ts";
-import { saveCheckoutSessionItem } from "./queries/.generated/save-checkout-session-item.sql.ts";
+import {
+  deleteCheckoutSessionItemsBySessionId,
+  deleteCurrentCheckoutSessionByOwner,
+  findCheckoutSessionById,
+  findCurrentCheckoutSessionByOwner,
+  listCheckoutSessionItems,
+  saveCheckoutSession,
+  saveCheckoutSessionItem,
+} from "./queries/checkout-sessions.ts";
 
 const NullableStringOption = Schema.OptionFromNullishOr(Schema.String, {
   onNoneEncoding: null,
@@ -118,9 +121,8 @@ const toCheckoutSession = Effect.fn("SqlCheckoutSessionRepository.toCheckoutSess
   });
 });
 
-// oxlint-disable-next-line effect/no-unknown-parameters -- Untrusted SQL row is decoded here with Schema before entering domain logic.
-const decodeOptionalCheckoutSessionRow = (row: unknown) =>
-  Option.match(Option.fromNullishOr(row), {
+const decodeOptionalCheckoutSessionRow = (row: Option.Option<SqlConnection.Row>) =>
+  Option.match(row, {
     onNone: () => Effect.succeed(Option.none<CheckoutSessionRow>()),
     onSome: (row) => decodeCheckoutSessionRow(row).pipe(Effect.map(Option.some)),
   });

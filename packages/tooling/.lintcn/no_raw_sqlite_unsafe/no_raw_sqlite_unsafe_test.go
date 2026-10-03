@@ -27,7 +27,7 @@ yield* createCheckoutSession(sqlClient, row);
 		`,
 	},
 	{
-		FileName: "packages/coffee/external/sqlite/src/sql/queries/.generated/CheckoutSessionQueries.ts",
+		FileName: "packages/coffee/external/sqlite/src/sql/migrate.ts",
 		Code: `
 yield* sqlClient.unsafe("select 1");
 		`,
@@ -41,6 +41,15 @@ yield* sqlClient.unsafe("select 1");
 }
 
 var invalidCases = []rule_tester.InvalidTestCase{
+	{
+		FileName: "packages/coffee/external/sqlite/src/sql/queries/checkout-sessions.ts",
+		Code: `
+yield* sqlClient.unsafe("select 1");
+		`,
+		Errors: []rule_tester.InvalidTestCaseError{
+			{MessageId: "noRawSqliteUnsafe"},
+		},
+	},
 	{
 		FileName: "packages/coffee/external/sqlite/src/sql/SqlCheckoutSessionRepository.ts",
 		Code: `

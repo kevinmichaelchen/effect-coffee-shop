@@ -3,9 +3,9 @@
 `@effect-coffee-shop/coffee-external-sqlite` provides SQLite and D1
 implementations of the Coffee application ports.
 
-The SQL definitions, generated queries, and migrations live under
-[`src/sql`](./src/sql). Runtime-specific layers adapt Bun SQLite or Cloudflare
-D1 into the shared SQL repository layer.
+The SQL queries and migrations live under [`src/sql`](./src/sql).
+Runtime-specific layers adapt Bun SQLite or Cloudflare D1 into the shared SQL
+repository layer.
 
 See [`coffee-application`](../../application) for the ports implemented by this package.
 
@@ -22,9 +22,7 @@ See [`coffee-application`](../../application) for the ports implemented by this 
 ## Commands
 
 ```bash
-bun run --cwd packages/coffee/external/sqlite db:check
-bun run --cwd packages/coffee/external/sqlite db:generate
-bun run --cwd packages/coffee/external/sqlite db:migrate
+bun run --cwd packages/coffee/external/sqlite auth:schema
 bun run --cwd packages/coffee/external/sqlite typecheck
 bun run --cwd packages/coffee/external/sqlite lint
 bun run --cwd packages/coffee/external/sqlite lint:custom

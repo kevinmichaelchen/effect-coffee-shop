@@ -8,6 +8,7 @@
     "reportUnusedDisableDirectives": "error"
   },
   "rules": {
+    "typescript/no-generated-empty-object-type": "error",
     "no-bitwise": "error",
     "no-plusplus": "error",
     "typescript/no-floating-promises": "error",
@@ -36,8 +37,8 @@
           "better-auth",
           "better-auth/*",
           "bun:*",
-          "effect/unstable/ai",
-          "effect/unstable/ai/*",
+          "effect/ai",
+          "effect/ai/*",
           "node:*"
         ]
       }

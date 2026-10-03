@@ -10,7 +10,7 @@ import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
 import { SqliteClient } from "@effect/sql-sqlite-bun";
 
-export const coffeeSqliteConfig = Config.all({
+const coffeeSqliteConfig = Config.all({
   filename: Config.String("COFFEE_SQLITE_PATH").pipe(Config.withDefault(".data/coffee.sqlite")),
 });
 

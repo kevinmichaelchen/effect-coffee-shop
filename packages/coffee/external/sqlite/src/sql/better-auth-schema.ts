@@ -5,13 +5,13 @@
  */
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
-import { sqlfuBetterAuthAdapter } from "sqlfu/better-auth";
+import { Database } from "bun:sqlite";
 
 const auth = betterAuth({
   appName: "Effect Coffee Shop",
   basePath: "/api/auth",
   baseURL: "http://localhost",
-  database: sqlfuBetterAuthAdapter(),
+  database: new Database(":memory:"),
   plugins: [
     passkey({
       registration: {
