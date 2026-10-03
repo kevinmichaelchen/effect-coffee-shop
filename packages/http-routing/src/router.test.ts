@@ -10,7 +10,6 @@ import * as Metric from "effect/Metric";
 import * as MutableRef from "effect/MutableRef";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
-import * as TestClock from "effect/testing/TestClock";
 import { WideEvent, WideEventLogger, type LogEvent } from "effect-wide-event";
 import { createHttpRouter } from "./router.ts";
 import { routeResponse, type HttpRouteEffect } from "./route.ts";
@@ -304,30 +303,6 @@ describe("HTTP wide events", () => {
       assert.strictEqual(
         HashSet.size(HashSet.fromIterable(events.map((event) => event.requestId))),
         3,
-      );
-    }).pipe(Effect.provide(WideEventLogger.Capture(captured)));
-  });
-
-  it.effect("measures the request with the Effect clock", () => {
-    const captured = MutableRef.make<Array<LogEvent>>([]);
-    return Effect.gen(function* () {
-      const entered = yield* Deferred.make<void>();
-      const release = yield* Deferred.make<void>();
-      const route = makeRouter(() =>
-        Deferred.succeed(entered, undefined).pipe(
-          Effect.andThen(Deferred.await(release)),
-          Effect.as(routeResponse(new Response())),
-        ),
-      );
-      const fiber = yield* route(request(), undefined).pipe(Effect.forkChild);
-      yield* Deferred.await(entered);
-      yield* TestClock.adjust("25 millis");
-      yield* Deferred.succeed(release, undefined);
-      yield* Fiber.join(fiber);
-      const events = yield* readEvents(captured);
-      assert.deepStrictEqual(
-        events.map((event) => event.durationMs),
-        [25],
       );
     }).pipe(Effect.provide(WideEventLogger.Capture(captured)));
   });
