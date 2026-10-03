@@ -9,3 +9,53 @@ transport contracts, and runtime wiring belong outside this boundary.
 
 Run `typecheck`, `lint`, `lint:custom`, `fmt:check`, and `test` with
 `bun run --cwd packages/coffee/domain <task>`.
+
+## Order fulfillment
+
+[`order-fulfillment.ts`](src/order-fulfillment.ts) defines the staff-controlled
+order lifecycle with [`@typeonce/effect-machine`](https://github.com/typeonce-dev/effect-machine).
+Its state paths are the existing `OrderStatus` values, and its typed event handlers
+declare the five allowed edges. The library checks event names and destination
+paths when the model compiles.
+
+```mermaid
+stateDiagram-v2
+    state "picked-up" as pickedUp
+    [*] --> pending
+    pending --> brewing: StartBrewing
+    pending --> cancelled: Cancel
+    brewing --> ready: MarkReady
+    brewing --> cancelled: Cancel
+    ready --> pickedUp: PickUp
+```
+
+`picked-up` and `cancelled` have no handlers and are absorbing states. Repeated
+commands, skipped steps, backward steps, and cancellation after readiness are
+rejected. There is no command to return an order to `pending`.
+
+The application authenticates staff, loads the order, calls
+`transitionOrderStatus(from, to)`, and saves the status returned by `Machine.plan`.
+The planner leaves unhandled events unchanged; the domain returns `Option.none`
+for them, which the application maps to the existing
+`InvalidOrderStatusTransitionError` (HTTP 409) before any save. Machine planning
+failures map to `InternalAppError`. All other order fields and the existing
+authorization, persistence error mapping, and success observability are preserved.
+The existing `order` exports remain available; `canTransitionTo` reads the same
+machine's enabled events. That synchronous query is exact for this model because
+every handler is unconditional.
+
+Each command projects the repository's decoded status into a typed logical
+snapshot. The model has no state data, invokes, timers, or commands, so planning
+requires no live machine, fibers, or snapshot storage. The repository remains
+authoritative and retains its existing read-then-save concurrency semantics.
+Adding state-owned work or data would require revisiting this projection.
+
+The dependency is pinned to `0.40.0`, the first release supporting stable Effect
+4 (`effect: ^4.0.0`). It has a package-specific Bun release-age exception so this
+exact release installs alongside the repository's Effect `4.0.0`.
+
+Tests cover all 25 status pairs, multi-event fulfillment and cancellation traces,
+and all five transition definitions with `MachineTest`. Application tests cover
+all 20 staff-command/status combinations, persisted order preservation, rejection
+without writes, authorization before repository access, missing orders, and read
+and save failures.
