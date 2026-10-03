@@ -35,14 +35,17 @@ rejected. There is no command to return an order to `pending`.
 
 The application authenticates staff, loads the order, calls
 `transitionOrderStatus(from, to)`, and saves the status returned by `Machine.plan`.
-The planner leaves unhandled events unchanged; the domain returns `Option.none`
-for them, which the application maps to the existing
+The domain accepts a plan only when its settled status changes and equals the
+requested target. Unhandled events and plans that settle elsewhere return
+`Option.none`, which the application maps to the existing
 `InvalidOrderStatusTransitionError` (HTTP 409) before any save. Machine planning
 failures map to `InternalAppError`. All other order fields and the existing
 authorization, persistence error mapping, and success observability are preserved.
-The existing `order` exports remain available; `canTransitionTo` reads the same
-machine's enabled events. That synchronous query is exact for this model because
-every handler is unconditional.
+`OrderStatus` and `orderStatuses` live in the lightweight `order` module; importing
+order schemas or errors does not load the machine. Fulfillment helpers, including
+`canTransitionTo`, are exported from `order-fulfillment`. That synchronous query
+reads the machine's enabled events and is exact for this model because every
+handler is unconditional.
 
 Each command projects the repository's decoded status into a typed logical
 snapshot. The model has no state data, invokes, timers, or commands, so planning
@@ -51,8 +54,9 @@ authoritative and retains its existing read-then-save concurrency semantics.
 Adding state-owned work or data would require revisiting this projection.
 
 The dependency is pinned to `0.40.0`, the first release supporting stable Effect
-4 (`effect: ^4.0.0`). It has a package-specific Bun release-age exception so this
-exact release installs alongside the repository's Effect `4.0.0`.
+4 (`effect: ^4.0.0`). The committed lockfile installs this adopted version alongside
+the repository's Effect `4.0.0`; future dependency resolutions remain subject to
+Bun's normal release-age quarantine.
 
 Tests cover all 25 status pairs, multi-event fulfillment and cancellation traces,
 and all five transition definitions with `MachineTest`. Application tests cover

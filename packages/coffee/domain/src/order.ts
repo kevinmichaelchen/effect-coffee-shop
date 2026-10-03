@@ -1,5 +1,5 @@
 /**
- * Defines Coffee order, order item, status, and transition rules.
+ * Defines Coffee order, order item, and status schemas.
  *
  * @module
  */
@@ -9,9 +9,10 @@ import { DrinkId, DrinkSize, Milk, Temperature } from "./menu.ts";
 import { Money } from "./money.ts";
 import { CustomerName, Quantity, ShotCount } from "./order-primitives.ts";
 import { typeId } from "./typed-id.ts";
-import { OrderStatus } from "./order-fulfillment.ts";
 
-export { OrderStatus, orderStatuses, canTransitionTo } from "./order-fulfillment.ts";
+export const orderStatuses = ["pending", "brewing", "ready", "picked-up", "cancelled"] as const;
+export const OrderStatus = Schema.Literals(orderStatuses);
+export type OrderStatus = typeof OrderStatus.Type;
 
 export const OrderIdFactory = makeTypeId("order", { brand: "OrderId" });
 export type OrderId = TypeIdFrom<typeof OrderIdFactory>;

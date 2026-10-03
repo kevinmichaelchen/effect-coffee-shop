@@ -7,11 +7,7 @@ import { Machine } from "@typeonce/effect-machine";
 import * as Effect from "effect/Effect";
 import * as Match from "effect/Match";
 import * as Option from "effect/Option";
-import * as Schema from "effect/Schema";
-
-export const orderStatuses = ["pending", "brewing", "ready", "picked-up", "cancelled"] as const;
-export const OrderStatus = Schema.Literals(orderStatuses);
-export type OrderStatus = typeof OrderStatus.Type;
+import type { OrderStatus } from "./order.ts";
 
 const Root = Machine.state({
   states: {
@@ -76,18 +72,17 @@ export const canTransitionTo = (from: OrderStatus, to: OrderStatus): boolean =>
       Machine.enabled(orderFulfillment, snapshotFromStatus(from)).includes(event._tag),
   });
 
-/** An unhandled event leaves the machine unchanged and is reported as None. */
+/** Accept only a changed plan that settles on the requested target. */
 export const transitionOrderStatus = Effect.fn("OrderFulfillment.transitionOrderStatus")(function* (
   from: OrderStatus,
   to: OrderStatus,
 ) {
-  const event = eventForStatus(to);
-  if (Option.isNone(event)) {
-    return Option.none<OrderStatus>();
-  }
-
-  const plan = yield* Machine.plan(orderFulfillment, snapshotFromStatus(from), event.value);
-  return plan.next.state.path === from
-    ? Option.none<OrderStatus>()
-    : Option.some(plan.next.state.path);
+  const next = yield* Option.match(eventForStatus(to), {
+    onNone: () => Effect.succeed(Option.none<OrderStatus>()),
+    onSome: (event) =>
+      Machine.plan(orderFulfillment, snapshotFromStatus(from), event).pipe(
+        Effect.map((plan) => Option.some(plan.next.state.path)),
+      ),
+  });
+  return Option.filter(next, (status) => status !== from && status === to);
 });

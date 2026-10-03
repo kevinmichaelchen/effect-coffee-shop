@@ -3,8 +3,13 @@ import { MachineTest } from "@typeonce/effect-machine/testing";
 import * as Effect from "effect/Effect";
 import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
-import { canTransitionTo, orderStatuses, type OrderStatus } from "./order.ts";
-import { FulfillmentEvents, orderFulfillment, transitionOrderStatus } from "./order-fulfillment.ts";
+import { orderStatuses, type OrderStatus } from "./order.ts";
+import {
+  canTransitionTo,
+  FulfillmentEvents,
+  orderFulfillment,
+  transitionOrderStatus,
+} from "./order-fulfillment.ts";
 
 const allowedTransitions = {
   pending: ["brewing", "cancelled"],
