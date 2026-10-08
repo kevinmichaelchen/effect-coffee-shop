@@ -11,6 +11,7 @@
     "./money": "./src/money.ts",
     "./order-primitives": "./src/order-primitives.ts",
     "./order": "./src/order.ts",
+    "./order-fulfillment": "./src/order-fulfillment.ts",
     "./typed-id": "./src/typed-id.ts"
   },
   "scripts": {
@@ -24,6 +25,7 @@
   },
   "dependencies": {
     "@just-be/effect-typed-id": "0.5.0",
+    "@typeonce/effect-machine": "0.40.0",
     "effect": "catalog:"
   },
   "devDependencies": {

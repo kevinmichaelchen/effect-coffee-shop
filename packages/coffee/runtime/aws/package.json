@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "catalog:",
+    "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
     "@types/pg": "^8.20.0",
     "oxfmt": "catalog:",

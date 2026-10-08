@@ -1,5 +1,5 @@
 /**
- * Defines Coffee order, order item, status, and transition rules.
+ * Defines Coffee order, order item, and status schemas.
  *
  * @module
  */
@@ -11,8 +11,8 @@ import { CustomerName, Quantity, ShotCount } from "./order-primitives.ts";
 import { typeId } from "./typed-id.ts";
 
 export const orderStatuses = ["pending", "brewing", "ready", "picked-up", "cancelled"] as const;
-export type OrderStatus = (typeof orderStatuses)[number];
 export const OrderStatus = Schema.Literals(orderStatuses);
+export type OrderStatus = typeof OrderStatus.Type;
 
 export const OrderIdFactory = makeTypeId("order", { brand: "OrderId" });
 export type OrderId = TypeIdFrom<typeof OrderIdFactory>;
@@ -58,14 +58,3 @@ export interface ListOrdersFilters {
 }
 
 export const isOrderStatus = Schema.is(OrderStatus);
-
-const validTransitions: Record<OrderStatus, ReadonlyArray<OrderStatus>> = {
-  pending: ["brewing", "cancelled"],
-  brewing: ["ready", "cancelled"],
-  ready: ["picked-up"],
-  "picked-up": [],
-  cancelled: [],
-};
-
-export const canTransitionTo = (from: OrderStatus, to: OrderStatus): boolean =>
-  validTransitions[from].some((nextStatus) => nextStatus === to);

@@ -1,18 +1,21 @@
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Logger from "effect/Logger";
+import { WideEventLogger } from "effect-wide-event";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Metric from "effect/Metric";
 import * as Option from "effect/Option";
 import { FetchHttpClient } from "effect/http";
+import * as HttpServerError from "effect/http/HttpServerError";
+import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import { Otlp } from "effect/observability";
+import { withHttpWideEvent } from "./logging.ts";
 
 const defaultServiceName = "http-routing";
 const nonBlankString = Option.filter((value: string) => value.trim() !== "");
 
 const ConsoleObservabilityLive = Layer.mergeAll(
-  Logger.layer([Logger.consoleJson], { mergeWithExisting: true }),
+  WideEventLogger.Json,
   Metric.enableRuntimeMetricsLayer,
 );
 
@@ -22,17 +25,22 @@ const makeOtlpObservabilityLayer = (input: {
 }) =>
   Otlp.layerJson({
     baseUrl: input.baseUrl,
+    loggerMergeWithExisting: true,
     resource: {
       serviceName: input.serviceName,
     },
-  }).pipe(Layer.provide(FetchHttpClient.layer));
+  }).pipe(
+    Layer.provide(FetchHttpClient.layer),
+    // Build OTLP with the JSON logger already installed, then retain both outputs.
+    Layer.provideMerge(ConsoleObservabilityLive),
+  );
 
 const resolveOtlpObservabilityLayer = (input: {
   readonly endpoint: Option.Option<string>;
   readonly serviceName: string;
 }) =>
   Option.match(input.endpoint, {
-    onNone: () => Layer.empty,
+    onNone: () => ConsoleObservabilityLive,
     onSome: (baseUrl) =>
       makeOtlpObservabilityLayer({
         baseUrl,
@@ -46,7 +54,7 @@ const resolveOtelServiceName = (serviceName: Option.Option<string>): string =>
     onSome: (value) => value,
   });
 
-const OtlpObservabilityLive = Layer.unwrap(
+export const HttpObservabilityLive = Layer.unwrap(
   Effect.gen(function* () {
     const endpoint = yield* Config.option(Config.String("OTEL_EXPORTER_OTLP_ENDPOINT")).pipe(
       Effect.map(nonBlankString),
@@ -57,11 +65,6 @@ const OtlpObservabilityLive = Layer.unwrap(
 
     return resolveOtlpObservabilityLayer({ endpoint, serviceName });
   }),
-);
-
-export const HttpObservabilityLive = Layer.mergeAll(
-  ConsoleObservabilityLive,
-  OtlpObservabilityLive,
 );
 
 const HttpObservabilityRuntime = ManagedRuntime.make(HttpObservabilityLive);
@@ -84,6 +87,27 @@ const requestDurationMs = Metric.histogram("http_routing_request_duration_ms", {
 type MetricAttributes = Readonly<Record<string, string>>;
 
 export const runHttpEffect = HttpObservabilityRuntime.runPromise;
+
+/** Consume request failures after emission so native servers never receive a raw rejection. */
+export const runHttpRequest = <E>(request: Request, effect: Effect.Effect<Response, E>) =>
+  HttpObservabilityRuntime.runPromise(
+    Effect.suspend(() => {
+      const requestId = crypto.randomUUID();
+      return effect.pipe(
+        withHttpWideEvent({ method: request.method, requestId }),
+        Effect.catchCause((cause) =>
+          HttpServerError.causeResponse(cause).pipe(
+            Effect.map(([response]) =>
+              HttpServerResponse.toWeb(
+                HttpServerResponse.setHeader(response, "x-request-id", requestId),
+                { withoutBody: request.method === "HEAD" },
+              ),
+            ),
+          ),
+        ),
+      );
+    }),
+  );
 
 export const recordHttpRequestCompleted = (input: {
   readonly durationMs: number;
@@ -126,11 +150,8 @@ export function requestSpanAttributes(input: {
   readonly request: Request;
   readonly routeKind: string;
 }) {
-  const url = new URL(input.request.url);
-
   return {
     http_method: input.request.method,
-    http_path: url.pathname,
     route_kind: input.routeKind,
   };
 }

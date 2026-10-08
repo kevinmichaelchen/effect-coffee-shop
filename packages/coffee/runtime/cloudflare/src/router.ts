@@ -23,7 +23,7 @@ export { type CloudflareWorkerEnv } from "./env.ts";
 export const routeCloudflareRequest = (
   request: Request,
   env: CloudflareWorkerEnv,
-  executionContext: ExecutionContext,
+  executionContext: Pick<ExecutionContext, "waitUntil">,
 ) =>
   handleHttpRequest(request, env, {
     waitUntil: (promise) => executionContext.waitUntil(promise),

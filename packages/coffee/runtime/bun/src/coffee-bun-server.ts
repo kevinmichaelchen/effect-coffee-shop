@@ -8,7 +8,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { createHttpRouter } from "@effect-coffee-shop/http-routing/router";
 import { routeResponse, type HttpRoute } from "@effect-coffee-shop/http-routing/route";
-import { runHttpEffect } from "@effect-coffee-shop/http-routing/observability";
+import { runHttpRequest } from "@effect-coffee-shop/http-routing/observability";
 import { systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import { createCoffeeRequestServices } from "@effect-coffee-shop/coffee-backend/http/backend";
 import { createCoffeeWebHandler } from "@effect-coffee-shop/coffee-http/web-handler";
@@ -50,7 +50,7 @@ export async function startCoffeeBunServer(input: {
   ]);
   const server = Bun.serve({
     port,
-    fetch: async (request) => runHttpEffect(handleHttpRequest(request, Bun.env)),
+    fetch: async (request) => runHttpRequest(request, handleHttpRequest(request, Bun.env)),
   });
 
   registerShutdown(dispose, server);

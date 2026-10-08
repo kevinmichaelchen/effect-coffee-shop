@@ -11,6 +11,9 @@ import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
+import { HttpObservabilityLive } from "@effect-coffee-shop/http-routing/observability";
+import { withHttpWideEvent } from "@effect-coffee-shop/http-routing/logging";
+import { toLambdaHttpResponse } from "./http-response.ts";
 import { routeAwsRequest } from "./router.ts";
 import { awsEnvNames, type AwsLambdaEnv } from "./env.ts";
 
@@ -41,6 +44,27 @@ const runtimeEnvConfig = Config.all({
 
 const runtimeEnv = runtimeEnvConfig.pipe(Effect.orDie);
 
+/** The request effect registered with Alchemy, including conversion and configuration. */
+export const lambdaFetch = Effect.fn("CoffeeApi.fetch")(
+  function* () {
+    const request = yield* HttpServerRequest.HttpServerRequest;
+    const requestId = crypto.randomUUID();
+    return yield* Effect.gen(function* () {
+      const webRequest = yield* HttpServerRequest.toWeb(request).pipe(Effect.orDie);
+      const env = yield* runtimeEnv;
+      const response = yield* routeAwsRequest(webRequest, env);
+      return HttpServerResponse.fromWeb(response);
+    }).pipe(
+      withHttpWideEvent({ method: request.method, requestId }),
+      Effect.orDie,
+      toLambdaHttpResponse,
+      Effect.map(HttpServerResponse.setHeader("x-request-id", requestId)),
+    );
+  },
+  Effect.provide(HttpObservabilityLive),
+  Effect.orDie,
+);
+
 export default class CoffeeApi extends AWS.Lambda.Function<CoffeeApi>()(
   "CoffeeApi",
   Effect.gen(function* () {
@@ -64,14 +88,5 @@ export default class CoffeeApi extends AWS.Lambda.Function<CoffeeApi>()(
       url: true,
     };
   }),
-  Effect.succeed({
-    fetch: Effect.gen(function* () {
-      const request = yield* HttpServerRequest.HttpServerRequest;
-      const webRequest = yield* HttpServerRequest.toWeb(request).pipe(Effect.orDie);
-      const env = yield* runtimeEnv;
-      const response = yield* routeAwsRequest(webRequest, env).pipe(Effect.orDie);
-
-      return HttpServerResponse.fromWeb(response);
-    }),
-  }),
+  Effect.succeed({ fetch: lambdaFetch() }),
 ) {}

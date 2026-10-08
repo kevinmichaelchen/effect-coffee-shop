@@ -6,6 +6,10 @@ It defines HTTP groups, endpoint schemas, handler layers, a Web Fetch handler ad
 Fetch handler adapter. The package owns the HTTP shape, but not database selection, deployment
 bindings or core business behavior.
 
+Request logging belongs to the outer [`http-routing`](../../../http-routing) router, which emits
+one wide event across Bun, Cloudflare, and AWS. This package's Fetch handler disables Effect's
+HTTP request logger to avoid a second request event.
+
 ## Directory Map
 
 - [`src/api.ts`](./src/api.ts) defines health, session, menu, and order HTTP API groups and
