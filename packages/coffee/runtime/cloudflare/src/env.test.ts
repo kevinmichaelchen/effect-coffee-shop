@@ -48,13 +48,15 @@ describe("cloudflare runtime config", () => {
     Effect.gen(function* () {
       const runtime = yield* readCloudflareRuntime({
         ASSETS: makeAssetFetcher(),
-        BETTER_AUTH_SECRET: makeSecretBinding(" secret-123 "),
+        APP_ORIGIN: "https://coffee.example",
+        MCP_SIGNING_KEY: "A".repeat(43),
+        AUTH_SECRET: makeSecretBinding(" secret-123 "),
         COFFEE_STAFF_USER_IDS: " staff-a, staff-b , , staff-a ",
         DB: database,
       });
 
       expect(Option.isSome(runtime.bindings.assets)).toBe(true);
-      expect(Option.map(runtime.config.betterAuthSecret, Redacted.value)).toEqual(
+      expect(Option.map(runtime.config.authSecret, Redacted.value)).toEqual(
         Option.some("secret-123"),
       );
       expect([...runtime.config.staffUserIds]).toEqual(["staff-a", "staff-b"]);
@@ -64,13 +66,15 @@ describe("cloudflare runtime config", () => {
   it.effect("treats missing or blank optional values as absent", () =>
     Effect.gen(function* () {
       const runtime = yield* readCloudflareRuntime({
-        BETTER_AUTH_SECRET: "",
+        APP_ORIGIN: "https://coffee.example",
+        MCP_SIGNING_KEY: "A".repeat(43),
+        AUTH_SECRET: "",
         COFFEE_STAFF_USER_IDS: " ,  , ",
         DB: database,
       } satisfies CloudflareWorkerEnv);
 
       expect(Option.isNone(runtime.bindings.assets)).toBe(true);
-      expect(Option.isNone(runtime.config.betterAuthSecret)).toBe(true);
+      expect(Option.isNone(runtime.config.authSecret)).toBe(true);
       expect([...runtime.config.staffUserIds]).toEqual([]);
     }),
   );

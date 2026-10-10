@@ -6,48 +6,11 @@ import { ordersQueryKey } from "#features/coffee-shop/hooks/useCoffeeQueries.ts"
 
 type PendingAuthAction = "create-account" | "sign-in" | "sign-out" | null;
 
-function getErrorMessage(error: { message?: string | undefined } | null): string {
-  return error?.message ?? "Authentication failed.";
-}
-
-function readThrownMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Authentication failed.";
-}
-
 async function refreshAuthQueries(queryClient: ReturnType<typeof useQueryClient>): Promise<void> {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: viewerQueryKey }),
     queryClient.invalidateQueries({ queryKey: ordersQueryKey }),
   ]);
-}
-
-function toRegistrationContext(displayName: string): string {
-  return JSON.stringify({ displayName });
-}
-
-async function signInWithPasskey(): Promise<void> {
-  const result = await authClient.signIn.passkey();
-
-  if (result.error !== null) {
-    throw new Error(getErrorMessage(result.error));
-  }
-}
-
-async function registerPasskey(displayName: string): Promise<void> {
-  const registration = await authClient.passkey.addPasskey({
-    name: `${displayName}'s passkey`,
-    context: toRegistrationContext(displayName),
-  });
-
-  if (registration.error !== null) {
-    throw new Error(getErrorMessage(registration.error));
-  }
-
-  const session = await authClient.getSession();
-
-  if (session.data === null) {
-    await signInWithPasskey();
-  }
 }
 
 function useAuthActionRunner(
@@ -57,19 +20,19 @@ function useAuthActionRunner(
 ) {
   return async function runAuthAction(
     action: Exclude<PendingAuthAction, null>,
-    effect: () => Promise<void>,
+    effect: () => Promise<{ readonly ok: boolean; readonly message: string }>,
   ): Promise<void> {
     setPendingAction(action);
     setErrorMessage(null);
 
-    try {
-      await effect();
+    const result = await effect();
+    if (result.ok) {
       await refreshAuthQueries(queryClient);
-    } catch (error) {
-      setErrorMessage(readThrownMessage(error));
-    } finally {
-      setPendingAction(null);
-    }
+      if (action !== "sign-out" && window.location.pathname === "/login/mcp") {
+        window.location.assign("/oauth/coffee/authorize");
+      }
+    } else setErrorMessage(result.message);
+    setPendingAction(null);
   };
 }
 
@@ -101,21 +64,15 @@ export function usePasskeyAuth() {
       return;
     }
 
-    await runAuthAction("create-account", async () => registerPasskey(validatedDisplayName));
+    await runAuthAction("create-account", async () => authClient.register(validatedDisplayName));
   }
 
   async function signIn(): Promise<void> {
-    await runAuthAction("sign-in", signInWithPasskey);
+    await runAuthAction("sign-in", authClient.signIn);
   }
 
   async function signOut(): Promise<void> {
-    await runAuthAction("sign-out", async () => {
-      const result = await authClient.signOut();
-
-      if (result.error !== null) {
-        throw new Error(getErrorMessage(result.error));
-      }
-    });
+    await runAuthAction("sign-out", authClient.signOut);
   }
 
   return {

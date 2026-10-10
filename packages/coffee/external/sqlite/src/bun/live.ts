@@ -18,9 +18,10 @@ const BunSqlCoffeeSchemaLive = Layer.effect(
   ),
 );
 
-export const BunCoffeeAppLive = SqlCoffeeAppLive.pipe(
-  Layer.provide(
-    Layer.merge(BunSqlClientLive, Layer.provide(BunSqlCoffeeSchemaLive, BunSqlClientLive)),
-  ),
+/** Migrated SQLite client shared by application and authentication composition. */
+export const BunCoffeeDatabaseLive = BunSqlCoffeeSchemaLive.pipe(
+  Layer.provideMerge(BunSqlClientLive),
   Layer.provide(BunServices.layer),
 );
+
+export const BunCoffeeAppLive = SqlCoffeeAppLive.pipe(Layer.provide(BunCoffeeDatabaseLive));

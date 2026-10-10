@@ -9,7 +9,8 @@
     "./action-tools": "./src/action-tools.ts",
     "./prompts": "./src/prompts.ts",
     "./resources": "./src/resources.ts",
-    "./server": "./src/server.ts"
+    "./server": "./src/server.ts",
+    "./actor": "./src/actor.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

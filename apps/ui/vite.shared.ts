@@ -16,13 +16,14 @@ const alchemyHostsVite = process.env.ALCHEMY_CLOUDFLARE_VITE_INJECTED === "1";
 const coffeeProxy = {
   "/api": {
     target: coffeeProxyTarget,
-    changeOrigin: true,
+    changeOrigin: false,
     ws: true,
-    rewrite: (path: string) => path.replace(/^\/api/, ""),
   },
+  "/oauth": { target: coffeeProxyTarget, changeOrigin: false },
+  "/.well-known": { target: coffeeProxyTarget, changeOrigin: false },
   "/mcp": {
     target: coffeeProxyTarget,
-    changeOrigin: true,
+    changeOrigin: false,
     ws: true,
   },
 } satisfies NonNullable<NonNullable<UserConfig["server"]>["proxy"]>;

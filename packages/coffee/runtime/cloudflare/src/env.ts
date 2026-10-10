@@ -1,3 +1,5 @@
+import { readAuthConfig } from "@effect-coffee-shop/coffee-auth/config";
+import type { AuthServerConfig } from "@effect-coffee-shop/coffee-auth/server";
 /**
  * Decodes Cloudflare Worker bindings and scalar environment configuration.
  *
@@ -27,12 +29,18 @@ export const cloudflareBindingNames = {
 } as const;
 
 export const cloudflareEnvNames = {
-  betterAuthSecret: "BETTER_AUTH_SECRET",
+  appOrigin: "APP_ORIGIN",
+  mcpSigningKey: "MCP_SIGNING_KEY",
+  mcpClients: "MCP_CLIENTS",
+  authSecret: "AUTH_SECRET",
   coffeeStaffUserIds: "COFFEE_STAFF_USER_IDS",
 } as const;
 
 export interface CloudflareWorkerEnv {
-  BETTER_AUTH_SECRET?: SecretValueBinding | string;
+  APP_ORIGIN?: string;
+  MCP_SIGNING_KEY?: string;
+  MCP_CLIENTS?: string;
+  AUTH_SECRET?: SecretValueBinding | string;
   COFFEE_STAFF_USER_IDS?: string;
   DB: D1Database;
   ASSETS?: AssetFetcher;
@@ -52,7 +60,8 @@ export interface CloudflareRuntime {
     readonly db: D1Database;
   };
   readonly config: {
-    readonly betterAuthSecret: Option.Option<Redacted.Redacted<string>>;
+    readonly auth: Option.Option<AuthServerConfig>;
+    readonly authSecret: Option.Option<Redacted.Redacted<string>>;
     readonly staffUserIds: ReadonlySet<string>;
   };
 }
@@ -61,47 +70,50 @@ const cloudflareConfig = Config.all({
   coffeeStaffUserIds: Config.String("coffeeStaffUserIds").pipe(Config.withDefault("")),
 });
 
-const trimBetterAuthSecret = (secret: string): Option.Option<Redacted.Redacted<string>> =>
+const trimAuthSecret = (secret: string): Option.Option<Redacted.Redacted<string>> =>
   trimOptionalRedactedString(
-    Option.some(Redacted.make(secret, { label: cloudflareEnvNames.betterAuthSecret })),
-    cloudflareEnvNames.betterAuthSecret,
+    Option.some(Redacted.make(secret, { label: cloudflareEnvNames.authSecret })),
+    cloudflareEnvNames.authSecret,
   );
 
-export const readCloudflareRuntime = Effect.fn("Cloudflare.readRuntime")(function* (
-  env: CloudflareWorkerEnv,
-) {
-  const decodedConfig = yield* cloudflareConfig.parse(
-    ConfigProvider.fromUnknown(env).pipe(ConfigProvider.constantCase),
-  );
-  const betterAuthSecret = yield* Option.match(
-    Option.fromNullishOr(env[cloudflareEnvNames.betterAuthSecret]),
-    {
-      onNone: () => Effect.succeed(Option.none()),
-      onSome: (binding) =>
-        Match.value(binding).pipe(
-          Match.when(P.isString, (secret) => Effect.succeed(trimBetterAuthSecret(secret))),
-          Match.orElse((secretBinding) =>
-            Effect.tryPromise({
-              try: async () => secretBinding.get(),
-              catch: (cause) =>
-                new CloudflareSecretBindingError({
-                  message: "Unable to read BETTER_AUTH_SECRET from Cloudflare Secrets Store.",
-                  cause,
-                }),
-            }).pipe(Effect.map(trimBetterAuthSecret)),
+export const readCloudflareRuntime = Effect.fn("Cloudflare.readRuntime")(
+  function* (env: CloudflareWorkerEnv) {
+    const decodedConfig = yield* cloudflareConfig.parse(
+      ConfigProvider.fromUnknown(env).pipe(ConfigProvider.constantCase),
+    );
+    const authSecret = yield* Option.match(
+      Option.fromNullishOr(env[cloudflareEnvNames.authSecret]),
+      {
+        onNone: () => Effect.succeed(Option.none()),
+        onSome: (binding) =>
+          Match.value(binding).pipe(
+            Match.when(P.isString, (secret) => Effect.succeed(trimAuthSecret(secret))),
+            Match.orElse((secretBinding) =>
+              Effect.tryPromise({
+                try: async () => secretBinding.get(),
+                catch: (cause) =>
+                  new CloudflareSecretBindingError({
+                    message: "Unable to read AUTH_SECRET from Cloudflare Secrets Store.",
+                    cause,
+                  }),
+              }).pipe(Effect.map(trimAuthSecret)),
+            ),
           ),
-        ),
-    },
-  );
+      },
+    );
 
-  return {
-    bindings: {
-      assets: Option.fromNullishOr(env[cloudflareBindingNames.assets]),
-      db: env[cloudflareBindingNames.db],
-    },
-    config: {
-      betterAuthSecret,
-      staffUserIds: parseCsvSet(decodedConfig.coffeeStaffUserIds),
-    },
-  } satisfies CloudflareRuntime;
-});
+    return {
+      bindings: {
+        assets: Option.fromNullishOr(env[cloudflareBindingNames.assets]),
+        db: env[cloudflareBindingNames.db],
+      },
+      config: {
+        auth: yield* readAuthConfig(authSecret, parseCsvSet(decodedConfig.coffeeStaffUserIds)),
+        authSecret,
+        staffUserIds: parseCsvSet(decodedConfig.coffeeStaffUserIds),
+      },
+    } satisfies CloudflareRuntime;
+  },
+  (effect, env) =>
+    effect.pipe(Effect.provide(ConfigProvider.layer(ConfigProvider.fromUnknown(env)))),
+);

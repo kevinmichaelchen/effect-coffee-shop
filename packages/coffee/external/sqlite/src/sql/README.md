@@ -60,16 +60,10 @@ every statement that way. On Bun SQLite each migration runs in a transaction.
 D1 has no transactions, and batches do not survive Alchemy's local platform
 proxy, so D1 applies statements in order.
 
-## Better Auth Schema
+## Authentication schema
 
-Better Auth remains the source for auth table shape. To see the DDL it expects:
-
-```sh
-bun run --cwd apps/backend db:auth:schema
-```
-
-That writes the full Better Auth schema to `better-auth.sql` (gitignored). Diff
-it against the existing migrations and write a new migration for any changes.
-
-Presentation code must not run Better Auth schema migrations or compatibility
-`alter table` patches at request time.
+Yielded's table mappings live in `packages/coffee/auth/src/persistence/`.
+`0004_yielded_auth.sql` creates their tables and removes the old prototype auth
+and Agent Auth tables. Historical migrations remain unchanged. Keep SQLite and
+PostgreSQL migrations aligned with these mappings; auth HTTP handlers never run
+schema alterations.

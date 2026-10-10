@@ -24,19 +24,25 @@ const optionalSecretConfig = (name: string) =>
 
 const requiredSecretConfig = (name: string) => Config.Redacted(name);
 
-const configuredBetterAuthSecret = Config.Redacted(awsEnvNames.betterAuthSecret).pipe(
+const configuredAuthSecret = Config.Redacted(awsEnvNames.authSecret).pipe(
   Config.option,
   Config.map(Option.getOrUndefined),
   Effect.orDie,
 );
 
 const runtimeEnvConfig = Config.all({
-  betterAuthSecret: optionalSecretConfig(awsEnvNames.betterAuthSecret),
+  appOrigin: Config.String(awsEnvNames.appOrigin),
+  mcpSigningKey: Config.Redacted(awsEnvNames.mcpSigningKey),
+  mcpClients: optionalVariableConfig(awsEnvNames.mcpClients),
+  authSecret: optionalSecretConfig(awsEnvNames.authSecret),
   coffeePostgresUrl: requiredSecretConfig(awsEnvNames.coffeePostgresUrl),
   coffeeStaffUserIds: optionalVariableConfig(awsEnvNames.coffeeStaffUserIds),
 }).pipe(
   Config.map((env): AwsLambdaEnv => ({
-    BETTER_AUTH_SECRET: Redacted.value(env.betterAuthSecret),
+    APP_ORIGIN: env.appOrigin,
+    MCP_SIGNING_KEY: Redacted.value(env.mcpSigningKey),
+    MCP_CLIENTS: env.mcpClients || "[]",
+    AUTH_SECRET: Redacted.value(env.authSecret),
     COFFEE_POSTGRES_URL: Redacted.value(env.coffeePostgresUrl),
     COFFEE_STAFF_USER_IDS: env.coffeeStaffUserIds,
   })),
@@ -68,14 +74,22 @@ export const lambdaFetch = Effect.fn("CoffeeApi.fetch")(
 export default class CoffeeApi extends AWS.Lambda.Function<CoffeeApi>()(
   "CoffeeApi",
   Effect.gen(function* () {
-    const generatedBetterAuthSecret = yield* Alchemy.makeRandom("BetterAuthSecret", {
+    const generatedAuthSecret = yield* Alchemy.makeRandom("AuthSecret", {
       bytes: 32,
     });
-    const betterAuthSecret = (yield* configuredBetterAuthSecret) ?? generatedBetterAuthSecret;
+    const authSecret = (yield* configuredAuthSecret) ?? generatedAuthSecret;
 
     return {
       env: {
-        [awsEnvNames.betterAuthSecret]: betterAuthSecret,
+        [awsEnvNames.appOrigin]: yield* Config.String(awsEnvNames.appOrigin).pipe(Effect.orDie),
+        [awsEnvNames.mcpSigningKey]: yield* Config.Redacted(awsEnvNames.mcpSigningKey).pipe(
+          Effect.orDie,
+        ),
+        [awsEnvNames.mcpClients]: yield* Config.String(awsEnvNames.mcpClients).pipe(
+          Config.withDefault("[]"),
+          Effect.orDie,
+        ),
+        [awsEnvNames.authSecret]: authSecret,
         [awsEnvNames.coffeePostgresUrl]: yield* requiredSecretConfig(
           awsEnvNames.coffeePostgresUrl,
         ).pipe(Effect.orDie),

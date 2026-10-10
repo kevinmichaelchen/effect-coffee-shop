@@ -35,6 +35,9 @@
   // The Alchemy workspace builds the UI by path (`Cloudflare.Website.Vite`) rather than
   // importing it; the dependency exists so Turbo hashes UI changes into the smoke test.
   "ignoreDependencies": [
+    // Runtime peers used by the Yielded WebAuthn server/browser adapters.
+    "@simplewebauthn/server",
+    "@simplewebauthn/browser",
     // Loaded indirectly by @vitejs/plugin-react's reactCompilerPreset in vite.shared.ts.
     "babel-plugin-react-compiler",
     "oxlint-tsgolint",
@@ -194,6 +197,10 @@
         "patterns": ["packages/coffee/presentation/actions/**"],
       },
       {
+        "name": "auth-contract",
+        "patterns": ["packages/coffee/auth/src/contract.ts"],
+      },
+      {
         "name": "auth",
         "patterns": ["packages/coffee/auth/**"],
       },
@@ -225,7 +232,7 @@
       },
       {
         "from": "ui",
-        "allow": ["ui-kit"],
+        "allow": ["ui-kit", "auth-contract"],
       },
       {
         "from": "backend-app",
@@ -247,7 +254,7 @@
       },
       {
         "from": "backend-composition",
-        "allow": ["http-routing", "domain", "application", "external", "presentation"],
+        "allow": ["http-routing", "domain", "application", "auth", "external", "presentation"],
       },
       {
         "from": "runtime",
@@ -275,8 +282,12 @@
         "allow": ["domain", "application"],
       },
       {
+        "from": "auth-contract",
+        "allow": [],
+      },
+      {
         "from": "auth",
-        "allow": ["http-routing", "domain", "application"],
+        "allow": ["auth-contract", "http-routing", "domain", "application"],
       },
       {
         "from": "external",

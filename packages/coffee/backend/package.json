@@ -6,7 +6,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./app-layer": "./src/app-layer.ts",
-    "./http/api-route": "./src/http/api-route.ts",
     "./http/backend": "./src/http/backend.ts",
     "./http/direct-auth": "./src/http/direct-auth.ts"
   },
@@ -21,13 +20,22 @@
   },
   "dependencies": {
     "@effect-coffee-shop/coffee-application": "workspace:*",
+    "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
     "@effect-coffee-shop/coffee-http": "workspace:*",
+    "@effect-coffee-shop/coffee-mcp": "workspace:*",
     "@effect-coffee-shop/http-routing": "workspace:*",
+    "@yielded/auth-persistence": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@effect-coffee-shop/coffee-external-drizzle-postgres": "workspace:*",
+    "@effect/platform-node": "catalog:",
+    "@effect/sql-pglite": "catalog:",
+    "@electric-sql/pglite": "catalog:",
     "@types/bun": "catalog:",
+    "@yielded/auth": "catalog:",
+    "miniflare": "4.20260730.0",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

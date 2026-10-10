@@ -40,6 +40,11 @@ bun run dev
 The UI runs at `http://localhost:5173` and proxies `/api/*` to the Bun backend
 at `http://localhost:3000`.
 
+For passkey sign-in, configure `APP_ORIGIN=http://localhost:5173`, `AUTH_SECRET`,
+and an independent `MCP_SIGNING_KEY` (random secrets of at least 32 characters).
+Remote MCP additionally needs explicit `MCP_CLIENTS` registrations and an MCP
+`2026-07-28` client. See [auth setup](./packages/coffee/auth/README.md).
+
 For Portless subdomains, passkey auth and proxy
 overrides, see [`apps/ui`](./apps/ui).
 
@@ -59,18 +64,18 @@ Editable sources live in [`docs/architecture`](./docs/architecture).
 
 </details>
 
-| Layer                | Workspace                                                                        | Owns                                                                                     |
-| -------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Domain               | [`packages/coffee/domain`](./packages/coffee/domain) | Pure Coffee models, IDs, and errors. |
-| UI kit               | [`packages/ui-kit`](./packages/ui-kit) | Shared React primitives, fields, and theme controls. |
-| Application          | [`packages/coffee/application`](./packages/coffee/application)                                 | Coffee use cases, ports, actors, and contracts. |
-| Presentation         | [`packages/coffee/presentation`](./packages/coffee/presentation)                 | HTTP, CLI, and MCP protocol adapters over the application service.                       |
-| Presentation support | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions) | Coffee tool names, descriptions, and schemas used by Effect MCP.                         |
-| Auth                 | [`packages/coffee/auth`](./packages/coffee/auth)                                 | Better Auth passkey setup and actor resolution.                                          |
-| External adapters    | [`packages/coffee/external`](./packages/coffee/external)                         | In-memory, SQLite/D1, and Drizzle/Postgres implementations of Coffee ports.              |
-| Host utilities       | [`packages/backend-host`](./packages/backend-host)                               | Runtime-agnostic Fetch host primitives, mounts, logging, and request-scoped services.    |
-| Runtime shell        | [`apps/backend`](./apps/backend)                                                 | Bun, Cloudflare, and AWS composition roots that choose concrete Layers.                  |
-| Browser app          | [`apps/ui`](./apps/ui)                                                           | Vite/React UI, local proxying, passkey sign-in, and coffee ordering.                     |
+| Layer                | Workspace                                                                        | Owns                                                                                  |
+| -------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Domain               | [`packages/coffee/domain`](./packages/coffee/domain)                             | Pure Coffee models, IDs, and errors.                                                  |
+| UI kit               | [`packages/ui-kit`](./packages/ui-kit)                                           | Shared React primitives, fields, and theme controls.                                  |
+| Application          | [`packages/coffee/application`](./packages/coffee/application)                   | Coffee use cases, ports, actors, and contracts.                                       |
+| Presentation         | [`packages/coffee/presentation`](./packages/coffee/presentation)                 | HTTP, CLI, and MCP protocol adapters over the application service.                    |
+| Presentation support | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions) | Coffee tool names, descriptions, and schemas used by Effect MCP.                      |
+| Auth                 | [`packages/coffee/auth`](./packages/coffee/auth)                                 | Yielded Auth passkeys, stateful sessions, and typed customer/staff identities.        |
+| External adapters    | [`packages/coffee/external`](./packages/coffee/external)                         | In-memory, SQLite/D1, and Drizzle/Postgres implementations of Coffee ports.           |
+| Host utilities       | [`packages/backend-host`](./packages/backend-host)                               | Runtime-agnostic Fetch host primitives, mounts, logging, and request-scoped services. |
+| Runtime shell        | [`apps/backend`](./apps/backend)                                                 | Bun, Cloudflare, and AWS composition roots that choose concrete Layers.               |
+| Browser app          | [`apps/ui`](./apps/ui)                                                           | Vite/React UI, local proxying, passkey sign-in, and coffee ordering.                  |
 
 ## Why Coffee Actions Exists
 
@@ -94,7 +99,7 @@ case in a protocol-neutral shape.
 | Run or change backend runtime composition | [`apps/backend/README.md`](./apps/backend/README.md)                                           |
 | Work on the browser UI                    | [`apps/ui/README.md`](./apps/ui/README.md)                                                     |
 | Understand package boundaries             | [`packages/README.md`](./packages/README.md)                                                   |
-| Add or change Coffee business behavior    | [`packages/coffee/application`](./packages/coffee/application)                                               |
+| Add or change Coffee business behavior    | [`packages/coffee/application`](./packages/coffee/application)                                 |
 | Add a shared tool/capability action       | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions)               |
 | Change HTTP, CLI, or MCP surfaces         | [`packages/coffee/presentation`](./packages/coffee/presentation)                               |
 | Change passkey auth                       | [`packages/coffee/auth`](./packages/coffee/auth)                                               |

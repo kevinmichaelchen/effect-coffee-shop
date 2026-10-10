@@ -1,3 +1,4 @@
+import * as Config from "effect/Config";
 /**
  * Defines the Alchemy stack that deploys Coffee Shop to Cloudflare.
  *
@@ -32,16 +33,14 @@ class DeploySmokeCheckError extends Schema.TaggedError<DeploySmokeCheckError>()(
   },
 ) {}
 
-const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
-
-const betterAuthSecret = Effect.fn("Cloudflare.betterAuthSecret")(function* () {
-  const provided = yield* optionalTrimmedRedacted(cloudflareEnvNames.betterAuthSecret);
+const authSecret = Effect.fn("Cloudflare.authSecret")(function* () {
+  const provided = yield* optionalTrimmedRedacted(cloudflareEnvNames.authSecret);
 
   if (provided !== undefined) {
     return provided;
   }
 
-  const generated = yield* Alchemy.Random("better-auth-secret", {
+  const generated = yield* Alchemy.Random("auth-secret", {
     bytes: 32,
   });
   return generated.text;
@@ -109,33 +108,15 @@ const CloudflareDeploymentSmokeCheck = Alchemy.Action(
 
     const mcpUrl = new URL("/mcp", input.url).toString();
     const mcp = yield* fetchSmokeResponse({
-      init: {
-        body: encodeJsonString({
-          id: "deploy-smoke",
-          jsonrpc: "2.0",
-          method: "initialize",
-          params: {
-            capabilities: {},
-            clientInfo: {
-              name: "alchemy-deploy-smoke",
-              version: "1.0.0",
-            },
-            protocolVersion: "2025-06-18",
-          },
-        }),
-        headers: {
-          "content-type": "application/json",
-        },
-        method: "POST",
-      },
-      label: "MCP initialize",
+      init: { method: "POST" },
+      label: "MCP OAuth discovery",
       url: mcpUrl,
     });
-    yield* requireOkSmokeResponse({
-      label: "MCP initialize",
-      response: mcp,
-      url: mcpUrl,
-    });
+    if (mcp.status !== 401 || !mcp.headers.get("www-authenticate")) {
+      return yield* new DeploySmokeCheckError({
+        message: "MCP must reject unauthenticated requests with OAuth discovery.",
+      });
+    }
 
     return {
       checked: true,
@@ -170,15 +151,12 @@ export default Alchemy.Stack(
       migrations: path.join(repoRoot, "packages/coffee/external/sqlite/src/sql/migrations"),
     });
     const secretsStore = yield* Cloudflare.SecretsStore.Store("coffee-secrets");
-    const betterAuthStoreSecret = yield* Cloudflare.SecretsStore.Secret(
-      cloudflareEnvNames.betterAuthSecret,
-      {
-        comment: "Better Auth signing secret for the Coffee Shop Cloudflare Worker.",
-        name: cloudflareEnvNames.betterAuthSecret,
-        store: secretsStore,
-        value: yield* betterAuthSecret(),
-      },
-    );
+    const authStoreSecret = yield* Cloudflare.SecretsStore.Secret(cloudflareEnvNames.authSecret, {
+      comment: "Yielded Auth request-binding secret for the Coffee Shop Cloudflare Worker.",
+      name: cloudflareEnvNames.authSecret,
+      store: secretsStore,
+      value: yield* authSecret(),
+    });
 
     const website = yield* Cloudflare.Website.Vite("onion", {
       rootDir: path.join(repoRoot, "apps/ui"),
@@ -205,11 +183,19 @@ export default Alchemy.Stack(
         workspaces: "auto",
       },
       assets: {
-        runWorkerFirst: ["/api", "/api/*", "/mcp", "/mcp/*"],
+        runWorkerFirst: ["/api", "/api/*", "/mcp", "/mcp/*", "/oauth/*", "/.well-known/*"],
       },
       env: {
+        [cloudflareEnvNames.appOrigin]: yield* Config.String(cloudflareEnvNames.appOrigin),
+        [cloudflareEnvNames.mcpSigningKey]: yield* Config.Redacted(
+          cloudflareEnvNames.mcpSigningKey,
+        ),
+        [cloudflareEnvNames.mcpClients]: yield* stringWithDefault(
+          cloudflareEnvNames.mcpClients,
+          "[]",
+        ),
         [cloudflareBindingNames.db]: coffeeDb,
-        [cloudflareEnvNames.betterAuthSecret]: betterAuthStoreSecret,
+        [cloudflareEnvNames.authSecret]: authStoreSecret,
         [cloudflareEnvNames.coffeeStaffUserIds]: yield* stringWithDefault(
           cloudflareEnvNames.coffeeStaffUserIds,
           "",

@@ -37,6 +37,7 @@ export default Alchemy.Stack(
       routes: {
         "/.well-known": { url: apiUrl },
         "/api": { url: apiUrl },
+        "/oauth": { url: apiUrl },
         "/mcp": { url: apiUrl },
       },
       invalidation: {

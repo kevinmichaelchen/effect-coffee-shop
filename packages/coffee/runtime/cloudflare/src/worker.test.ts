@@ -59,7 +59,7 @@ it.live(
                       new Request(`https://coffee.example${example.path}`),
                       {
                         DB: proxy.env.DB,
-                        BETTER_AUTH_SECRET: {
+                        AUTH_SECRET: {
                           get: () => Promise.reject({ message: "private-password" }),
                         },
                         ASSETS: {

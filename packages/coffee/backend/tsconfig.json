@@ -13,7 +13,12 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "types": ["bun"],
-    "plugins": [{ "name": "@effect/language-service" }]
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "allowedUnstableApis": ["effect/http", "effect/sql", "@effect/sql-pglite"]
+      }
+    ]
   },
   "include": ["src/**/*.ts"]
 }

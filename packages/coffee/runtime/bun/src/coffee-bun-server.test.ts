@@ -1,3 +1,4 @@
+import { CoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
 import { afterEach, assert, expect, it, vi } from "vitest";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -43,7 +44,7 @@ it.each([
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
   await startCoffeeBunServer({
-    appLayer: Layer.empty,
+    appLayer: CoffeeAppLive,
     routes: Layer.empty,
     extraRoutes: [
       {

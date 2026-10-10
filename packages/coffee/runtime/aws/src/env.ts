@@ -1,3 +1,5 @@
+import { readAuthConfig } from "@effect-coffee-shop/coffee-auth/config";
+import type { AuthServerConfig } from "@effect-coffee-shop/coffee-auth/server";
 /**
  * Decodes AWS Lambda environment configuration for the Coffee backend.
  *
@@ -15,26 +17,33 @@ import {
 export { revealOptionalSecret, revealSecret } from "@effect-coffee-shop/coffee-runtime-shared/env";
 
 export const awsEnvNames = {
-  betterAuthSecret: "BETTER_AUTH_SECRET",
+  appOrigin: "APP_ORIGIN",
+  mcpSigningKey: "MCP_SIGNING_KEY",
+  mcpClients: "MCP_CLIENTS",
+  authSecret: "AUTH_SECRET",
   coffeePostgresUrl: "COFFEE_POSTGRES_URL",
   coffeeStaffUserIds: "COFFEE_STAFF_USER_IDS",
 } as const;
 
 export interface AwsLambdaEnv {
-  readonly BETTER_AUTH_SECRET?: string;
+  readonly APP_ORIGIN?: string;
+  readonly MCP_SIGNING_KEY?: string;
+  readonly MCP_CLIENTS?: string;
+  readonly AUTH_SECRET?: string;
   readonly COFFEE_POSTGRES_URL?: string;
   readonly COFFEE_STAFF_USER_IDS?: string;
 }
 
 export interface AwsRuntime {
   readonly config: {
-    readonly betterAuthSecret: Option.Option<Redacted.Redacted<string>>;
+    readonly auth: Option.Option<AuthServerConfig>;
+    readonly authSecret: Option.Option<Redacted.Redacted<string>>;
     readonly staffUserIds: ReadonlySet<string>;
   };
 }
 
 const awsRuntimeConfig = Config.all({
-  betterAuthSecret: Config.option(Config.Redacted("betterAuthSecret")),
+  authSecret: Config.option(Config.Redacted("authSecret")),
   coffeeStaffUserIds: Config.String("coffeeStaffUserIds").pipe(Config.withDefault("")),
 });
 
@@ -47,10 +56,14 @@ export const readAwsRuntime = (env: unknown): AwsRuntime => {
 
   return {
     config: {
-      betterAuthSecret: trimOptionalRedactedString(
-        decodedConfig.betterAuthSecret,
-        awsEnvNames.betterAuthSecret,
+      // oxlint-disable-next-line effect/effect-run-in-body -- Synchronous configuration boundary.
+      auth: Effect.runSync(
+        readAuthConfig(
+          trimOptionalRedactedString(decodedConfig.authSecret, awsEnvNames.authSecret),
+          parseCsvSet(decodedConfig.coffeeStaffUserIds),
+        ).pipe(Effect.provide(ConfigProvider.layer(ConfigProvider.fromUnknown(env)))),
       ),
+      authSecret: trimOptionalRedactedString(decodedConfig.authSecret, awsEnvNames.authSecret),
       staffUserIds: parseCsvSet(decodedConfig.coffeeStaffUserIds),
     },
   };

@@ -42,3 +42,21 @@ that path would create two migration authorities.
 
 Use `Drizzle.Schema` here only after choosing to make a Drizzle schema the source of truth for that
 database surface.
+
+## Auth and provider configuration
+
+Both stacks pass `APP_ORIGIN`, `AUTH_SECRET`, `MCP_SIGNING_KEY`, `MCP_CLIENTS`, and
+`COFFEE_STAFF_USER_IDS` to the runtime. Configure the exact public website origin;
+the application never infers its trusted origin from incoming requests. The MCP
+signing key is separate from the browser ceremony secret. `MCP_CLIENTS=[]` disables
+remote MCP. See [auth setup](../../packages/coffee/auth/README.md) for the registry.
+
+Cloudflare provisions D1 and applies the SQL migrations. AWS still requires an
+external `COFFEE_POSTGRES_URL`; this stack does not provision PostgreSQL. Shared
+application code depends on Effect services, with each runtime selecting its SQL
+adapter. Request scopes own disposable clients and MCP fibers on both platforms.
+
+Route `/api/*`, `/mcp`, `/oauth/*`, and `/.well-known/*` to the backend. `/login/mcp`
+is an application page served by the static website; it returns successful sign-in
+to Yielded's consent endpoint. The local Alchemy test checks that unauthenticated
+MCP requests receive OAuth discovery with HTTP 401.

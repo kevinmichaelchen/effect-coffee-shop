@@ -1,3 +1,4 @@
+import * as Schema from "effect/Schema";
 import { defineConfig } from "vitest/config";
 
 /**
@@ -10,6 +11,11 @@ import { defineConfig } from "vitest/config";
  * environment the developer has configured.
  */
 const localOnlyCloudflareEnv = {
+  APP_ORIGIN: "http://localhost:5173",
+  MCP_SIGNING_KEY: "A".repeat(43),
+  MCP_CLIENTS: Schema.encodeSync(Schema.fromJsonString(Schema.Json))([
+    { clientId: "test", name: "Test", redirectUris: ["http://localhost:6274/callback"] },
+  ]),
   ALCHEMY_LOCAL_STATE: "1",
   ALCHEMY_TELEMETRY_DISABLED: "1",
   CLOUDFLARE_ACCOUNT_ID: "0".repeat(32),
