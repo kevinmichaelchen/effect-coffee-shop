@@ -17,6 +17,9 @@
         "name": "@effect/language-service",
         "allowedDuplicatedPackages": ["effect"],
         "allowedUnstableApis": [
+          "@effect/vitest",
+          "@effect/platform-node",
+          "effect/Crypto",
           "effect/http",
           "effect/sql",
           "@effect/sql-d1",
