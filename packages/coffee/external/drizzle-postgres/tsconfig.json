@@ -14,7 +14,10 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "plugins": [
-      { "name": "@effect/language-service", "allowedUnstableApis": ["@effect/sql-pglite"] }
+      {
+        "name": "@effect/language-service",
+        "allowedUnstableApis": ["@effect/sql-pg", "effect/Path", "@effect/sql-pglite"]
+      }
     ]
   },
   "include": ["src/**/*.ts", "drizzle.config.ts"]

@@ -12,7 +12,7 @@
     "skipLibCheck": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    "plugins": [{ "name": "@effect/language-service" }]
+    "plugins": [{ "name": "@effect/language-service", "allowedUnstableApis": ["@effect/vitest"] }]
   },
   "include": ["src/**/*.ts"]
 }
