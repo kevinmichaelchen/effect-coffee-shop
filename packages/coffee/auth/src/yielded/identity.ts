@@ -4,7 +4,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import type { AuthenticatedActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 
-/** Identity shared by verified legacy sessions and future Yielded session claims. */
+/** Identity decoded from a verified Yielded session. */
 export const CoffeeAuthIdentity = Schema.Struct({
   subjectId: AuthSchema.SubjectId,
   displayName: Schema.String,

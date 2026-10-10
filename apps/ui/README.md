@@ -9,7 +9,7 @@ This repo uses Bun workspaces, so install dependencies once from the repo root w
 - React + Vite
 - RetroUI components from `retroui.dev`
 - TanStack Query for API state
-- Better Auth passkey sign-in for customer and staff workspaces
+- Yielded Auth passkey sign-in for customer and staff workspaces
 - strict `oxlint` + `lintcn` + ESLint checks with complexity, function-length, and size limits
 
 ## Run it
@@ -39,7 +39,7 @@ Install `portless` globally once:
 bun add -g portless
 ```
 
-From the repo root, run the in-memory backend on `api.coffee.localhost:1365` in one terminal:
+From the repo root, run the persistent backend on `api.coffee.localhost:1365` in one terminal:
 
 ```bash
 bun run dev:local:api
@@ -73,7 +73,7 @@ VITE_COFFEE_PROXY_TARGET=http://api.coffee.localhost:1365
 If you want the local UI to exercise passkey auth through the Bun backend, also set:
 
 ```bash
-BETTER_AUTH_SECRET=...
+AUTH_SECRET=...
 ```
 
 ## Checks
@@ -117,3 +117,9 @@ the Interactions panel shows their steps. Use `bun run test:storybook` to run
 all stories in Chromium in both themes, or `bun run build-storybook` to build the
 static workshop. Shared field stories also verify that inputs can be found by
 their visible labels.
+
+For passkeys, set `APP_ORIGIN` on the backend to the exact UI origin. HTTP development
+must use a literal loopback hostname (for example `http://localhost:5173`); named
+`.localhost` hosts require HTTPS. The Vite proxy preserves `/api`, `/oauth`, and
+`/.well-known` paths. `/login/mcp` serves the same app and returns a successful
+sign-in to the fixed OAuth consent path.

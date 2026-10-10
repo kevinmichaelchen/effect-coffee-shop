@@ -6,11 +6,10 @@ handlers are adapted to standard Web [`Request` and `Response`][mdn-fetch] objec
 
 ## Nomenclature
 
-| Name             | Meaning                                                                        |
-| ---------------- | ------------------------------------------------------------------------------ |
-| `backend.ts`     | Builds the Coffee backend handler and request services used by runtime shells. |
-| `api-route.ts`   | Adapts the Coffee HTTP API under `/api` into an `HttpRoute`.                   |
-| `direct-auth.ts` | Applies direct HTTP auth rules before app routes handle a request.             |
+| Name             | Meaning                                                                    |
+| ---------------- | -------------------------------------------------------------------------- |
+| `backend.ts`     | Composes browser auth, OAuth/MCP, and the API in one scoped request graph. |
+| `direct-auth.ts` | Applies direct HTTP auth rules before app routes handle a request.         |
 
 `http` means product-level HTTP composition. Generic route dispatch, logging, request services, and
 observability live in [`@effect-coffee-shop/http-routing`](../../../../http-routing), which is kept

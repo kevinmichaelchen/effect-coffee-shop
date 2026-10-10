@@ -22,11 +22,14 @@
   },
   "dependencies": {
     "@effect-coffee-shop/coffee-application": "workspace:*",
+    "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-backend": "workspace:*",
     "@effect-coffee-shop/coffee-cli": "workspace:*",
     "@effect-coffee-shop/coffee-external-in-memory": "workspace:*",
+    "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
     "@effect-coffee-shop/coffee-http": "workspace:*",
     "@effect-coffee-shop/coffee-mcp": "workspace:*",
+    "@effect-coffee-shop/coffee-runtime-shared": "workspace:*",
     "@effect-coffee-shop/http-routing": "workspace:*",
     "@effect/platform-bun": "catalog:",
     "effect": "catalog:"

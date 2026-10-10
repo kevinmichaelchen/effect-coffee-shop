@@ -1,16 +1,14 @@
 /**
- * Starts a local in-memory backend that serves both HTTP API and MCP routes.
+ * Starts a local persistent backend that serves both HTTP API and MCP routes.
  *
  * @module
  */
-import * as Layer from "effect/Layer";
-import { CoffeeAppLive as InMemoryCoffeeAppLive } from "@effect-coffee-shop/coffee-external-in-memory";
+import { CoffeeAppLive } from "@effect-coffee-shop/coffee-backend/app-layer";
 import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";
-import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
 import { startCoffeeBunServer } from "./coffee-bun-server.ts";
 
 await startCoffeeBunServer({
-  appLayer: InMemoryCoffeeAppLive,
+  appLayer: CoffeeAppLive,
   portEnv: "PORT",
-  routes: Layer.mergeAll(CoffeeHttpApiLive, CoffeeMcpHttpLive),
+  routes: CoffeeHttpApiLive,
 });

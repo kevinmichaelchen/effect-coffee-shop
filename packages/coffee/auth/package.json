@@ -5,11 +5,15 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./better-auth/cloudflare": "./src/better-auth/cloudflare.ts",
-    "./better-auth/shared": "./src/better-auth/shared.ts",
-    "./better-auth/users": "./src/better-auth/users.ts",
+    "./contract": "./src/contract.ts",
+    "./server": "./src/server.ts",
+    "./database": "./src/database.ts",
     "./yielded/identity": "./src/yielded/identity.ts",
-    "./yielded/better-auth": "./src/yielded/better-auth.ts"
+    "./oauth": "./src/oauth.ts",
+    "./config": "./src/config.ts",
+    "./testing/auth-client": "./src/testing/auth-client.ts",
+    "./testing/passkey": "./src/testing/passkey.ts",
+    "./adapters": "./src/adapters.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -21,22 +25,27 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@better-auth/passkey": "catalog:",
     "@cloudflare/workers-types": "catalog:",
     "@effect-coffee-shop/coffee-application": "workspace:*",
-    "@effect-coffee-shop/http-routing": "workspace:*",
+    "@effect/sql-d1": "catalog:",
+    "@simplewebauthn/server": "catalog:",
     "@yielded/auth": "catalog:",
-    "better-auth": "catalog:",
+    "@yielded/auth-persistence": "catalog:",
+    "@yielded/auth-simplewebauthn": "catalog:",
+    "@yielded/crypto": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {
-    "@alchemy.run/cloudflare-runtime": "catalog:",
+    "@effect-coffee-shop/coffee-external-drizzle-postgres": "workspace:*",
     "@effect-coffee-shop/coffee-external-sqlite": "workspace:*",
     "@effect/platform-node": "catalog:",
+    "@effect/sql-pglite": "catalog:",
     "@effect/vitest": "catalog:",
+    "@electric-sql/pglite": "catalog:",
     "@levischuck/tiny-cbor": "0.2.11",
     "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/bun": "catalog:",
+    "miniflare": "4.20260730.0",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

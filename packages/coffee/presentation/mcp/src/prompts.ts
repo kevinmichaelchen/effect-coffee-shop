@@ -1,3 +1,4 @@
+import { withMcpActor } from "./actor.ts";
 /**
  * Defines MCP prompts for Coffee recommendations and queue summaries.
  *
@@ -21,7 +22,7 @@ export const RecommendDrinkPrompt = McpServer.prompt({
   },
   content: Effect.fn("CoffeeMcp.recommendDrinkPrompt")(function* ({ occasion }) {
     const app = yield* CoffeeOrderApp;
-    const menu = yield* app.listMenu();
+    const menu = yield* app.listMenu().pipe(withMcpActor);
     return `Recommend one drink for "${occasion}" from this menu:\n${prettyJson(toMenuView(menu))}`;
   }),
 });
@@ -37,12 +38,15 @@ export const SummarizeOpenOrdersPrompt = McpServer.prompt({
   },
   content: Effect.fn("CoffeeMcp.summarizeOpenOrdersPrompt")(function* ({ focus }) {
     const app = yield* CoffeeOrderApp;
-    const openOrders = yield* app.listOrders({}).pipe(
-      Effect.map((orders) =>
-        orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
-      ),
-      Effect.map(toCoffeeOrdersView),
-    );
+    const openOrders = yield* app
+      .listOrders({})
+      .pipe(withMcpActor)
+      .pipe(
+        Effect.map((orders) =>
+          orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
+        ),
+        Effect.map(toCoffeeOrdersView),
+      );
     return `Summarize the open order queue for ${focus}:\n${prettyJson(openOrders)}`;
   }),
 });

@@ -53,7 +53,11 @@ const captureInvocation = (effect: Effect.Effect<HttpServerResponse.HttpServerRe
     (consoleLog) => Effect.sync(() => consoleLog.mockRestore()),
   );
 
-const config = { COFFEE_POSTGRES_URL: "postgres://user:private-password@localhost/coffee" };
+const config = {
+  APP_ORIGIN: "https://coffee.example",
+  MCP_SIGNING_KEY: "A".repeat(43),
+  COFFEE_POSTGRES_URL: "postgres://user:private-password@localhost/coffee",
+};
 const throwDecoderDefect = (): never => {
   throw { message: "private-password" };
 };
@@ -107,7 +111,7 @@ describe("registered Lambda fetch effect", () => {
       const webResponse = HttpServerResponse.toWeb(response);
       assert.strictEqual(
         yield* Effect.promise(() => webResponse.text()),
-        "Better Auth is unavailable. Configure BETTER_AUTH_SECRET.",
+        "Authentication is unavailable.",
       );
     }),
   );

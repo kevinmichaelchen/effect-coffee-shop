@@ -1,53 +1,18 @@
-/**
- * Routes Better Auth routes on AWS Lambda.
- *
- * @module
- */
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
 import {
   requestPathIsOrStartsWith,
   routeResponse,
   type HttpRoute,
 } from "@effect-coffee-shop/http-routing/route";
-import { createCoffeeAuth } from "@effect-coffee-shop/coffee-auth/better-auth/shared";
-import { getAwsRuntimeBackend } from "../backend.ts";
-import { revealSecret, type AwsRuntime } from "../env.ts";
-
-const betterAuthUnavailableResponse = () =>
-  new Response("Better Auth is unavailable. Configure BETTER_AUTH_SECRET.", { status: 503 });
-
-const isAuthRequest = (request: Request): boolean =>
-  requestPathIsOrStartsWith(request, "/api/auth");
-
-const handleAuthRequest = Effect.fn("Aws.handleAuthRequest")(function* (
-  request: Request,
-  runtime: AwsRuntime,
-) {
-  return yield* Option.match(runtime.config.betterAuthSecret, {
-    onNone: () => Effect.succeed(betterAuthUnavailableResponse()),
-    onSome: (secret) => {
-      const backend = getAwsRuntimeBackend();
-      const ensurePersistence = Effect.promise(async () => backend.ensureAuthPersistence());
-      const response = Effect.fn("auth.response")(function* () {
-        const database = yield* Effect.promise(async () => backend.persistence.authDatabase());
-
-        return yield* Effect.promise(async () =>
-          createCoffeeAuth({
-            database,
-            request,
-            secret: revealSecret(secret),
-          }).handler(request),
-        );
-      });
-
-      return ensurePersistence.pipe(Effect.andThen(response()));
-    },
-  });
-});
+import { handleAwsCoffeeRequest } from "../backend.ts";
+import type { AwsRuntime } from "../env.ts";
 
 export const authRoute: HttpRoute<AwsRuntime> = {
   name: "auth",
-  matches: isAuthRequest,
-  handle: ({ env, request }) => handleAuthRequest(request, env).pipe(Effect.map(routeResponse)),
+  matches: (request) =>
+    requestPathIsOrStartsWith(request, "/api/auth") ||
+    requestPathIsOrStartsWith(request, "/oauth") ||
+    requestPathIsOrStartsWith(request, "/.well-known"),
+  handle: ({ request, env }) =>
+    handleAwsCoffeeRequest(request, env).pipe(Effect.map(routeResponse)),
 };

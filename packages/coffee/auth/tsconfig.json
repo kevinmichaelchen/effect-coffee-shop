@@ -15,7 +15,14 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "allowedDuplicatedPackages": ["effect"]
+        "allowedDuplicatedPackages": ["effect"],
+        "allowedUnstableApis": [
+          "effect/http",
+          "effect/sql",
+          "@effect/sql-d1",
+          "@effect/sql-pglite",
+          "effect/persistence"
+        ]
       }
     ],
     "resolveJsonModule": true

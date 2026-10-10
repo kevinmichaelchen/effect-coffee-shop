@@ -4,17 +4,26 @@
  * @module
  */
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { createHttpRouter } from "@effect-coffee-shop/http-routing/router";
 import { routeResponse, type HttpRoute } from "@effect-coffee-shop/http-routing/route";
 import { runHttpRequest } from "@effect-coffee-shop/http-routing/observability";
-import { systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
-import { createCoffeeRequestServices } from "@effect-coffee-shop/coffee-backend/http/backend";
+import type { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";
 import { createCoffeeWebHandler } from "@effect-coffee-shop/coffee-http/web-handler";
 
+import { readAuthConfig } from "@effect-coffee-shop/coffee-auth/config";
+import { handleCoffeeRequest } from "@effect-coffee-shop/coffee-backend/http/backend";
+import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
+import { transactionalAuthDatabase } from "@effect-coffee-shop/coffee-auth/database";
+import {
+  optionalTrimmedRedactedString,
+  parseCsvSet,
+} from "@effect-coffee-shop/coffee-runtime-shared/env";
+
 export type CoffeeWebHandlerInput = Parameters<typeof createCoffeeWebHandler>;
-export type CoffeeRoutesLayer = CoffeeWebHandlerInput[0];
+export type CoffeeRoutesLayer = typeof CoffeeHttpApiLive;
 export type CoffeeAppLayer = CoffeeWebHandlerInput[1];
 // oxlint-disable-next-line effect/prefer-option-over-null -- Native environment adapter accepts/emits undefined; decoded runtime configuration uses Option.
 export type CoffeeBunEnv = Record<string, string | undefined>;
@@ -36,16 +45,32 @@ export async function startCoffeeBunServer(input: {
 }): Promise<void> {
   // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
   const port = await Effect.runPromise(readPort(input.portEnv ?? "COFFEE_HTTP_PORT"));
-  const { dispose, handler } = createCoffeeWebHandler(input.routes, input.appLayer);
+  const database = Layer.unwrap(
+    Effect.promise(() => import("@effect-coffee-shop/coffee-external-sqlite/bun")).pipe(
+      Effect.map(({ BunCoffeeDatabaseLive }) => BunCoffeeDatabaseLive),
+    ),
+  );
+  // oxlint-disable-next-line effect/effect-run-in-body -- Bun entrypoint decodes configuration before serving.
+  const auth = await Effect.runPromise(
+    readAuthConfig(
+      optionalTrimmedRedactedString(Bun.env.AUTH_SECRET, "AUTH_SECRET"),
+      parseCsvSet(Bun.env.COFFEE_STAFF_USER_IDS),
+    ),
+  );
   const handleHttpRequest = createHttpRouter<CoffeeBunEnv>([
     ...(input.extraRoutes ?? []),
     {
       name: "routes",
       matches: () => true,
       handle: ({ request }) =>
-        Effect.promise(async () => handler(request, createCoffeeRequestServices(systemActor))).pipe(
-          Effect.map(routeResponse),
-        ),
+        handleCoffeeRequest({
+          request,
+          auth,
+          database: transactionalAuthDatabase(database),
+          appLayer: input.appLayer,
+          httpRoutes: input.routes,
+          mcpRoutes: CoffeeMcpHttpLive,
+        }).pipe(Effect.map(routeResponse)),
     },
   ]);
   const server = Bun.serve({
@@ -53,7 +78,7 @@ export async function startCoffeeBunServer(input: {
     fetch: async (request) => runHttpRequest(request, handleHttpRequest(request, Bun.env)),
   });
 
-  registerShutdown(dispose, server);
+  registerShutdown(async () => {}, server);
   // oxlint-disable-next-line effect/effect-run-in-body -- Native Promise/callback boundary owns running this Effect; application effects stay composed.
   await Effect.runPromise(
     Effect.logInfo("Coffee HTTP server listening").pipe(

@@ -29,7 +29,7 @@ under `packages/coffee`, while shared HTTP routing utilities stay directly under
   prompts, Effect AI toolkit projection, tools, and stdio/HTTP MCP Layers.
 - [`coffee/presentation/cli`](./coffee/presentation/cli): CLI command tree over
   `CoffeeOrderApp`.
-- [`coffee/auth`](./coffee/auth): Better Auth passkey setup and actor resolution.
+- [`coffee/auth`](./coffee/auth): Yielded Auth passkey setup and actor resolution.
 - [`coffee/runtime`](./coffee/runtime): runtime adapters for Bun, Cloudflare Workers, and AWS
   Lambda.
 

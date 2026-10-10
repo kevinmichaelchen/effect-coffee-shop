@@ -19,7 +19,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@better-auth/drizzle-adapter": "catalog:",
     "@effect-coffee-shop/coffee-application": "workspace:*",
     "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-backend": "workspace:*",
@@ -29,15 +28,11 @@
     "@effect-coffee-shop/coffee-runtime-shared": "workspace:*",
     "@effect-coffee-shop/http-routing": "workspace:*",
     "alchemy": "catalog:",
-    "drizzle-orm": "catalog:",
-    "effect": "catalog:",
-    "pg": "8.22.0"
+    "effect": "catalog:"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "catalog:",
     "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
-    "@types/pg": "^8.20.0",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

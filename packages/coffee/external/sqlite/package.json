@@ -14,14 +14,12 @@
     "./sql/SqlCheckoutSessionRepository": "./src/sql/SqlCheckoutSessionRepository.ts",
     "./sql/SqlMenuRepository": "./src/sql/SqlMenuRepository.ts",
     "./sql/SqlOrderRepository": "./src/sql/SqlOrderRepository.ts",
-    "./sql/better-auth-schema": "./src/sql/better-auth-schema.ts",
     "./sql/live": "./src/sql/live.ts",
     "./sql/models": "./src/sql/models.ts",
     "./sql/persistence": "./src/sql/persistence.ts",
     "./sql/schema-ready": "./src/sql/schema-ready.ts"
   },
   "scripts": {
-    "auth:schema": "cd src/sql && bunx --bun @better-auth/cli generate --config better-auth-schema.ts --output better-auth.sql --yes",
     "typecheck": "tsc --noEmit",
     "lint": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
     "lint:fix": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
@@ -31,13 +29,11 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@better-auth/passkey": "catalog:",
     "@effect-coffee-shop/coffee-application": "workspace:*",
     "@effect-coffee-shop/coffee-domain": "workspace:*",
     "@effect/platform-bun": "catalog:",
     "@effect/sql-d1": "catalog:",
     "@effect/sql-sqlite-bun": "catalog:",
-    "better-auth": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {

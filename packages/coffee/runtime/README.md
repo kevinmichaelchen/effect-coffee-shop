@@ -16,9 +16,9 @@ configuration, chooses concrete persistence and auth bindings, and hands standar
 ## Nomenclature
 
 `runtime` names deployment/runtime shells, not business capabilities. Each runtime can have a
-`backend.ts` because each host may need a different cache or persistence binding, while
+`backend.ts` because each host may need a different persistence binding, while
 [`../backend/src/http/backend.ts`](../backend/src/http/backend.ts) defines the shared Coffee backend
-shape.
+composition. Each request owns and disposes its route graph; no mutable global backend cache is used.
 
 `routes` names request branches registered with `createHttpRouter`. The old term `mounts` implied a
 framework tree or nested server mount; these modules are simpler path/method matches over Web

@@ -28,10 +28,12 @@
     "lint:custom:run": "lintcn lint"
   },
   "dependencies": {
-    "@better-auth/passkey": "catalog:",
+    "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/ui-kit": "workspace:*",
+    "@simplewebauthn/browser": "catalog:",
     "@tanstack/react-query": "catalog:",
-    "better-auth": "catalog:",
+    "@yielded/auth": "catalog:",
+    "@yielded/auth-simplewebauthn": "catalog:",
     "effect": "catalog:",
     "lucide-react": "catalog:",
     "react": "catalog:",

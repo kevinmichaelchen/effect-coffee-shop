@@ -53,3 +53,14 @@ bun run --cwd packages/coffee/presentation/mcp lint:custom
 bun run --cwd packages/coffee/presentation/mcp fmt:check
 bun run --cwd packages/coffee/presentation/mcp test
 ```
+
+## Authority and serverless lifetime
+
+HTTP uses Effect's stateless MCP `2026-07-28` transport. The host installs Yielded
+OAuth middleware and provides `McpActor`, whose effect resolves the verified grant's
+active account and current staff policy **on every invocation**. Tools, resources,
+and prompts use that actor; they never substitute a system identity.
+
+Stdio explicitly provides the local system operator at its composition root.
+Protocol session IDs and client-supplied metadata do not establish application identity.
+See [auth configuration](../../auth/README.md) for client registration and signing keys.

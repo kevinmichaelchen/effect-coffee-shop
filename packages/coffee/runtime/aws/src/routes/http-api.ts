@@ -1,14 +1,18 @@
-/**
- * Routes the Coffee HTTP API inside the AWS runtime.
- *
- * @module
- */
-import { createAwsRequestServices } from "../backend.ts";
+import * as Effect from "effect/Effect";
+import {
+  requestPathIsOrStartsWith,
+  routeResponse,
+  type HttpRoute,
+} from "@effect-coffee-shop/http-routing/route";
+import { handleAwsCoffeeRequest } from "../backend.ts";
 import type { AwsRuntime } from "../env.ts";
-import { makeCoffeeApiRoute } from "@effect-coffee-shop/coffee-backend/http/api-route";
-import { resolveAwsRequestActor } from "./request-actor.ts";
+import { handleDirectHttpRequest } from "@effect-coffee-shop/coffee-backend/http/direct-auth";
 
-export const httpApiRoute = makeCoffeeApiRoute<AwsRuntime>({
-  createRequestServices: createAwsRequestServices,
-  resolveRequestActor: ({ env, request }) => resolveAwsRequestActor({ runtime: env, request }),
-});
+export const httpApiRoute: HttpRoute<AwsRuntime> = {
+  name: "api",
+  matches: (request) => requestPathIsOrStartsWith(request, "/api"),
+  handle: ({ request, env }) =>
+    handleDirectHttpRequest(request, () =>
+      handleAwsCoffeeRequest(request, env).pipe(Effect.map(routeResponse)),
+    ),
+};

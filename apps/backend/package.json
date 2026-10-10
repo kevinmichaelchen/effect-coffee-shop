@@ -14,7 +14,6 @@
     "mcp:stdio": "bun run src/bun/mcp-stdio-main.ts",
     "mcp:http": "bun run src/bun/mcp-http-main.ts",
     "dev:local:api": "bun run src/bun/local-backend-main.ts",
-    "db:auth:schema": "bun run --cwd ../../packages/coffee/external/sqlite auth:schema",
     "typecheck": "tsc --noEmit",
     "lint": "bun --bun oxlint -c oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
     "lint:fix": "bun --bun oxlint -c oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",

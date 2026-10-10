@@ -1,3 +1,6 @@
+import * as Effect from "effect/Effect";
+import { systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
+import { McpActor } from "./actor.ts";
 /**
  * Composes Coffee MCP resources, prompts, and tools into server layers.
  *
@@ -29,13 +32,17 @@ const CoffeeMcpFeaturesLive = Layer.mergeAll(CoffeeMcpSharedFeaturesLive, Coffee
 
 export const CoffeeMcpStdioLive = CoffeeMcpFeaturesLive.pipe(
   Layer.provide(McpServer.layerStdio(mcpServerInfo)),
+  Layer.provide(Layer.succeed(McpActor, { current: Effect.succeed(systemActor) })),
 );
 
-export const CoffeeMcpHttpLive = CoffeeMcpFeaturesLive.pipe(
-  Layer.provide(
-    McpServer.layerHttp({
-      ...mcpServerInfo,
-      path: "/mcp",
-    }),
-  ),
-);
+export const CoffeeMcpHttpLive = (allowedOrigins: ReadonlyArray<string>) =>
+  CoffeeMcpFeaturesLive.pipe(
+    Layer.provide(
+      McpServer.layerHttp({
+        ...mcpServerInfo,
+        protocols: [McpProtocol.v2026_07_28],
+        path: "/mcp",
+        allowedOrigins,
+      }),
+    ),
+  );

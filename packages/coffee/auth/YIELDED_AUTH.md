@@ -1,134 +1,98 @@
-# Yielded Auth integration status
+# Yielded Auth implementation notes
 
-This PR adopts the published `@yielded/auth@0.1.0-beta.14` identity and passkey
-schemas while retaining Better Auth as the credential/session owner. A full
-cutover cannot safely reuse the stored rows as Yielded credentials or sessions.
-No database migration, deletion, dual write, alternative sign-in endpoint, or
-replacement cookie is introduced.
+The application pins the Yielded package family to `0.1.0-beta.32`, inspected
+from the published npm packages and the matching
+[upstream tag](https://github.com/yielded-dev/auth/tree/%40yielded/auth%400.1.0-beta.32).
+This version supports Effect 4 and includes native SQL persistence, passkey
+registration, browser ceremony adapters, and typed HTTP clients.
 
-## Published API and Effect compatibility
+The exact beta.32 family is recorded in the committed lockfile and installs with
+`bun install --frozen-lockfile`. Yielded has no release-age exemption: dependency
+re-resolution that selects these packages is subject to Bun's three-day policy
+(beta.32 was published on 2026-10-10). SimpleWebAuthn server/browser 14 perform
+the WebAuthn protocol work.
 
-Inspected on 2026-10-03: the npm `beta` tag points to `0.1.0-beta.14`; `latest`
-still points to `0.1.0-beta.1`. Install the exact catalog version rather than
-implicitly selecting `latest`. The beta.14 tarball declares `effect: ^4.0.0`
-as its only peer dependency and has no runtime dependencies. Its identity/passkey
-API is exercised against this repository's pinned Effect `4.0.0`.
-There is no release-age exemption for Yielded. `bun install --frozen-lockfile`
-installs the inspected, exact beta from the committed lockfile. Until beta.14
-passes the normal three-day window, Bun rejects dependency re-resolution that
-selects it again; future Yielded versions remain subject to the same policy.
+## Persistence
 
-Research used the [official passkey guide](https://yielded.dev/auth/guide/passkeys),
-[session guide](https://yielded.dev/auth/guide/sessions),
-[adapter reference](https://yielded.dev/auth/reference/adapters), npm metadata and
-published declarations/source. Upstream source was inspected at
-[`33e8c3a`](https://github.com/yielded-dev/auth/tree/33e8c3a5aa6ba8f010986d5b607e6d3db456b9fa).
-This PR installs only the core package; it does not install persistence or verifier
-companions whose storage/authority requirements are not yet implemented.
+Application-owned SQL migrations define subjects, credential authority,
+passkey credentials and flows, sessions, and pending authentication records.
+Subjects and credentials carry security revisions. Session rows store digests
+of opaque credentials, validated provenance, and idle/absolute expirations.
 
-The beta.14 companions expose these choices:
+The managed storage descriptor supplies table definitions and session mappings.
+Passkey registration uses an explicit native SQL mapping because it also needs
+the application's display-name snapshot and subject creation policy. Subject
+IDs are random UUIDs generated at the trusted persistence boundary.
 
-| Package                             | API and requirements                                                                                                                  |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `@yielded/auth-persistence`         | Direct Effect SQL composition and shared adapter contracts; application-owned migrations and subject authority.                       |
-| `@yielded/auth-persistence-drizzle` | `/SqliteBun`, `/D1`, `/Postgres`, `/Pglite`, and other explicit drivers; peers include Effect/SQL `4.0.0` and Drizzle `>=1.0.0-rc.4`. |
-| `@yielded/auth-simplewebauthn`      | `/Server` and `/Browser`; SimpleWebAuthn server `>=14.0.1 <15` and browser `>=14.0.0 <15`. Better Auth currently uses version 13.     |
+PostgreSQL and Bun SQLite use interactive Effect SQL transactions. Cloudflare
+D1 uses Yielded's conditional batch implementation with `D1Client.batch`.
+Atomic credential updates are never emulated by sequential statements.
+The Alchemy local platform proxy cannot pass prepared statement objects through
+batch calls correctly; integration tests use Miniflare's D1 binding. Deployed
+Workers receive native D1 bindings.
 
-The repository already patches Drizzle RC4 for Effect 4. A future companion
-integration must compare that patch with Yielded's documented patch, rather than
-overwriting it. D1's conditional batch ownership and interactive PostgreSQL/SQLite
-transactions require distinct adapters; replacing one with sequential writes does
-not preserve atomicity.
+The current fixed authentication requirement is a recent, user-verified,
+phishing-resistant possession factor. The empty `requirementColumns` declaration
+means this policy is application configuration rather than mutable subject data.
+Credential management and alternate sign-in methods are not exposed by the
+Coffee contract.
 
-## Implemented boundary
+## HTTP and identity
 
-`resolveCoffeeActor` still asks Better Auth to verify the incoming signed session
-cookie. Only the returned user reaches `identityFromVerifiedBetterAuthUser`.
-The boundary decodes that user once and maps its unchanged ID to Yielded's
-`SubjectId`. `actorFromIdentity` uses Yielded's lossless string ID codec and
-deployment `staffUserIds` to resolve Coffee authority. Session/user role fields
-cannot grant staff or system access. Display names retain trimming and email
-fallback. Missing secrets and absent/invalid sessions remain anonymous.
+The shared contract defines registration, login, session lookup and logout.
+Yielded handles CSRF admission, bound challenges, secure cookie delivery and
+session verification. Browser route middleware uses Yielded's `http.withRequest`
+and calls `getSession()` directly, preserving cookie delivery on the actual response.
+`/api/me` returns the application actor. The actor probe exists only in test fixtures.
+Only server configuration selects staff membership. Application authorization
+stays in Coffee's existing use cases.
 
-The Cloudflare boundary explicitly forwards D1 methods with their original
-receiver. Better Auth's structural dialect detection otherwise fails for the
-local Cloudflare RPC proxy. It retains D1's original batch implementation.
+All runtimes and the UI use the new contract. There is no legacy-cookie bridge
+or dual write. Historical migrations are retained; the new migration deliberately
+discards the unused prototype auth data.
 
-`decodeBetterAuthPasskeyMaterial` accepts a persisted row and returns validated
-credential/subject IDs, protocol credential ID, counter, and public-key bytes in
-canonical base64url. Better Auth stores the key in standard base64. This decoder
-does not authenticate, validate a COSE algorithm, import a credential, or fabricate
-the missing metadata below. It has no database access or writes. Malformed rows
-produce a typed error without including the rejected row or key.
+## Official integration patterns
 
-## Why credential and session cutover remains blocked
+- [Yielded HTTP integration](https://yielded.dev/auth/guide/http-and-client): shared
+  auth layer and request boundary, direct service calls, typed identity projection.
+- [Yielded Effect MCP example](https://github.com/yielded-dev/auth/blob/main/examples/auth/src/strava-mcp.ts):
+  `OAuthServer`, its bearer middleware, `CurrentAccess`, durable `OAuthServerPersistence`,
+  and application-owned permissions. Consent rendering, PKCE, discovery, refresh,
+  and revocation are supplied by Yielded.
+- [Alchemy connection lifecycle](https://alchemy.run/sql/effect-sql/lifecycle):
+  disposable database resources belong to an execution scope. Our Fetch adapter
+  acquires and awaits disposal of one complete route graph per request. There is
+  no process-global mutable auth cache or request-derived trusted origin.
+- [Alchemy layers](https://alchemy.run/infrastructure-as-effects/layers): hosts select
+  database adapters; the shared backend selects replaceable `AuthAdaptersLive` layers.
 
-1. **Missing WebAuthn user handle.** Better Auth 1.7.6 generates random 32-byte
-   registration `userID` bytes. It stores the application user ID in the temporary
-   verification record, but not those random bytes in the passkey row. Yielded's
-   `PasskeyCredential` requires the actual authenticator `userHandle`. Deriving it
-   from `user.id` would be incorrect. Existing handles need recovery during an
-   authenticated ceremony or explicit re-enrollment, with verified RP/credential
-   ownership; neither is available from a database-only conversion.
-2. **Missing authentication authority.** Legacy users/passkeys lack subject and
-   credential security revisions, enrollment user-verification evidence, profile
-   generation and RP-scoped ownership records. Yielded rechecks these alongside
-   challenge consumption, counter updates and session issuance. Enrollment UV
-   cannot be inferred from a valid legacy session: Better Auth allows registration
-   without requiring UV. The key's COSE algorithm can be decoded in a later adapter,
-   but doing that does not recover the absent authority evidence.
-3. **Different session model.** Better Auth stores raw opaque tokens and signs the
-   cookie. Yielded stateful sessions use namespaced digests, credential/row versions,
-   authentication provenance, security revisions and separate absolute/idle
-   lifetimes. These cannot be reconstructed truthfully from `createdAt`,
-   `updatedAt`, `expiresAt` and `token`. Yielded's session service must not be
-   supplied synthetic assurance or provenance to accept legacy cookies.
-4. **Different registration and HTTP contracts.** Yielded's passkey registration
-   provisions a subject (or a pending result); it does not automatically establish
-   a session. The current UI expects registration with `createSession: true` and
-   Better Auth's endpoints, response bodies, challenge cookies, and client plugin.
-   A coordinated browser/server flow and explicit registration authority are
-   required to preserve that user journey.
+HTTP MCP uses Effect's stateless `McpProtocol.v2026_07_28`. Each request carries
+protocol metadata and OAuth credentials. Older in-memory HTTP session protocols
+are deliberately unsupported: Workers/Lambda cannot rely on instance affinity.
+Stdio is explicitly a local system-operator interface.
 
-These are data/behavior incompatibilities, not an Effect version mismatch. A safe
-next phase needs additive storage for explicit subject/credential authority and
-verified handles, a legacy-cookie bridge with revocation/expiry parity, and
-registration/session completion on all persistence owners. Keep legacy readers
-and data until old sessions expire and credential ownership has been verified.
-No migration should delete historical Agent Auth tables as part of this work.
+The beta.32 managed adapters were evaluated. We retain the supported native SQL
+composition because passkey **registration** also provisions our subject and display
+name atomically, and D1 requires conditional batches with a constant assurance policy.
+Adding Drizzle solely to auth would not remove that integration. OAuth storage uses
+Yielded's provided adapter and published migrations on both databases.
 
-## Verification and runtime limits
+## Rate-limit lifetime
 
-The D1 tests create an ES256 software authenticator and exercise real registration
-and authentication verification, signup session creation, customer/staff mapping,
-sign-out revocation, expired/forged cookies, forged signatures, replay rejection,
-and wrong-origin rejection without persisting a user/credential/session. They also
-read the real stored passkey through the material decoder.
-Local D1's RPC proxy emits index-introspection batch errors from Miniflare;
-Better Auth falls back and the credential/session assertions still pass. This is
-not a claim that D1 supports interactive registration transactions.
+The [official shared-store recipe](https://yielded.dev/auth/guide/rate-limits)
+uses `Persistence.keyValueRateLimiterStore`. We supply an Effect `KeyValueStore`
+with the same database layer, so rebuilding the request runtime preserves identifier,
+subject, and target counters. Yielded hashes bucket identifiers before persistence.
 
-The AWS regression applies the repository's committed Postgres migrations to
-PGlite and calls the actual `makeBetterAuthDatabase` factory used by `backend.ts`.
-The test supplies PGlite-backed async Drizzle and committed-migration layers;
-the auth factory is unchanged.
-It tests signup, passkey sign-in, material decoding, actor mapping, revocation
-and expiry. Before the fix, the same test reproduced missing model tables; fixing
-only the model names then reproduced HTTP 500 (`res.map is not a function`)
-because Better Auth awaited Effect queries.
+Effect 4.0.0's built-in `KeyValueStore.layerSql` assumes blob results are typed
+buffers; D1 returns number arrays and a second read fails in `TextDecoder`.
+A regression test covers this boundary. `KeyValueStore.makeStringOnly` supplies
+the standard store interface over a small schema-decoded SQL text adapter. The
+committed OAuth migrations also create `coffee_auth_rate_limits`; no rate-limit
+algorithm or custom cache is implemented by the application.
 
-AWS now supplies a Promise-based `drizzle-orm/node-postgres` service and explicit
-`user`/`session`/`account`/`passkey`/`verification` schema keys. Auth owns a scoped
-`pg` pool with at most two connections, using the same `COFFEE_POSTGRES_URL` as the
-Effect application pools; auth runtime disposal closes its pool. Schema readiness
-still comes from the existing migration layer. No tables, credentials or sessions
-are rewritten. Effect tests cover exact opaque IDs, role escalation attempts,
-name fallback and malformed input.
-
-This does not claim deployed AWS, a networked Postgres server or browser-device
-verification. Cloudflare/AWS share the changed actor boundary. The D1 wrapper
-forwards only `prepare`, `batch` and `exec`, preserving receivers without requiring
-optional `withSession` or deprecated `dump`; the credential/session test exercises
-a binding with only those three methods.
-Bun's current HTTP entrypoints compose application HTTP routes without mounting
-the `/api/auth` endpoints; this PR does not silently change that topology.
+This is approximate accounting: its read/write sequence is not atomic under
+concurrency. Action/module budgets remain local to an auth acquisition. This toy
+has no aggregate edge quota; deployments needing strict distributed admission
+should replace the injected rate-limit layer with an atomic shared store (the
+Yielded guide points to Effect's Redis store), and configure ingress limits.
