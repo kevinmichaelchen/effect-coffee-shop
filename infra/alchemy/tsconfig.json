@@ -13,7 +13,9 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": false,
     "types": ["node"],
-    "plugins": [{ "name": "@effect/language-service", "allowedUnstableApis": ["effect/http"] }]
+    "plugins": [
+      { "name": "@effect/language-service", "allowedUnstableApis": ["effect/Path", "effect/http"] }
+    ]
   },
   "include": ["./*.ts"]
 }

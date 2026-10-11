@@ -32,6 +32,11 @@ minimumReleaseAgeExcludes = [
   "@distilled.cloud/railway",
   "@distilled.cloud/stripe",
   "@distilled.cloud/zerossl",
+  # Explicitly adopted Yielded auth stack; versions pinned in the workspace catalog.
+  "@yielded/auth",
+  "@yielded/auth-persistence",
+  "@yielded/auth-simplewebauthn",
+  "@yielded/crypto",
   "effect",
   "@effect/platform-bun",
   "@effect/platform-node",

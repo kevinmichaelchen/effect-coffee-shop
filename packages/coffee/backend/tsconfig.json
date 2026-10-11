@@ -16,7 +16,12 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "allowedUnstableApis": ["effect/http", "effect/sql", "@effect/sql-pglite"]
+        "allowedUnstableApis": [
+          "effect/http",
+          "effect/sql",
+          "@effect/sql-pglite",
+          "@effect/platform-node"
+        ]
       }
     ]
   },

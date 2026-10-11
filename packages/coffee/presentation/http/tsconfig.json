@@ -16,7 +16,12 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "allowedUnstableApis": ["effect/http", "effect/http-api"]
+        "allowedUnstableApis": [
+          "@effect/platform-node",
+          "@effect/vitest",
+          "effect/http",
+          "effect/http-api"
+        ]
       }
     ]
   },

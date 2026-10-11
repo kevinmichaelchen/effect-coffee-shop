@@ -16,7 +16,7 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "allowedUnstableApis": ["effect/http", "effect/observability"]
+        "allowedUnstableApis": ["@effect/vitest", "effect/http", "effect/observability"]
       }
     ]
   },

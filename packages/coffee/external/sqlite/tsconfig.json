@@ -16,7 +16,16 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "allowedUnstableApis": ["@effect/sql-d1", "effect/sql"]
+        "allowedUnstableApis": [
+          "@effect/platform-bun",
+          "@effect/platform-node",
+          "@effect/sql-sqlite-bun",
+          "effect/FileSystem",
+          "effect/Path",
+          "@effect/vitest",
+          "@effect/sql-d1",
+          "effect/sql"
+        ]
       }
     ]
   },

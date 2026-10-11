@@ -15,6 +15,7 @@
     "plugins": [
       {
         "name": "@effect/language-service",
+        "allowedUnstableApis": ["@effect/vitest"],
         "allowedDuplicatedPackages": ["effect"]
       }
     ],
