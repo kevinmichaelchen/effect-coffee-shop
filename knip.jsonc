@@ -19,11 +19,8 @@
     "packages/tooling": {
       "project": ["*.ts"],
     },
-    "packages/coffee/testing": {
-      "project": ["src/**/*.ts!"],
-    },
     "infra/alchemy": {
-      "entry": ["alchemy.run.ts!", "aws.ts!", "cloudflare.ts!"],
+      "entry": ["alchemy.run.ts!", "cloudflare.ts!"],
       "project": ["*.ts!", "!*.test.ts!", "!vitest.config.ts!"],
       // The UI is built by path (`Cloudflare.Website.Vite`), not imported; the dependency
       // gives Turbo the workspace edge that hashes UI changes into the smoke test.
@@ -33,11 +30,9 @@
       "entry": ["aws.ts!", "cloudflare.ts!"],
       "project": ["*.ts!", "!*.test.ts!", "!vitest.config.ts!"],
     },
-    "apps/backend": {
-      "entry": ["src/bun/*-main.ts!"],
-      "project": ["src/**/*.ts!", "*.ts"],
-    },
     "apps/ui": {
+      // The Website's Worker, deployed by path from the Alchemy stack.
+      "entry": ["src/worker.ts!"],
       "project": [
         "src/**/*.{ts,tsx,css,mdx}!",
         "!src/**/*.stories.tsx!",

@@ -57,8 +57,7 @@
       "dependsOn": ["typecheck"],
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
       "outputs": [],
-      "outputLogs": "new-only",
-      "env": ["COFFEE_POSTGRES_TEST_URL"]
+      "outputLogs": "new-only"
     },
     "dev": {
       "description": "Run long-lived local development servers.",

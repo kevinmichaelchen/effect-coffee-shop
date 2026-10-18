@@ -24,8 +24,8 @@ Passkey registration uses an explicit native SQL mapping because it also needs
 the application's display-name snapshot and subject creation policy. Subject
 IDs are random UUIDs generated at the trusted persistence boundary.
 
-PostgreSQL and Bun SQLite use interactive Effect SQL transactions. Cloudflare
-D1 uses Yielded's conditional batch implementation with `D1Client.batch`.
+Cloudflare D1 uses Yielded's conditional batch implementation with
+`D1Client.batch`.
 Atomic credential updates are never emulated by sequential statements.
 The Alchemy local platform proxy cannot pass prepared statement objects through
 batch calls correctly; integration tests use Miniflare's D1 binding. Deployed
@@ -45,9 +45,9 @@ session verification. Browser route middleware uses Yielded's `http.withRequest`
 and calls `getSession()` directly, preserving cookie delivery on the actual response.
 `/api/me` returns the application actor. The actor probe exists only in test fixtures.
 Only server configuration selects staff membership. Application authorization
-stays in Coffee's existing use cases.
+stays in the Coffee domain model.
 
-All runtimes and the UI use the new contract. There is no legacy-cookie bridge
+The Worker and the UI use the new contract. There is no legacy-cookie bridge
 or dual write. Historical migrations are retained; the new migration deliberately
 discards the unused prototype auth data.
 
@@ -60,22 +60,21 @@ discards the unused prototype auth data.
   and application-owned permissions. Consent rendering, PKCE, discovery, refresh,
   and revocation are supplied by Yielded.
 - [Alchemy connection lifecycle](https://alchemy.run/sql/effect-sql/lifecycle):
-  disposable database resources belong to an execution scope. Our Fetch adapter
+  disposable database resources belong to an execution scope. The Coffee Worker
   acquires and awaits disposal of one complete route graph per request. There is
   no process-global mutable auth cache or request-derived trusted origin.
-- [Alchemy layers](https://alchemy.run/infrastructure-as-effects/layers): hosts select
-  database adapters; the shared backend selects replaceable `AuthAdaptersLive` layers.
+- [Alchemy layers](https://alchemy.run/infrastructure-as-effects/layers): the Coffee
+  Worker binds D1 and selects replaceable `AuthAdaptersLive` layers.
 
 HTTP MCP uses Effect's stateless `McpProtocol.v2026_07_28`. Each request carries
 protocol metadata and OAuth credentials. Older in-memory HTTP session protocols
-are deliberately unsupported: Workers/Lambda cannot rely on instance affinity.
-Stdio is explicitly a local system-operator interface.
+are deliberately unsupported: Workers cannot rely on instance affinity.
 
 The beta.32 managed adapters were evaluated. We retain the supported native SQL
 composition because passkey **registration** also provisions our subject and display
 name atomically, and D1 requires conditional batches with a constant assurance policy.
 Adding Drizzle solely to auth would not remove that integration. OAuth storage uses
-Yielded's provided adapter and published migrations on both databases.
+Yielded's provided adapter and published migrations.
 
 ## Rate-limit lifetime
 

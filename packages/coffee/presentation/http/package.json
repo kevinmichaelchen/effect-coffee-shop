@@ -5,8 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./api": "./src/api.ts",
-    "./web-handler": "./src/web-handler.ts"
+    "./api": "./src/api.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -20,11 +19,9 @@
   "dependencies": {
     "@effect-coffee-shop/coffee-application": "workspace:*",
     "@effect-coffee-shop/coffee-domain": "workspace:*",
-    "@effect-coffee-shop/http-routing": "workspace:*",
     "effect": "catalog:"
   },
   "devDependencies": {
-    "@effect-coffee-shop/coffee-external-in-memory": "workspace:*",
     "@effect/platform-node": "catalog:",
     "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",

@@ -3,12 +3,30 @@
 This directory holds deployment graphs, not application composition roots. Keep application behavior in
 `apps/` and `packages/`; keep cloud resource wiring here.
 
-It is the `@effect-coffee-shop/infra-alchemy` workspace. `alchemy.run.ts` selects the default stack for
-the root `infra:*` scripts; `cloudflare.ts` and `aws.ts` back the `cf:*` and `aws:*` scripts. The root
-scripts run the `alchemy` CLI from the repository root, and the stacks resolve cross-workspace paths
-(the UI root and the D1 migrations directory) from their own location, so the same files work under
-`bun run cf:test`, which Turbo runs from this directory. The workspace depends on the backend, the
-Cloudflare runtime and the UI so Turbo re-runs the smoke test when any bundled source changes.
+It is the `@effect-coffee-shop/infra-alchemy` workspace. `cloudflare.ts` is the only stack;
+`alchemy.run.ts` re-exports it, so the root `infra:*` and `cf:*` scripts deploy the same graph, and
+`bun run dev` runs it under `alchemy dev`. The stack contains:
+
+- `CoffeeWorker` from [`coffee-server`](../../packages/coffee/server): the domain model on Durable
+  Objects, the D1 auth database `coffee-db` (migrations in
+  [`packages/coffee/auth/migrations`](../../packages/coffee/auth/migrations)), and the
+  `AUTH_SECRET` in Secrets Store.
+- `Cloudflare.Website.Vite("onion")` for [`apps/ui`](../../apps/ui), whose `src/worker.ts`
+  forwards `/api`, `/mcp`, `/oauth/`, and `/.well-known/` to the Coffee Worker over the `COFFEE`
+  service binding, so the app and the Apis share one origin.
+- An optional deploy smoke check (`COFFEE_DEPLOY_SMOKE_CHECKS`, `COFFEE_DEPLOY_SMOKE_MCP`).
+
+The root scripts run the `alchemy` CLI from the repository root, and the stack resolves the UI root
+from its own location, so the same file works under `bun run cf:test`, which Turbo runs from this
+directory. The workspace depends on `coffee-server` and the UI so Turbo re-runs the test when any
+bundled source changes.
+
+## Tests
+
+`cloudflare.test.ts` deploys the stack with Alchemy's local Cloudflare emulation and checks
+`/api/health`, that `/mcp` answers 401 with OAuth discovery, that retired endpoints return 404,
+and an end-to-end flow: passkey registration and sign-in, `CustomerApi.PlaceOrder` on Durable
+Objects, then the order appearing in the `CustomerOrders` view.
 
 ## Custom Infrastructure Glue
 
@@ -30,33 +48,21 @@ Avoid one-off deploy scripts for resources that should be part of the graph. If 
 state, adoption, deletion policy, or downstream references, model those semantics explicitly before
 using it in a production stack.
 
-## Drizzle.Schema Fit
-
-`alchemy-effect` can manage Drizzle schema migrations as a deploy-time resource. That fits
-Drizzle-backed paths such as the Postgres adapter or future Neon/Planetscale experiments.
-
-Do not apply `Drizzle.Schema` to the current Cloudflare D1 path by default. The D1 deployment uses
-the checked-in SQL migrations under
-`packages/coffee/external/sqlite/src/sql/migrations`, and mixing deploy-time Drizzle generation into
-that path would create two migration authorities.
-
-Use `Drizzle.Schema` here only after choosing to make a Drizzle schema the source of truth for that
-database surface.
-
 ## Auth and provider configuration
 
-Both stacks pass `APP_ORIGIN`, `AUTH_SECRET`, `MCP_SIGNING_KEY`, `MCP_CLIENTS`, and
-`COFFEE_STAFF_USER_IDS` to the runtime. Configure the exact public website origin;
+The Coffee Worker reads `APP_ORIGIN`, `MCP_SIGNING_KEY`, `MCP_CLIENTS`,
+`COFFEE_STAFF_USER_IDS`, and `AUTH_SECRET` through Effect `Config` at deploy time; Alchemy binds
+those reads to the Worker. `AUTH_SECRET` is optional: when unset, `Alchemy.Random` generates one
+and keeps it across deploys. Configure the exact public website origin;
 the application never infers its trusted origin from incoming requests. The MCP
 signing key is separate from the browser ceremony secret. `MCP_CLIENTS=[]` disables
 remote MCP. See [auth setup](../../packages/coffee/auth/README.md) for the registry.
 
-Cloudflare provisions D1 and applies the SQL migrations. AWS still requires an
-external `COFFEE_POSTGRES_URL`; this stack does not provision PostgreSQL. Shared
-application code depends on Effect services, with each runtime selecting its SQL
-adapter. Request scopes own disposable clients and MCP fibers on both platforms.
+D1 holds only auth state (passkeys, sessions, OAuth grants); orders, carts, and checkouts live in
+the domain model on Durable Objects. Each request builds and releases its own route graph, so
+disposable clients and MCP fibers are request-scoped.
 
-Route `/api/*`, `/mcp`, `/oauth/*`, and `/.well-known/*` to the backend. `/login/mcp`
+The Website Worker routes `/api/*`, `/mcp`, `/oauth/*`, and `/.well-known/*` to the Coffee Worker. `/login/mcp`
 is an application page served by the static website; it returns successful sign-in
 to Yielded's consent endpoint. The local Alchemy test checks that unauthenticated
 MCP requests receive OAuth discovery with HTTP 401.

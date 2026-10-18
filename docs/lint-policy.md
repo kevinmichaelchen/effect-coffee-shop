@@ -28,9 +28,9 @@ This is not an unconditional pass of every upstream rule:
   `Effect.tryPromise` for translating failures into typed domain errors.
 - The Effect language service warns on APIs Effect marks `@stability unstable`.
   Each workspace's `tsconfig.json` allows only the unstable module subtrees it
-  owns through `allowedUnstableApis`, for example `effect/http` in HTTP
-  adapters and `effect/sql` in the SQLite adapter. Domain and application
-  workspaces allow none.
+  owns through `allowedUnstableApis`, for example `effect/http` in the HTTP
+  adapter and the server. Domain and application allow only `effect/rpc`
+  (which `alchemy/Domain` Apis build on) and `@effect/vitest`.
 - Individual source lines document required interoperability: native HTTP/SDK
   optional fields, SQL NULL encoding, arbitrary input at schema decoders,
   serialization, cryptographic APIs, native integration probes, and runtime or
@@ -51,7 +51,7 @@ Schemas and their exported types share a domain name (`CoffeeOrder`, `CartItem`)
 without a `Schema` suffix. Optional domain values use
 `Option`; schema codecs retain external storage and transport encodings. Pure
 Effect tests use `@effect/vitest`; effectful test traversals specify concurrency.
-Repository sorting uses Effect array/order helpers.
+Sorting uses Effect array/order helpers.
 
 ## Local enforcement
 
@@ -68,8 +68,8 @@ The Alchemy stacks (`infra/alchemy`) and the Turbo cache deployment
 (`infra/turbo-cache`) are Bun workspaces, so their typecheck, lint, format and
 test tasks are ordinary per-package Turbo tasks with gitignore-aware default
 inputs. Cross-workspace coverage comes from the package graph rather than
-input globs: the Alchemy workspace depends on the backend, the Cloudflare
-runtime and the UI it bundles, and every `test` task depends on `typecheck`,
+input globs: the Alchemy workspace depends on `coffee-server` and the UI it
+bundles, and every `test` task depends on `typecheck`,
 which depends on `^typecheck`, so an edit in any bundled package changes the
 smoke test's hash. The UI dependency exists only for that edge; Fallow and
 Knip are told to ignore it because the stack builds the UI by path instead of
@@ -109,7 +109,6 @@ Vitest's focused-test rule is enabled. Test files and helpers additionally forbi
 native Vitest call recognizer misses. The standalone-expect rule recognizes
 Effect and Alchemy test blocks. Assertion-discovery heuristics are disabled for backend tests:
 Effect smoke tests can assert success by executing without a failed effect.
-The shared repository-contract factory also permits parameterized test titles.
 
 ## Fallow and Knip
 
@@ -134,21 +133,15 @@ for a reviewed public contract, not a general unused-code suppression.
 namespace types, and circular dependencies (including dynamic imports).
 `bun run knip:production` additionally uses strict production mode, requiring
 direct runtime dependency declarations in the owning workspace.
-Deployment entrypoints are explicit in each infrastructure workspace, and the
-backend exports its Lambda and Worker entrypoints so the Alchemy workspace can
-declare that dependency. Package export maps exclude test files.
-The shared repository contract harness lives in `@effect-coffee-shop/coffee-testing`,
-which owns its runtime `@effect/vitest` dependency. External adapter tests declare
-that package as a dev dependency; core uses `@effect/vitest` only for its own tests.
-The `testing` architecture zone may import domain and application code, while
-production zones cannot import it. Knip explicitly analyzes the testing workspace's
-source, including in strict production mode.
+Deployment entrypoints are explicit in each infrastructure workspace, and
+`coffee-server` exports its `CoffeeWorker` so the Alchemy workspace can declare
+that dependency; the UI's `src/worker.ts` is an explicit entry because the stack
+deploys it by path. Package export maps exclude test files, and workspaces use
+`@effect/vitest` only as a dev dependency for their own tests.
 
 Knip configuration comments explain the limited exceptions: the embedded Effect
 language-service settings key, Bun-wrapped Oxlint binaries, ambient Cloudflare
-types, and externally installed Portless. Generated SQL stays in Knip's import
-graph, but unused generator-owned convenience files/exports are not cleanup
-candidates. Source-owned files and exports remain checked. Both Knip modes and
+types, and externally installed Portless. Source-owned files and exports remain checked. Both Knip modes and
 full Fallow must pass before a push, and Knip treats configuration hints as
 errors. Fallow explicitly recognizes the two React plugin dependencies because
 its Oxlint config discovery misses aliased JavaScript plugins; the UI lint
@@ -165,7 +158,9 @@ TypeScript patching resolves the compiler from the tooling workspace explicitly,
 so isolated installs do not require a root TypeScript dependency.
 
 The domain and application are separate Bun workspaces. Domain has no workspace
-dependencies; application depends on domain. Fallow enforces the same direction.
+dependencies; application depends on domain. Fallow enforces the same direction:
+`server` is the only zone that may import auth and presentation, and the UI may
+import the domain (for its Api clients) and the auth contract.
 The UI kit has its own UI lint policy and a zone allowing no app imports; the app
 may import the kit. The app hosts all Storybook tests, including kit stories. Both
 UI custom-lint tasks depend on the app custom-rule build for cache invalidation.

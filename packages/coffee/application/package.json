@@ -8,9 +8,7 @@
     "./CurrentActor": "./src/CurrentActor.ts",
     "./contracts": "./src/contracts.ts",
     "./errors": "./src/errors.ts",
-    "./observability": "./src/observability.ts",
-    "./ports/*": "./src/ports/*.ts",
-    "./use-cases/*": "./src/use-cases/*.ts"
+    "./observability": "./src/observability.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -23,11 +21,10 @@
   },
   "dependencies": {
     "@effect-coffee-shop/coffee-domain": "workspace:*",
+    "alchemy": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {
-    "@effect/vitest": "catalog:",
-    "@just-be/effect-typed-id": "0.6.0",
     "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/bun": "catalog:",
     "oxfmt": "catalog:",

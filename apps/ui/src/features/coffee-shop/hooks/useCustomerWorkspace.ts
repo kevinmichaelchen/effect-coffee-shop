@@ -4,15 +4,15 @@ import { useViewerQuery } from "#features/auth/hooks/useViewerQuery.ts";
 import { anonymousViewer, isAuthenticatedViewer } from "#features/auth/lib/viewer.ts";
 import {
   useCreateOrderMutation,
+  useCustomerOrdersQuery,
   useMenuQuery,
-  useOrdersQuery,
 } from "#features/coffee-shop/hooks/useCoffeeQueries.ts";
 import { useOrderDraft } from "#features/coffee-shop/hooks/useOrderDraft.ts";
 import { isActiveOrder, toPlaceOrderRequest } from "#features/coffee-shop/lib/coffee.ts";
 import { useThemePreference } from "@effect-coffee-shop/ui-kit/hooks/useThemePreference";
-import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";
+import type { OrderTicket } from "#features/coffee-shop/lib/coffee.ts";
 
-const emptyOrders: readonly CoffeeOrder[] = [];
+const emptyOrders: readonly OrderTicket[] = [];
 
 function getErrorMessage(...messages: Array<string | undefined>): string | null {
   return messages.find((message) => message !== undefined) ?? null;
@@ -25,7 +25,7 @@ function readMutationError(error: unknown): string {
 async function submitCustomerOrder(input: {
   createOrderMutation: ReturnType<typeof useCreateOrderMutation>;
   draftState: ReturnType<typeof useOrderDraft>;
-  setReceiptOrder: (order: CoffeeOrder | null) => void;
+  setReceiptOrder: (order: OrderTicket | null) => void;
 }): Promise<void> {
   const { createOrderMutation, draftState, setReceiptOrder } = input;
 
@@ -46,15 +46,15 @@ async function submitCustomerOrder(input: {
 function createSubmitOrderHandler(input: {
   createOrderMutation: ReturnType<typeof useCreateOrderMutation>;
   draftState: ReturnType<typeof useOrderDraft>;
-  setReceiptOrder: (order: CoffeeOrder | null) => void;
+  setReceiptOrder: (order: OrderTicket | null) => void;
 }) {
   return async () => submitCustomerOrder(input);
 }
 
 function useCustomerQueries(viewer: ReturnType<typeof useViewerQuery>["data"]) {
-  const canLoadOrders = viewer !== undefined && isAuthenticatedViewer(viewer);
+  const userId = viewer !== undefined && isAuthenticatedViewer(viewer) ? viewer.userId : null;
   const menuQuery = useMenuQuery();
-  const ordersQuery = useOrdersQuery({ enabled: canLoadOrders });
+  const ordersQuery = useCustomerOrdersQuery(userId);
 
   return {
     menu: menuQuery.data ?? [],
@@ -64,7 +64,7 @@ function useCustomerQueries(viewer: ReturnType<typeof useViewerQuery>["data"]) {
   };
 }
 
-function getOrderGroups(orders: readonly CoffeeOrder[]) {
+function getOrderGroups(orders: readonly OrderTicket[]) {
   return {
     activeOrders: orders.filter(isActiveOrder),
     historyOrders: orders.filter((order) => !isActiveOrder(order)).reverse(),
@@ -77,7 +77,7 @@ export function useCustomerWorkspace() {
   const { menu, menuQuery, orders, ordersQuery } = useCustomerQueries(viewerQuery.data);
   const createOrderMutation = useCreateOrderMutation();
   const { theme, toggleTheme } = useThemePreference();
-  const [receiptOrder, setReceiptOrder] = useState<CoffeeOrder | null>(null);
+  const [receiptOrder, setReceiptOrder] = useState<OrderTicket | null>(null);
   const draftState = useOrderDraft(menu);
   const { activeOrders, historyOrders } = getOrderGroups(orders);
   const errorMessage = getErrorMessage(

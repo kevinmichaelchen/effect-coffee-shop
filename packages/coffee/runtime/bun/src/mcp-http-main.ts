@@ -1,9 +1,0 @@
-import { CoffeeAppLive } from "@effect-coffee-shop/coffee-backend/app-layer";
-import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";
-import { startCoffeeBunServer } from "./coffee-bun-server.ts";
-
-await startCoffeeBunServer({
-  appLayer: CoffeeAppLive,
-  routes: CoffeeHttpApiLive,
-  portEnv: "COFFEE_MCP_HTTP_PORT",
-});

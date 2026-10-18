@@ -1,31 +1,12 @@
 /**
- * Defines application error conversion and reporting helpers.
+ * Defines the errors Coffee adapters (HTTP, MCP) report, with their HTTP statuses.
+ * Domain rejections are translated into these at the application boundary.
  *
  * @module
  */
-import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
-
-export class PersistenceError extends Schema.TaggedError<PersistenceError>()(
-  "PersistenceError",
-  {
-    message: Schema.String,
-    cause: Schema.optional(Schema.Defect()),
-  },
-  { httpApiStatus: 500 },
-) {
-  static refail =
-    (message: string) =>
-    <A, E, R>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, PersistenceError, R> =>
-      Effect.mapError(
-        effect,
-        (cause) =>
-          new PersistenceError({
-            message,
-            cause,
-          }),
-      );
-}
+import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
+import { OrderStatus } from "@effect-coffee-shop/coffee-domain/Order/OrderStatus";
 
 export class InternalAppError extends Schema.TaggedError<InternalAppError>()(
   "InternalAppError",
@@ -36,10 +17,36 @@ export class InternalAppError extends Schema.TaggedError<InternalAppError>()(
   { httpApiStatus: 500 },
 ) {}
 
-export const internalAppErrorFromPersistence =
-  (message: string) =>
-  (error: PersistenceError): InternalAppError =>
-    new InternalAppError({
-      message,
-      cause: error.cause ?? error,
-    });
+export class DrinkNotFoundError extends Schema.TaggedError<DrinkNotFoundError>()(
+  "DrinkNotFoundError",
+  {
+    drinkId: Schema.String,
+  },
+  { httpApiStatus: 404 },
+) {}
+
+export class InvalidOrderInputError extends Schema.TaggedError<InvalidOrderInputError>()(
+  "InvalidOrderInputError",
+  {
+    message: Schema.String,
+  },
+  { httpApiStatus: 400 },
+) {}
+
+export class OrderNotFoundError extends Schema.TaggedError<OrderNotFoundError>()(
+  "OrderNotFoundError",
+  {
+    orderId: OrderId,
+  },
+  { httpApiStatus: 404 },
+) {}
+
+export class InvalidOrderStatusTransitionError extends Schema.TaggedError<InvalidOrderStatusTransitionError>()(
+  "InvalidOrderStatusTransitionError",
+  {
+    orderId: OrderId,
+    from: OrderStatus,
+    to: OrderStatus,
+  },
+  { httpApiStatus: 409 },
+) {}

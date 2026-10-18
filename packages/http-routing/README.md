@@ -1,10 +1,12 @@
 # HTTP Routing
 
-`@effect-coffee-shop/http-routing` provides runtime-agnostic HTTP routing utilities.
+`@effect-coffee-shop/http-routing` provides runtime-agnostic HTTP plumbing.
 
-It is not a Coffee business package. It owns the reusable HTTP plumbing needed by Bun, Cloudflare,
-AWS, and tests: route dispatch, request logging, observability, JSON encoding helpers, and
-request-scoped services over standard Web [`Request` and `Response`][mdn-fetch] objects.
+It is not a Coffee business package. The [Coffee Worker](../coffee/server) uses its wide-event
+request logging (`withHttpWideEvent` and `annotateHttpStatus` from `src/logging.ts`). The package
+also keeps generic route dispatch, request-scoped services, observability, and JSON helpers over
+standard Web [`Request` and `Response`][mdn-fetch] objects; the Worker routes with Effect's
+`HttpRouter` instead and does not mount `createHttpRouter`.
 
 ## Directory Map
 
@@ -23,58 +25,43 @@ request-scoped services over standard Web [`Request` and `Response`][mdn-fetch] 
 This package may know about generic HTTP requests and shared routing concerns. It should not choose
 a Coffee persistence layer, parse deployment-specific bindings, adapt MCP protocol details, or
 define Coffee domain/application behavior. Runtime composition belongs in
-[`apps/backend`](../../apps/backend).
-
-## Nomenclature
-
-`http-routing` is deliberately narrower than "backend" and broader than any one runtime. It routes
-Web HTTP requests, while platform adapters decide how those requests arrive. The exported
-`HttpRoute` contract is an Effect-based route branch; `createHttpRouter` turns a route list into the
-single request handler used by Bun, Cloudflare, AWS, and tests.
+[`coffee-server`](../coffee/server).
 
 ## Request Logging
 
-`createHttpRouter` uses [`effect-wide-event`](https://github.com/cevr/effect-wide-event) 0.6.0
+`withHttpWideEvent` uses [`effect-wide-event`](https://github.com/cevr/effect-wide-event) 0.6.0
 to emit one `http_routing.request` event when a request effect finishes, including failures,
-defects, and interruption. Auth, API, MCP, assets, and unmatched requests share this boundary.
-Emission completes before the effect returns; streamed response bodies are not consumed or timed.
-The inner Coffee Fetch handler keeps Effect's HTTP request logger disabled.
-Lambda starts the same request scope before converting the incoming request or reading runtime
-configuration. Its router reuses that scope, so setup failures emit once and routed requests do
-not acquire a second event boundary.
+defects, and interruption. Nested calls reuse the outer event instead of opening a second one.
+`annotateHttpStatus` records the selected `route_kind` and the response status. In the Coffee
+Worker, domain Api, auth, REST, MCP, and unmatched requests share this boundary; the Worker logs
+with `WideEventLogger.Json` and maps failed causes with Effect's native HTTP response mapper after
+the event is recorded, so callers get a safe response instead of a raw error. Emission completes
+before the effect returns; streamed response bodies are not consumed or timed.
 
-`HttpObservabilityLive` supplies a single flat JSON console logger, runtime metrics, and optional
-OTLP export. Bun and Cloudflare run the router through `runHttpRequest`; Lambda provides the same
-layer within its invocation scope. Independent application/auth diagnostic logs can still appear.
-When OTLP is enabled, its logger explicitly inherits the JSON logger; both sinks receive the event
-without restoring Effect's default pretty console logger.
-Bun, Cloudflare, and Lambda map failed causes with Effect's native HTTP response mapper after
-emission. Their entry points return a response with `x-request-id` instead of rejecting with raw
-errors, preventing additional runtime error logs. Lambda retains Alchemy's HTTP response mapping.
+`createHttpRouter` and `runHttpRequest` apply the same boundary for Web `Request` handlers, and
+`HttpObservabilityLive` supplies a flat JSON console logger, runtime metrics, and optional OTLP
+export (`OTEL_SERVICE_NAME` chooses the exported service name).
 
 Events include `service`, `method`, a locally generated `requestId`, `route_kind`, `durationMs`,
 `timestamp`, `traceId`, `spanId`, and Effect exit `status` (`ok` or `error`). Effects that return a
 response also record `http_status` and `outcome`: `ok` below 400, `warning` for 4xx, and `domain_error` for 5xx.
 A returned HTTP error response is still a successful Effect exit. All boundary events use the
 upstream default Info level. This replaces the former `.complete`/`.error` events and snake-case
-method, path, duration, and request ID fields. Responses include the same generated ID in
-`x-request-id`, including Lambda responses for failures before routing. Adding this header copies
-response headers without reading or buffering the body, and supports immutable asset/redirect
-responses.
+method, path, duration, and request ID fields. `withResponseRequestId` can add the same generated
+ID as `x-request-id`; it copies response headers without reading or buffering the body.
 
 URLs (including path segments), request/response headers and bodies, environment bindings, and raw
 error values are excluded. Failure details use fixed `Failure`, `Defect`, or `Interrupted` labels
 and messages. Request spans also omit raw paths. Use `route_kind` for the selected route branch
 and trace IDs for correlation; incoming transport IDs are not copied into logs.
 
-Route `logFields` can add trusted scalar metadata to the event. Signed-in API requests include
-`actor_kind` and the pseudonymous application user ID `actor_user_id`; anonymous requests include
-only `actor_kind`. These IDs support correlation and are not anonymous data: restrict log access
+`createHttpRouter` route `logFields` (and `annotateHttpStatus` `extraFields`) can add trusted
+scalar metadata to the event, for example `actor_kind` and the pseudonymous application user ID
+`actor_user_id`. These IDs support correlation and are not anonymous data: restrict log access
 and retention accordingly.
 
-Code executing in the router's Effect context can also use `WideEvent.setOptional` to enrich it.
-The separate inner Fetch runtime does not inherit this accumulator. Keep credentials and directly
-identifying data (such as names, email addresses, and phone numbers) out of both extensions; do not
+Code executing inside the boundary's Effect context can also use `WideEvent.setOptional` to enrich
+it. Keep credentials and directly identifying data (such as names, email addresses, and phone numbers) out of both extensions; do not
 add another wide-event boundary to an inner HTTP handler.
 
 ## Commands

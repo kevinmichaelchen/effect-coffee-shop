@@ -3,6 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import type { AuthenticatedActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
+import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.id";
 
 /** Identity decoded from a verified Yielded session. */
 export const CoffeeAuthIdentity = Schema.Struct({
@@ -20,7 +21,7 @@ export const actorFromIdentity = Effect.fn("CoffeeAuth.actorFromIdentity")(funct
   const userId = yield* Identity.stringSubjectId.toNative(identity.subjectId);
   const actor = {
     displayName: identity.displayName,
-    userId,
+    userId: CustomerId.make(userId),
   };
 
   return Option.match(Option.some(userId).pipe(Option.filter((id) => staffUserIds.has(id))), {

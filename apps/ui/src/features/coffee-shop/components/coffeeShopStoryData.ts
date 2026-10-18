@@ -1,6 +1,6 @@
 import {
   createOrderDraft,
-  type CoffeeOrder,
+  type OrderTicket,
   type MenuItem,
 } from "#features/coffee-shop/lib/coffee.ts";
 
@@ -43,7 +43,7 @@ export const storyDraft = {
 };
 
 // Fixed timestamps and explicit totals keep stories independent of the backend and clock.
-export const storyOrder: CoffeeOrder = {
+export const storyOrder: OrderTicket = {
   id: "ticket-1042",
   customerName: "Morgan Rivera",
   ownerUserId: "customer-morgan",
@@ -66,7 +66,7 @@ export const storyOrder: CoffeeOrder = {
   ],
 };
 
-export const storyGroupOrder: CoffeeOrder = {
+export const storyGroupOrder: OrderTicket = {
   ...storyOrder,
   id: "ticket-1043",
   customerName: "Alexandra Montgomery-Rivera and the morning study group",
@@ -98,13 +98,13 @@ export const storyGroupOrder: CoffeeOrder = {
   ],
 };
 
-export const storyActiveOrders: readonly CoffeeOrder[] = [
+export const storyActiveOrders: readonly OrderTicket[] = [
   storyOrder,
   { ...storyGroupOrder, status: "brewing" },
   { ...storyOrder, id: "ticket-1044", customerName: "Sam Lee", status: "ready" },
 ];
 
-export const storyHistoryOrders: readonly CoffeeOrder[] = [
+export const storyHistoryOrders: readonly OrderTicket[] = [
   { ...storyOrder, id: "ticket-1039", status: "picked-up" },
   { ...storyGroupOrder, id: "ticket-1040", status: "cancelled" },
 ];

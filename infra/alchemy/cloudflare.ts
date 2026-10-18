@@ -1,4 +1,3 @@
-import * as Config from "effect/Config";
 /**
  * Defines the Alchemy stack that deploys Coffee Shop to Cloudflare.
  *
@@ -9,16 +8,8 @@ import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
-import {
-  cloudflareBindingNames,
-  cloudflareEnvNames,
-} from "@effect-coffee-shop/coffee-runtime-cloudflare/env";
-import {
-  booleanWithDefault,
-  numberBetweenWithDefault,
-  optionalTrimmedRedacted,
-  stringWithDefault,
-} from "./config.ts";
+import CoffeeWorker from "@effect-coffee-shop/coffee-server/CoffeeWorker";
+import { booleanWithDefault, numberBetweenWithDefault } from "./config.ts";
 import { coffeeStackName } from "./shared.ts";
 
 const state = () =>
@@ -32,19 +23,6 @@ class DeploySmokeCheckError extends Schema.TaggedError<DeploySmokeCheckError>()(
     cause: Schema.optionalKey(Schema.Unknown),
   },
 ) {}
-
-const authSecret = Effect.fn("Cloudflare.authSecret")(function* () {
-  const provided = yield* optionalTrimmedRedacted(cloudflareEnvNames.authSecret);
-
-  if (provided !== undefined) {
-    return provided;
-  }
-
-  const generated = yield* Alchemy.Random("auth-secret", {
-    bytes: 32,
-  });
-  return generated.text;
-});
 
 const fetchSmokeResponse = (input: {
   readonly init?: RequestInit;
@@ -147,23 +125,17 @@ export default Alchemy.Stack(
       name: "COFFEE_OBSERVABILITY_SAMPLING_RATE",
     });
 
-    const coffeeDb = yield* Cloudflare.D1.Database("coffee-db", {
-      migrations: path.join(repoRoot, "packages/coffee/external/sqlite/src/sql/migrations"),
-    });
-    const secretsStore = yield* Cloudflare.SecretsStore.Store("coffee-secrets");
-    const authStoreSecret = yield* Cloudflare.SecretsStore.Secret(cloudflareEnvNames.authSecret, {
-      comment: "Yielded Auth request-binding secret for the Coffee Shop Cloudflare Worker.",
-      name: cloudflareEnvNames.authSecret,
-      store: secretsStore,
-      value: yield* authSecret(),
-    });
+    // The backend: the domain model on Durable Objects, auth on D1, REST and
+    // MCP. It reads APP_ORIGIN, MCP_SIGNING_KEY, MCP_CLIENTS,
+    // COFFEE_STAFF_USER_IDS and AUTH_SECRET from this environment.
+    const api = yield* CoffeeWorker;
 
+    // The app: the Vite build, and a small Worker that forwards the backend's
+    // paths to it over a service binding, so the app and the Apis share one
+    // origin and the session cookie stays first-party.
     const website = yield* Cloudflare.Website.Vite("onion", {
       rootDir: path.join(repoRoot, "apps/ui"),
-      compatibility: {
-        flags: ["nodejs_compat"],
-      },
-      main: "../backend/src/cloudflare/worker.ts",
+      main: "src/worker.ts",
       observability: {
         enabled: true,
         headSamplingRate: observabilitySamplingRate,
@@ -171,11 +143,6 @@ export default Alchemy.Stack(
           enabled: true,
           headSamplingRate: observabilitySamplingRate,
           invocationLogs: true,
-          persist: true,
-        },
-        traces: {
-          enabled: true,
-          headSamplingRate: observabilitySamplingRate,
           persist: true,
         },
       },
@@ -186,20 +153,7 @@ export default Alchemy.Stack(
         runWorkerFirst: ["/api", "/api/*", "/mcp", "/mcp/*", "/oauth/*", "/.well-known/*"],
       },
       env: {
-        [cloudflareEnvNames.appOrigin]: yield* Config.String(cloudflareEnvNames.appOrigin),
-        [cloudflareEnvNames.mcpSigningKey]: yield* Config.Redacted(
-          cloudflareEnvNames.mcpSigningKey,
-        ),
-        [cloudflareEnvNames.mcpClients]: yield* stringWithDefault(
-          cloudflareEnvNames.mcpClients,
-          "[]",
-        ),
-        [cloudflareBindingNames.db]: coffeeDb,
-        [cloudflareEnvNames.authSecret]: authStoreSecret,
-        [cloudflareEnvNames.coffeeStaffUserIds]: yield* stringWithDefault(
-          cloudflareEnvNames.coffeeStaffUserIds,
-          "",
-        ),
+        COFFEE: api,
       },
     });
 
@@ -210,7 +164,7 @@ export default Alchemy.Stack(
     });
 
     return {
-      database: coffeeDb.databaseName,
+      api: api.url,
       smoke,
       url: website.url,
     };

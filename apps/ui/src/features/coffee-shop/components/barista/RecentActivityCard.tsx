@@ -3,10 +3,10 @@ import { Text } from "@effect-coffee-shop/ui-kit/components/retroui/Text";
 import { StatusBadge } from "#features/coffee-shop/components/StatusBadge.tsx";
 import { formatOrderTime, formatPrice } from "#features/coffee-shop/lib/coffee.ts";
 import { formatOrderItems } from "#features/coffee-shop/lib/order-display.ts";
-import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";
+import type { OrderTicket } from "#features/coffee-shop/lib/coffee.ts";
 
 export interface RecentActivityCardProps {
-  orders: readonly CoffeeOrder[];
+  orders: readonly OrderTicket[];
   onInspect: (orderId: string) => void;
 }
 

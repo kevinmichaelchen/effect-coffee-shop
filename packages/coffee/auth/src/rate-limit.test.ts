@@ -1,5 +1,5 @@
 import * as NodeServices from "@effect/platform-node/NodeServices";
-import { migrateCloudflareD1 } from "@effect-coffee-shop/coffee-external-sqlite/cloudflare";
+import { migrateCloudflareD1 } from "./testing/migrate.ts";
 import { AuthRateLimitStoreLive } from "./persistence/rate-limit-store.ts";
 /* oxlint-disable effect/effect-run-in-body -- Vitest owns the native test boundary. */
 import { expect, it } from "vitest";

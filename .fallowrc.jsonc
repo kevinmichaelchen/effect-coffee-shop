@@ -2,32 +2,21 @@
   "$schema": "./node_modules/fallow/schema.json",
   "entry": [
     "infra/alchemy/alchemy.run.ts",
-    "infra/alchemy/aws.ts",
     "infra/turbo-cache/aws.ts",
-    "apps/backend/src/cloudflare/worker.ts",
-    "apps/backend/src/bun/*.ts",
-    "apps/backend/scripts/*.ts",
-    "apps/backend/src/**/*.test.ts",
-    "apps/backend/test/**/*.ts",
     "apps/ui/src/main.tsx",
+    // The Website's Worker, deployed by path from the Alchemy stack.
+    "apps/ui/src/worker.ts",
     "apps/ui/src/**/*.stories.tsx",
     "apps/ui/.storybook/**/*.{ts,tsx}",
     "apps/ui/vite.config.ts",
     "apps/ui/vite.shared.ts",
     "apps/ui/vitest.config.ts",
     "packages/http-routing/src/index.ts",
-    "packages/coffee/domain/src/**/*.test.ts",
-    "packages/coffee/application/src/**/*.test.ts",
+    "packages/coffee/domain/test/**/*.ts",
+    "packages/coffee/server/test/**/*.ts",
     "packages/ui-kit/src/**/*.stories.tsx",
-    "packages/coffee/backend/src/index.ts",
     "packages/coffee/presentation/actions/src/index.ts",
     "packages/coffee/presentation/actions/src/**/*.test.ts",
-    "packages/coffee/external/in-memory/src/index.ts",
-    "packages/coffee/external/sqlite/src/index.ts",
-    "packages/coffee/external/sqlite/src/bun/live.ts",
-    "packages/coffee/external/sqlite/src/cloudflare/live.ts",
-    "packages/coffee/runtime/aws/src/**/*.test.ts",
-    "packages/coffee/runtime/cloudflare/src/**/*.test.ts",
   ],
   "ignorePatterns": ["**/*.d.ts", "**/*.generated.ts", "**/dist/**", "**/storybook-static/**"],
   // Fallow does not discover the aliased React JavaScript plugins in Oxlint JSON,
@@ -80,12 +69,7 @@
     "minOccurrences": 3,
     "threshold": 14.5,
     "ignoreImports": true,
-    "ignore": [
-      "apps/ui/src/**/*.stories.tsx",
-      "packages/ui-kit/src/**/*.stories.tsx",
-      "packages/coffee/external/drizzle-postgres/src/db/auth-schema.ts",
-      "packages/coffee/external/drizzle-postgres/src/db/schema.ts",
-    ],
+    "ignore": ["apps/ui/src/**/*.stories.tsx", "packages/ui-kit/src/**/*.stories.tsx"],
   },
   "health": {
     "maxCyclomatic": 20,
@@ -97,8 +81,6 @@
     "enabled": true,
     "projects": [
       "packages/tooling/tsconfig.json",
-      "packages/coffee/testing/tsconfig.json",
-      "apps/backend/tsconfig.json",
       "apps/ui/tsconfig.app.json",
       "apps/ui/tsconfig.node.json",
       "packages/turbo-cache/tsconfig.json",
@@ -107,18 +89,10 @@
       "packages/coffee/application/tsconfig.json",
       "packages/ui-kit/tsconfig.json",
       "packages/coffee/auth/tsconfig.json",
-      "packages/coffee/backend/tsconfig.json",
+      "packages/coffee/server/tsconfig.json",
       "packages/coffee/presentation/mcp/tsconfig.json",
-      "packages/coffee/presentation/cli/tsconfig.json",
       "packages/coffee/presentation/http/tsconfig.json",
       "packages/coffee/presentation/actions/tsconfig.json",
-      "packages/coffee/external/sqlite/tsconfig.json",
-      "packages/coffee/external/drizzle-postgres/tsconfig.json",
-      "packages/coffee/external/in-memory/tsconfig.json",
-      "packages/coffee/runtime/cloudflare/tsconfig.json",
-      "packages/coffee/runtime/shared/tsconfig.json",
-      "packages/coffee/runtime/bun/tsconfig.json",
-      "packages/coffee/runtime/aws/tsconfig.json",
       "infra/alchemy/tsconfig.json",
       "infra/turbo-cache/tsconfig.json",
     ],
@@ -133,12 +107,7 @@
     "zones": [
       {
         "name": "tests",
-        "patterns": [
-          "**/*.test.ts",
-          "**/test-support.ts",
-          "apps/backend/scripts/**",
-          "apps/backend/test/**",
-        ],
+        "patterns": ["**/*.test.ts", "**/test-support.ts", "packages/coffee/*/test/**"],
       },
       {
         "name": "tooling",
@@ -148,13 +117,8 @@
           "**/vitest.config.ts",
           "**/vitest.setup.ts",
           "apps/ui/vite*.ts",
-          "**/drizzle.config.ts",
           "apps/ui/.storybook/**",
         ],
-      },
-      {
-        "name": "testing",
-        "patterns": ["packages/coffee/testing/**"],
       },
       {
         "name": "infra",
@@ -169,20 +133,8 @@
         "patterns": ["apps/ui/**"],
       },
       {
-        "name": "backend-app",
-        "patterns": ["apps/backend/**"],
-      },
-      {
         "name": "http-routing",
         "patterns": ["packages/http-routing/**"],
-      },
-      {
-        "name": "backend-composition",
-        "patterns": ["packages/coffee/backend/**"],
-      },
-      {
-        "name": "runtime",
-        "patterns": ["packages/coffee/runtime/**"],
       },
       {
         "name": "domain",
@@ -205,12 +157,12 @@
         "patterns": ["packages/coffee/auth/**"],
       },
       {
-        "name": "external",
-        "patterns": ["packages/coffee/external/**"],
-      },
-      {
         "name": "presentation",
         "patterns": ["packages/coffee/presentation/**"],
+      },
+      {
+        "name": "server",
+        "patterns": ["packages/coffee/server/**"],
       },
       {
         "name": "turbo-cache",
@@ -219,12 +171,8 @@
     ],
     "rules": [
       {
-        "from": "testing",
-        "allow": ["domain", "application"],
-      },
-      {
         "from": "infra",
-        "allow": ["backend-app", "ui", "external", "runtime", "turbo-cache"],
+        "allow": ["server", "ui", "turbo-cache"],
       },
       {
         "from": "ui-kit",
@@ -232,42 +180,12 @@
       },
       {
         "from": "ui",
-        "allow": ["ui-kit", "auth-contract"],
-      },
-      {
-        "from": "backend-app",
-        "allow": [
-          "http-routing",
-          "backend-composition",
-          "runtime",
-          "domain",
-          "application",
-          "actions",
-          "auth",
-          "external",
-          "presentation",
-        ],
+        // The app is a client of the domain's Apis: it imports their declarations, ids and values.
+        "allow": ["ui-kit", "auth-contract", "domain"],
       },
       {
         "from": "http-routing",
         "allow": [],
-      },
-      {
-        "from": "backend-composition",
-        "allow": ["http-routing", "domain", "application", "auth", "external", "presentation"],
-      },
-      {
-        "from": "runtime",
-        "allow": [
-          "http-routing",
-          "backend-composition",
-          "domain",
-          "application",
-          "actions",
-          "auth",
-          "external",
-          "presentation",
-        ],
       },
       {
         "from": "domain",
@@ -290,12 +208,12 @@
         "allow": ["auth-contract", "http-routing", "domain", "application"],
       },
       {
-        "from": "external",
-        "allow": ["domain", "application"],
-      },
-      {
         "from": "presentation",
         "allow": ["http-routing", "domain", "application", "actions"],
+      },
+      {
+        "from": "server",
+        "allow": ["http-routing", "domain", "application", "actions", "auth", "presentation"],
       },
       {
         "from": "tooling",

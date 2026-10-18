@@ -58,20 +58,26 @@ export const withHttpWideEvent =
       }).pipe(Effect.provideService(HttpRequestEvent, { requestId }));
     });
 
-export const annotateHttpResponse = (input: {
+export const annotateHttpStatus = (input: {
   readonly extraFields?: StructuredLogRecord;
-  readonly response: Response;
+  readonly status: number;
   readonly routeKind: string;
 }) =>
   WideEvent.setOptional({
     ...input.extraFields,
     event: "http_routing.request",
     route_kind: input.routeKind,
-    http_status: input.response.status,
-    outcome:
-      input.response.status >= 500
-        ? "domain_error"
-        : input.response.status >= 400
-          ? "warning"
-          : "ok",
+    http_status: input.status,
+    outcome: input.status >= 500 ? "domain_error" : input.status >= 400 ? "warning" : "ok",
+  });
+
+export const annotateHttpResponse = (input: {
+  readonly extraFields?: StructuredLogRecord;
+  readonly response: Response;
+  readonly routeKind: string;
+}) =>
+  annotateHttpStatus({
+    extraFields: input.extraFields ?? {},
+    status: input.response.status,
+    routeKind: input.routeKind,
   });

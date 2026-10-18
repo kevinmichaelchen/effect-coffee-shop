@@ -4,13 +4,7 @@
  * @module
  */
 import * as Schema from "effect/Schema";
-import {
-  DrinkNotFoundError,
-  InvalidOrderInputError,
-  InvalidOrderStatusTransitionError,
-  OrderNotFoundError,
-} from "@effect-coffee-shop/coffee-domain/errors";
-import { OrderId } from "@effect-coffee-shop/coffee-domain/order";
+import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import {
   CartItemIdRequest,
   CheckoutCartRequest,
@@ -25,7 +19,13 @@ import {
   AuthenticationRequiredError,
   StaffRoleRequiredError,
 } from "@effect-coffee-shop/coffee-application/CurrentActor";
-import { InternalAppError } from "@effect-coffee-shop/coffee-application/errors";
+import {
+  DrinkNotFoundError,
+  InternalAppError,
+  InvalidOrderInputError,
+  InvalidOrderStatusTransitionError,
+  OrderNotFoundError,
+} from "@effect-coffee-shop/coffee-application/errors";
 
 export const AppError = Schema.Union([
   AuthenticationRequiredError,
@@ -40,9 +40,7 @@ export const AppError = Schema.Union([
 export const EmptyActionInput = Schema.Record(Schema.String, Schema.Never);
 
 export const OrderIdActionInput = Schema.Struct({
-  orderId: OrderId.annotate({
-    description: "Coffee shop ticket id, such as order_00000000000000000000000001.",
-  }),
+  orderId: OrderId,
 });
 
 // oxlint-disable-next-line effect/require-schema-type-alias -- Schema decoder functions have no .Type member.

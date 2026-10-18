@@ -1,13 +1,13 @@
 import { OrderDetailsDrawer } from "#features/coffee-shop/components/barista/OrderDetailsDrawer.tsx";
 import { QueueBoardCard } from "#features/coffee-shop/components/barista/QueueBoardCard.tsx";
 import { RecentActivityCard } from "#features/coffee-shop/components/barista/RecentActivityCard.tsx";
-import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
+import type { OrderTicket, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
 export interface BaristaPanelProps {
-  activeOrders: readonly CoffeeOrder[];
-  historyOrders: readonly CoffeeOrder[];
+  activeOrders: readonly OrderTicket[];
+  historyOrders: readonly OrderTicket[];
   pendingOrderId: string | null;
-  selectedOrder: CoffeeOrder | null;
+  selectedOrder: OrderTicket | null;
   onAction: (orderId: string, action: OrderAction) => void;
   onInspect: (orderId: string) => void;
   onOpenChange: (open: boolean) => void;

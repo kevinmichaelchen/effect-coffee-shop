@@ -29,11 +29,13 @@
   },
   "dependencies": {
     "@effect-coffee-shop/coffee-auth": "workspace:*",
+    "@effect-coffee-shop/coffee-domain": "workspace:*",
     "@effect-coffee-shop/ui-kit": "workspace:*",
     "@simplewebauthn/browser": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@yielded/auth": "catalog:",
     "@yielded/auth-simplewebauthn": "catalog:",
+    "alchemy": "catalog:",
     "effect": "catalog:",
     "lucide-react": "catalog:",
     "react": "catalog:",

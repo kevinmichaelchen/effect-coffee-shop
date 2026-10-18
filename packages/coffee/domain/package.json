@@ -3,16 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "sideEffects": false,
   "exports": {
-    "./cart": "./src/cart.ts",
-    "./checkout-session": "./src/checkout-session.ts",
-    "./errors": "./src/errors.ts",
-    "./menu": "./src/menu.ts",
-    "./money": "./src/money.ts",
-    "./order-primitives": "./src/order-primitives.ts",
-    "./order": "./src/order.ts",
-    "./order-fulfillment": "./src/order-fulfillment.ts",
-    "./typed-id": "./src/typed-id.ts"
+    "./*": "./src/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -24,8 +17,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@just-be/effect-typed-id": "0.6.0",
-    "@typeonce/effect-machine": "0.40.0",
+    "alchemy": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {

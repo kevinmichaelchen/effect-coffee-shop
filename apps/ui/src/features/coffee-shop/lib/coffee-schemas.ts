@@ -29,21 +29,23 @@ const CoffeeOrderItem = Schema.Struct({
   lineTotalCents: Schema.Int,
 });
 
-const OrderItemRequest = Schema.Struct({
+// Optional keys match the domain's `DrinkSelection`, so a request passes through as is.
+const DrinkSelection = Schema.Struct({
   drinkId: Schema.String,
   size: DrinkSize,
-  milk: Schema.optional(Milk),
-  temperature: Schema.optional(Temperature),
-  shots: Schema.optional(Schema.Int),
-  notes: Schema.optional(Schema.String),
-  quantity: Schema.optional(Schema.Int),
+  milk: Schema.optionalKey(Milk),
+  temperature: Schema.optionalKey(Temperature),
+  shots: Schema.optionalKey(Schema.Int),
+  notes: Schema.optionalKey(Schema.String),
+  quantity: Schema.optionalKey(Schema.Int),
 });
 
-export const PlaceOrderRequest = Schema.Struct({
-  items: Schema.Array(OrderItemRequest),
+const PlaceOrderRequest = Schema.Struct({
+  items: Schema.Array(DrinkSelection),
 });
 
-export const CoffeeOrder = Schema.Struct({
+/** An order as the components render it: cents and an ISO timestamp. */
+const OrderTicket = Schema.Struct({
   id: Schema.String,
   customerName: Schema.String,
   ownerUserId: Schema.String,
@@ -59,9 +61,8 @@ export const CoffeeApiError = Schema.Struct({
 });
 
 export const Menu = Schema.Array(MenuItem);
-export const CoffeeOrders = Schema.Array(CoffeeOrder);
 
 export type MenuItem = typeof MenuItem.Type;
-export type CoffeeOrder = typeof CoffeeOrder.Type;
+export type OrderTicket = typeof OrderTicket.Type;
 export type PlaceOrderRequest = typeof PlaceOrderRequest.Type;
 export type CoffeeApiError = typeof CoffeeApiError.Type;

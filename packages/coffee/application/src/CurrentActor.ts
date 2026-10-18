@@ -1,39 +1,31 @@
 /**
- * Models the actor currently authorized to run Coffee application workflows.
+ * Models who is calling a Coffee adapter: anonymous, or a signed-in actor
+ * the domain can act for.
  *
  * @module
  */
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import * as Context from "effect/Context";
+import { Actor, isStaff } from "@effect-coffee-shop/coffee-domain/Actor";
 
 const AnonymousActor = Schema.Struct({
   kind: Schema.Literal("anonymous"),
 }).annotate({ identifier: "AnonymousActor" });
 
-const AuthenticatedActor = Schema.Struct({
-  displayName: Schema.String,
-  kind: Schema.Literals(["customer", "staff", "system"] as const),
-  userId: Schema.String,
-}).annotate({ identifier: "AuthenticatedActor" });
-
-export const AppActor = Schema.Union([AnonymousActor, AuthenticatedActor]).annotate({
+export const AppActor = Schema.Union([AnonymousActor, Actor]).annotate({
   identifier: "AppActor",
 });
 
 export type AppActor = typeof AppActor.Type;
 export type AnonymousActor = typeof AnonymousActor.Type;
-export type AuthenticatedActor = typeof AuthenticatedActor.Type;
+export type AuthenticatedActor = Actor;
 
 export const anonymousActor: AnonymousActor = {
   kind: "anonymous",
 };
 
-export const systemActor: AuthenticatedActor = {
-  displayName: "System Operator",
-  kind: "system",
-  userId: "system",
-};
+export { systemActor } from "@effect-coffee-shop/coffee-domain/Actor";
 
 export class CurrentActor extends Context.Service<CurrentActor, AppActor>()(
   "effect-coffee-shop/application/CurrentActor",
@@ -59,16 +51,12 @@ export function isAuthenticatedActor(actor: AppActor): actor is AuthenticatedAct
   return actor.kind !== "anonymous";
 }
 
-function isStaffActor(actor: AppActor): actor is AuthenticatedActor {
-  return actor.kind === "staff" || actor.kind === "system";
-}
-
-const authenticationRequiredError = () =>
+export const authenticationRequiredError = () =>
   new AuthenticationRequiredError({
     message: "Sign in to place and view orders.",
   });
 
-const staffRoleRequiredError = () =>
+export const staffRoleRequiredError = () =>
   new StaffRoleRequiredError({
     message: "Only coffee-shop staff can manage the live queue.",
   });
@@ -93,7 +81,7 @@ export const requireStaffActor = Effect.fn("CurrentActor.requireStaffActor")(
   > {
     const actor = yield* requireSignedInActor();
 
-    if (!isStaffActor(actor)) {
+    if (!isStaff(actor)) {
       return yield* staffRoleRequiredError();
     }
 

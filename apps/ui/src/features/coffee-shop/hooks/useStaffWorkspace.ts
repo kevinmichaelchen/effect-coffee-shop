@@ -8,14 +8,14 @@ import {
 } from "#features/auth/lib/viewer.ts";
 import {
   useOrderActionMutation,
-  useOrdersQuery,
+  useStaffQueueQuery,
 } from "#features/coffee-shop/hooks/useCoffeeQueries.ts";
 import { getQueueLoad, isActiveOrder } from "#features/coffee-shop/lib/coffee.ts";
 import { getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import { useThemePreference } from "@effect-coffee-shop/ui-kit/hooks/useThemePreference";
-import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
+import type { OrderTicket, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
-const emptyOrders: readonly CoffeeOrder[] = [];
+const emptyOrders: readonly OrderTicket[] = [];
 
 function getErrorMessage(...messages: Array<string | undefined>): string | null {
   return messages.find((message) => message !== undefined) ?? null;
@@ -25,7 +25,7 @@ function readMutationError(error: unknown): string {
   return error instanceof Error ? error.message : "Unable to update the order.";
 }
 
-function getStaffQueueSnapshot(orders: readonly CoffeeOrder[], selectedOrderId: string | null) {
+function getStaffQueueSnapshot(orders: readonly OrderTicket[], selectedOrderId: string | null) {
   const activeOrders = orders.filter(isActiveOrder);
   const historyOrders = orders.filter((order) => !isActiveOrder(order)).reverse();
 
@@ -60,7 +60,7 @@ function useStaffOrders(input: {
   const { selectedOrderId, viewer } = input;
   const canLoadOrders =
     viewer !== undefined && isAuthenticatedViewer(viewer) && isStaffViewer(viewer);
-  const ordersQuery = useOrdersQuery({ enabled: canLoadOrders });
+  const ordersQuery = useStaffQueueQuery({ enabled: canLoadOrders });
   const orders = ordersQuery.data ?? emptyOrders;
 
   return {

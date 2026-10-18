@@ -4,10 +4,10 @@ import { Text } from "@effect-coffee-shop/ui-kit/components/retroui/Text";
 import { StatusBadge } from "#features/coffee-shop/components/StatusBadge.tsx";
 import { formatOrderTime, formatPrice, getOrderActions } from "#features/coffee-shop/lib/coffee.ts";
 import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
-import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
+import type { OrderTicket, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
 export interface OrderDetailsDrawerProps {
-  order: CoffeeOrder | null;
+  order: OrderTicket | null;
   pending: boolean;
   onAction: (orderId: string, action: OrderAction) => void;
   onOpenChange: (open: boolean) => void;

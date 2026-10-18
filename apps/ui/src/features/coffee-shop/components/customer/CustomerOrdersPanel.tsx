@@ -4,11 +4,11 @@ import { Text } from "@effect-coffee-shop/ui-kit/components/retroui/Text";
 import { StatusBadge } from "#features/coffee-shop/components/StatusBadge.tsx";
 import { formatOrderTime, formatPrice } from "#features/coffee-shop/lib/coffee.ts";
 import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
-import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";
+import type { OrderTicket } from "#features/coffee-shop/lib/coffee.ts";
 
 export interface CustomerOrdersPanelProps {
-  activeOrders: readonly CoffeeOrder[];
-  historyOrders: readonly CoffeeOrder[];
+  activeOrders: readonly OrderTicket[];
+  historyOrders: readonly OrderTicket[];
   isRefreshing: boolean;
 }
 
@@ -50,7 +50,7 @@ function OrderGroup(inputProps: OrderGroupProps) {
 
 interface OrderGroupProps {
   emptyMessage: string;
-  orders: readonly CoffeeOrder[];
+  orders: readonly OrderTicket[];
   title: string;
 }
 
@@ -62,11 +62,11 @@ function EmptyOrders({ message }: { message: string }) {
   );
 }
 
-function OrderRows({ orders }: { orders: readonly CoffeeOrder[] }) {
+function OrderRows({ orders }: { orders: readonly OrderTicket[] }) {
   return orders.map((order) => <OrderRow key={order.id} order={order} />);
 }
 
-function OrderRow({ order }: { order: CoffeeOrder }) {
+function OrderRow({ order }: { order: OrderTicket }) {
   return (
     <div className="grid gap-2 rounded-md border border-border bg-background p-3">
       <div className="flex flex-wrap items-center justify-between gap-3">

@@ -1,9 +1,9 @@
 import { Button } from "@effect-coffee-shop/ui-kit/components/retroui/Button";
 import { getOrderActions } from "#features/coffee-shop/lib/coffee.ts";
-import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
+import type { OrderTicket, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
 export interface QueueRowActionsProps {
-  order: CoffeeOrder;
+  order: OrderTicket;
   pending: boolean;
   onAction: (orderId: string, action: OrderAction) => void;
 }
