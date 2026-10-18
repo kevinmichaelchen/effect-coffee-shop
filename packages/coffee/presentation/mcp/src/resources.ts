@@ -7,7 +7,7 @@ import { withMcpActor } from "./actor.ts";
 import * as Effect from "effect/Effect";
 import * as McpSchema from "effect/ai/McpSchema";
 import * as McpServer from "effect/ai/McpServer";
-import { OrderId } from "@effect-coffee-shop/coffee-domain/order";
+import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import {
   toCoffeeOrderView,

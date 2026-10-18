@@ -1,6 +1,3 @@
-import * as Effect from "effect/Effect";
-import { systemActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
-import { McpActor } from "./actor.ts";
 /**
  * Composes Coffee MCP resources, prompts, and tools into server layers.
  *
@@ -9,7 +6,6 @@ import { McpActor } from "./actor.ts";
 import * as Layer from "effect/Layer";
 import * as McpProtocol from "effect/ai/McpProtocol";
 import * as McpServer from "effect/ai/McpServer";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { CoffeeActionToolsLive } from "./action-tools.ts";
 import { MenuResource, OpenOrdersResource, OrderResource } from "./resources.ts";
 import { RecommendDrinkPrompt, SummarizeOpenOrdersPrompt } from "./prompts.ts";
@@ -26,14 +22,9 @@ const CoffeeMcpSharedFeaturesLive = Layer.mergeAll(
   OrderResource,
   RecommendDrinkPrompt,
   SummarizeOpenOrdersPrompt,
-).pipe(Layer.provide(CoffeeOrderApp.layer));
+);
 
 const CoffeeMcpFeaturesLive = Layer.mergeAll(CoffeeMcpSharedFeaturesLive, CoffeeActionToolsLive);
-
-export const CoffeeMcpStdioLive = CoffeeMcpFeaturesLive.pipe(
-  Layer.provide(McpServer.layerStdio(mcpServerInfo)),
-  Layer.provide(Layer.succeed(McpActor, { current: Effect.succeed(systemActor) })),
-);
 
 export const CoffeeMcpHttpLive = (allowedOrigins: ReadonlyArray<string>) =>
   CoffeeMcpFeaturesLive.pipe(

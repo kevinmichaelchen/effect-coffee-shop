@@ -11,14 +11,16 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@effect-coffee-shop/backend": "workspace:*",
-    "@effect-coffee-shop/coffee-runtime-cloudflare": "workspace:*",
+    "@effect-coffee-shop/coffee-server": "workspace:*",
     "alchemy": "catalog:",
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@effect-coffee-shop/coffee-auth": "workspace:*",
+    "@effect-coffee-shop/coffee-domain": "workspace:*",
     "@effect-coffee-shop/web": "workspace:*",
     "@types/node": "catalog:",
+    "@yielded/auth": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

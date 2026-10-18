@@ -1,77 +1,104 @@
+import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.id";
+import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
+import { makeOrderId, OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
+import { mainShop } from "@effect-coffee-shop/coffee-domain/Shop/Shop.aggregate";
+import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
+import * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
 import type { MenuItem, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 import {
   CoffeeApiError,
-  CoffeeOrder,
-  CoffeeOrders,
+  type OrderTicket,
   Menu,
-  PlaceOrderRequest,
+  type PlaceOrderRequest,
 } from "#features/coffee-shop/lib/coffee-schemas.ts";
 import { requestJson } from "#shared/lib/http.ts";
-import * as Schema from "effect/Schema";
-
-const apiBaseUrl = import.meta.env.VITE_COFFEE_API_URL ?? "/api";
-const encodePlaceOrderRequest = Schema.encodeUnknownSync(PlaceOrderRequest);
-
-function toRequestUrl(path: string): string {
-  return `${apiBaseUrl}${path}`;
-}
+import { apiBaseUrl, customerRuntime, type StaffClient, staffRuntime } from "./domain-clients.ts";
+import { OrderRequestError, toOrderRequestError } from "./order-failures.ts";
+import { toCoffeeOrder, toCoffeeOrders } from "./order-mapping.ts";
 
 function readApiErrorMessage(error: CoffeeApiError): string {
   return error.message ?? error._tag ?? "Unknown API error";
 }
 
-function getActionPath(orderId: string, action: OrderAction): string {
-  const actionPaths: Record<OrderAction, string> = {
-    "start-brewing": "start-brewing",
-    "mark-ready": "mark-ready",
-    "pick-up": "pick-up",
-    cancel: "cancel",
-  };
-
-  return `/orders/${orderId}/${actionPaths[action]}`;
+function decodeCustomerId(userId: string): Effect.Effect<CustomerId, OrderRequestError> {
+  return Schema.decodeEffect(CustomerId)(userId).pipe(
+    Effect.mapError(() => new OrderRequestError({ message: "Sign in to place and view orders." })),
+  );
 }
+
+function decodeOrderId(orderId: string): Effect.Effect<OrderId, OrderRequestError> {
+  return Schema.decodeEffect(OrderId)(orderId).pipe(
+    Effect.mapError(() => new OrderRequestError({ message: `${orderId} is not an order id.` })),
+  );
+}
+
+const staffActions = {
+  "start-brewing": (api: StaffClient, target: OrderId) => api.StartBrewing({ target }),
+  "mark-ready": (api: StaffClient, target: OrderId) => api.MarkReady({ target }),
+  "pick-up": (api: StaffClient, target: OrderId) => api.PickUpOrder({ target }),
+  cancel: (api: StaffClient, target: OrderId) => api.CancelOrder({ target }),
+} satisfies Record<OrderAction, unknown>;
 
 export async function fetchMenu(): Promise<readonly MenuItem[]> {
   return requestJson({
     errorSchema: CoffeeApiError,
-    path: toRequestUrl("/menu"),
+    path: `${apiBaseUrl}/menu`,
     readErrorMessage: readApiErrorMessage,
     schema: Menu,
   });
 }
 
-export async function fetchOrders(): Promise<readonly CoffeeOrder[]> {
-  return requestJson({
-    errorSchema: CoffeeApiError,
-    path: toRequestUrl("/orders"),
-    readErrorMessage: readApiErrorMessage,
-    schema: CoffeeOrders,
-  });
+/** The signed-in customer's orders, oldest first. */
+export async function fetchCustomerOrders(userId: string): Promise<readonly OrderTicket[]> {
+  return customerRuntime.runPromise(
+    Effect.gen(function* () {
+      const customerId = yield* decodeCustomerId(userId);
+      const api = yield* CustomerApi.Client;
+      const view = yield* api.CustomerOrders.get(customerId).pipe(
+        Effect.mapError(toOrderRequestError),
+      );
+      return toCoffeeOrders(view);
+    }),
+  );
 }
 
-export async function createOrder(payload: PlaceOrderRequest): Promise<CoffeeOrder> {
-  return requestJson({
-    errorSchema: CoffeeApiError,
-    init: {
-      body: JSON.stringify(encodePlaceOrderRequest(payload)),
-      headers: { "content-type": "application/json" },
-      method: "POST",
-    },
-    path: toRequestUrl("/orders"),
-    readErrorMessage: readApiErrorMessage,
-    schema: CoffeeOrder,
-  });
+/** The shop's queue for the baristas: open orders and recent history, oldest first. */
+export async function fetchStaffQueue(): Promise<readonly OrderTicket[]> {
+  return staffRuntime.runPromise(
+    Effect.gen(function* () {
+      const api = yield* StaffApi.Client;
+      const view = yield* api.OrderQueue.get(mainShop).pipe(Effect.mapError(toOrderRequestError));
+      return toCoffeeOrders(view);
+    }),
+  );
+}
+
+export async function createOrder(payload: PlaceOrderRequest): Promise<OrderTicket> {
+  return customerRuntime.runPromise(
+    Effect.gen(function* () {
+      const api = yield* CustomerApi.Client;
+      const target = yield* makeOrderId;
+      const { reply } = yield* api
+        .PlaceOrder({ target, items: payload.items })
+        .pipe(Effect.mapError(toOrderRequestError));
+      return toCoffeeOrder(reply.order);
+    }),
+  );
 }
 
 export async function updateOrderStatus(
   orderId: string,
   action: OrderAction,
-): Promise<CoffeeOrder> {
-  return requestJson({
-    errorSchema: CoffeeApiError,
-    init: { method: "POST" },
-    path: toRequestUrl(getActionPath(orderId, action)),
-    readErrorMessage: readApiErrorMessage,
-    schema: CoffeeOrder,
-  });
+): Promise<OrderTicket> {
+  return staffRuntime.runPromise(
+    Effect.gen(function* () {
+      const target = yield* decodeOrderId(orderId);
+      const api = yield* StaffApi.Client;
+      const { reply } = yield* staffActions[action](api, target).pipe(
+        Effect.mapError(toOrderRequestError),
+      );
+      return toCoffeeOrder(reply.order);
+    }),
+  );
 }

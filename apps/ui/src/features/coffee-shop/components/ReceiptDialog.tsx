@@ -4,11 +4,11 @@ import { Text } from "@effect-coffee-shop/ui-kit/components/retroui/Text";
 import { StatusBadge } from "#features/coffee-shop/components/StatusBadge.tsx";
 import { formatOrderTime, formatPrice } from "#features/coffee-shop/lib/coffee.ts";
 import { formatOrderItems } from "#features/coffee-shop/lib/order-display.ts";
-import type { CoffeeOrder } from "#features/coffee-shop/lib/coffee.ts";
+import type { OrderTicket } from "#features/coffee-shop/lib/coffee.ts";
 
 export interface ReceiptDialogProps {
   actionLabel: string;
-  order: CoffeeOrder | null;
+  order: OrderTicket | null;
   onClose: () => void;
   onOpenOrders: () => void;
 }
@@ -32,7 +32,7 @@ export function ReceiptDialog(inputProps: ReceiptDialogProps) {
 
 function ReceiptContent(inputProps: {
   actionLabel: string;
-  order: CoffeeOrder;
+  order: OrderTicket;
   onClose: () => void;
   onOpenOrders: () => void;
 }) {
@@ -50,7 +50,7 @@ function ReceiptContent(inputProps: {
   );
 }
 
-function ReceiptDetails({ order }: { order: CoffeeOrder }) {
+function ReceiptDetails({ order }: { order: OrderTicket }) {
   return (
     <div className="grid gap-5 px-4 pb-5 pt-1">
       <div className="flex flex-wrap items-center gap-3">

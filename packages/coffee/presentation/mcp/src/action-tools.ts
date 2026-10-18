@@ -126,5 +126,4 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
       }),
     ),
   ),
-  Layer.provide(CoffeeOrderApp.layer),
 );

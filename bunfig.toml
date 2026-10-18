@@ -3,13 +3,12 @@ linker = "isolated"
 globalStore = true
 minimumReleaseAge = 259200
 # Bun 1.3.11 only honors package-level release-age exclusions.
-# pglite-test and its constructive-io dependency chain publish faster than the
-# release-age window; all are from the same publisher.
 minimumReleaseAgeExcludes = [
   # Explicitly adopted Effect v4 integration; pinned in the workspace catalog.
   "effect-wide-event",
   # Explicitly adopted launch release; version pinned in the workspace catalog.
   "@shadcn/lint",
+  # Pinned to a pkg.alchemy.run preview build of alchemy main for alchemy/Domain.
   "alchemy",
   # alchemy pins its @alchemy.run/* and @distilled.cloud/* siblings to the same
   # release, so they ship together with each adopted alchemy version.
@@ -38,14 +37,9 @@ minimumReleaseAgeExcludes = [
   "@yielded/auth-simplewebauthn",
   "@yielded/crypto",
   "effect",
-  "@effect/platform-bun",
   "@effect/platform-node",
   "@effect/platform-node-shared",
   "@effect/sql-d1",
-  "@effect/sql-pg",
-  "@effect/sql-pglite",
-  "@effect/sql-sqlite-bun",
-  "@effect/sql-sqlite-do",
   "@effect/vitest",
   # The Effect language service ships each platform binary as a separate
   # exact-version package, so every binding must be listed.
@@ -57,25 +51,6 @@ minimumReleaseAgeExcludes = [
   "@effect/tsgo-linux-x64",
   "@effect/tsgo-win32-arm64",
   "@effect/tsgo-win32-x64",
-  "pglite-test",
-  "@pgpmjs/core",
-  "@pgpmjs/env",
-  "@pgpmjs/pglite-adapter",
-  "@pgpmjs/types",
-  "pg-cache",
-  "pg-env",
-  "pgsql-client",
-  "pgsql-test",
-  "@pgpmjs/ast",
-  "@pgpmjs/bundle",
-  "csv-to-pg",
-  "pgsql-deparser",
-  "pgsql-parser",
-  "pgsql-seed",
-  "@pgpmjs/traverse",
-  "@pgsql/quotes",
-  "@pgsql/utils",
-  "libpg-query",
   # prek, oxlint and oxfmt are adopted as soon as they publish (decision 2026-09-15).
   # Each ships platform binaries as separate exact-version packages, so every
   # binding must be listed; oxlint-tsgolint is oxlint's type-aware companion.

@@ -15,11 +15,11 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "allowedUnstableApis": ["@effect/vitest"],
+        "allowedUnstableApis": ["@effect/vitest", "effect/rpc"],
         "allowedDuplicatedPackages": ["effect"]
       }
     ],
     "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts", "*.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "*.ts"]
 }

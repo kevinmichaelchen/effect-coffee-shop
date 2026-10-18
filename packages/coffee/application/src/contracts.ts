@@ -6,12 +6,9 @@
 import * as Arr from "effect/Array";
 import * as Schema from "effect/Schema";
 import * as SchemaTransformation from "effect/SchemaTransformation";
-import { CartItemId } from "@effect-coffee-shop/coffee-domain/cart";
-import {
-  CheckoutSessionId,
-  CheckoutSessionStatus,
-  type CheckoutSession,
-} from "@effect-coffee-shop/coffee-domain/checkout-session";
+import { CartItemId } from "@effect-coffee-shop/coffee-domain/Cart/CartItem.id";
+import { CheckoutId } from "@effect-coffee-shop/coffee-domain/Cart/Checkout";
+import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.id";
 import {
   DrinkId,
   DrinkKind,
@@ -19,15 +16,18 @@ import {
   MenuItem,
   Milk,
   Temperature,
-} from "@effect-coffee-shop/coffee-domain/menu";
-import { MoneyFromCents, Money } from "@effect-coffee-shop/coffee-domain/money";
-import { QuantityInput, ShotCountInput } from "@effect-coffee-shop/coffee-domain/order-primitives";
+} from "@effect-coffee-shop/coffee-domain/Menu/Menu";
+import { CoffeeOrderItem, OrderQuote } from "@effect-coffee-shop/coffee-domain/Menu/OrderItem";
 import {
-  CoffeeOrderItem,
-  OrderId,
-  OrderStatus,
-  type CoffeeOrder,
-} from "@effect-coffee-shop/coffee-domain/order";
+  QuantityInput,
+  ShotCountInput,
+} from "@effect-coffee-shop/coffee-domain/Menu/OrderPrimitives";
+import { MoneyFromCents, Money } from "@effect-coffee-shop/coffee-domain/Money";
+import type { CoffeeOrder } from "@effect-coffee-shop/coffee-domain/Order/CoffeeOrder";
+import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
+import { OrderStatus } from "@effect-coffee-shop/coffee-domain/Order/OrderStatus";
+
+export { OrderQuote };
 
 // Keep menu-choice request fields as trimmed strings so use cases can surface
 // domain-specific errors instead of boundary SchemaError failures.
@@ -35,7 +35,7 @@ const BoundaryString = Schema.Trim;
 const CartItemIdInput = CartItemId.annotate({
   description: "Cart line id, such as cart_item_00000000000000000000000001.",
 });
-const CheckoutSessionIdInput = CheckoutSessionId.annotate({
+const CheckoutSessionIdInput = CheckoutId.annotate({
   description: "Checkout session id returned by prepare_cart_checkout.",
 });
 const CustomerNameInput = BoundaryString.annotate({
@@ -131,12 +131,6 @@ export const ListOrdersRequest = Schema.Struct({
 }).annotate({ identifier: "ListOrdersRequest" });
 export type ListOrdersRequest = typeof ListOrdersRequest.Type;
 
-export const OrderQuote = Schema.Struct({
-  items: Schema.NonEmptyArray(CoffeeOrderItem),
-  totalPrice: Money,
-}).annotate({ identifier: "OrderQuote" });
-export type OrderQuote = typeof OrderQuote.Type;
-
 export const CartItemQuote = Schema.Struct({
   cartItemId: CartItemId,
   item: CoffeeOrderItem,
@@ -144,11 +138,28 @@ export const CartItemQuote = Schema.Struct({
 export type CartItemQuote = typeof CartItemQuote.Type;
 
 export const CartSnapshot = Schema.Struct({
-  ownerUserId: Schema.String,
+  ownerUserId: CustomerId,
   items: Schema.Array(CartItemQuote),
   totalPrice: Money,
 }).annotate({ identifier: "CartSnapshot" });
 export type CartSnapshot = typeof CartSnapshot.Type;
+
+export const checkoutSessionStatuses = ["awaiting_confirmation"] as const;
+export const CheckoutSessionStatus = Schema.Literals(checkoutSessionStatuses);
+export type CheckoutSessionStatus = typeof CheckoutSessionStatus.Type;
+
+/** A prepared checkout, as adapters present it to the person confirming it. */
+export const CheckoutSession = Schema.Struct({
+  id: CheckoutId,
+  ownerUserId: CustomerId,
+  status: CheckoutSessionStatus,
+  items: Schema.NonEmptyArray(CoffeeOrderItem),
+  totalPrice: Money,
+  createdAt: Schema.DateTimeUtc,
+  updatedAt: Schema.DateTimeUtc,
+  expiresAt: Schema.DateTimeUtc,
+}).annotate({ identifier: "CheckoutSession" });
+export type CheckoutSession = typeof CheckoutSession.Type;
 
 export const ItemOptions = Schema.Struct({
   item: MenuItem,
@@ -234,7 +245,7 @@ export const CartView = Schema.Struct({
 export type CartView = typeof CartView.Type;
 
 export const CheckoutSessionView = Schema.Struct({
-  id: Schema.toEncoded(CheckoutSessionId),
+  id: Schema.toEncoded(CheckoutId),
   ownerUserId: Schema.String,
   status: CheckoutSessionStatus,
   items: Schema.NonEmptyArray(CoffeeOrderItemView),
@@ -306,7 +317,7 @@ const CoffeeOrderItemViewModel = Schema.Struct({
 const CoffeeOrderViewModel = Schema.Struct({
   id: OrderId,
   customerName: Schema.String,
-  ownerUserId: Schema.String,
+  ownerUserId: CustomerId,
   items: Schema.NonEmptyArray(CoffeeOrderItemViewModel),
   status: OrderStatus,
   totalPrice: MoneyFromCents,
@@ -342,7 +353,7 @@ const CartItemViewModel = Schema.Struct({
 });
 
 const CartViewModel = Schema.Struct({
-  ownerUserId: Schema.String,
+  ownerUserId: CustomerId,
   items: Schema.Array(CartItemViewModel),
   totalPrice: MoneyFromCents,
 }).pipe(
@@ -352,8 +363,8 @@ const CartViewModel = Schema.Struct({
 );
 
 const CheckoutSessionViewModel = Schema.Struct({
-  id: CheckoutSessionId,
-  ownerUserId: Schema.String,
+  id: CheckoutId,
+  ownerUserId: CustomerId,
   status: CheckoutSessionStatus,
   items: Schema.NonEmptyArray(CoffeeOrderItemViewModel),
   totalPrice: MoneyFromCents,

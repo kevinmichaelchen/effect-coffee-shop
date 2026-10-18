@@ -30,7 +30,7 @@
   },
   "overrides": [
     {
-      "files": ["**/*.test.ts", "**/drizzle.config.ts"],
+      "files": ["**/*.test.ts"],
       "rules": {
         "effect/avoid-process-env": "off"
       }
@@ -41,26 +41,13 @@
         "no-restricted-imports": [
           "error",
           {
-            "patterns": [
-              "@effect-coffee-shop/backend",
-              "@effect-coffee-shop/backend/*",
-              "#app-layer",
-              "**/apps/backend/src/**",
-              "**/apps/backend/src/cloudflare/**",
-              "**/src/cloudflare/**"
-            ]
+            "patterns": ["@effect-coffee-shop/coffee-server", "@effect-coffee-shop/coffee-server/*"]
           }
         ]
       }
     },
     {
-      "files": [
-        "**/*.test.ts",
-        "**/*.test.tsx",
-        "**/testing/**/*.ts",
-        "**/test-support.ts",
-        "**/repository-contract.ts"
-      ],
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/testing/**/*.ts", "**/test-support.ts"],
       "rules": {
         "no-restricted-properties": [
           "error",
@@ -72,7 +59,7 @@
       }
     },
     {
-      "files": ["**/repository-contract.ts"],
+      "files": [],
       "rules": {
         "vitest/valid-title": "off"
       }

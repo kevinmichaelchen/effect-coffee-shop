@@ -3,7 +3,9 @@ import babel from "@rolldown/plugin-babel";
 import { reactCompilerPreset } from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
 
-const coffeeProxyTarget = process.env.VITE_COFFEE_PROXY_TARGET ?? "http://localhost:3000";
+// A standalone `vite` dev server proxies the backend paths to the CoffeeWorker
+// that `alchemy dev` serves (its default local port).
+const coffeeProxyTarget = process.env.VITE_COFFEE_PROXY_TARGET ?? "http://localhost:1337";
 
 /**
  * Alchemy sets this marker whenever it hosts Vite (`alchemy dev`, deploys, and

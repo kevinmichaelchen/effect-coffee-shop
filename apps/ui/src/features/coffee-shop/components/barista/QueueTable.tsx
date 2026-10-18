@@ -4,10 +4,10 @@ import { StatusBadge } from "#features/coffee-shop/components/StatusBadge.tsx";
 import { QueueRowActions } from "#features/coffee-shop/components/barista/QueueRowActions.tsx";
 import { formatOrderTime } from "#features/coffee-shop/lib/coffee.ts";
 import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
-import type { CoffeeOrder, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
+import type { OrderTicket, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 
 export interface QueueTableProps {
-  orders: readonly CoffeeOrder[];
+  orders: readonly OrderTicket[];
   pendingOrderId: string | null;
   onAction: (orderId: string, action: OrderAction) => void;
   onInspect: (orderId: string) => void;

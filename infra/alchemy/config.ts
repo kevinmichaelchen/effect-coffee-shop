@@ -5,10 +5,7 @@
  */
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
-import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
-import * as Str from "effect/String";
 
 export const booleanWithDefault = (name: string, defaultValue: boolean) =>
   Config.Boolean(name).pipe(Config.withDefault(defaultValue), Effect.orDie);
@@ -28,41 +25,3 @@ export const numberBetweenWithDefault = (input: {
     ),
     input.name,
   ).pipe(Config.withDefault(input.defaultValue), Effect.orDie);
-
-const optionalString = (name: string) =>
-  Config.String(name).pipe(Config.option, Config.map(Option.getOrUndefined), Effect.orDie);
-
-export const stringWithDefault = (name: string, defaultValue: string) =>
-  Config.String(name).pipe(Config.withDefault(defaultValue), Effect.orDie);
-
-export const optionalTrimmedString = (name: string) =>
-  optionalString(name).pipe(
-    Effect.map((value) => {
-      const trimmed = value === undefined ? undefined : Str.trim(value);
-
-      return trimmed === undefined || trimmed === "" ? undefined : trimmed;
-    }),
-  );
-
-export const optionalTrimmedRedacted = (name: string) =>
-  Config.Redacted(name).pipe(
-    Config.option,
-    Config.map(
-      Option.flatMap((redacted) => {
-        const trimmed = Str.trim(Redacted.value(redacted));
-
-        return trimmed === ""
-          ? Option.none()
-          : Option.some(Redacted.make(trimmed, { label: name }));
-      }),
-    ),
-    Config.map(Option.getOrUndefined),
-    Effect.orDie,
-  );
-
-export const optionalCsv = (name: string) =>
-  optionalTrimmedString(name).pipe(
-    Effect.map((value) =>
-      value ? Str.split(value, ",").map(Str.trim).filter(Str.isNonEmpty) : undefined,
-    ),
-  );

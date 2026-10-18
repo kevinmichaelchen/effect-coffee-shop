@@ -23,32 +23,45 @@ classes: {
   }
 }
 
-app: "apps/backend\ncomposition root\nchooses concrete layers" {
+infra: "infra/alchemy\nCloudflare stack" {
   class: app
 }
 
-presentation: "presentation and capability adapters\nHTTP, MCP, CLI, auth" {
+ui: "apps/ui\nReact app + Website Worker" {
+  class: app
+}
+
+server: "coffee-server\nCoffee Worker, composition root\nDurable Objects, D1, Secrets Store" {
+  class: app
+}
+
+presentation: "presentation\nREST (health, menu, me), MCP" {
   class: presentation
 }
 
-actions: "presentation/actions\nshared capability catalog" {
+actions: "presentation/actions\nshared tool catalog" {
   class: presentation
 }
 
-core: "coffee-application\nuse cases and ports" {
-  class: application
-}
-
-domain: "coffee-domain\npure business types" {
-  class: domain
-}
-
-external: "external implementations\nrepositories and runtime adapters" {
+auth: "coffee-auth\nYielded passkeys, MCP OAuth" {
   class: external
 }
 
-app -> presentation: "mount surfaces"
-presentation -> actions: "project tools/capabilities"
-actions -> core: "run use cases"
-external -> core: "implement ports"
-core -> domain: "uses domain types"
+core: "coffee-application\nCoffeeOrderApp over the model" {
+  class: application
+}
+
+domain: "coffee-domain\nalchemy/Domain model\naggregates, views, policy, Apis" {
+  class: domain
+}
+
+infra -> server: "deploys"
+infra -> ui: "deploys"
+ui -> domain: "Api clients"
+server -> presentation: "mounts"
+server -> auth: "sessions"
+server -> domain: "hosts model + Apis"
+presentation -> actions: "project tools"
+presentation -> core: "call"
+actions -> core: "run"
+core -> domain: "commands + views"

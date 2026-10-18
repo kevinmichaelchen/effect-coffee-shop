@@ -1,65 +1,119 @@
 # Coffee Domain
 
-`@effect-coffee-shop/coffee-domain` owns pure Coffee concepts: money, menu items,
-orders, carts, checkout sessions, typed IDs, and domain errors. Import individual
-modules such as `@effect-coffee-shop/coffee-domain/order`.
+`@effect-coffee-shop/coffee-domain` is the coffee shop as an
+[`alchemy/Domain`](https://main.alchemy.run/domain/what-is-ddd/) model: commands that aggregates
+decide, events they record, views that fold those events into what people read, and a policy that
+reacts. It is pure: it imports only `alchemy/Domain` and `effect`. The same model runs in memory
+for tests and on Cloudflare Durable Objects in production, hosted by
+[`coffee-server`](../server).
 
-This package has no workspace dependencies. Application workflows, persistence,
-transport contracts, and runtime wiring belong outside this boundary.
+Files follow the alchemy-domain layout: one building block per file, named `<Noun>.<kind>.ts`,
+with folders as subdomains. Import them by path, e.g.
+`@effect-coffee-shop/coffee-domain/Order/Order.aggregate`.
 
-Run `typecheck`, `lint`, `lint:custom`, `fmt:check`, and `test` with
-`bun run --cwd packages/coffee/domain <task>`.
+> `alchemy/Domain` is not in an npm release yet. The workspace catalog pins `alchemy` to a
+> preview build of alchemy `main` (`https://pkg.alchemy.run/alchemy/9e3c058`). Move to the first
+> npm release that ships `alchemy/Domain` once it is published.
 
-## Order fulfillment
+## The model
 
-[`order-fulfillment.ts`](src/order-fulfillment.ts) defines the staff-controlled
-order lifecycle with [`@typeonce/effect-machine`](https://github.com/typeonce-dev/effect-machine).
-Its state paths are the existing `OrderStatus` values, and its typed event handlers
-declare the five allowed edges. The library checks event names and destination
-paths when the model compiles.
+| Building block | Files                                                                                                                          | What it does                                                                                                                              |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Aggregate      | [`Order/Order.aggregate.ts`](src/Order/Order.aggregate.ts)                                                                     | One ticket, keyed by `OrderId`: placed once, then moved along its lifecycle by staff.                                                     |
+| Aggregate      | [`Cart/Cart.aggregate.ts`](src/Cart/Cart.aggregate.ts)                                                                         | One person's cart, keyed by `CustomerId`: its lines and the checkout awaiting confirmation. Confirming empties the cart in the same step. |
+| Aggregate      | [`Customer/Customer.aggregate.ts`](src/Customer/Customer.aggregate.ts), [`Shop/Shop.aggregate.ts`](src/Shop/Shop.aggregate.ts) | Keys only: views about one customer, or the whole shop, are keyed by them. They decide nothing yet.                                       |
+| View           | [`Order/OrderSummary.view.ts`](src/Order/OrderSummary.view.ts)                                                                 | One ticket as people read it. Staff read any; a customer only their own.                                                                  |
+| View           | [`Order/CustomerOrders.view.ts`](src/Order/CustomerOrders.view.ts)                                                             | Every order one customer placed, folded from `OrderSummary`.                                                                              |
+| View           | [`Order/OrderQueue.view.ts`](src/Order/OrderQueue.view.ts)                                                                     | The baristas' queue: open orders plus the 200 most recent finished ones. Staff only.                                                      |
+| Policy         | [`Cart/CheckoutFulfillment.policy.ts`](src/Cart/CheckoutFulfillment.policy.ts)                                                 | Whenever a checkout is confirmed, place its order at the checkout's prices.                                                               |
+| Api            | [`CustomerApi.api.ts`](src/CustomerApi.api.ts), [`StaffApi.api.ts`](src/StaffApi.api.ts)                                       | What each audience may send and read.                                                                                                     |
+| Model          | [`CoffeeShop.model.ts`](src/CoffeeShop.model.ts)                                                                               | Everything hosted together, plus the policy implementations as one Layer.                                                                 |
+
+Commands live in `<Command>.command.ts` with the events they record and the rejections only they
+return. Shared rejections have their own `*.rejection.ts` files.
+
+| Aggregate | Commands                                                                                                      | Events                                                                                                        |
+| --------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `Order`   | `PlaceOrder`, `PlaceCheckedOutOrder` (policy only), `StartBrewing`, `MarkReady`, `PickUpOrder`, `CancelOrder` | `OrderPlaced`, `BrewingStarted`, `OrderReady`, `OrderPickedUp`, `OrderCancelled`                              |
+| `Cart`    | `AddCartItem`, `UpdateCartItem`, `RemoveCartItem`, `ClearCart`, `PrepareCheckout`, `ConfirmCheckout`          | `CartItemAdded`, `CartItemUpdated`, `CartItemRemoved`, `CartCleared`, `CheckoutPrepared`, `CheckoutConfirmed` |
+
+Rejections carry their evidence: `DrinkNotFound { drinkId }`, `InvalidOrder { message }`,
+`InvalidStatusTransition { orderId, from, to }`, `OrderNotFound`, `AlreadyPlaced`, `StaffOnly`,
+`NotYourOrder`, `NotYourCart`, `CartItemNotFound`, `CheckoutNotFound`, `CheckoutExpired`.
+
+## Order lifecycle
+
+Staff move a ticket through these states. `decide` in `Order.aggregate.ts` refuses every other
+move with `InvalidStatusTransition`, including repeated, skipped and backward steps.
 
 ```mermaid
 stateDiagram-v2
     state "picked-up" as pickedUp
-    [*] --> pending
+    [*] --> pending: PlaceOrder
     pending --> brewing: StartBrewing
-    pending --> cancelled: Cancel
+    pending --> cancelled: CancelOrder
     brewing --> ready: MarkReady
-    brewing --> cancelled: Cancel
-    ready --> pickedUp: PickUp
+    brewing --> cancelled: CancelOrder
+    ready --> pickedUp: PickUpOrder
 ```
 
-`picked-up` and `cancelled` have no handlers and are absorbing states. Repeated
-commands, skipped steps, backward steps, and cancellation after readiness are
-rejected. There is no command to return an order to `pending`.
+## Checkout
 
-The application authenticates staff, loads the order, calls
-`transitionOrderStatus(from, to)`, and saves the status returned by `Machine.plan`.
-The domain accepts a plan only when its settled status changes and equals the
-requested target. Unhandled events and plans that settle elsewhere return
-`Option.none`, which the application maps to the existing
-`InvalidOrderStatusTransitionError` (HTTP 409) before any save. Machine planning
-failures map to `InternalAppError`. All other order fields and the existing
-authorization, persistence error mapping, and success observability are preserved.
-`OrderStatus` and `orderStatuses` live in the lightweight `order` module; importing
-order schemas or errors does not load the machine. Fulfillment helpers, including
-`canTransitionTo`, are exported from `order-fulfillment`. That synchronous query
-reads the machine's enabled events and is exact for this model because every
-handler is unconditional.
+```mermaid
+sequenceDiagram
+    participant C as Customer
+    participant Cart
+    participant P as CheckoutFulfillment
+    participant Order
+    C->>Cart: PrepareCheckout(checkoutId)
+    Cart-->>C: CheckoutPrepared (prices held 15 minutes)
+    C->>Cart: ConfirmCheckout(checkoutId, orderId)
+    Cart-->>C: CheckoutConfirmed (cart emptied)
+    Cart--)P: CheckoutConfirmed
+    P->>Order: PlaceCheckedOutOrder(orderId)
+    Order--)C: OrderPlaced, seen in OrderSummary / CustomerOrders
+```
 
-Each command projects the repository's decoded status into a typed logical
-snapshot. The model has no state data, invokes, timers, or commands, so planning
-requires no live machine, fibers, or snapshot storage. The repository remains
-authoritative and retains its existing read-then-save concurrency semantics.
-Adding state-owned work or data would require revisiting this projection.
+Emptying the cart and confirming happen in one `Cart` commit, so a confirmed cart is never
+ordered twice. Placing the order is the policy's job, so it happens just after the commit.
+`PlaceCheckedOutOrder` is idempotent, because policies run at least once.
 
-The dependency is pinned to `0.40.0`, the first release supporting stable Effect
-4 (`effect: ^4.0.0`). The committed lockfile installs this adopted version alongside
-the repository's Effect `4.0.0`; future dependency resolutions remain subject to
-Bun's normal release-age quarantine.
+## Who may do what
 
-Tests cover all 25 status pairs, multi-event fulfillment and cancellation traces,
-and all five transition definitions with `MachineTest`. Application tests cover
-all 20 staff-command/status combinations, persisted order preservation, rejection
-without writes, authorization before repository access, missing orders, and read
-and save failures.
+`Session` ([`Session.middleware.ts`](src/Session.middleware.ts)) authenticates a request and
+provides `CurrentActor` ([`CurrentActor.context.ts`](src/CurrentActor.context.ts)): a `customer`,
+`staff`, or `system` [`Actor`](src/Actor.ts). Each command's `decide` and each view's `validate`
+authorizes against it:
+
+- Anyone signed in may place orders and use their own cart (a cart is keyed by its owner).
+- Only staff (and the system) may move tickets or read the queue.
+- Customers read only their own tickets and order lists.
+
+Staff authority comes from deployment configuration (`COFFEE_STAFF_USER_IDS`), never from the
+session.
+
+## Values
+
+[`Menu/`](src/Menu) holds the static menu and pricing. [`Menu/OrderItem.ts`](src/Menu/OrderItem.ts)
+prices a `DrinkSelection` (menu choices with defaults) as pure functions returning `Result`, so
+`decide` can price a request and reject it in the same step. [`Money.ts`](src/Money.ts) keeps
+exact cents. Ids (`OrderId`, `CartItemId`, `CheckoutId`) are prefixed, time-ordered strings made by
+whoever sends the creating command ([`TypedId.ts`](src/TypedId.ts)), so a retried command
+addresses the same instance.
+
+## Tests
+
+[`test/CoffeeShop.story.test.ts`](test/CoffeeShop.story.test.ts) specifies the model with stories:
+given events, when a command is sent, then the events, replies, rejections and view states that
+follow. The policy runs for real. Unit tests cover pricing, money, the menu and the lifecycle
+table.
+
+```bash
+bun run --cwd packages/coffee/domain test
+bun run --cwd packages/coffee/domain typecheck
+bun run --cwd packages/coffee/domain lint
+```
+
+The server's [`CoffeeApis.test.ts`](../server/test/CoffeeApis.test.ts) drives the Apis over the
+in-memory platform. The Alchemy smoke test (`bun run cf:test`) runs the model on locally emulated
+Durable Objects.

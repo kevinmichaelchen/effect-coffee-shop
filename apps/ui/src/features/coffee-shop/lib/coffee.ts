@@ -1,4 +1,4 @@
-import type { CoffeeOrder, MenuItem, PlaceOrderRequest } from "./coffee-schemas.ts";
+import type { OrderTicket, MenuItem, PlaceOrderRequest } from "./coffee-schemas.ts";
 
 export const drinkSizes = ["small", "medium", "large"] as const;
 export const milks = ["whole", "oat", "almond", "none"] as const;
@@ -23,7 +23,7 @@ export interface OrderDraft {
   notes: string;
 }
 
-export type { CoffeeOrder, MenuItem, PlaceOrderRequest } from "./coffee-schemas.ts";
+export type { OrderTicket, MenuItem, PlaceOrderRequest } from "./coffee-schemas.ts";
 
 export interface OrderActionOption {
   action: OrderAction;
@@ -102,7 +102,7 @@ export function getOrderActions(status: OrderStatus): readonly OrderActionOption
   return actionOptions[status];
 }
 
-export function isActiveOrder(order: CoffeeOrder): boolean {
+export function isActiveOrder(order: OrderTicket): boolean {
   return activeStatuses.has(order.status);
 }
 

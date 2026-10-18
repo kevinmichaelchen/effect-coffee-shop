@@ -1,5 +1,7 @@
 /**
- * Defines the Coffee HTTP API groups, endpoints, and server handlers.
+ * Defines the Coffee REST endpoints that sit beside the domain Apis: health,
+ * the static menu, and who is signed in. Orders, carts and checkout are
+ * served by `CustomerApi` and `StaffApi` from the domain package.
  *
  * @module
  */
@@ -11,33 +13,14 @@ import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as HttpApiSchema from "effect/http-api/HttpApiSchema";
-import {
-  DrinkNotFoundError,
-  InvalidOrderInputError,
-  InvalidOrderStatusTransitionError,
-  OrderNotFoundError,
-} from "@effect-coffee-shop/coffee-domain/errors";
-import { OrderId } from "@effect-coffee-shop/coffee-domain/order";
-import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
+import { menuItems } from "@effect-coffee-shop/coffee-domain/Menu/Menu";
 import {
   type AppActor,
-  AuthenticationRequiredError,
   CurrentActor,
-  StaffRoleRequiredError,
   anonymousActor,
   isAuthenticatedActor,
 } from "@effect-coffee-shop/coffee-application/CurrentActor";
-import {
-  CoffeeOrderView,
-  CoffeeOrdersView,
-  ListOrdersRequest,
-  MenuView,
-  PlaceOrderRequest,
-  toCoffeeOrderView,
-  toCoffeeOrdersView,
-  toMenuView,
-} from "@effect-coffee-shop/coffee-application/contracts";
-import { InternalAppError } from "@effect-coffee-shop/coffee-application/errors";
+import { MenuView, toMenuView } from "@effect-coffee-shop/coffee-application/contracts";
 
 const HealthStatus = Schema.Struct({
   status: Schema.Literal("ok"),
@@ -61,28 +44,6 @@ const toActorSummary = (actor: AppActor): ActorSummary =>
       }
     : anonymousActor;
 
-const orderIdParams = {
-  orderId: OrderId,
-};
-
-const orderStatusErrors = [
-  AuthenticationRequiredError,
-  InvalidOrderStatusTransitionError,
-  OrderNotFoundError,
-  StaffRoleRequiredError,
-  InternalAppError,
-];
-
-const orderStatusEndpoint = <Name extends string, Path extends `/${string}`>(
-  name: Name,
-  path: Path,
-) =>
-  HttpApiEndpoint.post(name, path, {
-    params: orderIdParams,
-    success: CoffeeOrderView,
-    error: orderStatusErrors,
-  });
-
 class HealthApi extends HttpApiGroup.make("health", { topLevel: true }).add(
   HttpApiEndpoint.get("check", "/health", {
     success: HttpApiSchema.WithHeaders(HealthStatus, {
@@ -95,7 +56,6 @@ class MenuApi extends HttpApiGroup.make("menu")
   .add(
     HttpApiEndpoint.get("list", "/", {
       success: MenuView,
-      error: InternalAppError,
     }),
   )
   .prefix("/menu") {}
@@ -108,42 +68,10 @@ class SessionApi extends HttpApiGroup.make("session")
   )
   .prefix("/") {}
 
-class OrdersApi extends HttpApiGroup.make("orders")
-  .add(
-    HttpApiEndpoint.post("create", "/", {
-      payload: PlaceOrderRequest,
-      success: CoffeeOrderView,
-      error: [
-        AuthenticationRequiredError,
-        DrinkNotFoundError,
-        InvalidOrderInputError,
-        InternalAppError,
-      ],
-    }),
-    HttpApiEndpoint.get("list", "/", {
-      query: ListOrdersRequest,
-      success: CoffeeOrdersView,
-      error: [AuthenticationRequiredError, InvalidOrderInputError, InternalAppError],
-    }),
-    HttpApiEndpoint.get("getById", "/:orderId", {
-      params: {
-        orderId: OrderId,
-      },
-      success: CoffeeOrderView,
-      error: [AuthenticationRequiredError, OrderNotFoundError, InternalAppError],
-    }),
-    orderStatusEndpoint("startBrewing", "/:orderId/start-brewing"),
-    orderStatusEndpoint("markReady", "/:orderId/mark-ready"),
-    orderStatusEndpoint("pickUp", "/:orderId/pick-up"),
-    orderStatusEndpoint("cancel", "/:orderId/cancel"),
-  )
-  .prefix("/orders") {}
-
 export class CoffeeHttpApi extends HttpApi.make("coffee-order-api")
   .add(HealthApi)
   .add(MenuApi)
-  .add(SessionApi)
-  .add(OrdersApi) {}
+  .add(SessionApi) {}
 
 const HealthApiLive = HttpApiBuilder.group(CoffeeHttpApi, "health", (handlers) =>
   handlers.handle("check", () =>
@@ -157,9 +85,7 @@ const HealthApiLive = HttpApiBuilder.group(CoffeeHttpApi, "health", (handlers) =
 );
 
 const MenuApiLive = HttpApiBuilder.group(CoffeeHttpApi, "menu", (handlers) =>
-  handlers.handle("list", () =>
-    CoffeeOrderApp.use((app) => app.listMenu().pipe(Effect.map(toMenuView))),
-  ),
+  handlers.handle("list", () => Effect.succeed(toMenuView(menuItems))),
 );
 
 const SessionApiLive = HttpApiBuilder.group(CoffeeHttpApi, "session", (handlers) =>
@@ -170,34 +96,7 @@ const SessionApiLive = HttpApiBuilder.group(CoffeeHttpApi, "session", (handlers)
   ),
 );
 
-const OrdersApiLive = HttpApiBuilder.group(CoffeeHttpApi, "orders", (handlers) =>
-  handlers.handleAll({
-    create: ({ payload }) =>
-      CoffeeOrderApp.use((app) => app.placeOrder(payload).pipe(Effect.map(toCoffeeOrderView))),
-    list: ({ query }) =>
-      CoffeeOrderApp.use((app) => app.listOrders(query).pipe(Effect.map(toCoffeeOrdersView))),
-    getById: ({ params }) =>
-      CoffeeOrderApp.use((app) => app.getOrder(params.orderId).pipe(Effect.map(toCoffeeOrderView))),
-    startBrewing: ({ params }) =>
-      CoffeeOrderApp.use((app) =>
-        app.startBrewing(params.orderId).pipe(Effect.map(toCoffeeOrderView)),
-      ),
-    markReady: ({ params }) =>
-      CoffeeOrderApp.use((app) =>
-        app.markReady(params.orderId).pipe(Effect.map(toCoffeeOrderView)),
-      ),
-    pickUp: ({ params }) =>
-      CoffeeOrderApp.use((app) =>
-        app.pickUpOrder(params.orderId).pipe(Effect.map(toCoffeeOrderView)),
-      ),
-    cancel: ({ params }) =>
-      CoffeeOrderApp.use((app) =>
-        app.cancelOrder(params.orderId).pipe(Effect.map(toCoffeeOrderView)),
-      ),
-  }),
-);
-
 export const CoffeeHttpApiLive = Layer.provide(
   HttpApiBuilder.layer(CoffeeHttpApi, { openapiPath: "/openapi.json" }),
-  [HealthApiLive, MenuApiLive, SessionApiLive, OrdersApiLive],
-).pipe(Layer.provide(CoffeeOrderApp.layer));
+  [HealthApiLive, MenuApiLive, SessionApiLive],
+);

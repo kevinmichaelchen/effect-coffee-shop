@@ -19,60 +19,45 @@ classes: {
   }
 }
 
-clients: "clients\nbrowser, agents, staff, tests"
+clients: "clients\nbrowser, MCP agents, tests"
 
-runtimes: "deployable runtimes" {
+website: "Website Worker (apps/ui)\nVite assets; forwards /api, /mcp, /oauth/, /.well-known/" {
   class: runtime
-  bun: "Bun\nlocal HTTP, local API, MCP stdio/HTTP" {
-    class: runtime
-  }
-  cloudflare: "Cloudflare Worker\nD1, assets" {
-    class: runtime
-  }
-  aws: "AWS Lambda\nPostgres, Function URL" {
-    class: runtime
-  }
 }
 
-fetch_host: "backend-host createFetchHost\nordered mount dispatch + request telemetry" {
+coffee: "Coffee Worker (coffee-server)\none wide event per request" {
   class: host
 }
 
-mount_manifest: "surface manifest\npath matchers are explicit and toggleable" {
-  class: host
-}
-
-surfaces: "mounted surfaces" {
+surfaces: "surfaces" {
   class: surface
-  api: "HTTP API\n/api/*" {
+  domain_apis: "Domain Apis (Effect RPC)\n/api/customer, /api/staff\nactor from session header" {
     class: surface
   }
-  mcp: "MCP HTTP\n/mcp" {
+  rest: "REST\n/api/health, /api/menu, /api/me\nstatic menu, session actor" {
     class: surface
   }
-  auth: "Yielded Auth\n/api/auth/*" {
+  mcp: "MCP HTTP\n/mcp (OAuth)" {
     class: surface
   }
-  assets: "Static assets\nCloudflare fallback" {
+  auth: "Yielded Auth + OAuth\n/api/auth/*, /oauth/*, /.well-known/*" {
     class: surface
   }
 }
 
-implementations: "surface implementations" {
+storage: "platform" {
   class: implementation
-  route_layers: "Effect route layers\ncoffee-http + coffee-mcp" {
+  model: "CoffeeShop model\nDurable Objects (DomainCloudflare)" {
     class: implementation
   }
-  app_layer: "Coffee app layer\npersistence + domain services" {
-    class: implementation
-  }
-  auth: "auth adapters\npasskeys and session resolution" {
+  d1: "D1 coffee-db\npasskeys, sessions, OAuth grants" {
     class: implementation
   }
 }
 
-clients -> runtimes: "requests"
-runtimes -> fetch_host: "Fetch entrypoint"
-fetch_host -> mount_manifest: "find matching surface"
-mount_manifest -> surfaces: "delegate"
-surfaces -> implementations: "run handler"
+clients -> website: "requests"
+website -> coffee: "service binding COFFEE"
+coffee -> surfaces: "route by path"
+surfaces.domain_apis -> storage.model: "commands + views"
+surfaces.mcp -> storage.model: "CoffeeOrderApp"
+surfaces.auth -> storage.d1

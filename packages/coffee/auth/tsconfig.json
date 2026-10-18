@@ -23,8 +23,9 @@
           "effect/http",
           "effect/sql",
           "@effect/sql-d1",
-          "@effect/sql-pglite",
-          "effect/persistence"
+          "effect/persistence",
+          "effect/FileSystem",
+          "effect/Path"
         ]
       }
     ],
