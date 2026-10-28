@@ -1,6 +1,4 @@
 import tailwindcss from "@tailwindcss/vite";
-import babel from "@rolldown/plugin-babel";
-import { reactCompilerPreset } from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
 
 // A standalone `vite` dev server proxies the backend paths to the CoffeeWorker
@@ -31,7 +29,7 @@ const coffeeProxy = {
 } satisfies NonNullable<NonNullable<UserConfig["server"]>["proxy"]>;
 
 export const sharedViteConfig = {
-  plugins: [tailwindcss(), babel({ presets: [reactCompilerPreset()] })],
+  plugins: [tailwindcss()],
   server: {
     allowedHosts: [".localhost"],
     ...(alchemyHostsVite ? {} : { proxy: coffeeProxy }),

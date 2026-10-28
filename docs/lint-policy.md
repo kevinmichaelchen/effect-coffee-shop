@@ -15,8 +15,8 @@ The React UI retains its separate policy; it does not inherit backend-only rules
 Every Oxlint policy used by the workspaces enables `options.typeAware` and
 `options.typeCheck`. The former runs rules that need TypeScript types; the latter
 also reports TypeScript compiler diagnostics. We still run each workspace's
-`tsc --noEmit` task: the repository patches that compiler with Effect diagnostics,
-and the separate Turbo task preserves compiler checks in the dependency graph.
+`typecheck` task (`tsrs --noEmit` plus `effect-tsrs diagnostics`): the separate Turbo
+task preserves compiler and Effect checks in the dependency graph.
 The UI task checks both its app and Node configuration projects.
 
 ## Deliberate exceptions
@@ -115,7 +115,7 @@ Effect smoke tests can assert success by executing without a failed effect.
 Fallow requires every reachable file to belong to an architecture zone; unused
 files fail its dead-code check.
 The infrastructure workspaces and the Turbo cache implementation have explicit
-zones; tool configuration and Storybook support form a tooling zone. Production/application
+zones; tool configuration forms a tooling zone. Production/application
 zones cannot import tooling. Semantic queries are configured for all compiler
 projects and require complete evidence. The push gate runs the full scan;
 `fallow:audit` remains available for a quick, syntactic changed-file review.
@@ -162,7 +162,7 @@ dependencies; application depends on domain. Fallow enforces the same direction:
 `server` is the only zone that may import auth and presentation, and the UI may
 import the domain (for its Api clients) and the auth contract.
 The UI kit has its own UI lint policy and a zone allowing no app imports; the app
-may import the kit. The app hosts all Storybook tests, including kit stories. Both
+may import the kit. The app hosts the UI tests (Foldkit Story and Scene tests). Both
 UI custom-lint tasks depend on the app custom-rule build for cache invalidation.
 The kit lint task retains `$TURBO_DEFAULT$` and adds the single app theme CSS
 file it reads, preserving gitignore handling while invalidating token checks.

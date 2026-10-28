@@ -112,16 +112,14 @@ protocol-neutral shape.
 
 ## Common Commands
 
-| Command                   | Purpose                                                            |
-| ------------------------- | ------------------------------------------------------------------ |
-| `bun run dev`             | Run the full stack locally with Alchemy (Workers, Vite, D1, DOs).  |
-| `bun run storybook`       | Run the UI Storybook dev server.                                   |
-| `bun run build-storybook` | Build the UI Storybook static site.                                |
-| `bun run test`            | Run every workspace's tests through Turborepo.                     |
-| `bun run cf:test`         | Deploy the stack locally and run its smoke and end-to-end tests.   |
-| `bun run check`           | Run typecheck, lint, format check, tests, custom lint, and Fallow. |
-| `bun run check:affected`  | Run the affected workspace gate against the current branch.        |
-| `bun run build`           | Build distributable workspace artifacts through Turborepo.         |
+| Command                  | Purpose                                                            |
+| ------------------------ | ------------------------------------------------------------------ |
+| `bun run dev`            | Run the full stack locally with Alchemy (Workers, Vite, D1, DOs).  |
+| `bun run test`           | Run every workspace's tests through Turborepo.                     |
+| `bun run cf:test`        | Deploy the stack locally and run its smoke and end-to-end tests.   |
+| `bun run check`          | Run typecheck, lint, format check, tests, custom lint, and Fallow. |
+| `bun run check:affected` | Run the affected workspace gate against the current branch.        |
+| `bun run build`          | Build distributable workspace artifacts through Turborepo.         |
 
 Workspace-specific gate:
 
@@ -153,24 +151,20 @@ CI runs three jobs in parallel on every PR and push to `main`:
 | -------------------- | --------------------------------------------------------------------------------------------------------- |
 | `bun run ci:static`  | Native TypeScript 7 + Effect diagnostics, type-aware Oxlint, Oxfmt, and infrastructure typechecking.      |
 | `bun run ci:backend` | All package tests (domain stories, Apis over `Domain.InMemory`, auth on D1) plus the local Alchemy stack. |
-| `bun run ci:ui`      | Storybook browser tests in light/dark themes and the production Vite build.                               |
+| `bun run ci:ui`      | Foldkit Story and Scene tests and the production Vite build.                                              |
 
-For local browser tests, first run `bunx --no-install playwright install --with-deps --only-shell chromium`
-from `apps/ui`. The custom `lintcn` and Fallow audits remain available through `bun run check`.
+The custom `lintcn` and Fallow audits remain available through `bun run check`.
 
 CI restores Turborepo task caches and cancels superseded PR runs. Shared lint
 configuration and dependency typechecks participate in cache invalidation.
-Dependencies are installed from the frozen lockfile, and the Effect compiler
-patch runs on every install. Keep TypeScript and `@effect/tsgo` pinned to a
-[supported combination](https://github.com/Effect-TS/tsgo#supported-package-versions).
-The compiler executable is named `tsc` in TypeScript 7; the old native-preview
-`tsgo` package is no longer needed.
+Dependencies are installed from the frozen lockfile. Keep `tsrs` and
+`@yielded/effect-tsrs` pinned to a
+[supported combination](https://github.com/yielded-dev/effect-tsrs#supported-package-versions).
 
 ## Local Configuration
 
 The root install covers all workspaces, uses the root dependency catalog, and
-patches TypeScript with Effect tsgo diagnostics, and installs local Git hooks
-outside CI.
+and installs local Git hooks outside CI.
 
 Environment examples live in:
 
@@ -216,8 +210,7 @@ The Coffee Worker reads `APP_ORIGIN`, `MCP_SIGNING_KEY`, `MCP_CLIENTS`,
 - Root tasks are run by Turborepo.
 - `check:affected`, `build:affected`, and `test:affected` use Turborepo's
   affected mode against the current branch.
-- Installs automatically apply the Effect tsgo compiler patch. `bun run tsgo:patch`
-  reapplies it; `bun run tsgo:unpatch` restores the stock native TypeScript binary.
-  Typechecks use native TypeScript 7 through `tsc`, with Effect diagnostics enabled.
+- Typechecks run the Rust TypeScript 7 compiler (`tsrs --noEmit`), then
+  `effect-tsrs diagnostics` for the Effect diagnostics. There is no compiler patch step.
 - Decode external input at the boundary, preferably with `effect/Schema`, then
   pass typed domain values inward.

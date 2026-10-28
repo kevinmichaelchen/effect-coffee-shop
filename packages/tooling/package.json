@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit && effect-tsrs diagnostics --project tsconfig.json",
     "lint": "bun --bun oxlint -c oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
@@ -16,11 +16,12 @@
   "devDependencies": {
     "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/node": "catalog:",
+    "@yielded/effect-tsrs": "catalog:",
     "lintcn": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "typescript": "catalog:",
+    "tsrs": "catalog:",
     "vitest": "catalog:"
   }
 }

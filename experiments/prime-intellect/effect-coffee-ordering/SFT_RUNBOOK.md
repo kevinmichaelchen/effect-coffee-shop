@@ -25,12 +25,12 @@ uv run python scripts/build_effect_coffee_receipt_sft.py
 
 Corpora:
 
-| File | Rows | Use |
-| --- | ---: | --- |
-| `data/effect_coffee_sft/receipt_final_response_sft.jsonl` | `22` | First SFT target. Teaches final receipt wording directly. |
-| `data/effect_coffee_sft/receipt_tool_trajectory_sft.jsonl` | `22` | Follow-up target. Teaches full tool-call plus final receipt traces. |
-| `data/effect_coffee_sft/product_behavior_final_response_sft.jsonl` | `16` | Broader cashier behavior: clarification, substitutions, unsupported carts, notes, and concise refusals. |
-| `data/effect_coffee_sft/product_behavior_tool_trajectory_sft.jsonl` | `16` | Full tool-call traces for the broader cashier behavior set. |
+| File                                                                | Rows | Use                                                                                                     |
+| ------------------------------------------------------------------- | ---: | ------------------------------------------------------------------------------------------------------- |
+| `data/effect_coffee_sft/receipt_final_response_sft.jsonl`           | `22` | First SFT target. Teaches final receipt wording directly.                                               |
+| `data/effect_coffee_sft/receipt_tool_trajectory_sft.jsonl`          | `22` | Follow-up target. Teaches full tool-call plus final receipt traces.                                     |
+| `data/effect_coffee_sft/product_behavior_final_response_sft.jsonl`  | `16` | Broader cashier behavior: clarification, substitutions, unsupported carts, notes, and concise refusals. |
+| `data/effect_coffee_sft/product_behavior_tool_trajectory_sft.jsonl` | `16` | Full tool-call traces for the broader cashier behavior set.                                             |
 
 Start with `receipt_final_response_sft.jsonl`. It has the least blast radius
 because it only teaches post-tool receipt wording.
@@ -97,14 +97,14 @@ published hard holdout.
 
 Current champion:
 
-| Metric | Value |
-| --- | ---: |
-| Adapter | `rqvfrcdy4xt95oka37b0xjyu` |
-| Environment | `0.1.5`, `split=hard_eval` |
-| Reward | `0.830` |
-| Tool correctness | `0.984` |
-| Price format | `0.625` |
-| Receipt style | `0.866` |
+| Metric           |                      Value |
+| ---------------- | -------------------------: |
+| Adapter          | `rqvfrcdy4xt95oka37b0xjyu` |
+| Environment      | `0.1.5`, `split=hard_eval` |
+| Reward           |                    `0.830` |
+| Tool correctness |                    `0.984` |
+| Price format     |                    `0.625` |
+| Receipt style    |                    `0.866` |
 
 Required improvement:
 

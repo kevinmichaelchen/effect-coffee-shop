@@ -1,12 +1,12 @@
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-class HttpRequestError extends Schema.TaggedError<HttpRequestError>()("HttpRequestError", {
+export class HttpRequestError extends Schema.TaggedError<HttpRequestError>()("HttpRequestError", {
   message: Schema.String,
   status: Schema.Number,
 }) {}
 
-class HttpResponseDecodeError extends Schema.TaggedError<HttpResponseDecodeError>()(
+export class HttpResponseDecodeError extends Schema.TaggedError<HttpResponseDecodeError>()(
   "HttpResponseDecodeError",
   {
     message: Schema.String,
@@ -46,21 +46,7 @@ export type JsonRequestInput<
   | JsonRequestInputWithError<SuccessSchema, ErrorSchema>
   | JsonRequestInputWithoutError<SuccessSchema>;
 
-export function requestJson<SuccessSchema extends Schema.ConstraintDecoder<unknown, never>>(
-  input: JsonRequestInputWithoutError<SuccessSchema>,
-): Promise<SuccessSchema["Type"]>;
 export function requestJson<
-  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
-  ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
->(input: JsonRequestInputWithError<SuccessSchema, ErrorSchema>): Promise<SuccessSchema["Type"]>;
-export async function requestJson<
-  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
-  ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
->(input: JsonRequestInput<SuccessSchema, ErrorSchema>): Promise<SuccessSchema["Type"]> {
-  return Effect.runPromise(requestJsonEffect(input));
-}
-
-function requestJsonEffect<
   SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
   ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
 >(

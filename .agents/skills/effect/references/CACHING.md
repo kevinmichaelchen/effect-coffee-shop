@@ -19,7 +19,7 @@ Prefer `effect/Cache` over a `Map` + timestamp + prune-loop cache when its keyed
 ## Exit-Aware TTL (cache successes, skip degraded results)
 
 ```ts
-import { Cache, Duration, Effect, Exit } from "effect"
+import { Cache, Duration, Effect, Exit } from "effect";
 
 const makeResolver = Effect.gen(function* () {
   const cache = yield* Cache.makeWith(
@@ -29,10 +29,10 @@ const makeResolver = Effect.gen(function* () {
       timeToLive: (exit) =>
         Exit.isSuccess(exit) && exit.value.cacheable ? "10 minutes" : Duration.zero,
     },
-  )
+  );
   return (channelRef: string) =>
-    Cache.get(cache, channelRef).pipe(Effect.map((resolved) => resolved.where))
-})
+    Cache.get(cache, channelRef).pipe(Effect.map((resolved) => resolved.where));
+});
 ```
 
 This replaces a hand-rolled `Map<string, { value, expiresAtMs }>` plus prune logic, and upgrades it: repeated rows pointing at the same key during one burst share a single provider call.
@@ -43,13 +43,12 @@ A cache cannot fix a lookup that pays a scoped acquisition per call, such as SDK
 
 ```ts
 // Bad: every cache miss acquires a fresh client
-const lookup = (id: string) =>
-  getRecord(id).pipe(Effect.provide(apiClientLayer(options)))
+const lookup = (id: string) => getRecord(id).pipe(Effect.provide(apiClientLayer(options)));
 
 // Good: client built once for the layer's lifetime; misses are one API call
 // Layer.build requires Scope.Scope; acquire this inside the owning layer's scope.
-const context = yield* Layer.build(apiClientLayer(options))
-const lookup = (id: string) => Context.get(context, ApiClient).getRecord(id)
+const context = yield * Layer.build(apiClientLayer(options));
+const lookup = (id: string) => Context.get(context, ApiClient).getRecord(id);
 ```
 
 ## Request Batching (`Effect.request` + `RequestResolver`)

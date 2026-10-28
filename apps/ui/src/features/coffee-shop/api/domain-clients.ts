@@ -38,3 +38,12 @@ export const staffRuntime = ManagedRuntime.make(
     Layer.provide(FetchHttpClient.layer),
   ),
 );
+
+/**
+ * Runs a Domain Api call on its managed runtime as an Effect. A defect in the
+ * runtime stays a defect; Commands turn it into a failure Message.
+ */
+export const onRuntime =
+  <R>(runtime: ManagedRuntime.ManagedRuntime<R, never>) =>
+  <A, E>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, E> =>
+    Effect.promise(async () => runtime.runPromiseExit(effect)).pipe(Effect.flatMap((exit) => exit));

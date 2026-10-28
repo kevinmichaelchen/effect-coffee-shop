@@ -7,7 +7,7 @@
     "./*": "./src/*.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit && effect-tsrs diagnostics --project tsconfig.json",
     "lint": "bun --bun oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
     "lint:fix": "bun --bun oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
     "lint:custom": "bun run --cwd ../../tooling lint:custom:run --tsconfig ../coffee/server/tsconfig.json",
@@ -31,10 +31,11 @@
   "devDependencies": {
     "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
+    "@yielded/effect-tsrs": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "typescript": "catalog:",
+    "tsrs": "catalog:",
     "vitest": "catalog:"
   }
 }

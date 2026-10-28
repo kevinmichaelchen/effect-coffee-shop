@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/knip/schema.json",
-  // Effect-tsgo embeds the language service; this name configures its built-in diagnostics.
+  // effect-tsrs reads this language-service plugin name from tsconfig to configure its diagnostics.
   // Knip does not credit oxlint/tsgolint invoked via our Bun interpreter wrapper.
   "ignoreDependencies": ["@effect/language-service", "oxlint", "oxlint-tsgolint"],
   // Portless is a developer-installed local reverse proxy, not application code.
@@ -13,8 +13,7 @@
     "packages/coffee/domain": { "project": ["src/**/*.ts!", "!src/**/*.test.ts!", "*.ts"] },
     "packages/coffee/application": { "project": ["src/**/*.ts!", "!src/**/*.test.ts!", "*.ts"] },
     "packages/ui-kit": {
-      "entry": ["src/**/*.stories.tsx"],
-      "project": ["src/**/*.{ts,tsx}!", "!src/**/*.stories.tsx!"],
+      "project": ["src/**/*.ts!"],
     },
     "packages/tooling": {
       "project": ["*.ts"],
@@ -32,14 +31,8 @@
     },
     "apps/ui": {
       // The Website's Worker, deployed by path from the Alchemy stack.
-      "entry": ["src/worker.ts!"],
-      "project": [
-        "src/**/*.{ts,tsx,css,mdx}!",
-        "!src/**/*.stories.tsx!",
-        "!src/**/*StoryData.ts!",
-        "*.ts",
-        ".storybook/**/*.{ts,tsx}",
-      ],
+      "entry": ["src/worker.ts!", "src/entry.ts!"],
+      "project": ["src/**/*.{ts,css}!", "!src/**/*.test.ts!", "*.ts"],
     },
     "packages/**": {
       "project": [

@@ -85,12 +85,12 @@ without task-specific training?
 
 ### Results
 
-| Metric | Value |
-| --- | ---: |
-| reward avg | `0.417` |
-| pass@1 | `0.562` |
-| pass@2 | `0.750` |
-| tool_correctness avg | `0.484` |
+| Metric                     |   Value |
+| -------------------------- | ------: |
+| reward avg                 | `0.417` |
+| pass@1                     | `0.562` |
+| pass@2                     | `0.750` |
+| tool_correctness avg       | `0.484` |
 | final_response_quality avg | `0.146` |
 
 ### Observed Failure Mode
@@ -153,11 +153,11 @@ stayed behaviorally comparable with the baseline.
 
 Trainer evals:
 
-| Checkpoint | Avg@2 |
-| --- | ---: |
-| step 0 | `0.2167` |
-| step 25 | `0.7458` |
-| final | `0.7500` |
+| Checkpoint |    Avg@2 |
+| ---------- | -------: |
+| step 0     | `0.2167` |
+| step 25    | `0.7458` |
+| final      | `0.7500` |
 
 The step-25 held-out eval cleared the improvement gate, so training continued
 to step 50 because marginal cost was still low.
@@ -178,13 +178,13 @@ to step 50 because marginal cost was still low.
 - Hosted eval id: `h044tihp1vgs8aznqfgsd5kd`
 - Eval shape: 8 examples, 2 rollouts per example, 256 max tokens
 
-| Metric | Vanilla Qwen 0.8B | Trained adapter | Delta |
-| --- | ---: | ---: | ---: |
-| reward avg | `0.417` | `0.775` | `+0.358` |
-| pass@1 | `0.562` | `0.812` | `+0.250` |
-| pass@2 | `0.750` | `0.875` | `+0.125` |
-| tool_correctness avg | `0.484` | `0.906` | `+0.422` |
-| final_response_quality avg | `0.146` | `0.250` | `+0.104` |
+| Metric                     | Vanilla Qwen 0.8B | Trained adapter |    Delta |
+| -------------------------- | ----------------: | --------------: | -------: |
+| reward avg                 |           `0.417` |         `0.775` | `+0.358` |
+| pass@1                     |           `0.562` |         `0.812` | `+0.250` |
+| pass@2                     |           `0.750` |         `0.875` | `+0.125` |
+| tool_correctness avg       |           `0.484` |         `0.906` | `+0.422` |
+| final_response_quality avg |           `0.146` |         `0.250` | `+0.104` |
 
 ### Spend
 
@@ -268,14 +268,14 @@ The next run should be small and comparative:
 Iteration 2 should be considered better only if it improves or preserves
 correctness while reducing verbosity:
 
-| Metric | Iteration 1 | Iteration 2 Target |
-| --- | ---: | ---: |
-| reward avg | `0.775` | `>= 0.80` |
-| pass@1 | `0.812` | `>= 0.85` |
-| tool_correctness avg | `0.906` | `>= 0.90` |
-| final_response_quality avg | `0.250` | `>= 0.50` |
-| average total tool calls | `3.000` | `< 2.25` |
-| max_turns_reached rate | `0.562` | `< 0.25` |
+| Metric                     | Iteration 1 | Iteration 2 Target |
+| -------------------------- | ----------: | -----------------: |
+| reward avg                 |     `0.775` |          `>= 0.80` |
+| pass@1                     |     `0.812` |          `>= 0.85` |
+| tool_correctness avg       |     `0.906` |          `>= 0.90` |
+| final_response_quality avg |     `0.250` |          `>= 0.50` |
+| average total tool calls   |     `3.000` |           `< 2.25` |
+| max_turns_reached rate     |     `0.562` |           `< 0.25` |
 
 ## Next Decision
 
@@ -298,11 +298,11 @@ changed the system prompt to make the desired trace explicit:
 
 The new reward weights were:
 
-| Reward component | Weight |
-| --- | ---: |
-| `tool_correctness` | `0.55` |
+| Reward component         | Weight |
+| ------------------------ | -----: |
+| `tool_correctness`       | `0.55` |
 | `final_response_quality` | `0.25` |
-| `product_efficiency` | `0.20` |
+| `product_efficiency`     | `0.20` |
 
 `product_efficiency` scored the operational shape of the trace:
 
@@ -322,18 +322,18 @@ The Iteration 1 adapter was redeployed and evaluated against environment
 - Hosted eval id: `xvcy6h7p5z1ffgm9i0t22eka`
 - Eval shape: 8 examples, 2 rollouts per example, 256 max tokens
 
-| Metric | Iteration 1 under `0.1.3` |
-| --- | ---: |
-| reward avg | `0.703` |
-| pass@1 | `0.938` |
-| pass@2 | `1.000` |
-| tool_correctness avg | `0.953` |
-| final_response_quality avg | `0.286` |
-| product_efficiency avg | `0.536` |
-| average total tool calls | `3.000` |
-| average `list_menu` calls | `1.625` |
-| average `place_order` calls | `1.375` |
-| max_turns_reached rate | `0.562` |
+| Metric                      | Iteration 1 under `0.1.3` |
+| --------------------------- | ------------------------: |
+| reward avg                  |                   `0.703` |
+| pass@1                      |                   `0.938` |
+| pass@2                      |                   `1.000` |
+| tool_correctness avg        |                   `0.953` |
+| final_response_quality avg  |                   `0.286` |
+| product_efficiency avg      |                   `0.536` |
+| average total tool calls    |                   `3.000` |
+| average `list_menu` calls   |                   `1.625` |
+| average `place_order` calls |                   `1.375` |
+| max_turns_reached rate      |                   `0.562` |
 
 This confirmed the diagnosis: the first adapter was already strong on business
 correctness, but it still used too many tools, repeated menu lookups, and often
@@ -349,15 +349,14 @@ ran to the turn limit.
 
 Trainer evals:
 
-| Checkpoint | Avg@2 | Notes |
-| --- | ---: | --- |
-| step 0 | `0.4521` | raw base model under stricter reward |
-| step 25 | `0.6992` | near-tie with Iteration 1 stricter baseline |
-| final | `0.7984` | clear improvement, so final adapter was evaluated externally |
+| Checkpoint |    Avg@2 | Notes                                                        |
+| ---------- | -------: | ------------------------------------------------------------ |
+| step 0     | `0.4521` | raw base model under stricter reward                         |
+| step 25    | `0.6992` | near-tie with Iteration 1 stricter baseline                  |
+| final      | `0.7984` | clear improvement, so final adapter was evaluated externally |
 
 The step-25 eval was slightly below the Iteration 1 stricter baseline, but the
-training reward was still rising and cost was low, so the run continued to step
-50. That was the right call: the final trainer eval moved materially above the
+training reward was still rising and cost was low, so the run continued to step 50. That was the right call: the final trainer eval moved materially above the
 baseline.
 
 ### External Verification Eval
@@ -369,19 +368,19 @@ baseline.
 - Eval shape: 8 examples, 2 rollouts per example, 256 max tokens
 - Deployment status after eval: unloaded
 
-| Metric | Iteration 1 strict baseline | Iteration 2 adapter | Delta |
-| --- | ---: | ---: | ---: |
-| reward avg | `0.703` | `0.907` | `+0.204` |
-| pass@1 | `0.938` | `1.000` | `+0.062` |
-| pass@2 | `1.000` | `1.000` | `+0.000` |
-| tool_correctness avg | `0.953` | `1.000` | `+0.047` |
-| final_response_quality avg | `0.286` | `0.729` | `+0.443` |
-| product_efficiency avg | `0.536` | `0.875` | `+0.339` |
-| average total tool calls | `3.000` | `1.812` | `-1.188` |
-| average `list_menu` calls | `1.625` | `1.062` | `-0.563` |
-| average `place_order` calls | `1.375` | `0.750` | `-0.625` |
-| max_turns_reached rate | `0.562` | `0.000` | `-0.562` |
-| average output tokens | `225.875` | `129.000` | `-96.875` |
+| Metric                      | Iteration 1 strict baseline | Iteration 2 adapter |     Delta |
+| --------------------------- | --------------------------: | ------------------: | --------: |
+| reward avg                  |                     `0.703` |             `0.907` |  `+0.204` |
+| pass@1                      |                     `0.938` |             `1.000` |  `+0.062` |
+| pass@2                      |                     `1.000` |             `1.000` |  `+0.000` |
+| tool_correctness avg        |                     `0.953` |             `1.000` |  `+0.047` |
+| final_response_quality avg  |                     `0.286` |             `0.729` |  `+0.443` |
+| product_efficiency avg      |                     `0.536` |             `0.875` |  `+0.339` |
+| average total tool calls    |                     `3.000` |             `1.812` |  `-1.188` |
+| average `list_menu` calls   |                     `1.625` |             `1.062` |  `-0.563` |
+| average `place_order` calls |                     `1.375` |             `0.750` |  `-0.625` |
+| max_turns_reached rate      |                     `0.562` |             `0.000` |  `-0.562` |
+| average output tokens       |                   `225.875` |           `129.000` | `-96.875` |
 
 ### Decision
 
@@ -433,12 +432,12 @@ Iteration 3 therefore changed the environment before changing the model:
 - Added rubric: `price_format`
 - New reward weights:
 
-| Reward component | Weight |
-| --- | ---: |
-| `tool_correctness` | `0.45` |
+| Reward component         | Weight |
+| ------------------------ | -----: |
+| `tool_correctness`       | `0.45` |
 | `final_response_quality` | `0.25` |
-| `product_efficiency` | `0.20` |
-| `price_format` | `0.10` |
+| `product_efficiency`     | `0.20` |
+| `price_format`           | `0.10` |
 
 The `hard_eval` split keeps price-sensitive and noisy phrasing examples
 separate from training. It includes cases such as "whole milk" natural language
@@ -463,20 +462,20 @@ The Iteration 2 champion was redeployed and evaluated against environment
 - Hosted eval id: `uio6f0cvm0h9xp7pu18gevsb`
 - Eval shape: 8 examples, 2 rollouts per example, 256 max tokens
 
-| Metric | Iteration 2 on `hard_eval` |
-| --- | ---: |
-| reward avg | `0.835` |
-| pass@1 | `1.000` |
-| pass@2 | `1.000` |
-| tool_correctness avg | `1.000` |
-| final_response_quality avg | `0.622` |
-| product_efficiency avg | `0.837` |
-| price_format avg | `0.625` |
-| average total tool calls | `1.812` |
-| average `list_menu` calls | `1.062` |
-| average `place_order` calls | `0.750` |
-| max_turns_reached rate | `0.062` |
-| average output tokens | `142.062` |
+| Metric                      | Iteration 2 on `hard_eval` |
+| --------------------------- | -------------------------: |
+| reward avg                  |                    `0.835` |
+| pass@1                      |                    `1.000` |
+| pass@2                      |                    `1.000` |
+| tool_correctness avg        |                    `1.000` |
+| final_response_quality avg  |                    `0.622` |
+| product_efficiency avg      |                    `0.837` |
+| price_format avg            |                    `0.625` |
+| average total tool calls    |                    `1.812` |
+| average `list_menu` calls   |                    `1.062` |
+| average `place_order` calls |                    `0.750` |
+| max_turns_reached rate      |                    `0.062` |
+| average output tokens       |                  `142.062` |
 
 This confirmed the remaining weakness precisely. The model was still perfectly
 correct at tool use on the hard split, but several accepted-order confirmations
@@ -493,11 +492,11 @@ said values like `518 cents` instead of `$5.18`.
 
 Trainer metrics:
 
-| Checkpoint | Hard eval Avg@2 | Mean eval completion length | Decision |
-| --- | ---: | ---: | --- |
-| step 0 | `0.4181` | `427.625` | raw baseline under hard reward |
-| step 22 | `0.6908` | `610.625` | below champion |
-| final | `0.7571` | `720.063` | rejected |
+| Checkpoint | Hard eval Avg@2 | Mean eval completion length | Decision                       |
+| ---------- | --------------: | --------------------------: | ------------------------------ |
+| step 0     |        `0.4181` |                   `427.625` | raw baseline under hard reward |
+| step 22    |        `0.6908` |                   `610.625` | below champion                 |
+| final      |        `0.7571` |                   `720.063` | rejected                       |
 
 The run improved over the raw base but did not beat the Iteration 2 champion.
 It also moved in the wrong direction on verbosity, so no external deployment
@@ -524,11 +523,11 @@ tool-use gains while learning the stricter receipt formatting reward.
 
 Trainer metrics:
 
-| Checkpoint | Hard eval Avg@2 | Mean eval completion length | Decision |
-| --- | ---: | ---: | --- |
-| step 32 | `0.7237` | `674.438` | below champion |
-| step 41 | `0.7354` | `617.188` | below champion |
-| final | `0.7471` | `742.000` | rejected |
+| Checkpoint | Hard eval Avg@2 | Mean eval completion length | Decision       |
+| ---------- | --------------: | --------------------------: | -------------- |
+| step 32    |        `0.7237` |                   `674.438` | below champion |
+| step 41    |        `0.7354` |                   `617.188` | below champion |
+| final      |        `0.7471` |                   `742.000` | rejected       |
 
 This was the right low-cost experiment, but it did not work. It preserved much
 of the tool correctness during training batches, yet the held-out policy was
@@ -589,13 +588,13 @@ sparse. Iteration 4 therefore made the receipt behavior more explicit:
 - Added rubric: `receipt_style`
 - New reward weights:
 
-| Reward component | Weight |
-| --- | ---: |
-| `tool_correctness` | `0.40` |
+| Reward component         | Weight |
+| ------------------------ | -----: |
+| `tool_correctness`       | `0.40` |
 | `final_response_quality` | `0.20` |
-| `product_efficiency` | `0.15` |
-| `price_format` | `0.15` |
-| `receipt_style` | `0.10` |
+| `product_efficiency`     | `0.15` |
+| `price_format`           | `0.15` |
+| `receipt_style`          | `0.10` |
 
 `receipt_style` rewards a successful final answer that includes the drink name,
 order id, exact dollar total, no cent/currency mistakes, no post-success tool
@@ -610,18 +609,18 @@ any new run could be compared fairly.
 - Hosted eval id: `qu00ipz8e4o04ja1jgx119wu`
 - Eval shape: 8 examples, 2 rollouts per example, 256 max tokens
 
-| Metric | Champion on `0.1.5 hard_eval` |
-| --- | ---: |
-| reward avg | `0.830` |
-| pass@1 | `1.000` |
-| pass@2 | `1.000` |
-| tool_correctness avg | `0.984` |
-| final_response_quality avg | `0.639` |
-| product_efficiency avg | `0.853` |
-| price_format avg | `0.625` |
-| receipt_style avg | `0.866` |
-| average total tool calls | `1.750` |
-| average output tokens | `132.562` |
+| Metric                     | Champion on `0.1.5 hard_eval` |
+| -------------------------- | ----------------------------: |
+| reward avg                 |                       `0.830` |
+| pass@1                     |                       `1.000` |
+| pass@2                     |                       `1.000` |
+| tool_correctness avg       |                       `0.984` |
+| final_response_quality avg |                       `0.639` |
+| product_efficiency avg     |                       `0.853` |
+| price_format avg           |                       `0.625` |
+| receipt_style avg          |                       `0.866` |
+| average total tool calls   |                       `1.750` |
+| average output tokens      |                     `132.562` |
 
 The champion remains strong. The key miss is unchanged: exact dollar formatting
 is only `0.625`.
@@ -638,12 +637,12 @@ is only `0.625`.
 
 Trainer metrics:
 
-| Checkpoint | Hard eval Avg@2 | Mean eval completion length | Decision |
-| --- | ---: | ---: | --- |
-| step 32 | `0.7435` | `645.688` | below champion |
-| step 42 | `0.7521` | `635.563` | below champion |
-| step 52 | `0.7412` | `668.688` | below champion |
-| final | `0.7426` | `669.625` | rejected |
+| Checkpoint | Hard eval Avg@2 | Mean eval completion length | Decision       |
+| ---------- | --------------: | --------------------------: | -------------- |
+| step 32    |        `0.7435` |                   `645.688` | below champion |
+| step 42    |        `0.7521` |                   `635.563` | below champion |
+| step 52    |        `0.7412` |                   `668.688` | below champion |
+| final      |        `0.7426` |                   `669.625` | rejected       |
 
 This confirmed that adding receipt-style reward and examples helped training
 batches but did not produce a better held-out policy. The model still became
@@ -654,10 +653,10 @@ too verbose on held-out eval.
 Before training a bigger model, two raw larger Qwen models were evaluated on
 the same hard holdout.
 
-| Model | Eval id | Reward avg | Tool correctness | Price format | Receipt style | Notes |
-| --- | --- | ---: | ---: | ---: | ---: | --- |
-| `Qwen/Qwen3.5-2B` | `psc4otym1oh7irxcdw18tzya` | `0.610` | `0.562` | `0.750` | `0.741` | better receipt prior, weak tool use |
-| `Qwen/Qwen3.5-4B` | `a0tbg2ctifimgv5l18z7jrij` | `0.674` | `0.688` | `0.688` | `0.688` | verbose reasoning, 50% truncation |
+| Model             | Eval id                    | Reward avg | Tool correctness | Price format | Receipt style | Notes                               |
+| ----------------- | -------------------------- | ---------: | ---------------: | -----------: | ------------: | ----------------------------------- |
+| `Qwen/Qwen3.5-2B` | `psc4otym1oh7irxcdw18tzya` |    `0.610` |          `0.562` |      `0.750` |       `0.741` | better receipt prior, weak tool use |
+| `Qwen/Qwen3.5-4B` | `a0tbg2ctifimgv5l18z7jrij` |    `0.674` |          `0.688` |      `0.688` |       `0.688` | verbose reasoning, 50% truncation   |
 
 An attempted `Qwen/Qwen3.5-4B` eval with `enable_thinking=false` failed at the
 hosted eval client layer:
@@ -685,10 +684,10 @@ run was the most plausible larger-model experiment.
 
 Trainer metrics:
 
-| Checkpoint | Hard eval Avg@2 | Mean eval completion length | Decision |
-| --- | ---: | ---: | --- |
-| step 0 | `0.6116` | `553.438` | raw 2B baseline in training config |
-| step 27 | `0.6675` | `628.438` | below champion; stopped soon after |
+| Checkpoint | Hard eval Avg@2 | Mean eval completion length | Decision                           |
+| ---------- | --------------: | --------------------------: | ---------------------------------- |
+| step 0     |        `0.6116` |                   `553.438` | raw 2B baseline in training config |
+| step 27    |        `0.6675` |                   `628.438` | below champion; stopped soon after |
 
 Training did improve over raw 2B, but it was still far below the 0.8B champion
 and had worse verbosity. The run was stopped to protect budget.
@@ -758,9 +757,9 @@ promoted the reproducible source artifacts into the repository:
 
 Dataset shape:
 
-| Corpus | Rows | Purpose |
-| --- | ---: | --- |
-| `receipt_final_response_sft.jsonl` | `22` | prompt/completion rows focused directly on final customer receipts |
+| Corpus                              | Rows | Purpose                                                            |
+| ----------------------------------- | ---: | ------------------------------------------------------------------ |
+| `receipt_final_response_sft.jsonl`  | `22` | prompt/completion rows focused directly on final customer receipts |
 | `receipt_tool_trajectory_sft.jsonl` | `22` | raw messages rows with tool calls, tool results, and final receipt |
 
 The successful-order completions use the compact target style:
@@ -927,8 +926,8 @@ The corrected run:
 First interval eval:
 
 | Step | Hard eval Avg@2 | Hard mean completion length | Product-readiness Avg@2 | Product mean completion length |
-| ---: | ---: | ---: | ---: | ---: |
-| `32` | `0.7545` | `620.5625` | `0.7545` | `629.25` |
+| ---: | --------------: | --------------------------: | ----------------------: | -----------------------------: |
+| `32` |        `0.7545` |                  `620.5625` |                `0.7545` |                       `629.25` |
 
 ### Decision
 
@@ -982,15 +981,15 @@ prompt.
 
 ### Baselines
 
-| Model | Env | Split | Reward | Tool correctness | Price format | Notes |
-| --- | --- | --- | ---: | ---: | ---: | --- |
-| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.9` | `hard_eval` | `0.359` | `0.375` | `0.375` | First true split-specific baseline after eval routing fix. |
-| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.10` | `hard_eval` | `0.462` | `0.500` | `0.375` | Single-object `items_json` tolerance recovered some tool calls. |
-| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.11` | `hard_eval` | `0.520` | `0.625` | `0.375` | Direct-order prompt helped but still below the old champion gate. |
-| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.13` | `hard_eval` | `0.507` API / `0.508` logs | `0.531` | `0.438` | Prompt-only receipt tightening improved price format but reduced overall hard reward. Do not use as next base. |
-| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.14` | `hard_eval` | `0.592` API / `0.564` logs | `0.625` | `0.500` | Order-first tool presentation improved direct-order behavior versus `0.1.11`; still below promotion gate. |
-| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.10` | `product_readiness` | `0.610` | `0.622` | `0.688` | All 16 product-readiness examples now run. |
-| Raw `Qwen/Qwen3.5-2B` | `0.1.11` | `hard_eval` | `0.783` | `0.812` | `0.812` | Better receipt priors, still below `0.830` and weaker tool discipline. |
+| Model                               | Env      | Split               |                     Reward | Tool correctness | Price format | Notes                                                                                                          |
+| ----------------------------------- | -------- | ------------------- | -------------------------: | ---------------: | -----------: | -------------------------------------------------------------------------------------------------------------- |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.9`  | `hard_eval`         |                    `0.359` |          `0.375` |      `0.375` | First true split-specific baseline after eval routing fix.                                                     |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.10` | `hard_eval`         |                    `0.462` |          `0.500` |      `0.375` | Single-object `items_json` tolerance recovered some tool calls.                                                |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.11` | `hard_eval`         |                    `0.520` |          `0.625` |      `0.375` | Direct-order prompt helped but still below the old champion gate.                                              |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.13` | `hard_eval`         | `0.507` API / `0.508` logs |          `0.531` |      `0.438` | Prompt-only receipt tightening improved price format but reduced overall hard reward. Do not use as next base. |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.14` | `hard_eval`         | `0.592` API / `0.564` logs |          `0.625` |      `0.500` | Order-first tool presentation improved direct-order behavior versus `0.1.11`; still below promotion gate.      |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.10` | `product_readiness` |                    `0.610` |          `0.622` |      `0.688` | All 16 product-readiness examples now run.                                                                     |
+| Raw `Qwen/Qwen3.5-2B`               | `0.1.11` | `hard_eval`         |                    `0.783` |          `0.812` |      `0.812` | Better receipt priors, still below `0.830` and weaker tool discipline.                                         |
 
 Important caveat: `0.1.8` hosted evals are not comparable because the eval split
 bug meant both "hard" and "product" jobs used the generic eval set.
@@ -1022,11 +1021,11 @@ environment `0.1.11`.
 
 Key training metrics:
 
-| Step | Reward | Tool correctness | Price format | Receipt style | Max-turns reached |
-| ---: | ---: | ---: | ---: | ---: | ---: |
-| `30` | `0.590` | `0.859` | `0.182` | `0.558` | `0.750` |
-| `34` | `0.715` | `1.000` | `0.400` | `0.729` | `0.859` |
-| `35` | `0.683` | `0.996` | `0.273` | `0.649` | `0.766` |
+| Step |  Reward | Tool correctness | Price format | Receipt style | Max-turns reached |
+| ---: | ------: | ---------------: | -----------: | ------------: | ----------------: |
+| `30` | `0.590` |          `0.859` |      `0.182` |       `0.558` |           `0.750` |
+| `34` | `0.715` |          `1.000` |      `0.400` |       `0.729` |           `0.859` |
+| `35` | `0.683` |          `0.996` |      `0.273` |       `0.649` |           `0.766` |
 
 Decision: stop and do not promote. The run learned order fields and tool
 correctness faster than receipt formatting. Rollouts still produced wrong final
@@ -1059,12 +1058,12 @@ Published `kevinmichaelchen/effect-coffee-ordering@0.1.12` on
 Attempted fresh hosted baselines for champion adapter
 `rqvfrcdy4xt95oka37b0xjyu` on `0.1.12`.
 
-| Eval id | Split | Status | Result |
-| --- | --- | --- | --- |
-| `jxlbpddxbkkigg0zyjl99ffe` | `hard_eval` | failed before scoring | Hosted eval pulled and installed `effect-coffee-ordering==0.1.12`, then inference returned `404` for `Qwen/Qwen3.5-0.8B:rqvfrcdy4xt95oka37b0xjyu`. |
-| `yf28igow4r0mwwi2ey6bscfe` | `product_readiness` | failed before scoring | Same failure: `0.1.12` installed, but the champion adapter model string was unavailable to hosted inference. |
-| `s4ewj8fmw7muxoqwqb9f8wum` | `hard_eval` | failed before scoring | After the adapter deployed successfully, hosted eval installed `0.1.12` but inference preflight returned a 503 auth-service/model lookup error. |
-| `gvedyecbd8xomrrirltdr6w4` | `product_readiness` | failed before scoring | After the adapter deployed successfully, hosted eval installed `0.1.12` but chat-completions preflight returned a 502 connection error. |
+| Eval id                    | Split               | Status                | Result                                                                                                                                             |
+| -------------------------- | ------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jxlbpddxbkkigg0zyjl99ffe` | `hard_eval`         | failed before scoring | Hosted eval pulled and installed `effect-coffee-ordering==0.1.12`, then inference returned `404` for `Qwen/Qwen3.5-0.8B:rqvfrcdy4xt95oka37b0xjyu`. |
+| `yf28igow4r0mwwi2ey6bscfe` | `product_readiness` | failed before scoring | Same failure: `0.1.12` installed, but the champion adapter model string was unavailable to hosted inference.                                       |
+| `s4ewj8fmw7muxoqwqb9f8wum` | `hard_eval`         | failed before scoring | After the adapter deployed successfully, hosted eval installed `0.1.12` but inference preflight returned a 503 auth-service/model lookup error.    |
+| `gvedyecbd8xomrrirltdr6w4` | `product_readiness` | failed before scoring | After the adapter deployed successfully, hosted eval installed `0.1.12` but chat-completions preflight returned a 502 connection error.            |
 
 Deployment and inference notes:
 

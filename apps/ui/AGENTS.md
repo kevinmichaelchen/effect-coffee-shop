@@ -1,33 +1,18 @@
-# UI design-system checks
+# UI checks
 
 Run `bun run --cwd apps/ui check` from the repository root after UI changes.
-`lint` includes all six `@shadcn/lint` rules through Oxlint; the root Turbo/CI
-lint tasks already run it. Do not add a second shadcn plugin to ESLint.
 
-- Import primitives from `@effect-coffee-shop/ui-kit/components/retroui`; `components.json` and
-  `settings.shadcn.ui` identify that directory. Keep aliases synchronized.
-- Use Button sizes/variants for appearance. Callers may control layout.
-- Use Card and Alert `surface` props for background treatments. Use semantic
-  colors from `src/index.css`, including status and alert tokens.
-- Text permits typography and theme colors; Card content/header and table
-  cells permit composition/spacing according to `.oxlintrc.json` contracts.
-  Drawer borders/surfaces and dialog description text have explicit allowances.
-- Compound component contracts use resolved names (`CardComponentContent`,
-  `TableObjCell`, etc.), not the JSX spelling (`Card.Content`). Verify lint
-  findings when changing exports or contract patterns.
-- Put reusable layout values in named theme tokens/utilities. The composer
-  and customer workspace grid utilities preserve their sidebar proportions.
-- `packages/ui-kit/src/components` is the design-system implementation boundary: it may define
-  styles, arbitrary geometry, and forward class values. Theme-color and valid
-  Tailwind-class checks still apply there. Feature code must use its API.
-- Progress alone may set inline `transform` for its runtime numeric value;
-  other inline styles remain checked. Do not broaden this exception.
-
-When a rule reports an intentional new treatment, add a meaningful variant,
-semantic token, or narrowly scoped contract. Do not blanket-disable checks to
-silence a finding. Keep the light/dark Storybook interaction tests passing.
-
-Shared primitives and fields live in `packages/ui-kit`; keep it free of app imports.
-StatusBadge and API-client HTTP helpers remain in the app. Storybook discovers
-kit stories and app stories in both themes. Update the app Tailwind `@source` and
-both components.json files when changing the kit layout.
+- The app is Foldkit. State lives in one Model; only `update` changes it. Views are pure and
+  take the HTML builder `h` as the last argument. Side effects are named Commands
+  (`src/app/command.ts`) or Subscriptions that report back as Messages.
+- Decode external input once, in the Command that fetches it, and put typed values in the Message.
+  Command error channels are empty: turn failures into `Failed*` Messages.
+- Build UI from `@effect-coffee-shop/ui-kit/components/*` view functions. Feature views pass
+  layout classes; the kit owns appearance (variants, tokens from `src/index.css`).
+- Dialogs and drawers use the `@foldkit/ui` Dialog Submodel through the kit's `overlay`.
+  Do not hand-roll focus traps, scroll locks, or Escape handling.
+- Add a `foldkit/story` test for each new Message and a `foldkit/scene` test for new UI. Keep
+  Api and passkey modules mocked there.
+- The `@shadcn/lint` design-system rules were removed with JSX; they read JSX `className` props
+  and cannot see `h.Class(...)`. Keep class strings inside the kit and review new treatments
+  by hand: add a variant or semantic token rather than a one-off color or arbitrary value.

@@ -24,5 +24,5 @@
     "noUncheckedSideEffectImports": true,
     "plugins": [{ "name": "@effect/language-service" }]
   },
-  "include": ["vite.config.ts", "vite.shared.ts", "vitest.config.ts", ".storybook/**/*.ts"]
+  "include": ["vite.config.ts", "vite.shared.ts", "vitest.config.ts"]
 }

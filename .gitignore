@@ -16,7 +16,6 @@ dist
 coverage
 .turbo
 **/.turbo
-storybook-static
 .wrangler
 **/.prime
 

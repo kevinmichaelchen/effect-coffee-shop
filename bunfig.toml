@@ -6,8 +6,6 @@ minimumReleaseAge = 259200
 minimumReleaseAgeExcludes = [
   # Explicitly adopted Effect v4 integration; pinned in the workspace catalog.
   "effect-wide-event",
-  # Explicitly adopted launch release; version pinned in the workspace catalog.
-  "@shadcn/lint",
   # Pinned to a pkg.alchemy.run preview build of alchemy main for alchemy/Domain.
   "alchemy",
   # alchemy pins its @alchemy.run/* and @distilled.cloud/* siblings to the same
@@ -41,16 +39,22 @@ minimumReleaseAgeExcludes = [
   "@effect/platform-node-shared",
   "@effect/sql-d1",
   "@effect/vitest",
-  # The Effect language service ships each platform binary as a separate
-  # exact-version package, so every binding must be listed.
-  "@effect/tsgo",
-  "@effect/tsgo-darwin-arm64",
-  "@effect/tsgo-darwin-x64",
-  "@effect/tsgo-linux-arm",
-  "@effect/tsgo-linux-arm64",
-  "@effect/tsgo-linux-x64",
-  "@effect/tsgo-win32-arm64",
-  "@effect/tsgo-win32-x64",
+  # tsrs (the Rust TypeScript 7 compiler) and its Effect diagnostics ship each platform
+  # binary as a separate exact-version package, so every binding must be listed.
+  "tsrs",
+  "@tsrs/darwin-arm64",
+  "@tsrs/darwin-x64",
+  "@tsrs/linux-arm64-gnu",
+  "@tsrs/linux-arm64-musl",
+  "@tsrs/linux-x64-gnu",
+  "@tsrs/linux-x64-musl",
+  "@tsrs/win32-x64",
+  "@yielded/effect-tsrs",
+  "@yielded/effect-tsrs-darwin-arm64",
+  "@yielded/effect-tsrs-darwin-x64",
+  "@yielded/effect-tsrs-linux-arm64",
+  "@yielded/effect-tsrs-linux-x64",
+  "@yielded/effect-tsrs-win32-x64",
   # prek, oxlint and oxfmt are adopted as soon as they publish (decision 2026-09-15).
   # Each ships platform binaries as separate exact-version packages, so every
   # binding must be listed; oxlint-tsgolint is oxlint's type-aware companion.

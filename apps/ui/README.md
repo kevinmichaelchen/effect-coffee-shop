@@ -8,13 +8,14 @@ This repo uses Bun workspaces, so install dependencies once from the repo root w
 
 ## Stack
 
-- React + Vite
-- RetroUI components from `retroui.dev`
-- TanStack Query for API state
+- [Foldkit](https://foldkit.dev): one `Model`, `Message`s, a pure `update`, and a `view`
+  that returns HTML, with Effect doing the work through Commands and Subscriptions
+- Vite, Tailwind, and `@foldkit/ui` Dialog Submodels for the receipt, order-details, and
+  navigation overlays (focus trap, Escape, scroll lock, and return focus come from Foldkit)
 - `alchemy/Domain` Api clients over `Domain.protocolHttp` (Effect RPC) in
   [`src/features/coffee-shop/api/domain-clients.ts`](./src/features/coffee-shop/api/domain-clients.ts)
 - Yielded Auth passkey sign-in for customer and staff workspaces
-- strict `oxlint` + `lintcn` + ESLint checks with complexity, function-length, and size limits
+- strict `oxlint` + `lintcn` checks with complexity, function-length, and size limits
 
 ## Run it
 
@@ -61,35 +62,30 @@ bun run test
 bun run build
 ```
 
-## Storybook workshop
+## How the app is laid out
 
-Run `bun run storybook` from the repository root and open `http://localhost:6006`.
-Stories run locally with fixed sample data and callback spies; no backend or
-passkey registration is needed. Use the toolbar to switch light/dark themes and
-mobile/tablet/desktop viewports. The `Mobile` stories pin the narrow viewport.
+| Path                        | Role                                                                                         |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| `src/entry.ts`              | Runtime boundary: wires the application and runs it.                                         |
+| `src/app/model.ts`          | The single Model, as an Effect Schema.                                                       |
+| `src/app/message.ts`        | Every fact the app can learn (clicks, replies, ticks).                                       |
+| `src/app/update.ts`         | Pure `(Model, Message) -> Model + Commands`.                                                 |
+| `src/app/command.ts`        | Named one-shot effects: viewer, passkey auth, menu, orders, theme.                           |
+| `src/app/subscription.ts`   | Four-second order refresh, gated by route and viewer.                                        |
+| `src/app/route.ts`          | Bidirectional routes, including the `/control-room`, `/coffee-shop`, and `/login/mcp` paths. |
+| `src/app/view/*.ts`         | Views; primitives come from `@effect-coffee-shop/ui-kit`.                                    |
+| `src/features/*/api`, `lib` | Api clients and domain helpers; no UI framework imports.                                     |
 
-Useful starting points:
+Live order updates are a refresh Subscription over the existing Api clients. Replacing it with
+`@yielded/sync` needs a Sync source and server on the Coffee Worker first, so it is a separate
+change; the Subscription is the seam to swap.
 
-- **Coffee Shop / Screens / BaristaWorkflow / Playground**: start, ready, pick up,
-  or cancel tickets. Inspect tickets in the drawer and find closed tickets in
-  recent activity. Remount the story to reset the local queue.
-- **Coffee Shop / Customer / OrderComposerCard**: change drinks and customizations,
-  inspect tea constraints, edit quantities and notes, and try the pending state.
-  Submission is a spy visible in Storybook; it does not create a real order.
-- **Coffee Shop / Customer / ReceiptDialog**: single/group receipts, long names,
-  mobile layout, navigation, dismissal, and reopening.
-- **Coffee Shop / Barista**: empty/busy queues, updates scoped to one ticket,
-  status-specific drawer actions, and recent activity.
-- **Coffee Shop / Customer / CustomerOrdersPanel**: first visit, active/history
-  tickets, and background refreshing with existing content retained.
-- **Auth / Passkey** and **Auth / Session**: registration/sign-in callbacks,
-  pending and error states, customer/staff identities, and mobile examples.
+## Tests
 
-Stories with `play` functions demonstrate and assert interactions automatically;
-the Interactions panel shows their steps. Use `bun run test:storybook` to run
-all stories in Chromium in both themes, or `bun run build-storybook` to build the
-static workshop. Shared field stories also verify that inputs can be found by
-their visible labels.
+`bun run test` runs Vitest with Foldkit's `foldkit/story` (update-level tests that dispatch
+Messages and resolve Commands) and `foldkit/scene` (update plus view, queried by role, label,
+and text, with no browser). The Api and passkey modules are mocked in those tests, so they need
+no backend. Add a Story test whenever you add a Message, and a Scene test for new UI.
 
 For passkeys, set `APP_ORIGIN` for the Coffee Worker to the exact UI origin. HTTP development
 must use a literal loopback hostname (for example `http://localhost:5173`); named

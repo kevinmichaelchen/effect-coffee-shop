@@ -17,7 +17,7 @@
     "./testing/migrate": "./src/testing/migrate.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit && effect-tsrs diagnostics --project tsconfig.json",
     "lint": "bun --bun oxlint -c oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
     "lint:fix": "bun --bun oxlint -c oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
     "lint:custom": "bun run --cwd ../../tooling lint:custom:run --tsconfig ../coffee/auth/tsconfig.json",
@@ -43,11 +43,12 @@
     "@levischuck/tiny-cbor": "0.2.11",
     "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/bun": "catalog:",
+    "@yielded/effect-tsrs": "catalog:",
     "miniflare": "4.20260730.0",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "typescript": "catalog:",
+    "tsrs": "catalog:",
     "vitest": "catalog:"
   }
 }
