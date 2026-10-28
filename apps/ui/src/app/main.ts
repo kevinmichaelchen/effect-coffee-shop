@@ -3,6 +3,7 @@ import { Effect, Option, Schema } from "effect";
 import { type Runtime } from "foldkit";
 import { Url } from "foldkit/url";
 import { ThemePreference, themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
+import { initialAssistant } from "#features/assistant/lib/state.ts";
 import { anonymousViewer } from "#features/auth/lib/viewer.ts";
 import { ApplyTheme } from "#app/command.ts";
 import type { Message } from "#app/message.ts";
@@ -53,6 +54,7 @@ export const init: Runtime.RoutingApplicationInit<Model, Message, Flags> = (
       menuDialog: Dialog.init({ id: "menu-dialog" }),
       toasts: [],
       toastCount: 0,
+      assistant: initialAssistant,
     },
     commands: [ApplyTheme({ theme: flags.theme }), ...bootCommands(route)],
   };

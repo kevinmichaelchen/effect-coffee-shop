@@ -4,8 +4,9 @@ import { Update } from "foldkit";
 import { ExpireToast } from "#app/command.ts";
 import { Message } from "#app/message.ts";
 import type { Model, Toast } from "#app/model.ts";
+import type { AppServices } from "#app/resources.ts";
 
-export type UpdateStep = Update.Step<Model, Message>;
+export type UpdateStep = Update.Step<Model, Message, AppServices>;
 
 // TOASTS
 

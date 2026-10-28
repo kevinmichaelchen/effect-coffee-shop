@@ -1,6 +1,7 @@
 import { Dialog } from "@foldkit/ui";
 import { Schema } from "effect";
 import { ThemePreference } from "@effect-coffee-shop/ui-kit/components/theme";
+import { AssistantState } from "#features/assistant/lib/state.ts";
 import { Viewer } from "#features/auth/lib/viewer.ts";
 import { MenuItem, OrderDraft, OrderTicket } from "#features/coffee-shop/lib/coffee-schemas.ts";
 import { AppRoute } from "#app/route.ts";
@@ -41,5 +42,6 @@ export const Model = Schema.Struct({
   menuDialog: Dialog.Model,
   toasts: Schema.Array(Toast),
   toastCount: Schema.Int,
+  assistant: AssistantState,
 });
 export type Model = typeof Model.Type;

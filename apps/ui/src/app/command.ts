@@ -2,6 +2,20 @@ import { Effect, Schedule, Schema } from "effect";
 import { Command } from "foldkit";
 import { load, pushUrl } from "foldkit/navigation";
 import { ThemePreference, themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
+import {
+  generateReply,
+  loadModel,
+  transcribeSamples,
+} from "#features/assistant/api/assistant-worker.ts";
+import { finishRecording } from "#features/assistant/api/microphone.ts";
+import { messagesFor } from "#features/assistant/lib/prompt.ts";
+import { LocalModel } from "#features/assistant/lib/protocol.ts";
+import {
+  AssistantRequest,
+  decodeTurn,
+  toolDefinitions,
+  toolsFor,
+} from "#features/assistant/lib/tools.ts";
 import { authClient } from "#features/auth/auth-client.ts";
 import { fetchViewer } from "#features/auth/api/viewer.ts";
 import { createOrder, fetchMenu, updateOrderStatus } from "#features/coffee-shop/api/coffee.ts";
@@ -17,9 +31,9 @@ const unreachable = "Unable to reach the coffee shop. Check your connection and 
  */
 const recoverWith =
   <Failed>(onFailure: (fields: { readonly message: string }) => Failed) =>
-  <Success, Failure extends { readonly message: string }>(
-    effect: Effect.Effect<Success, Failure>,
-  ): Effect.Effect<Success | Failed> =>
+  <Success, Failure extends { readonly message: string }, R>(
+    effect: Effect.Effect<Success, Failure, R>,
+  ): Effect.Effect<Success | Failed, never, R> =>
     effect.pipe(
       Effect.catch((error) => Effect.succeed(onFailure({ message: error.message }))),
       Effect.catchCause(() => Effect.succeed(onFailure({ message: unreachable }))),
@@ -142,4 +156,44 @@ export const ExpireToast = Command.define("ExpireToast", {
   args: { id: Schema.String },
   messages: [Message.ExpiredToast],
   execute: ({ id }) => Effect.sleep("4 seconds").pipe(Effect.as(Message.ExpiredToast({ id }))),
+});
+
+// LOCAL AI
+
+export const DetectWebGpu = Command.define("DetectWebGpu", {
+  messages: [Message.DetectedWebGpu],
+  execute: Effect.promise(async () =>
+    navigator.gpu === undefined ? false : (await navigator.gpu.requestAdapter()) !== null,
+  ).pipe(Effect.map((isSupported) => Message.DetectedWebGpu({ isSupported }))),
+});
+
+export const LoadLocalModel = Command.define("LoadLocalModel", {
+  args: { model: LocalModel },
+  messages: [Message.LoadedLocalModel, Message.FailedLoadLocalModel],
+  execute: ({ model }) =>
+    loadModel(model).pipe(
+      Effect.as(Message.LoadedLocalModel({ model })),
+      recoverWith(({ message }) => Message.FailedLoadLocalModel({ model, message })),
+    ),
+});
+
+export const AskAssistant = Command.define("AskAssistant", {
+  args: { request: AssistantRequest },
+  messages: [Message.GotAssistantTurn, Message.FailedAssistantTurn],
+  execute: ({ request }) => {
+    const tools = toolsFor(request);
+    return generateReply(messagesFor(request), toolDefinitions(tools)).pipe(
+      Effect.map((output) => Message.GotAssistantTurn({ turn: decodeTurn(tools, output) })),
+      recoverWith(Message.FailedAssistantTurn),
+    );
+  },
+});
+
+export const TranscribeRecording = Command.define("TranscribeRecording", {
+  messages: [Message.GotTranscript, Message.FailedTranscript],
+  execute: finishRecording.pipe(
+    Effect.flatMap(transcribeSamples),
+    Effect.map((text) => Message.GotTranscript({ text })),
+    recoverWith(Message.FailedTranscript),
+  ),
 });

@@ -3,6 +3,7 @@ import { themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
 import { Flags, flags, init } from "#app/main.ts";
 import { Message } from "#app/message.ts";
 import { Model } from "#app/model.ts";
+import { managedResources } from "#app/resources.ts";
 import { subscriptions } from "#app/subscription.ts";
 import { update } from "#app/update.ts";
 import { view } from "#app/view/root.ts";
@@ -21,6 +22,7 @@ const application = Runtime.makeApplication({
   update,
   view,
   subscriptions,
+  managedResources,
   container: document.getElementById("root"),
   routing: {
     onUrlRequest: (request) => Message.ClickedLink({ request }),

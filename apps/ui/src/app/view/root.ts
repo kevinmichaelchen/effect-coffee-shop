@@ -10,6 +10,7 @@ import type { Model } from "#app/model.ts";
 import { shopRouter, staffRouter } from "#app/route.ts";
 import { authGate } from "#app/view/auth.ts";
 import type { Builder } from "#app/view/builder.ts";
+import { assistantCard } from "#app/view/assistant.ts";
 import { customerWorkspace, receiptDialog } from "#app/view/customer.ts";
 import { pageHeader } from "#app/view/header.ts";
 import { metricStrip, workspaceWarning } from "#app/view/shared.ts";
@@ -106,7 +107,7 @@ function staffPage(model: Model, h: Builder) {
         h,
       ),
       ...(model.viewer.kind === "customer" ? [staffAccessWarning(h)] : []),
-      ...(staffSession ? [staffQueue(model, h)] : []),
+      ...(staffSession ? [assistantCard(model, h), staffQueue(model, h)] : []),
     ],
   );
 }

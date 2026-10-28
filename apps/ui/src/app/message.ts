@@ -4,6 +4,8 @@ import { Schema } from "effect";
 import { defineMessageUnion } from "foldkit/message";
 import { UrlRequest } from "foldkit/navigation";
 import { Url } from "foldkit/url";
+import { LocalModel } from "#features/assistant/lib/protocol.ts";
+import { AssistantTurn } from "#features/assistant/lib/tools.ts";
 import { Viewer } from "#features/auth/lib/viewer.ts";
 import { MenuItem, OrderTicket } from "#features/coffee-shop/lib/coffee-schemas.ts";
 import { AuthAction } from "#app/model.ts";
@@ -70,5 +72,30 @@ export const Message = defineMessageUnion({
   // Toasts
   DismissedToast: { id: Schema.String },
   ExpiredToast: { id: Schema.String },
+  // Local AI
+  ClickedEnableAssistant: {},
+  DetectedWebGpu: { isSupported: Schema.Boolean },
+  AcquiredAssistantWorker: {},
+  FailedAcquireAssistantWorker: { message: Schema.String },
+  ReleasedAssistantWorker: {},
+  GotModelProgress: { model: LocalModel, loaded: Schema.Finite, total: Schema.Finite },
+  LoadedLocalModel: { model: LocalModel },
+  FailedLoadLocalModel: { model: LocalModel, message: Schema.String },
+  ClickedEnableVoice: {},
+  ChangedAssistantPrompt: { value: Schema.String },
+  SubmittedAssistantPrompt: {},
+  GotAssistantTurn: { turn: AssistantTurn },
+  FailedAssistantTurn: { message: Schema.String },
+  ClickedUndoAssistantEdit: {},
+  ClickedDismissAssistantTurn: {},
+  ClickedUseUsual: {},
+  // Voice
+  ClickedStartRecording: {},
+  AcquiredMicrophone: {},
+  FailedAcquireMicrophone: { message: Schema.String },
+  ReleasedMicrophone: {},
+  ClickedStopRecording: {},
+  GotTranscript: { text: Schema.String },
+  FailedTranscript: { message: Schema.String },
 });
 export type Message = typeof Message.Type;

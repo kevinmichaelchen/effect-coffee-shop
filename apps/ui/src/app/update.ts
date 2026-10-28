@@ -34,13 +34,33 @@ import {
   type UpdateStep,
   withToast,
 } from "#app/dialogs.ts";
+import {
+  enableAssistant,
+  enableVoice,
+  loadTextModel,
+  receiveLoadFailed,
+  receiveLoaded,
+  receiveProgress,
+  receiveRecordingFailed,
+  receiveTranscript,
+  receiveTurn,
+  receiveTurnFailed,
+  receiveWebGpu,
+  settleTurn,
+  startRecording,
+  stopRecording,
+  submitPrompt,
+  undoEdit,
+  useUsual,
+} from "#app/assistant.ts";
 import { composerFor, selectDrink, toInt } from "#app/draft.ts";
 import { feedFor } from "#app/feed.ts";
 import { Message } from "#app/message.ts";
 import type { AuthAction, Model } from "#app/model.ts";
+import type { AppServices } from "#app/resources.ts";
 import { AppRoute, mcpAuthorizePath, urlToAppRoute } from "#app/route.ts";
 
-export type UpdateReturn = Update.Return<Model, Message>;
+export type UpdateReturn = Update.Return<Model, Message, AppServices>;
 
 // SESSION
 
@@ -185,7 +205,7 @@ export const update = (model: Model, message: Message): UpdateReturn =>
       }),
 
     ChangedUrl: ({ url }) => {
-      const moved: Model = { ...model, route: urlToAppRoute(url) };
+      const moved: Model = settleTurn({ ...model, route: urlToAppRoute(url) });
       const left = closeOverlays(keepsOrders(model, moved) ? moved : withoutOrders(moved));
       const arrived = continueMcp(withMenuFetch({ model: left.model }));
       return {
@@ -255,7 +275,7 @@ export const update = (model: Model, message: Message): UpdateReturn =>
         : Option.match(composerFor(model.menu, model.draft), {
             onNone: () => ({ model }),
             onSome: ({ draft }) => ({
-              model: { ...model, isPlacingOrder: true },
+              model: settleTurn({ ...model, isPlacingOrder: true }),
               commands: [PlaceOrder({ request: toPlaceOrderRequest(draft) })],
             }),
           }),
@@ -277,7 +297,11 @@ export const update = (model: Model, message: Message): UpdateReturn =>
       Option.isSome(model.pendingOrderId)
         ? { model }
         : {
-            model: { ...model, pendingOrderId: Option.some(orderId), detailsError: Option.none() },
+            model: settleTurn({
+              ...model,
+              pendingOrderId: Option.some(orderId),
+              detailsError: Option.none(),
+            }),
             commands: [RunOrderAction({ orderId, action })],
           },
     SucceededOrderAction: ({ order }) =>
@@ -304,6 +328,33 @@ export const update = (model: Model, message: Message): UpdateReturn =>
     ExpiredToast: ({ id }) => ({
       model: { ...model, toasts: model.toasts.filter((toast) => toast.id !== id) },
     }),
+
+    ClickedEnableAssistant: () => enableAssistant(model),
+    DetectedWebGpu: ({ isSupported }) => receiveWebGpu(model, isSupported),
+    AcquiredAssistantWorker: () => loadTextModel(model),
+    FailedAcquireAssistantWorker: ({ message }) => receiveLoadFailed(model, "text", message),
+    ReleasedAssistantWorker: () => ({ model }),
+    GotModelProgress: ({ model: which, loaded, total }) =>
+      receiveProgress(model, which, loaded, total),
+    LoadedLocalModel: ({ model: which }) => receiveLoaded(model, which),
+    FailedLoadLocalModel: ({ model: which, message }) => receiveLoadFailed(model, which, message),
+    ClickedEnableVoice: () => enableVoice(model),
+    ChangedAssistantPrompt: ({ value }) => ({
+      model: { ...model, assistant: { ...model.assistant, prompt: value } },
+    }),
+    SubmittedAssistantPrompt: () => submitPrompt(model),
+    GotAssistantTurn: ({ turn }) => receiveTurn(model, turn),
+    FailedAssistantTurn: ({ message }) => receiveTurnFailed(model, message),
+    ClickedUndoAssistantEdit: () => undoEdit(model),
+    ClickedDismissAssistantTurn: () => ({ model: settleTurn(model) }),
+    ClickedUseUsual: () => useUsual(model),
+    ClickedStartRecording: () => startRecording(model),
+    AcquiredMicrophone: () => ({ model }),
+    FailedAcquireMicrophone: ({ message }) => receiveRecordingFailed(model, message),
+    ReleasedMicrophone: () => ({ model }),
+    ClickedStopRecording: () => stopRecording(model),
+    GotTranscript: ({ text }) => receiveTranscript(model, text),
+    FailedTranscript: ({ message }) => receiveRecordingFailed(model, message),
 
     CompletedNavigateInternal: () => ({ model }),
     CompletedLoadExternal: () => ({ model }),

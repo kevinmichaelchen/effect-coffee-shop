@@ -17,10 +17,12 @@ import {
 } from "effect";
 import * as Socket from "effect/socket/Socket";
 import { Subscription } from "foldkit";
+import { progressEvents } from "#features/assistant/api/assistant-worker.ts";
 import { toCoffeeOrder } from "#features/coffee-shop/api/order-mapping.ts";
 import { feedFor } from "#app/feed.ts";
 import { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
+import type { AppServices } from "#app/resources.ts";
 
 const definition = Client.definition(OrderFeed, {
   applyEvent: (snapshot, event) => ({
@@ -112,13 +114,30 @@ const observe = (connection: Connection): Stream.Stream<Message> =>
     }),
   ).pipe(Stream.orDie);
 
-export const subscriptions = Subscription.make<Model, Message>()((entry) => ({
+export const subscriptions = Subscription.make<Model, Message, AppServices>()((entry) => ({
   orders: entry(
     { connection: Schema.Option(Connection) },
     {
       modelToDependencies: (model) => ({ connection: connectionFor(model) }),
       dependenciesToStream: ({ connection }) =>
         Option.match(connection, { onNone: () => Stream.empty, onSome: observe }),
+    },
+  ),
+  modelProgress: entry(
+    { isLoading: Schema.Boolean },
+    {
+      modelToDependencies: (model) => ({
+        isLoading:
+          model.assistant.text._tag === "Loading" || model.assistant.voice._tag === "Loading",
+      }),
+      dependenciesToStream: ({ isLoading }) =>
+        isLoading
+          ? progressEvents.pipe(
+              Stream.map(({ model, loaded, total }) =>
+                Message.GotModelProgress({ model, loaded, total }),
+              ),
+            )
+          : Stream.empty,
     },
   ),
 }));

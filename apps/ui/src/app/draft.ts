@@ -5,6 +5,7 @@ import {
   normalizeDraftForItem,
 } from "#features/coffee-shop/lib/coffee.ts";
 import type { MenuItem, OrderDraft } from "#features/coffee-shop/lib/coffee.ts";
+import type { DraftPatch } from "#features/assistant/lib/tools.ts";
 
 export interface Composer {
   readonly draft: OrderDraft;
@@ -52,6 +53,30 @@ export function selectDrink(
         item,
       ),
     ),
+  );
+}
+
+/** Applies the assistant's edit: switch drink first, then the changed fields, kept valid. */
+export function patchDraft(
+  menu: readonly MenuItem[],
+  rawDraft: Option.Option<OrderDraft>,
+  patch: DraftPatch,
+): Option.Option<OrderDraft> {
+  const chosen =
+    patch.drinkId === undefined
+      ? rawDraft
+      : Option.orElse(selectDrink(menu, rawDraft, patch.drinkId), () => rawDraft);
+  return composerFor(menu, chosen).pipe(
+    Option.map(({ draft, item }) => {
+      const { extraShots, ...fields } = patch;
+      // "An extra shot" counts from the drink's usual shots, not whatever the draft held.
+      const shots =
+        extraShots === undefined ? fields.shots : createOrderDraft(item).shots + extraShots;
+      return normalizeDraftForItem(
+        { ...draft, ...fields, ...(shots === undefined ? {} : { shots }), drinkId: item.id },
+        item,
+      );
+    }),
   );
 }
 

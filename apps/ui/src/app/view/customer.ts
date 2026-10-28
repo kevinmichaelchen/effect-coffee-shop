@@ -9,6 +9,7 @@ import type { OrderTicket } from "#features/coffee-shop/lib/coffee.ts";
 import { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
 import type { Builder } from "#app/view/builder.ts";
+import { assistantCard } from "#app/view/assistant.ts";
 import { composerCard } from "#app/view/composer.ts";
 import { ordersCard } from "#app/view/orders.ts";
 import { statusBadge } from "#app/view/shared.ts";
@@ -16,8 +17,14 @@ import { statusBadge } from "#app/view/shared.ts";
 /** The composer and the customer's tickets, shown once someone is signed in. */
 export function customerWorkspace(model: Model, h: Builder) {
   return h.div(
-    [h.Class("grid gap-5 xl:grid-cols-customer-workspace")],
-    [composerCard(model, h), h.div([h.Id("my-orders")], [ordersCard(model, h)])],
+    [h.Class("grid gap-5")],
+    [
+      assistantCard(model, h),
+      h.div(
+        [h.Class("grid gap-5 xl:grid-cols-customer-workspace")],
+        [composerCard(model, h), h.div([h.Id("my-orders")], [ordersCard(model, h)])],
+      ),
+    ],
   );
 }
 

@@ -4,6 +4,7 @@ import { button } from "@effect-coffee-shop/ui-kit/components/button";
 import { card, cardContent, cardTitleHeader } from "@effect-coffee-shop/ui-kit/components/card";
 import { selectField, textAreaField, textField } from "@effect-coffee-shop/ui-kit/components/field";
 import { drinkSizes } from "#features/coffee-shop/lib/coffee.ts";
+import { usualDraft } from "#features/coffee-shop/lib/usual.ts";
 import { orderPreview } from "#app/view/preview.ts";
 import { composerFor, type Composer } from "#app/draft.ts";
 import { Message } from "#app/message.ts";
@@ -113,11 +114,39 @@ function drinkSelect(model: Model, composer: Composer, h: Builder) {
   );
 }
 
+/** The frequency table's suggestion: one tap back to the drink this customer orders most. */
+function usualChip(model: Model, h: Builder) {
+  return Option.match(usualDraft(model.orders, model.menu), {
+    onNone: () => [],
+    onSome: (usual) => [
+      h.div(
+        [h.Class("flex flex-wrap items-center gap-2")],
+        [
+          button(
+            {
+              attributes: [h.OnClick(Message.ClickedUseUsual())],
+              size: "sm",
+              variant: "secondary",
+            },
+            [
+              `Your usual: ${usual.size} ${toLabel(usual.milk === "none" ? "" : `${usual.milk} `)}${
+                model.menu.find((item) => item.id === usual.drinkId)?.name ?? usual.drinkId
+              }`,
+            ],
+            h,
+          ),
+        ],
+      ),
+    ],
+  });
+}
+
 function orderFields(model: Model, composer: Composer, h: Builder) {
   const { draft } = composer;
   return h.div(
     [h.Class("grid gap-4")],
     [
+      ...usualChip(model, h),
       drinkPicker(model, composer, h),
       drinkSelect(model, composer, h),
       sizeAndMilk(composer, h),
