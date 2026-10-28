@@ -2,7 +2,7 @@ import type { HtmlBuilder } from "foldkit/html";
 import { cn } from "#ui/lib/utils.ts";
 import type { Attributes, Child } from "#ui/components/types.ts";
 
-interface CellProps<Message> {
+export interface CellProps<Message> {
   readonly className?: string;
   readonly attributes?: Attributes<Message>;
 }

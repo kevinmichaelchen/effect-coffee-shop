@@ -31,6 +31,7 @@ import {
   openDetails,
   openMenu,
   openReceipt,
+  type UpdateStep,
   withToast,
 } from "#app/dialogs.ts";
 import { composerFor, selectDrink, toInt } from "#app/draft.ts";
@@ -39,8 +40,7 @@ import { Message } from "#app/message.ts";
 import type { AuthAction, Model } from "#app/model.ts";
 import { AppRoute, mcpAuthorizePath, urlToAppRoute } from "#app/route.ts";
 
-type UpdateReturn = Update.Return<Model, Message>;
-type UpdateStep = Update.Step<Model, Message>;
+export type UpdateReturn = Update.Return<Model, Message>;
 
 // SESSION
 

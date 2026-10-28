@@ -1,15 +1,12 @@
-import type { HtmlBuilder } from "foldkit/html";
 import { alert } from "@effect-coffee-shop/ui-kit/components/alert";
 import { card, cardContent, cardTitleHeader } from "@effect-coffee-shop/ui-kit/components/card";
 import { text } from "@effect-coffee-shop/ui-kit/components/text";
 import { formatOrderTime, formatPrice, isActiveOrder } from "#features/coffee-shop/lib/coffee.ts";
 import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import type { OrderTicket } from "#features/coffee-shop/lib/coffee.ts";
-import type { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
+import type { Builder } from "#app/view/builder.ts";
 import { statusBadge } from "#app/view/shared.ts";
-
-type Builder = HtmlBuilder<Message>;
 
 function orderRow(order: OrderTicket, h: Builder) {
   return h.keyed("div")(

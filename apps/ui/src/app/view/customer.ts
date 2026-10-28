@@ -1,6 +1,5 @@
 import { Dialog } from "@foldkit/ui";
 import { Option } from "effect";
-import type { HtmlBuilder } from "foldkit/html";
 import { button } from "@effect-coffee-shop/ui-kit/components/button";
 import { overlay } from "@effect-coffee-shop/ui-kit/components/overlay";
 import { text } from "@effect-coffee-shop/ui-kit/components/text";
@@ -9,11 +8,10 @@ import { formatOrderItems } from "#features/coffee-shop/lib/order-display.ts";
 import type { OrderTicket } from "#features/coffee-shop/lib/coffee.ts";
 import { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
+import type { Builder } from "#app/view/builder.ts";
 import { composerCard } from "#app/view/composer.ts";
 import { ordersCard } from "#app/view/orders.ts";
 import { statusBadge } from "#app/view/shared.ts";
-
-type Builder = HtmlBuilder<Message>;
 
 /** The composer and the customer's tickets, shown once someone is signed in. */
 export function customerWorkspace(model: Model, h: Builder) {

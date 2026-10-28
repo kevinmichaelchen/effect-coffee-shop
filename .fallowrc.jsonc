@@ -115,6 +115,10 @@
         "patterns": ["apps/ui/**"],
       },
       {
+        "name": "ui-kit",
+        "patterns": ["packages/ui-kit/**"],
+      },
+      {
         "name": "http-routing",
         "patterns": ["packages/http-routing/**"],
       },
@@ -158,7 +162,11 @@
       },
       {
         "from": "ui",
-        "allow": ["auth-contract", "domain"],
+        "allow": ["auth-contract", "domain", "ui-kit"],
+      },
+      {
+        "from": "ui-kit",
+        "allow": [],
       },
       {
         "from": "http-routing",

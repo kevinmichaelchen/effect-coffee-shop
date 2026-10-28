@@ -1,4 +1,3 @@
-import type { HtmlBuilder } from "foldkit/html";
 import { alert } from "@effect-coffee-shop/ui-kit/components/alert";
 import { badge, type BadgeVariant } from "@effect-coffee-shop/ui-kit/components/badge";
 import { card, cardContent } from "@effect-coffee-shop/ui-kit/components/card";
@@ -6,9 +5,7 @@ import { progress } from "@effect-coffee-shop/ui-kit/components/progress";
 import { text } from "@effect-coffee-shop/ui-kit/components/text";
 import { getStatusLabel } from "#features/coffee-shop/lib/coffee.ts";
 import type { OrderStatus } from "#features/coffee-shop/lib/coffee.ts";
-import type { Message } from "#app/message.ts";
-
-type Builder = HtmlBuilder<Message>;
+import type { Builder } from "#app/view/builder.ts";
 
 const badgeVariants = {
   pending: "default",

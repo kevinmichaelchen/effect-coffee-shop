@@ -1,5 +1,4 @@
 import { Option } from "effect";
-import type { HtmlBuilder } from "foldkit/html";
 import { alert } from "@effect-coffee-shop/ui-kit/components/alert";
 import { button } from "@effect-coffee-shop/ui-kit/components/button";
 import { card, cardContent, cardTitleHeader } from "@effect-coffee-shop/ui-kit/components/card";
@@ -9,8 +8,7 @@ import { orderPreview } from "#app/view/preview.ts";
 import { composerFor, type Composer } from "#app/draft.ts";
 import { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
-
-type Builder = HtmlBuilder<Message>;
+import type { Builder } from "#app/view/builder.ts";
 
 const toLabel = (value: string): string => value.replaceAll("-", " ");
 const options = (values: readonly string[]) =>

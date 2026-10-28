@@ -1,5 +1,4 @@
 import { Option } from "effect";
-import type { HtmlBuilder } from "foldkit/html";
 import { alert } from "@effect-coffee-shop/ui-kit/components/alert";
 import { button } from "@effect-coffee-shop/ui-kit/components/button";
 import { card, cardContent, cardTitleHeader } from "@effect-coffee-shop/ui-kit/components/card";
@@ -8,8 +7,7 @@ import { text } from "@effect-coffee-shop/ui-kit/components/text";
 import type { AuthenticatedViewer } from "#features/auth/lib/viewer.ts";
 import { Message } from "#app/message.ts";
 import type { AuthAction, Model } from "#app/model.ts";
-
-type Builder = HtmlBuilder<Message>;
+import type { Builder } from "#app/view/builder.ts";
 
 const pendingLabels = {
   "create-account": "Waiting for your passkey…",
@@ -60,7 +58,7 @@ function passkeyNotices(model: Model, h: Builder) {
   ];
 }
 
-export function passkeyGate(
+function passkeyGate(
   model: Model,
   props: { readonly title: string; readonly description: string },
   h: Builder,
@@ -143,7 +141,7 @@ function sessionIdentity(viewer: AuthenticatedViewer, copyState: Model["copyStat
   );
 }
 
-export function sessionCard(model: Model, viewer: AuthenticatedViewer, h: Builder) {
+function sessionCard(model: Model, viewer: AuthenticatedViewer, h: Builder) {
   return card(
     { className: "w-full" },
     [

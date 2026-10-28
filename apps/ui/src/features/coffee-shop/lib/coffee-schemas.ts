@@ -4,7 +4,7 @@ import { drinkSizes, milks, orderStatuses, temperatures } from "./coffee.ts";
 export const DrinkSize = Schema.Literals(drinkSizes);
 export const Milk = Schema.Literals(milks);
 export const Temperature = Schema.Literals(temperatures);
-export const OrderStatus = Schema.Literals(orderStatuses);
+const OrderStatus = Schema.Literals(orderStatuses);
 
 export const MenuItem = Schema.Struct({
   id: Schema.String,

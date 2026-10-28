@@ -1,5 +1,5 @@
 import { Match, Option } from "effect";
-import type { Document, HtmlBuilder } from "foldkit/html";
+import type { Document } from "foldkit/html";
 import { card, cardContent } from "@effect-coffee-shop/ui-kit/components/card";
 import { linkButton } from "@effect-coffee-shop/ui-kit/components/button";
 import { text } from "@effect-coffee-shop/ui-kit/components/text";
@@ -9,13 +9,12 @@ import { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
 import { shopRouter, staffRouter } from "#app/route.ts";
 import { authGate } from "#app/view/auth.ts";
+import type { Builder } from "#app/view/builder.ts";
 import { customerWorkspace, receiptDialog } from "#app/view/customer.ts";
 import { pageHeader } from "#app/view/header.ts";
 import { metricStrip, workspaceWarning } from "#app/view/shared.ts";
 import { staffAccessWarning, staffQueue, staffSnapshot } from "#app/view/staff.ts";
 import { isActiveOrder } from "#features/coffee-shop/lib/coffee.ts";
-
-type Builder = HtmlBuilder<Message>;
 
 const pageShell = "mx-auto grid min-h-screen w-full max-w-7xl gap-5 px-4 py-5 lg:px-6";
 

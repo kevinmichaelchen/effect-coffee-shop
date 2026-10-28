@@ -25,7 +25,7 @@
       "project": ["*.ts!", "!*.test.ts!", "!vitest.config.ts!"],
     },
     "apps/ui": {
-      "entry": ["src/worker.ts!", "src/entry.ts!"],
+      "entry": ["src/worker.ts!"],
       "project": ["src/**/*.{ts,css}!", "*.ts"],
     },
     "packages/**": {

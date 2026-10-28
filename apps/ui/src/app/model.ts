@@ -8,9 +8,9 @@ import { AppRoute } from "#app/route.ts";
 export const AuthAction = Schema.Literals(["create-account", "sign-in", "sign-out"]);
 export type AuthAction = typeof AuthAction.Type;
 
-export const CopyState = Schema.Literals(["idle", "copied", "failed"]);
+const CopyState = Schema.Literals(["idle", "copied", "failed"]);
 
-export const Toast = Schema.Struct({
+const Toast = Schema.Struct({
   id: Schema.String,
   kind: Schema.Literals(["success", "error"]),
   message: Schema.String,

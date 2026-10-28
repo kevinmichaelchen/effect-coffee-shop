@@ -1,4 +1,3 @@
-import type { HtmlBuilder } from "foldkit/html";
 import { button } from "@effect-coffee-shop/ui-kit/components/button";
 import { card, cardContent } from "@effect-coffee-shop/ui-kit/components/card";
 import { text } from "@effect-coffee-shop/ui-kit/components/text";
@@ -6,8 +5,7 @@ import { formatPrice } from "#features/coffee-shop/lib/coffee.ts";
 import type { Composer } from "#app/draft.ts";
 import { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
-
-type Builder = HtmlBuilder<Message>;
+import type { Builder } from "#app/view/builder.ts";
 
 export function orderPreview(model: Model, composer: Composer, h: Builder) {
   const { draft, item, priceCents } = composer;

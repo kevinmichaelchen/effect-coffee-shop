@@ -5,7 +5,7 @@ import { ExpireToast } from "#app/command.ts";
 import { Message } from "#app/message.ts";
 import type { Model, Toast } from "#app/model.ts";
 
-type UpdateStep = Update.Step<Model, Message>;
+export type UpdateStep = Update.Step<Model, Message>;
 
 // TOASTS
 

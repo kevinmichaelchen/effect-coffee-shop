@@ -1,4 +1,4 @@
-import type { HtmlBuilder } from "foldkit/html";
+import type { Html, HtmlBuilder } from "foldkit/html";
 import { cn } from "#ui/lib/utils.ts";
 import { text } from "#ui/components/text.ts";
 
@@ -11,10 +11,18 @@ export interface SelectOption {
   readonly value: string;
 }
 
-interface FieldBase {
+export interface FieldBase {
   readonly id: string;
   readonly label: string;
   readonly helperText?: string | undefined;
+}
+
+/** Label above, control in the middle, helper text below: the layout every field shares. */
+function fieldShell<Message>(field: FieldBase, control: Html, h: HtmlBuilder<Message>) {
+  return h.div(
+    [h.Class("grid gap-2")],
+    [h.label([h.For(field.id), h.Class(labelClass)], [field.label]), control, ...helper(field, h)],
+  );
 }
 
 function helper<Message>(field: FieldBase, h: HtmlBuilder<Message>) {
@@ -57,22 +65,19 @@ function optionalAttributes<Message>(props: TextFieldProps<Message>, h: HtmlBuil
 }
 
 export function textField<Message>(props: TextFieldProps<Message>, h: HtmlBuilder<Message>) {
-  return h.div(
-    [h.Class("grid gap-2")],
-    [
-      h.label([h.For(props.id), h.Class(labelClass)], [props.label]),
-      h.input([
-        h.Id(props.id),
-        h.Type(props.type ?? "text"),
-        h.Value(props.value),
-        h.Disabled(props.disabled ?? false),
-        h.OnInput(props.onInput),
-        ...optionalAttributes(props, h),
-        ...describedBy(props, h),
-        h.Class(controlClass),
-      ]),
-      ...helper(props, h),
-    ],
+  return fieldShell(
+    props,
+    h.input([
+      h.Id(props.id),
+      h.Type(props.type ?? "text"),
+      h.Value(props.value),
+      h.Disabled(props.disabled ?? false),
+      h.OnInput(props.onInput),
+      ...optionalAttributes(props, h),
+      ...describedBy(props, h),
+      h.Class(controlClass),
+    ]),
+    h,
   );
 }
 
@@ -86,25 +91,22 @@ export function textAreaField<Message>(
   props: TextAreaFieldProps<Message>,
   h: HtmlBuilder<Message>,
 ) {
-  return h.div(
-    [h.Class("grid gap-2")],
-    [
-      h.label([h.For(props.id), h.Class(labelClass)], [props.label]),
-      h.textarea([
-        h.Id(props.id),
-        h.Rows(4),
-        h.Value(props.value),
-        h.Placeholder(props.placeholder),
-        h.OnInput(props.onInput),
-        ...describedBy(props, h),
-        h.Class(
-          cn(
-            "w-full resize-y overflow-y-auto rounded border-2 border-border px-4 py-2 shadow-md transition focus:outline-hidden focus:shadow-xs placeholder:text-muted-foreground",
-          ),
+  return fieldShell(
+    props,
+    h.textarea([
+      h.Id(props.id),
+      h.Rows(4),
+      h.Value(props.value),
+      h.Placeholder(props.placeholder),
+      h.OnInput(props.onInput),
+      ...describedBy(props, h),
+      h.Class(
+        cn(
+          "w-full resize-y overflow-y-auto rounded border-2 border-border px-4 py-2 shadow-md transition focus:outline-hidden focus:shadow-xs placeholder:text-muted-foreground",
         ),
-      ]),
-      ...helper(props, h),
-    ],
+      ),
+    ]),
+    h,
   );
 }
 
@@ -116,25 +118,19 @@ export interface SelectFieldProps<Message> extends FieldBase {
 
 /** A native select: keyboard, typeahead, and screen-reader support come from the browser. */
 export function selectField<Message>(props: SelectFieldProps<Message>, h: HtmlBuilder<Message>) {
-  return h.div(
-    [h.Class("grid gap-2")],
-    [
-      h.label([h.For(props.id), h.Class(labelClass)], [props.label]),
-      h.select(
-        [
-          h.Id(props.id),
-          h.OnChange(props.onChange),
-          ...describedBy(props, h),
-          h.Class(cn(controlClass, "bg-background")),
-        ],
-        props.options.map((option) =>
-          h.option(
-            [h.Value(option.value), h.Selected(option.value === props.value)],
-            [option.label],
-          ),
-        ),
+  return fieldShell(
+    props,
+    h.select(
+      [
+        h.Id(props.id),
+        h.OnChange(props.onChange),
+        ...describedBy(props, h),
+        h.Class(cn(controlClass, "bg-background")),
+      ],
+      props.options.map((option) =>
+        h.option([h.Value(option.value), h.Selected(option.value === props.value)], [option.label]),
       ),
-      ...helper(props, h),
-    ],
+    ),
+    h,
   );
 }

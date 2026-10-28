@@ -1,6 +1,5 @@
 import { Dialog } from "@foldkit/ui";
 import { Option } from "effect";
-import type { HtmlBuilder } from "foldkit/html";
 import { alert } from "@effect-coffee-shop/ui-kit/components/alert";
 import { button } from "@effect-coffee-shop/ui-kit/components/button";
 import { overlay } from "@effect-coffee-shop/ui-kit/components/overlay";
@@ -10,9 +9,8 @@ import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order
 import type { OrderTicket } from "#features/coffee-shop/lib/coffee.ts";
 import { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
+import type { Builder } from "#app/view/builder.ts";
 import { statusBadge } from "#app/view/shared.ts";
-
-type Builder = HtmlBuilder<Message>;
 
 const detailLine = (label: string, value: string, h: Builder) =>
   h.div(

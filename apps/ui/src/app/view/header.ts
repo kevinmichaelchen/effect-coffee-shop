@@ -1,5 +1,4 @@
 import { Dialog } from "@foldkit/ui";
-import type { HtmlBuilder } from "foldkit/html";
 import {
   button,
   linkButton,
@@ -11,8 +10,7 @@ import { themeToggle } from "@effect-coffee-shop/ui-kit/components/theme";
 import { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
 import { staffRouter, shopRouter } from "#app/route.ts";
-
-type Builder = HtmlBuilder<Message>;
+import type { Builder } from "#app/view/builder.ts";
 
 interface NavLink {
   readonly href: string;
@@ -77,7 +75,7 @@ function menuDrawer(model: Model, links: readonly NavLink[], active: number, h: 
   });
 }
 
-interface HeaderProps {
+export interface HeaderProps {
   readonly title: string;
   readonly footerLabel: string;
   readonly target: "shop" | "staff";
