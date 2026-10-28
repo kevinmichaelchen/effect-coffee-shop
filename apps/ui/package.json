@@ -31,12 +31,15 @@
     "@effect-coffee-shop/ui-kit": "workspace:*",
     "@effect/platform-browser": "catalog:",
     "@foldkit/ui": "catalog:",
+    "@huggingface/transformers": "catalog:",
+    "@huggingface/transformers-structured-output": "catalog:",
     "@simplewebauthn/browser": "catalog:",
     "@yielded/auth": "catalog:",
     "@yielded/auth-simplewebauthn": "catalog:",
     "@yielded/sync": "catalog:",
     "effect": "catalog:",
     "foldkit": "catalog:",
+    "onnxruntime-web": "catalog:",
     "tailwindcss": "catalog:"
   },
   "devDependencies": {

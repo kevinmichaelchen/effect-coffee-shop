@@ -6,6 +6,9 @@ minimumReleaseAge = 259200
 minimumReleaseAgeExcludes = [
   # Explicitly adopted Effect v4 integration; pinned in the workspace catalog.
   "effect-wide-event",
+  # LFM3 support landed in Transformers.js 4.3.2 (2026-10-27); pinned in the workspace catalog.
+  "@huggingface/transformers",
+  "@huggingface/transformers-structured-output",
   # Explicitly adopted launch release; version pinned in the workspace catalog.
   "foldkit",
   "@foldkit/ui",
