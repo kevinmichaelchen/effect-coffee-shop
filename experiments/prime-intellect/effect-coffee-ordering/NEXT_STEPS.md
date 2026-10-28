@@ -11,15 +11,15 @@ when something is unavailable, and give a compact receipt with the right price.
 
 ## Current Champion
 
-| Field | Value |
-| --- | --- |
-| Adapter | `rqvfrcdy4xt95oka37b0xjyu` |
-| Deployed model string | `Qwen/Qwen3.5-0.8B:rqvfrcdy4xt95oka37b0xjyu` |
+| Field                 | Value                                                              |
+| --------------------- | ------------------------------------------------------------------ |
+| Adapter               | `rqvfrcdy4xt95oka37b0xjyu`                                         |
+| Deployed model string | `Qwen/Qwen3.5-0.8B:rqvfrcdy4xt95oka37b0xjyu`                       |
 | Hard eval environment | `kevinmichaelchen/effect-coffee-ordering@0.1.5`, `split=hard_eval` |
-| Reward | `0.830` |
-| Tool correctness | `0.984` |
-| Price format | `0.625` |
-| Receipt style | `0.866` |
+| Reward                | `0.830`                                                            |
+| Tool correctness      | `0.984`                                                            |
+| Price format          | `0.625`                                                            |
+| Receipt style         | `0.866`                                                            |
 
 Main remaining weakness: successful final confirmations are sometimes too
 verbose or use bad price formatting.
@@ -69,28 +69,28 @@ Run `e2s3bs35k9qwzlfbrfw0ol51` was stopped after its first interval
 eval because it failed the promotion gate:
 
 | Step | Hard eval Avg@2 | Hard mean completion length | Product-readiness Avg@2 | Product mean completion length |
-| ---: | ---: | ---: | ---: | ---: |
-| `32` | `0.7545` | `620.5625` | `0.7545` | `629.25` |
+| ---: | --------------: | --------------------------: | ----------------------: | -----------------------------: |
+| `32` |        `0.7545` |                  `620.5625` |                `0.7545` |                       `629.25` |
 
 Cost was `$0.1226`; no adapter was promoted.
 
 Recent baseline evals on the expanded tool surface:
 
-| Model | Env | Split | Reward | Tool correctness | Price format | Note |
-| --- | --- | --- | ---: | ---: | ---: | --- |
-| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.11` | `hard_eval` | `0.520` | `0.625` | `0.375` | Too much menu/options probing; bad final prices on successful orders. |
-| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.13` | `hard_eval` | `0.507` API / `0.508` logs | `0.531` | `0.438` | Prompt-only receipt tightening improved price format but hurt overall reward. |
-| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.14` | `hard_eval` | `0.592` API / `0.564` logs | `0.625` | `0.500` | Order-first tool presentation helped hard eval; product-readiness still needs a scored run. |
-| Raw `Qwen/Qwen3.5-2B` | `0.1.11` | `hard_eval` | `0.783` | `0.812` | `0.812` | Better receipt priors, still below champion gate and weaker tool discipline. |
+| Model                               | Env      | Split       |                     Reward | Tool correctness | Price format | Note                                                                                        |
+| ----------------------------------- | -------- | ----------- | -------------------------: | ---------------: | -----------: | ------------------------------------------------------------------------------------------- |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.11` | `hard_eval` |                    `0.520` |          `0.625` |      `0.375` | Too much menu/options probing; bad final prices on successful orders.                       |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.13` | `hard_eval` | `0.507` API / `0.508` logs |          `0.531` |      `0.438` | Prompt-only receipt tightening improved price format but hurt overall reward.               |
+| Champion `rqvfrcdy4xt95oka37b0xjyu` | `0.1.14` | `hard_eval` | `0.592` API / `0.564` logs |          `0.625` |      `0.500` | Order-first tool presentation helped hard eval; product-readiness still needs a scored run. |
+| Raw `Qwen/Qwen3.5-2B`               | `0.1.11` | `hard_eval` |                    `0.783` |          `0.812` |      `0.812` | Better receipt priors, still below champion gate and weaker tool discipline.                |
 
 These results mean `0.1.14` is a meaningful hard-eval improvement over the
 expanded-tool baseline, but it is not promotion ready.
 
 Receipt-drill warmup on `0.1.11` was attempted and stopped early:
 
-| Run | Latest step | Cost | Best observed training signal | Decision |
-| --- | ---: | ---: | --- | --- |
-| `w402wq3sb943xintnex94sga` | `36` | `$0.36` | step `34`: reward `0.715`, tool correctness `1.000`, price format `0.400`; step `35`: reward `0.683`, price format `0.273` | Do not promote. |
+| Run                        | Latest step |    Cost | Best observed training signal                                                                                              | Decision        |
+| -------------------------- | ----------: | ------: | -------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| `w402wq3sb943xintnex94sga` |        `36` | `$0.36` | step `34`: reward `0.715`, tool correctness `1.000`, price format `0.400`; step `35`: reward `0.683`, price format `0.273` | Do not promote. |
 
 READY adapter/checkpoint from this run:
 

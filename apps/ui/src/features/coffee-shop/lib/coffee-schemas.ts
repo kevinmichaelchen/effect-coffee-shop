@@ -1,12 +1,12 @@
 import * as Schema from "effect/Schema";
 import { drinkSizes, milks, orderStatuses, temperatures } from "./coffee.ts";
 
-const DrinkSize = Schema.Literals(drinkSizes);
-const Milk = Schema.Literals(milks);
-const Temperature = Schema.Literals(temperatures);
+export const DrinkSize = Schema.Literals(drinkSizes);
+export const Milk = Schema.Literals(milks);
+export const Temperature = Schema.Literals(temperatures);
 const OrderStatus = Schema.Literals(orderStatuses);
 
-const MenuItem = Schema.Struct({
+export const MenuItem = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   kind: Schema.Literals(["espresso", "tea"] as const),
@@ -40,12 +40,12 @@ const DrinkSelection = Schema.Struct({
   quantity: Schema.optionalKey(Schema.Int),
 });
 
-const PlaceOrderRequest = Schema.Struct({
+export const PlaceOrderRequest = Schema.Struct({
   items: Schema.Array(DrinkSelection),
 });
 
 /** An order as the components render it: cents and an ISO timestamp. */
-const OrderTicket = Schema.Struct({
+export const OrderTicket = Schema.Struct({
   id: Schema.String,
   customerName: Schema.String,
   ownerUserId: Schema.String,
@@ -53,6 +53,17 @@ const OrderTicket = Schema.Struct({
   status: OrderStatus,
   totalPriceCents: Schema.Int,
   createdAt: Schema.String,
+});
+
+/** The customer's in-progress drink choice, held in the Model. */
+export const OrderDraft = Schema.Struct({
+  drinkId: Schema.String,
+  size: DrinkSize,
+  milk: Milk,
+  temperature: Temperature,
+  shots: Schema.Int,
+  quantity: Schema.Int,
+  notes: Schema.String,
 });
 
 export const CoffeeApiError = Schema.Struct({
@@ -64,5 +75,6 @@ export const Menu = Schema.Array(MenuItem);
 
 export type MenuItem = typeof MenuItem.Type;
 export type OrderTicket = typeof OrderTicket.Type;
+export type OrderDraft = typeof OrderDraft.Type;
 export type PlaceOrderRequest = typeof PlaceOrderRequest.Type;
 export type CoffeeApiError = typeof CoffeeApiError.Type;

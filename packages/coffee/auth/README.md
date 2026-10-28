@@ -1,7 +1,7 @@
 # Coffee Auth
 
 Yielded Auth owns passkey enrollment, authentication, cookies, and stateful
-sessions. Better Auth has been removed. The UI uses the shared typed contract
+sessions. The UI uses the shared typed contract
 and Yielded's SimpleWebAuthn browser adapter.
 
 - `src/contract.ts`: shared browser/server operations and claims.
@@ -12,7 +12,8 @@ and Yielded's SimpleWebAuthn browser adapter.
 - `src/config.ts`: schema-decoded origin and OAuth client configuration.
 - `src/persistence/`: Effect SQL mappings and atomic credential/session writes.
 - `src/database.ts`: D1 atomic batches (`d1AuthDatabase`) and a generic transactional SQL layer.
-- `migrations/`: the D1 SQL migrations Alchemy applies to `coffee-db`.
+- `migrations/0000_auth.sql`: the complete Yielded Auth and OAuth schema for a fresh D1 database.
+  Recreate development databases when adopting this baseline; it is not an incremental upgrade.
 - `src/testing/`: test helpers, including `migrate.ts`, which applies `migrations/` to a D1 binding.
 - `src/yielded/identity.ts`: deployment-owned customer/staff mapping.
 
@@ -37,17 +38,9 @@ except for local development hosts accepted by Yielded. Creating an account
 first enrolls a passkey and then prompts for a sign-in assertion. If the second
 prompt is canceled, the account exists and the user can choose Sign in.
 
-## Prototype cutover
+## Database
 
-There are no existing users to preserve. Migration `0004_yielded_auth.sql`
-removes legacy auth and Agent Auth tables and creates Yielded's storage. Old
-passkeys and sessions are not imported. Migration `0006_drop_coffee_tables.sql`
-drops the former menu/order/cart/checkout tables: that state now lives in the
-`@alchemy.run/domain` model on Durable Objects, and D1 holds only auth state.
-
-Rename deployed `BETTER_AUTH_SECRET` configuration to `AUTH_SECRET`; Alchemy
-applies the migrations on deploy. The Worker serves auth under `/api/auth/*`
-and the application API under `/api`.
+`0000_auth.sql` creates the complete Yielded Auth schema, OAuth grants, and rate-limit storage. Alchemy applies it to `coffee-db` on deploy.
 
 ## Verification
 
@@ -77,7 +70,7 @@ unauthenticated requests receive 401 and OAuth discovery. Clients use authorizat
 code + S256 PKCE, the `coffee:access` scope, and resource `<APP_ORIGIN>/mcp`.
 The browser signs in at `/login/mcp` and returns to Yielded's consent page.
 Tokens use independent signing material and durable D1 grant storage.
-Migration `0005_mcp_oauth.sql` contains Yielded's published OAuth schema. Staff authority is checked on every tool invocation;
+Migration `0000_auth.sql` contains Yielded's published OAuth schema. Staff authority is checked on every tool invocation;
 OAuth scope never grants staff authority. Disabled accounts cannot execute tools.
 
 HTTP clients must support MCP `2026-07-28` and supply its required protocol,

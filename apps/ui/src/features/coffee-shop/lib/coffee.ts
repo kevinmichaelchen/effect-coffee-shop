@@ -1,4 +1,4 @@
-import type { OrderTicket, MenuItem, PlaceOrderRequest } from "./coffee-schemas.ts";
+import type { OrderDraft, OrderTicket, MenuItem, PlaceOrderRequest } from "./coffee-schemas.ts";
 
 export const drinkSizes = ["small", "medium", "large"] as const;
 export const milks = ["whole", "oat", "almond", "none"] as const;
@@ -13,17 +13,7 @@ export type Temperature = (typeof temperatures)[number];
 export type OrderStatus = (typeof orderStatuses)[number];
 export type OrderAction = "start-brewing" | "mark-ready" | "pick-up" | "cancel";
 
-export interface OrderDraft {
-  drinkId: string;
-  size: DrinkSize;
-  milk: Milk;
-  temperature: Temperature;
-  shots: number;
-  quantity: number;
-  notes: string;
-}
-
-export type { OrderTicket, MenuItem, PlaceOrderRequest } from "./coffee-schemas.ts";
+export type { OrderDraft, OrderTicket, MenuItem, PlaceOrderRequest } from "./coffee-schemas.ts";
 
 export interface OrderActionOption {
   action: OrderAction;

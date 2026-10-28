@@ -15,11 +15,11 @@ Use this when writing Effect tests, tests involving time, retry, schedules, conc
 ```ts
 it.effect("finds a user", () =>
   Effect.gen(function* () {
-    const users = yield* UserRepo.Service
-    const result = yield* users.find(UserId.make("u1"))
-    expect(Option.isSome(result)).toBe(true)
+    const users = yield* UserRepo.Service;
+    const result = yield* users.find(UserId.make("u1"));
+    expect(Option.isSome(result)).toBe(true);
   }).pipe(Effect.provide(UserRepo.testLayer)),
-)
+);
 ```
 
 ## Synchronization Instead Of Sleeps
@@ -33,24 +33,22 @@ it.effect("finds a user", () =>
 ```ts
 it.effect("publishes exactly once", () =>
   Effect.gen(function* () {
-    const published = yield* Queue.unbounded<Message>()
-    const ready = yield* Deferred.make<void>()
+    const published = yield* Queue.unbounded<Message>();
+    const ready = yield* Deferred.make<void>();
 
     const runWorker = makeWorker({
       onReady: () => Deferred.succeed(ready, undefined),
       onPublish: (message) => Queue.offer(published, message),
-    })
+    });
 
-    yield* runWorker.pipe(
-      Effect.forkScoped,
-    )
+    yield* runWorker.pipe(Effect.forkScoped);
 
-    yield* Deferred.await(ready)
-    const message = yield* Queue.take(published)
+    yield* Deferred.await(ready);
+    const message = yield* Queue.take(published);
 
-    expect(message).toEqual(expectedMessage)
+    expect(message).toEqual(expectedMessage);
   }),
-)
+);
 ```
 
 ## First-Class App Test Stubs
@@ -59,16 +57,14 @@ Use `TestInterface extends Interface`, `TestService`, and `testLayer` for reusab
 
 ```ts
 export interface Interface {
-  readonly send: (message: Message) => Effect.Effect<void, SendError>
+  readonly send: (message: Message) => Effect.Effect<void, SendError>;
 }
 
-export class Service extends Context.Service<Service, Interface>()(
-  "@app/Notifier",
-) {}
+export class Service extends Context.Service<Service, Interface>()("@app/Notifier") {}
 
 export interface TestInterface extends Interface {
-  readonly sentMessages: () => Effect.Effect<ReadonlyArray<Message>>
-  readonly failNextSend: (error: SendError) => Effect.Effect<void>
+  readonly sentMessages: () => Effect.Effect<ReadonlyArray<Message>>;
+  readonly failNextSend: (error: SendError) => Effect.Effect<void>;
 }
 
 export class TestService extends Context.Service<TestService, TestInterface>()(
@@ -77,29 +73,26 @@ export class TestService extends Context.Service<TestService, TestInterface>()(
 
 export const testLayer = Layer.effectContext(
   Effect.gen(function* () {
-    const sent = yield* Ref.make<ReadonlyArray<Message>>([])
-    const nextFailure = yield* Ref.make<Option.Option<SendError>>(Option.none())
+    const sent = yield* Ref.make<ReadonlyArray<Message>>([]);
+    const nextFailure = yield* Ref.make<Option.Option<SendError>>(Option.none());
 
     const service = TestService.of({
       send: Effect.fn("Notifier.Test.send")(function* (message) {
-        const failure = yield* Ref.getAndSet(nextFailure, Option.none())
-        if (Option.isSome(failure)) return yield* Effect.fail(failure.value)
-        yield* Ref.update(sent, (messages) => [...messages, message])
+        const failure = yield* Ref.getAndSet(nextFailure, Option.none());
+        if (Option.isSome(failure)) return yield* Effect.fail(failure.value);
+        yield* Ref.update(sent, (messages) => [...messages, message]);
       }),
       sentMessages: Effect.fn("Notifier.Test.sentMessages")(function* () {
-        return yield* Ref.get(sent)
+        return yield* Ref.get(sent);
       }),
       failNextSend: Effect.fn("Notifier.Test.failNextSend")(function* (error) {
-        yield* Ref.set(nextFailure, Option.some(error))
+        yield* Ref.set(nextFailure, Option.some(error));
       }),
-    })
+    });
 
-    return Context.empty().pipe(
-      Context.add(Service, service),
-      Context.add(TestService, service),
-    )
+    return Context.empty().pipe(Context.add(Service, service), Context.add(TestService, service));
   }),
-)
+);
 ```
 
 Guidance:

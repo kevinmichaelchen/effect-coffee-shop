@@ -21,7 +21,7 @@ classes: {
 
 clients: "clients\nbrowser, MCP agents, tests"
 
-website: "Website Worker (apps/ui)\nVite assets; forwards /api, /mcp, /oauth/, /.well-known/" {
+website: "Website Worker (apps/ui)\nFoldkit assets; forwards /api, /sync, /mcp, /oauth/, /.well-known/" {
   class: runtime
 }
 
@@ -32,6 +32,9 @@ coffee: "Coffee Worker (coffee-server)\none wide event per request" {
 surfaces: "surfaces" {
   class: surface
   domain_apis: "Domain Apis (Effect RPC)\n/api/customer, /api/staff\nactor from session header" {
+    class: surface
+  }
+  sync: "Yielded Sync\n/sync/orders/:id\nsession-authenticated WebSockets" {
     class: surface
   }
   rest: "REST\n/api/health, /api/menu, /api/me\nstatic menu, session actor" {
@@ -50,6 +53,9 @@ storage: "platform" {
   model: "CoffeeShop model\nDurable Objects (DomainCloudflare)" {
     class: implementation
   }
+  feeds: "Private order feeds\nYielded Sync Durable Objects" {
+    class: implementation
+  }
   d1: "D1 coffee-db\npasskeys, sessions, OAuth grants" {
     class: implementation
   }
@@ -61,3 +67,6 @@ coffee -> surfaces: "route by path"
 surfaces.domain_apis -> storage.model: "commands + views"
 surfaces.mcp -> storage.model: "CoffeeOrderApp"
 surfaces.auth -> storage.d1
+
+surfaces.sync -> storage.feeds: "snapshots + live events"
+storage.model -> storage.feeds: "SyncOrders policy"

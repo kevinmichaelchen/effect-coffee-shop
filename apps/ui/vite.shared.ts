@@ -1,6 +1,4 @@
 import tailwindcss from "@tailwindcss/vite";
-import babel from "@rolldown/plugin-babel";
-import { reactCompilerPreset } from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
 
 // A standalone `vite` dev server proxies the backend paths to the CoffeeWorker
@@ -16,6 +14,7 @@ const coffeeProxyTarget = process.env.VITE_COFFEE_PROXY_TARGET ?? "http://localh
 const alchemyHostsVite = process.env.ALCHEMY_CLOUDFLARE_VITE_INJECTED === "1";
 
 const coffeeProxy = {
+  "/sync": { target: coffeeProxyTarget, changeOrigin: false, ws: true },
   "/api": {
     target: coffeeProxyTarget,
     changeOrigin: false,
@@ -31,7 +30,7 @@ const coffeeProxy = {
 } satisfies NonNullable<NonNullable<UserConfig["server"]>["proxy"]>;
 
 export const sharedViteConfig = {
-  plugins: [tailwindcss(), babel({ presets: [reactCompilerPreset()] })],
+  plugins: [tailwindcss()],
   server: {
     allowedHosts: [".localhost"],
     ...(alchemyHostsVite ? {} : { proxy: coffeeProxy }),

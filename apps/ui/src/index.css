@@ -1,6 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&display=swap");
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @source "../../../packages/ui-kit/src";
 

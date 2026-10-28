@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "ignorePatterns": ["dist/**"],
-  "plugins": ["typescript", "unicorn", "oxc", "react", "jsx-a11y", "import", "promise", "vitest"],
+  "plugins": ["typescript", "unicorn", "oxc", "import", "promise", "vitest"],
   "options": {
     "typeAware": true,
     "typeCheck": true,
@@ -25,98 +25,14 @@
     "typescript/no-unsafe-return": "error",
     "typescript/no-unsafe-type-assertion": "error",
     "typescript/no-unnecessary-type-assertion": "error",
-    "no-restricted-imports": [
-      "error",
-      {
-        "paths": [
-          {
-            "name": "react",
-            "importNames": ["useEffect"],
-            "message": "useEffect is banned in the UI workspace. Model effects at the boundary or use event/query state instead."
-          }
-        ]
-      }
-    ],
-    "no-restricted-properties": [
-      "error",
-      {
-        "object": "React",
-        "property": "useEffect",
-        "message": "useEffect is banned in the UI workspace."
-      }
-    ],
     "promise-function-async": "error",
     "vitest/no-focused-tests": "error",
-    "react-hooks-js/rules-of-hooks": "error",
-    "react-refresh-js/only-export-components": [
-      "error",
-      {
-        "allowConstantExport": true
-      }
-    ],
     "vitest/no-standalone-expect": [
       "error",
       {
         "additionalTestBlockFunctions": ["it.effect", "it.live", "it.scoped", "it.scopedLive"]
       }
-    ],
-    "shadcn/no-raw-colors": "error",
-    "shadcn/no-arbitrary-values": "error",
-    "shadcn/no-inline-styles": "error",
-    "shadcn/no-unknown-classes": "error",
-    "shadcn/require-static-classes": "error",
-    "shadcn/no-restyle": [
-      "error",
-      {
-        "allow": ["layout"],
-        "contracts": [
-          {
-            "pattern": "^Text$",
-            "allow": ["layout", "typography", "color", "tracking-*"]
-          },
-          {
-            "pattern": "^CardComponent(Content|Header)$",
-            "allow": ["layout", "spacing", "border-border", "border-b", "grid-cols-order-composer"]
-          },
-          {
-            "pattern": "^CardComponent(Title|Description)$",
-            "allow": ["layout", "typography"]
-          },
-          {
-            "pattern": "^TableObjCell$",
-            "allow": ["layout", "spacing", "typography"]
-          },
-          {
-            "pattern": "^DrawerComponentContent$",
-            "allow": ["layout", "border-l", "border-border", "bg-card"]
-          },
-          {
-            "pattern": "^DrawerComponentHeader$",
-            "allow": ["layout", "spacing", "border-b", "border-border", "bg-card"]
-          },
-          {
-            "pattern": "^DialogComponentDescription$",
-            "allow": ["layout", "spacing", "typography", "text-muted-foreground"]
-          }
-        ]
-      }
-    ],
-    "react-hooks-js/exhaustive-deps": "error",
-    "react-hooks-js/static-components": "error",
-    "react-hooks-js/use-memo": "error",
-    "react-hooks-js/void-use-memo": "error",
-    "react-hooks-js/preserve-manual-memoization": "error",
-    "react-hooks-js/incompatible-library": "error",
-    "react-hooks-js/immutability": "error",
-    "react-hooks-js/globals": "error",
-    "react-hooks-js/refs": "error",
-    "react-hooks-js/set-state-in-effect": "error",
-    "react-hooks-js/error-boundaries": "error",
-    "react-hooks-js/purity": "error",
-    "react-hooks-js/set-state-in-render": "error",
-    "react-hooks-js/unsupported-syntax": "error",
-    "react-hooks-js/config": "error",
-    "react-hooks-js/gating": "error"
+    ]
   },
   "overrides": [
     {
@@ -161,8 +77,7 @@
           {
             "max": 12
           }
-        ],
-        "react/jsx-key": "error"
+        ]
       }
     },
     {
@@ -176,41 +91,6 @@
           }
         ]
       }
-    },
-    {
-      "files": ["src/components/**/*.{ts,tsx}"],
-      "rules": {
-        "shadcn/no-restyle": "off",
-        "shadcn/no-arbitrary-values": "off",
-        "shadcn/require-static-classes": "off"
-      }
-    },
-    {
-      "files": ["src/components/retroui/Progress.tsx"],
-      "rules": {
-        "shadcn/no-inline-styles": [
-          "error",
-          {
-            "allow": ["transform"]
-          }
-        ]
-      }
     }
-  ],
-  "jsPlugins": [
-    {
-      "name": "react-hooks-js",
-      "specifier": "eslint-plugin-react-hooks"
-    },
-    {
-      "name": "react-refresh-js",
-      "specifier": "eslint-plugin-react-refresh"
-    },
-    "@shadcn/lint"
-  ],
-  "settings": {
-    "shadcn": {
-      "ui": "#ui/components/retroui"
-    }
-  }
+  ]
 }

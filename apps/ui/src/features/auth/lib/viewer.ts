@@ -20,11 +20,3 @@ export type AuthenticatedViewer = typeof AuthenticatedViewer.Type;
 export const anonymousViewer: Viewer = {
   kind: "anonymous",
 };
-
-export function isAuthenticatedViewer(viewer: Viewer): viewer is AuthenticatedViewer {
-  return viewer.kind !== "anonymous";
-}
-
-export function isStaffViewer(viewer: Viewer): viewer is AuthenticatedViewer {
-  return viewer.kind === "staff";
-}

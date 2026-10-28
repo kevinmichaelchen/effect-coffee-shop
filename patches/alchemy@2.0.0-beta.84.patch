@@ -53,6 +53,6 @@ index 0000000000000000000000000000000000000000..b522f19d1769ea23ca157c73e995a547
 +});
 +
 +// Oxc discovers the nearest tsconfig for each transformed file. Alchemy's
-+// TSX therefore uses Alchemy's React settings while the user's config and its
++// TSX therefore uses Alchemy's JSX settings while the user's config and its
 +// dependencies retain their own compiler settings.
 +registerOxc({ conditions: ["bun"] });

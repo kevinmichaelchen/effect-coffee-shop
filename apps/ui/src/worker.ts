@@ -7,7 +7,7 @@ interface Env {
   readonly COFFEE: Fetcher;
 }
 
-const backendPrefixes = ["/api", "/mcp", "/oauth/", "/.well-known/"];
+const backendPrefixes = ["/sync/", "/api", "/mcp", "/oauth/", "/.well-known/"];
 
 /**
  * The app's Worker: the Vite build, plus the backend's paths forwarded to the

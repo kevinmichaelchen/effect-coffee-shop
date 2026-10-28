@@ -43,6 +43,7 @@ export const isOrStartsWith = (path: string, prefix: string) =>
 /** Paths that need auth configured: without it they answer 503. */
 export const needsAuth = (path: string) =>
   isOrStartsWith(path, "/api/auth") ||
+  isOrStartsWith(path, "/sync") ||
   isOrStartsWith(path, "/mcp") ||
   path.startsWith("/oauth/") ||
   path.startsWith("/.well-known/");

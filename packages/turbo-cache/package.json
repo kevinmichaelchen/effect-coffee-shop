@@ -14,7 +14,7 @@
     "./store": "./src/store.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit && effect-tsrs diagnostics --project tsconfig.json",
     "lint": "bun --bun oxlint -c ../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
@@ -30,10 +30,11 @@
     "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
+    "@yielded/effect-tsrs": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "typescript": "catalog:",
+    "tsrs": "catalog:",
     "vitest": "catalog:"
   }
 }
