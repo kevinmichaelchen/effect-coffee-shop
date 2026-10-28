@@ -28,6 +28,7 @@
     "lint:custom:run": "lintcn lint"
   },
   "dependencies": {
+    "@alchemy.run/domain": "catalog:",
     "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-domain": "workspace:*",
     "@effect-coffee-shop/ui-kit": "workspace:*",

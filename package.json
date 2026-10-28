@@ -18,9 +18,9 @@
     ],
     "catalog": {
       "@cloudflare/workers-types": "5.20260930.1",
-      "@effect/platform-node": "4.0.2",
-      "@effect/sql-d1": "4.0.2",
-      "@effect/vitest": "4.0.2",
+      "@effect/platform-node": "4.0.6",
+      "@effect/sql-d1": "4.0.6",
+      "@effect/vitest": "4.0.6",
       "@radix-ui/react-dialog": "^1.2.0",
       "@radix-ui/react-label": "^2.1.16",
       "@radix-ui/react-progress": "^1.1.17",
@@ -40,11 +40,11 @@
       "@vitejs/plugin-react": "^6.1.2",
       "@vitest/browser": "5.0.3",
       "@vitest/browser-playwright": "5.0.3",
-      "alchemy": "https://pkg.alchemy.run/alchemy/9e3c058",
+      "alchemy": "2.0.0-beta.84",
       "babel-plugin-react-compiler": "^1.0.0",
       "class-variance-authority": "^0.7.1",
       "clsx": "^2.1.1",
-      "effect": "4.0.2",
+      "effect": "4.0.6",
       "effect-wide-event": "0.6.0",
       "eslint-plugin-react-hooks": "^7.1.1",
       "eslint-plugin-react-refresh": "0.5.4",
@@ -73,7 +73,11 @@
       "@yielded/auth-simplewebauthn": "0.1.0-beta.32",
       "@yielded/crypto": "0.1.0-beta.32",
       "@simplewebauthn/server": "14.0.3",
-      "@simplewebauthn/browser": "14.0.0"
+      "@simplewebauthn/browser": "14.0.0",
+      "@alchemy.run/cloudflare": "2.0.0-beta.84",
+      "@alchemy.run/aws": "2.0.0-beta.84",
+      "@alchemy.run/domain": "2.0.0-beta.84",
+      "@effect/platform-bun": "4.0.6"
     }
   },
   "type": "module",
@@ -147,7 +151,11 @@
     "knip:production": "knip --cache --strict --treat-config-hints-as-errors --include nsExports,nsTypes --cycles"
   },
   "devDependencies": {
+    "@alchemy.run/aws": "catalog:",
+    "@alchemy.run/cloudflare": "catalog:",
     "@cloudflare/workers-types": "catalog:",
+    "@effect/platform-bun": "catalog:",
+    "@effect/platform-node": "catalog:",
     "@effect/tsgo": "0.51.1",
     "@j178/prek": "0.5.5",
     "alchemy": "catalog:",
@@ -158,11 +166,13 @@
     "varlock": "1.21.1"
   },
   "overrides": {
-    "@effect/sql-d1": "4.0.2",
-    "@effect/vitest": "4.0.2"
+    "@effect/sql-d1": "4.0.6",
+    "@effect/vitest": "4.0.6"
   },
   "packageManager": "bun@1.4.2",
   "patchedDependencies": {
-    "@just-be/effect-typed-id@0.5.0": "patches/@just-be%2Feffect-typed-id@0.5.0.patch"
+    "@just-be/effect-typed-id@0.5.0": "patches/@just-be%2Feffect-typed-id@0.5.0.patch",
+    "@alchemy.run/domain@2.0.0-beta.84": "patches/@alchemy.run%2Fdomain@2.0.0-beta.84.patch",
+    "alchemy@2.0.0-beta.84": "patches/alchemy@2.0.0-beta.84.patch"
   }
 }

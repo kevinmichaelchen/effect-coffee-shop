@@ -25,13 +25,13 @@ bundled source changes.
 
 `cloudflare.test.ts` deploys the stack with Alchemy's local Cloudflare emulation and checks
 `/api/health`, that `/mcp` answers 401 with OAuth discovery, that retired endpoints return 404,
-and an end-to-end flow: passkey registration and sign-in, `CustomerApi.PlaceOrder` on Durable
+and an end-to-end flow: passkey registration and sign-in, `CustomerApi` checkout confirmation and its fulfillment workflow on Durable
 Objects, then the order appearing in the `CustomerOrders` view.
 
 ## Custom Infrastructure Glue
 
 If this workspace needs infrastructure that Alchemy does not model yet, implement it with the same
-lifecycle discipline used by `alchemy-effect` providers:
+lifecycle discipline used by Alchemy providers:
 
 - Observe live state before mutating it.
 - Separate diff decisions from reconciliation where the API supports it.
@@ -66,3 +66,32 @@ The Website Worker routes `/api/*`, `/mcp`, `/oauth/*`, and `/.well-known/*` to 
 is an application page served by the static website; it returns successful sign-in
 to Yielded's consent endpoint. The local Alchemy test checks that unauthenticated
 MCP requests receive OAuth discovery with HTTP 401.
+
+## Alchemy beta.84
+
+Core (`alchemy`), Cloudflare (`@alchemy.run/cloudflare`), AWS (`@alchemy.run/aws`), and
+Domain (`@alchemy.run/domain`) use the same catalog version. The root declares both providers
+so CLI contribution discovery can load their authentication and state-store support. Keep
+provider dependencies in each workspace that imports them as well, for Bun's isolated linker.
+
+`CoffeeShop` registers the `FulfillCheckout` saga. `DomainCloudflare.DurableObjects` supplies
+both domain storage and the Durable Object workflow engine. `CheckoutFulfillment` starts
+one run per order; its activity sends the frozen checkout to the order aggregate. Domain
+stories use the in-memory engine. Existing stack, aggregate, view, and policy names stay stable.
+
+Effect and its platform/test adapters are pinned at `4.0.6`, satisfying beta.84's `^4.0.5`
+peer requirement. The root installs both platform adapters for CLI execution under Bun or Node.
+
+The versioned Bun patch for `@alchemy.run/domain@2.0.0-beta.84` exposes `./internal` using the
+same source/types/JavaScript conditions as its public exports. The released Cloudflare Domain
+adapter imports `captureContext` from that path, but beta.84 publishes the export as `null`.
+Without this patch the Worker cannot load under Node or bundle under Bun. Remove the patch
+when upgrading to an upstream release that exports the adapter integration.
+
+The `alchemy@2.0.0-beta.84` patch restores `bin/register-dev-mode.js` from the
+[release tag](https://github.com/alchemy-run/alchemy/blob/v2.0.0-beta.84/packages/alchemy/bin/register-dev-mode.js).
+The npm tarball excludes it, but Bun resolves Alchemy and Cloudflare to TypeScript source,
+which selects this loader when spawning the Node Vite runner. The patch bootstraps node-utils from its published JavaScript before enabling source
+conditions; otherwise Node rejects the loader's own TypeScript under `node_modules`. It then
+keeps those subprocesses on the same source export conditions. Remove this patch when upstream
+ships the loader or changes the published Bun subprocess bootstrap.

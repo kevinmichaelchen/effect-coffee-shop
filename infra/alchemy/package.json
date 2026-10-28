@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@alchemy.run/cloudflare": "catalog:",
+    "@alchemy.run/domain": "catalog:",
     "@effect-coffee-shop/coffee-server": "workspace:*",
     "alchemy": "catalog:",
     "effect": "catalog:"

@@ -1,4 +1,4 @@
-import * as Domain from "alchemy/Domain";
+import * as Domain from "@alchemy.run/domain";
 import { CancelOrder } from "./Order/CancelOrder.command.ts";
 import { MarkReady } from "./Order/MarkReady.command.ts";
 import { OrderQueue } from "./Order/OrderQueue.view.ts";

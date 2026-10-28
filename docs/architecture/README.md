@@ -1,7 +1,7 @@
 # Architecture Diagrams
 
 - [Package Layers](./package-layers.svg) shows the package dependency direction.
-  Dependencies point inward to `coffee-domain`, the `alchemy/Domain` model, which imports no
+  Dependencies point inward to `coffee-domain`, the `@alchemy.run/domain` model, which imports no
   other workspace. `coffee-application` is a thin service over the model for MCP and REST;
   `coffee-actions` lives under presentation as shared tool metadata. `coffee-server` is the
   only composition root, and `infra/alchemy` deploys it.

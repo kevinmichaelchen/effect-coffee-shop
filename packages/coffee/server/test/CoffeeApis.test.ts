@@ -8,7 +8,7 @@ import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.
 import { makeOrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import { mainShop } from "@effect-coffee-shop/coffee-domain/Shop/Shop.aggregate";
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
-import * as Domain from "alchemy/Domain";
+import * as Domain from "@alchemy.run/domain";
 import * as Effect from "effect/Effect";
 import * as Headers from "effect/http/Headers";
 import * as HttpServerRequest from "effect/http/HttpServerRequest";

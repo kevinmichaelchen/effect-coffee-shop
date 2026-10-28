@@ -43,7 +43,7 @@ There are no existing users to preserve. Migration `0004_yielded_auth.sql`
 removes legacy auth and Agent Auth tables and creates Yielded's storage. Old
 passkeys and sessions are not imported. Migration `0006_drop_coffee_tables.sql`
 drops the former menu/order/cart/checkout tables: that state now lives in the
-`alchemy/Domain` model on Durable Objects, and D1 holds only auth state.
+`@alchemy.run/domain` model on Durable Objects, and D1 holds only auth state.
 
 Rename deployed `BETTER_AUTH_SECRET` configuration to `AUTH_SECRET`; Alchemy
 applies the migrations on deploy. The Worker serves auth under `/api/auth/*`

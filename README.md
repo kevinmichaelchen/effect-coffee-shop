@@ -3,16 +3,16 @@
 Coffee-ordering app used to explore Domain-Driven Design and Onion Architecture
 with TypeScript and Effect.
 
-The Coffee domain is an event-sourced [`alchemy/Domain`](https://main.alchemy.run/domain/what-is-ddd/)
-model: aggregates decide commands, views fold their events, and a policy reacts.
+The Coffee domain is an event-sourced [`@alchemy.run/domain`](https://main.alchemy.run/domain/what-is-ddd/)
+model: aggregates decide commands, views fold their events, and a policy starts a durable checkout saga.
 One Cloudflare Worker hosts that model on Durable Objects and serves it to the
 browser UI, remote MCP clients, and a small REST surface, with Yielded Auth
 passkeys on D1.
 
 ## What This Repo Demonstrates
 
-- An event-sourced domain written with `alchemy/Domain`: aggregates, views, a
-  policy, and two typed Apis, tested in memory with given/when/then stories.
+- An event-sourced domain written with `@alchemy.run/domain`: aggregates, views, a
+  policy, a workflow saga, and two typed Apis, tested in memory with given/when/then stories.
 - The same model running unchanged on `Domain.InMemory` in tests and on
   Cloudflare Durable Objects in production.
 - One Coffee action catalog projected into Effect MCP tools over a thin
@@ -20,9 +20,8 @@ passkeys on D1.
 - A Vite/React browser app that calls the domain Apis directly through
   generated Effect RPC clients.
 
-> `alchemy/Domain` is not in an npm release yet. The root catalog pins `alchemy`
-> to a preview build of alchemy `main`
-> (`https://pkg.alchemy.run/alchemy/9e3c058`).
+> Alchemy core and the Cloudflare, AWS, and Domain packages are pinned together at
+> `2.0.0-beta.84` in the workspace catalog. Providers use their own `@alchemy.run/*` packages.
 
 ## Quick Start
 
@@ -67,7 +66,7 @@ Editable sources live in [`docs/architecture`](./docs/architecture).
 
 | Layer                | Workspace                                                                        | Owns                                                                                     |
 | -------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Domain               | [`packages/coffee/domain`](./packages/coffee/domain)                             | The `alchemy/Domain` model: aggregates, views, policy, Apis, menu, and rejections.       |
+| Domain               | [`packages/coffee/domain`](./packages/coffee/domain)                             | The `@alchemy.run/domain` model: aggregates, views, policy, Apis, menu, and rejections.  |
 | Application          | [`packages/coffee/application`](./packages/coffee/application)                   | `CoffeeOrderApp`, a thin service over the model for MCP/REST, plus contracts and actors. |
 | Presentation         | [`packages/coffee/presentation`](./packages/coffee/presentation)                 | REST (health, menu, me) and MCP adapters.                                                |
 | Presentation support | [`packages/coffee/presentation/actions`](./packages/coffee/presentation/actions) | Coffee tool names, descriptions, and schemas used by Effect MCP.                         |

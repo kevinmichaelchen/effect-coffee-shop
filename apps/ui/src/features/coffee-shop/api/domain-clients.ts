@@ -1,6 +1,6 @@
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
-import * as Domain from "alchemy/Domain";
+import * as Domain from "@alchemy.run/domain";
 import type * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as FetchHttpClient from "effect/http/FetchHttpClient";
