@@ -71,7 +71,7 @@
     "prepare": "if git rev-parse --git-dir >/dev/null 2>&1 && [ -z \"$CI\" ]; then prek install --overwrite --prepare-hooks; fi",
     "dev": "alchemy dev ./infra/alchemy/cloudflare.ts",
     "cf:profile": "alchemy profile",
-    "cf:profile:edit": "alchemy profile edit --add cloudflare",
+    "cf:profile:edit": "alchemy profile edit --add Cloudflare",
     "cf:plan": "alchemy plan ./infra/alchemy/cloudflare.ts",
     "cf:dev": "alchemy dev ./infra/alchemy/cloudflare.ts",
     "cf:deploy": "alchemy deploy ./infra/alchemy/cloudflare.ts",
