@@ -12,9 +12,6 @@ export class VoiceModelError extends Data.TaggedError("VoiceModelError")<{
 
 export type VoiceModel = AudioTranscriber;
 
-// ORT warns about every CPU-placed shape op; only errors are worth the console.
-ort.env.logLevel = "error";
-
 const modelBaseUrl = "https://huggingface.co/LiquidAI/LFM3-Audio-2B-ONNX/resolve/main";
 const cacheName = "lfm3-audio-2b-onnx";
 

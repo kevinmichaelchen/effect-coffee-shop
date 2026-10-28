@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import "#features/assistant/worker/ort-env.ts";
 import type { ProgressInfo } from "@huggingface/transformers";
 import { Cause, Effect, Option, Queue, Ref, Schema, Semaphore, Stream } from "effect";
 import { type LocalModel, WorkerEvent, WorkerRequest } from "#features/assistant/lib/protocol.ts";
