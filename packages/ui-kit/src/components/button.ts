@@ -36,6 +36,8 @@ export interface ButtonProps<Message> {
   readonly size?: ButtonSize;
   readonly className?: string;
   readonly disabled?: boolean;
+  /** `submit` lets a button send its form; buttons default to `button`. */
+  readonly type?: "button" | "submit";
   readonly attributes?: Attributes<Message>;
 }
 
@@ -50,7 +52,7 @@ export function button<Message>(
 ) {
   return h.button(
     [
-      h.Type("button"),
+      h.Type(props.type ?? "button"),
       h.Disabled(props.disabled ?? false),
       ...(props.attributes ?? []),
       h.Class(classFor(props)),
