@@ -16,6 +16,8 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@alchemy.run/cloudflare": "catalog:",
+    "@alchemy.run/domain": "catalog:",
     "@cloudflare/workers-types": "catalog:",
     "@effect-coffee-shop/coffee-application": "workspace:*",
     "@effect-coffee-shop/coffee-auth": "workspace:*",

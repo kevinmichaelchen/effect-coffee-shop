@@ -11,7 +11,7 @@ This repo uses Bun workspaces, so install dependencies once from the repo root w
 - React + Vite
 - RetroUI components from `retroui.dev`
 - TanStack Query for API state
-- `alchemy/Domain` Api clients over `Domain.protocolHttp` (Effect RPC) in
+- `@alchemy.run/domain` Api clients over `Domain.protocolHttp` (Effect RPC) in
   [`src/features/coffee-shop/api/domain-clients.ts`](./src/features/coffee-shop/api/domain-clients.ts)
 - Yielded Auth passkey sign-in for customer and staff workspaces
 - strict `oxlint` + `lintcn` + ESLint checks with complexity, function-length, and size limits

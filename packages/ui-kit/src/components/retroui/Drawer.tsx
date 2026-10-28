@@ -1,5 +1,10 @@
-/* oxlint-disable typescript/no-unsafe-argument -- oxlint cannot resolve Vaul component props */
-import type { ComponentProps } from "react";
+import type {
+  DialogContentProps,
+  DialogDescriptionProps,
+  DialogOverlayProps,
+  DialogTitleProps,
+} from "@radix-ui/react-dialog";
+import type { ComponentProps, RefAttributes } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 
 import { cn } from "#ui/lib/utils.ts";
@@ -20,7 +25,10 @@ function DrawerClose({ ...props }: ComponentProps<typeof DrawerPrimitive.Close>)
   return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />;
 }
 
-function DrawerOverlay({ className, ...props }: ComponentProps<typeof DrawerPrimitive.Overlay>) {
+function DrawerOverlay({
+  className,
+  ...props
+}: DialogOverlayProps & RefAttributes<HTMLDivElement>) {
   return (
     <DrawerPrimitive.Overlay
       data-slot="drawer-overlay"
@@ -37,7 +45,7 @@ function DrawerContent({
   className,
   children,
   ...props
-}: ComponentProps<typeof DrawerPrimitive.Content>) {
+}: DialogContentProps & RefAttributes<HTMLDivElement>) {
   return (
     <DrawerPortal data-slot="drawer-portal">
       <DrawerOverlay />
@@ -83,7 +91,10 @@ function DrawerFooter({ className, ...props }: ComponentProps<"div">) {
   );
 }
 
-function DrawerTitle({ className, ...props }: ComponentProps<typeof DrawerPrimitive.Title>) {
+function DrawerTitle({
+  className,
+  ...props
+}: DialogTitleProps & RefAttributes<HTMLHeadingElement>) {
   return (
     <DrawerPrimitive.Title
       data-slot="drawer-title"
@@ -96,7 +107,7 @@ function DrawerTitle({ className, ...props }: ComponentProps<typeof DrawerPrimit
 function DrawerDescription({
   className,
   ...props
-}: ComponentProps<typeof DrawerPrimitive.Description>) {
+}: DialogDescriptionProps & RefAttributes<HTMLParagraphElement>) {
   return (
     <DrawerPrimitive.Description
       data-slot="drawer-description"

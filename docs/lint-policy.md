@@ -30,7 +30,7 @@ This is not an unconditional pass of every upstream rule:
   Each workspace's `tsconfig.json` allows only the unstable module subtrees it
   owns through `allowedUnstableApis`, for example `effect/http` in the HTTP
   adapter and the server. Domain and application allow only `effect/rpc`
-  (which `alchemy/Domain` Apis build on) and `@effect/vitest`.
+  (which `@alchemy.run/domain` Apis build on) and `@effect/vitest`.
 - Individual source lines document required interoperability: native HTTP/SDK
   optional fields, SQL NULL encoding, arbitrary input at schema decoders,
   serialization, cryptographic APIs, native integration probes, and runtime or

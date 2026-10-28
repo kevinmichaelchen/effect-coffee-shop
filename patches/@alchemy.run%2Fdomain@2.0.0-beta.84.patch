@@ -1,0 +1,17 @@
+diff --git a/package.json b/package.json
+index e2210511a7c756fa9ffbd43271f910cdaf62dde8..ace5fdf1a84edce5e803f58440fa8938348925ad 100644
+--- a/package.json
++++ b/package.json
+@@ -32,7 +32,11 @@
+       "bun": "./src/index.ts",
+       "default": "./lib/index.js"
+     },
+-    "./internal": null,
++    "./internal": {
++      "types": "./lib/internal.d.ts",
++      "bun": "./src/internal.ts",
++      "default": "./lib/internal.js"
++    },
+     "./*": {
+       "types": "./lib/*.d.ts",
+       "bun": "./src/*.ts",

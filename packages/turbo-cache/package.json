@@ -21,6 +21,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@alchemy.run/aws": "catalog:",
+    "@alchemy.run/cloudflare": "catalog:",
     "alchemy": "catalog:",
     "effect": "catalog:"
   },

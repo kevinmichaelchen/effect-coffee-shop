@@ -15,7 +15,7 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "allowedUnstableApis": ["@effect/vitest", "effect/rpc"],
+        "allowedUnstableApis": ["@effect/vitest", "effect/rpc", "effect/workflow"],
         "allowedDuplicatedPackages": ["effect"]
       }
     ],

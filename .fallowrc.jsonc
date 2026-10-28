@@ -24,6 +24,8 @@
   // The Alchemy workspace builds the UI by path (`Cloudflare.Website.Vite`) rather than
   // importing it; the dependency exists so Turbo hashes UI changes into the smoke test.
   "ignoreDependencies": [
+    // Loaded dynamically by Alchemy's Bun CLI bootstrap.
+    "@effect/platform-bun",
     // Runtime peers used by the Yielded WebAuthn server/browser adapters.
     "@simplewebauthn/server",
     "@simplewebauthn/browser",

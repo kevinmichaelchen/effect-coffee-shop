@@ -1,6 +1,6 @@
 import { flow } from "effect/Function";
-import * as S3 from "alchemy/AWS/S3";
-import type { Bucket } from "alchemy/AWS/S3";
+import * as S3 from "@alchemy.run/aws/S3";
+import type { Bucket } from "@alchemy.run/aws/S3";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";

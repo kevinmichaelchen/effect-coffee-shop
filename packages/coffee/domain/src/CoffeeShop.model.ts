@@ -1,8 +1,9 @@
-import * as Domain from "alchemy/Domain";
+import * as Domain from "@alchemy.run/domain";
 import * as Layer from "effect/Layer";
 import { Cart } from "./Cart/Cart.aggregate.ts";
 import { CheckoutFulfillment, CheckoutFulfillmentLive } from "./Cart/CheckoutFulfillment.policy.ts";
 import { Customer } from "./Customer/Customer.aggregate.ts";
+import { FulfillCheckout, FulfillCheckoutLive } from "./Cart/FulfillCheckout.saga.ts";
 import { CustomerOrders } from "./Order/CustomerOrders.view.ts";
 import { Order } from "./Order/Order.aggregate.ts";
 import { OrderQueue } from "./Order/OrderQueue.view.ts";
@@ -14,7 +15,8 @@ export class CoffeeShop extends Domain.Model("CoffeeShop", {
   aggregates: [Order, Cart, Customer, Shop],
   views: [OrderSummary, CustomerOrders, OrderQueue],
   policies: [CheckoutFulfillment],
+  sagas: [FulfillCheckout],
 }) {}
 
-/** Every policy implementation, as one Layer. */
-export const CoffeeShopHandlers = Layer.mergeAll(CheckoutFulfillmentLive);
+/** Every policy and saga implementation, as one Layer. */
+export const CoffeeShopHandlers = Layer.mergeAll(CheckoutFulfillmentLive, FulfillCheckoutLive);

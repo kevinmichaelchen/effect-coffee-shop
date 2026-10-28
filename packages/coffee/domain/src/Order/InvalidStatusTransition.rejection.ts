@@ -1,4 +1,4 @@
-import * as Domain from "alchemy/Domain";
+import * as Domain from "@alchemy.run/domain";
 import { OrderId } from "./Order.id.ts";
 import { OrderStatus } from "./OrderStatus.ts";
 

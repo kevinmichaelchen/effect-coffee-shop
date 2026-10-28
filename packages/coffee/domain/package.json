@@ -17,6 +17,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@alchemy.run/domain": "catalog:",
     "alchemy": "catalog:",
     "effect": "catalog:"
   },

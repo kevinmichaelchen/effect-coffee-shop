@@ -1,6 +1,6 @@
 import * as Alchemy from "alchemy";
-import * as AWS from "alchemy/AWS";
-import { state } from "alchemy/AWS/StateStore";
+import * as AWS from "@alchemy.run/aws";
+import { state } from "@alchemy.run/aws/StateStore";
 import * as Effect from "effect/Effect";
 import CacheApi, { Artifacts } from "./aws-service.ts";
 

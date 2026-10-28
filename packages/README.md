@@ -5,7 +5,7 @@ under `packages/coffee`, while shared utilities stay directly under `packages`.
 
 ## Packages
 
-- [`coffee/domain`](./coffee/domain): the event-sourced `alchemy/Domain` model
+- [`coffee/domain`](./coffee/domain): the event-sourced `@alchemy.run/domain` model
   (aggregates, views, policy, `CustomerApi`/`StaffApi`, menu). Depends only on
   `alchemy` and `effect`.
 - [`coffee/application`](./coffee/application): `CoffeeOrderApp`, a thin service

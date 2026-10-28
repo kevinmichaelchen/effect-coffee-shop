@@ -1,5 +1,5 @@
 import { assert, describe, expect, it } from "@effect/vitest";
-import { Story } from "alchemy/Domain/Story";
+import { Story } from "@alchemy.run/domain/Story";
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
@@ -9,6 +9,7 @@ import { Cart } from "../src/Cart/Cart.aggregate.ts";
 import { CartItemId } from "../src/Cart/CartItem.id.ts";
 import { CartItemNotFound } from "../src/Cart/CartItemNotFound.rejection.ts";
 import { CheckoutId } from "../src/Cart/Checkout.ts";
+import { FulfillCheckout } from "../src/Cart/FulfillCheckout.saga.ts";
 import { CartCleared, ClearCart } from "../src/Cart/ClearCart.command.ts";
 import {
   CheckoutConfirmed,
@@ -334,10 +335,34 @@ describe("checkout", () => {
         }),
       ),
       then(o9, samPlaced),
+      Story.saga(FulfillCheckout, o9.id, { _tag: "Completed", result: undefined }),
       state(samsCart, (cart) => expect(cart).toEqual({ lines: [], checkout: null })),
       view(CustomerOrders, Customer.ref(sam.userId), (orders) =>
         expect(orders.orders.map((order) => order.id)).toEqual([o9.id]),
       ),
+    ),
+  );
+
+  it.effect("reuses the completed fulfillment when another confirmation names the same order", () =>
+    story(
+      given(samsCart, new CheckoutPrepared({ checkout: prepared })),
+      clock(placedAt),
+      as(sam),
+      when(samsCart, new ConfirmCheckout({ checkoutId: checkoutId(1), orderId: o9.id })),
+      then(o9, samPlaced),
+      Story.saga(FulfillCheckout, o9.id, { _tag: "Completed", result: undefined }),
+      when(
+        samsCart,
+        new AddCartItem({
+          cartItemId: cartItem(1),
+          item: { drinkId: "latte", size: "medium", milk: "oat" },
+        }),
+      ),
+      when(samsCart, new PrepareCheckout({ checkoutId: checkoutId(2) })),
+      when(samsCart, new ConfirmCheckout({ checkoutId: checkoutId(2), orderId: o9.id })),
+      replied({ orderId: o9.id }),
+      Story.saga(FulfillCheckout, o9.id, { _tag: "Completed", result: undefined }),
+      then(o9),
     ),
   );
 
