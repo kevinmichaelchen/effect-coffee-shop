@@ -1,4 +1,4 @@
-import * as Domain from "alchemy/Domain";
+import * as Domain from "@alchemy.run/domain";
 import { AddCartItem } from "./Cart/AddCartItem.command.ts";
 import { Cart } from "./Cart/Cart.aggregate.ts";
 import { ClearCart } from "./Cart/ClearCart.command.ts";

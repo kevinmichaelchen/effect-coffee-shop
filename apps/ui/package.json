@@ -12,7 +12,7 @@
     "dev": "vite",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsrs --noEmit -p tsrsonfig.app.json && effect-tsrs diagnostics --project tsconfig.app.json && tsrs --noEmit -p tsrsonfig.node.json && effect-tsrs diagnostics --project tsconfig.node.json",
+    "typecheck": "tsrs --noEmit -p tsconfig.app.json && effect-tsrs diagnostics --project tsconfig.app.json && tsrs --noEmit -p tsconfig.node.json && effect-tsrs diagnostics --project tsconfig.node.json",
     "build": "vite build",
     "check": "bun run typecheck && bun run lint && bun run lint:custom && bun run fmt:check && bun run test && bun run build",
     "lint": "bun --bun oxlint -c .oxlintrc.json .",
@@ -25,6 +25,7 @@
     "lint:custom:run": "lintcn lint"
   },
   "dependencies": {
+    "@alchemy.run/domain": "catalog:",
     "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-domain": "workspace:*",
     "@effect-coffee-shop/ui-kit": "workspace:*",
@@ -33,7 +34,7 @@
     "@simplewebauthn/browser": "catalog:",
     "@yielded/auth": "catalog:",
     "@yielded/auth-simplewebauthn": "catalog:",
-    "alchemy": "catalog:",
+    "@yielded/sync": "catalog:",
     "effect": "catalog:",
     "foldkit": "catalog:",
     "tailwindcss": "catalog:"

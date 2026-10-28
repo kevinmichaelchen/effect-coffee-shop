@@ -1,9 +1,9 @@
 # Coffee Domain
 
 `@effect-coffee-shop/coffee-domain` is the coffee shop as an
-[`alchemy/Domain`](https://main.alchemy.run/domain/what-is-ddd/) model: commands that aggregates
+[`@alchemy.run/domain`](https://main.alchemy.run/domain/what-is-ddd/) model: commands that aggregates
 decide, events they record, views that fold those events into what people read, and a policy that
-reacts. It is pure: it imports only `alchemy/Domain` and `effect`. The same model runs in memory
+reacts. Its contracts use `@alchemy.run/domain`, `effect`, and `@yielded/sync`. The same model runs in memory
 for tests and on Cloudflare Durable Objects in production, hosted by
 [`coffee-server`](../server).
 
@@ -11,9 +11,8 @@ Files follow the alchemy-domain layout: one building block per file, named `<Nou
 with folders as subdomains. Import them by path, e.g.
 `@effect-coffee-shop/coffee-domain/Order/Order.aggregate`.
 
-> `alchemy/Domain` is not in an npm release yet. The workspace catalog pins `alchemy` to a
-> preview build of alchemy `main` (`https://pkg.alchemy.run/alchemy/9e3c058`). Move to the first
-> npm release that ships `alchemy/Domain` once it is published.
+> Alchemy core and the Cloudflare, AWS, and Domain packages are pinned together at
+> `2.0.0-beta.84` in the workspace catalog. Providers use their own `@alchemy.run/*` packages.
 
 ## The model
 
@@ -25,17 +24,18 @@ with folders as subdomains. Import them by path, e.g.
 | View           | [`Order/OrderSummary.view.ts`](src/Order/OrderSummary.view.ts)                                                                 | One ticket as people read it. Staff read any; a customer only their own.                                                                  |
 | View           | [`Order/CustomerOrders.view.ts`](src/Order/CustomerOrders.view.ts)                                                             | Every order one customer placed, folded from `OrderSummary`.                                                                              |
 | View           | [`Order/OrderQueue.view.ts`](src/Order/OrderQueue.view.ts)                                                                     | The baristas' queue: open orders plus the 200 most recent finished ones. Staff only.                                                      |
-| Policy         | [`Cart/CheckoutFulfillment.policy.ts`](src/Cart/CheckoutFulfillment.policy.ts)                                                 | Whenever a checkout is confirmed, place its order at the checkout's prices.                                                               |
+| Policy         | [`Cart/CheckoutFulfillment.policy.ts`](src/Cart/CheckoutFulfillment.policy.ts)                                                 | Whenever a checkout is confirmed, start its fulfillment saga.                                                                             |
+| Saga           | [`Cart/FulfillCheckout.saga.ts`](src/Cart/FulfillCheckout.saga.ts)                                                             | Place the confirmed order in a durable workflow, keyed by order id.                                                                       |
 | Api            | [`CustomerApi.api.ts`](src/CustomerApi.api.ts), [`StaffApi.api.ts`](src/StaffApi.api.ts)                                       | What each audience may send and read.                                                                                                     |
-| Model          | [`CoffeeShop.model.ts`](src/CoffeeShop.model.ts)                                                                               | Everything hosted together, plus the policy implementations as one Layer.                                                                 |
+| Model          | [`CoffeeShop.model.ts`](src/CoffeeShop.model.ts)                                                                               | Everything hosted together, plus policy and saga implementations as one Layer.                                                            |
 
 Commands live in `<Command>.command.ts` with the events they record and the rejections only they
 return. Shared rejections have their own `*.rejection.ts` files.
 
-| Aggregate | Commands                                                                                                      | Events                                                                                                        |
-| --------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `Order`   | `PlaceOrder`, `PlaceCheckedOutOrder` (policy only), `StartBrewing`, `MarkReady`, `PickUpOrder`, `CancelOrder` | `OrderPlaced`, `BrewingStarted`, `OrderReady`, `OrderPickedUp`, `OrderCancelled`                              |
-| `Cart`    | `AddCartItem`, `UpdateCartItem`, `RemoveCartItem`, `ClearCart`, `PrepareCheckout`, `ConfirmCheckout`          | `CartItemAdded`, `CartItemUpdated`, `CartItemRemoved`, `CartCleared`, `CheckoutPrepared`, `CheckoutConfirmed` |
+| Aggregate | Commands                                                                                                    | Events                                                                                                        |
+| --------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `Order`   | `PlaceOrder`, `PlaceCheckedOutOrder` (saga only), `StartBrewing`, `MarkReady`, `PickUpOrder`, `CancelOrder` | `OrderPlaced`, `BrewingStarted`, `OrderReady`, `OrderPickedUp`, `OrderCancelled`                              |
+| `Cart`    | `AddCartItem`, `UpdateCartItem`, `RemoveCartItem`, `ClearCart`, `PrepareCheckout`, `ConfirmCheckout`        | `CartItemAdded`, `CartItemUpdated`, `CartItemRemoved`, `CartCleared`, `CheckoutPrepared`, `CheckoutConfirmed` |
 
 Rejections carry their evidence: `DrinkNotFound { drinkId }`, `InvalidOrder { message }`,
 `InvalidStatusTransition { orderId, from, to }`, `OrderNotFound`, `AlreadyPlaced`, `StaffOnly`,
@@ -75,7 +75,10 @@ sequenceDiagram
 ```
 
 Emptying the cart and confirming happen in one `Cart` commit, so a confirmed cart is never
-ordered twice. Placing the order is the policy's job, so it happens just after the commit.
+ordered twice. After the commit, the policy starts `FulfillCheckout`, a saga keyed by order id. Its
+`PlaceCheckedOutOrder` activity journals completion and uses workflow-derived command ids, so
+redelivery or replay does not place another order. The in-memory platform runs the same workflow
+in stories; Cloudflare hosts it on `DomainCloudflare.DurableObjects`' built-in workflow engine.
 `PlaceCheckedOutOrder` is idempotent, because policies run at least once.
 
 ## Who may do what

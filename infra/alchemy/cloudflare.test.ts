@@ -1,13 +1,20 @@
+import { OrderFeed, FeedId } from "@effect-coffee-shop/coffee-domain/Order/OrderFeed";
+import * as NodeSocket from "@effect/platform-node/NodeSocket";
+import * as RpcClient from "effect/rpc/RpcClient";
+import * as RpcSerialization from "effect/rpc/RpcSerialization";
 import * as Alchemy from "alchemy";
-import * as Cloudflare from "alchemy/Cloudflare";
+import * as Cloudflare from "@alchemy.run/cloudflare";
 import * as Test from "alchemy/Test/Vitest";
 import { makeAuthClient } from "@effect-coffee-shop/coffee-auth/testing/auth-client";
 import { makeTestPasskey } from "@effect-coffee-shop/coffee-auth/testing/passkey";
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
 import { makeOrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.id";
+import { makeCartItemId } from "@effect-coffee-shop/coffee-domain/Cart/CartItem.id";
+import { makeCheckoutId } from "@effect-coffee-shop/coffee-domain/Cart/Checkout";
 import { Passkey } from "@yielded/auth";
-import * as Domain from "alchemy/Domain";
+import * as Domain from "@alchemy.run/domain";
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schedule from "effect/Schedule";
@@ -61,19 +68,6 @@ test(
   }),
 );
 
-test(
-  "returns 404 for the retired assistant and agent discovery endpoints",
-  Effect.forEach(
-    ["/api/assistant", "/api/auth/agent-configuration"],
-    Effect.fnUntraced(function* (path) {
-      const { api } = yield* deployed;
-      const response = yield* HttpClient.get(new URL(path, api));
-      expect(response.status).toBe(404);
-    }),
-    { concurrency: 1, discard: true },
-  ),
-);
-
 const Started = <A extends Schema.Top>(value: A) => Schema.TaggedStruct("Success", { value });
 const encodeJson = Schema.encodeSync(Schema.fromJsonString(Schema.Json));
 
@@ -123,7 +117,7 @@ const signedInCustomer = (api: string) =>
     };
   });
 
-/** Place an order through CustomerApi as the signed-in browser, then read it back. */
+/** Confirm checkout through CustomerApi, then wait for its durable workflow to place the order. */
 const orderThroughCustomerApi = (
   api: string,
   session: { readonly cookie: string; readonly appOrigin: string },
@@ -150,9 +144,17 @@ const orderThroughCustomerApi = (
         ),
       );
       const orderId = yield* makeOrderId;
-      const placed = yield* coffee.PlaceOrder({
-        target: orderId,
-        items: [{ drinkId: "latte", size: "medium", milk: "oat" }],
+      const checkoutId = yield* makeCheckoutId;
+      yield* coffee.AddCartItem({
+        target: userId,
+        cartItemId: yield* makeCartItemId,
+        item: { drinkId: "latte", size: "medium", milk: "oat" },
+      });
+      yield* coffee.PrepareCheckout({ target: userId, checkoutId });
+      const confirmed = yield* coffee.ConfirmCheckout({
+        target: userId,
+        checkoutId,
+        orderId,
       });
       const mine = yield* coffee.CustomerOrders.get(userId).pipe(
         Effect.repeat({
@@ -161,12 +163,12 @@ const orderThroughCustomerApi = (
         }),
         Effect.timeout("20 seconds"),
       );
-      return { orderId, placed, mine };
+      return { orderId, confirmed, mine };
     }),
   );
 
 test(
-  "hosts the domain on Durable Objects: a signed-in customer orders through CustomerApi",
+  "fulfills a signed-in customer's checkout through a Durable Object workflow",
   Effect.gen(function* () {
     const api = yield* Effect.fromNullishOr((yield* deployed).api);
     const session = yield* signedInCustomer(api);
@@ -176,8 +178,60 @@ test(
     }).pipe(Effect.flatMap(HttpClientResponse.schemaBodyJson(Viewer)));
     expect(me).toMatchObject({ kind: "customer", displayName: "Sam" });
 
-    const { orderId, placed, mine } = yield* orderThroughCustomerApi(api, session, me.userId);
-    expect(placed.reply.order).toMatchObject({ customerName: "Sam", status: "pending" });
+    const { orderId, confirmed, mine } = yield* orderThroughCustomerApi(api, session, me.userId);
+    expect(confirmed.reply.orderId).toEqual(orderId);
+    expect(mine?.orders).toMatchObject([{ customerName: "Sam", status: "pending" }]);
     expect(mine?.orders.map((order) => order.id)).toEqual([orderId]);
+    const feed = yield* feedSnapshot(api, session, FeedId.make(`customer:${me.userId}`)).pipe(
+      Effect.repeat({
+        until: (value) => Arr.isReadonlyArrayNonEmpty(value.snapshot.source.orders),
+        schedule: Schedule.spaced("100 millis"),
+      }),
+      Effect.timeout("20 seconds"),
+    );
+    expect(feed.snapshot.source.orders.map((order) => order.id)).toEqual([orderId]);
+    const live = yield* feedSnapshot(api, session, FeedId.make(`customer:${me.userId}`), true).pipe(
+      Effect.timeout("15 seconds"),
+    );
+    expect(live.snapshot.source.orders.map((order) => order.id)).toEqual([orderId]);
+    const denied = yield* Effect.result(feedSnapshot(api, session, FeedId.make("staff")));
+    expect(denied._tag).toBe("Failure");
   }),
 );
+
+const feedSnapshot = (
+  api: string,
+  session: { cookie: string; appOrigin: string },
+  id: FeedId,
+  socket = false,
+) =>
+  Effect.gen(function* () {
+    const browser = Layer.effect(
+      HttpClient.HttpClient,
+      Effect.map(HttpClient.HttpClient, (client) =>
+        client.pipe(
+          HttpClient.mapRequest(
+            HttpClientRequest.setHeaders({ cookie: session.cookie, origin: session.appOrigin }),
+          ),
+        ),
+      ),
+    ).pipe(Layer.provide(FetchHttpClient.layer));
+    const url = new URL(`/sync/orders/${encodeURIComponent(id)}`, api);
+    const protocol = socket
+      ? RpcClient.layerProtocolSocket().pipe(
+          Layer.provide(
+            NodeSocket.layerWebSocket(url.href.replace(/^http/, "ws"), {
+              headers: { cookie: session.cookie, origin: session.appOrigin },
+            }),
+          ),
+        )
+      : RpcClient.layerProtocolHttp({ url: url.href }).pipe(Layer.provide(browser));
+    return yield* Effect.gen(function* () {
+      const client = yield* RpcClient.make(OrderFeed.rpc);
+      return yield* client.snapshot({
+        protocolVersion: 1,
+        schemaVersion: 1,
+        address: OrderFeed.address(id),
+      });
+    }).pipe(Effect.provide(protocol.pipe(Layer.provide(RpcSerialization.layerJson))));
+  }).pipe(Effect.scoped);

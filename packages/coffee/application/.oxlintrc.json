@@ -46,9 +46,6 @@
               "@effect-coffee-shop/coffee-http/*",
               "@effect-coffee-shop/coffee-mcp",
               "@effect-coffee-shop/coffee-mcp/*",
-              "@tanstack/*",
-              "better-auth",
-              "better-auth/*",
               "bun:*",
               "node:*"
             ]

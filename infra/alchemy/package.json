@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@alchemy.run/cloudflare": "catalog:",
+    "@alchemy.run/domain": "catalog:",
     "@effect-coffee-shop/coffee-server": "workspace:*",
     "alchemy": "catalog:",
     "effect": "catalog:"
@@ -19,6 +21,7 @@
     "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-domain": "workspace:*",
     "@effect-coffee-shop/web": "workspace:*",
+    "@effect/platform-node": "catalog:",
     "@types/node": "catalog:",
     "@yielded/auth": "catalog:",
     "@yielded/effect-tsrs": "catalog:",

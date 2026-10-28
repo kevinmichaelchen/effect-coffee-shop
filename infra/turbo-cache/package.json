@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@alchemy.run/aws": "catalog:",
+    "@alchemy.run/cloudflare": "catalog:",
     "@effect-coffee-shop/turbo-cache": "workspace:*",
     "alchemy": "catalog:",
     "effect": "catalog:"

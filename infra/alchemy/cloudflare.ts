@@ -4,7 +4,7 @@
  * @module
  */
 import * as Alchemy from "alchemy";
-import * as Cloudflare from "alchemy/Cloudflare";
+import * as Cloudflare from "@alchemy.run/cloudflare";
 import * as Effect from "effect/Effect";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
@@ -150,7 +150,15 @@ export default Alchemy.Stack(
         workspaces: "auto",
       },
       assets: {
-        runWorkerFirst: ["/api", "/api/*", "/mcp", "/mcp/*", "/oauth/*", "/.well-known/*"],
+        runWorkerFirst: [
+          "/sync/*",
+          "/api",
+          "/api/*",
+          "/mcp",
+          "/mcp/*",
+          "/oauth/*",
+          "/.well-known/*",
+        ],
       },
       env: {
         COFFEE: api,

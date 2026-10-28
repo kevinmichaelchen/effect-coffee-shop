@@ -6,10 +6,26 @@ minimumReleaseAge = 259200
 minimumReleaseAgeExcludes = [
   # Explicitly adopted Effect v4 integration; pinned in the workspace catalog.
   "effect-wide-event",
-  # Pinned to a pkg.alchemy.run preview build of alchemy main for alchemy/Domain.
+  # Explicitly adopted launch release; version pinned in the workspace catalog.
+  "foldkit",
+  "@foldkit/ui",
+  "@foldkit/vite-plugin",
+  "@effect/platform-browser",
+  "@yielded/sync",
+  "@yielded/sync-platform-cloudflare",
+  "@yielded/sync-platform-alchemy-cf",
+  # Adopt the Alchemy release and its provider packages together.
   "alchemy",
+  "@alchemy.run/cloudflare",
+  "@alchemy.run/aws",
+  "@alchemy.run/domain",
+  "@alchemy.run/docker",
+  "@alchemy.run/kubernetes",
+  "@alchemy.run/sql",
+  "@alchemy.run/frontend-frameworks",
   # alchemy pins its @alchemy.run/* and @distilled.cloud/* siblings to the same
   # release, so they ship together with each adopted alchemy version.
+  "@alchemy.run/acme",
   "@alchemy.run/cloudflare-runtime",
   "@alchemy.run/floci",
   "@alchemy.run/node-utils",
@@ -35,6 +51,7 @@ minimumReleaseAgeExcludes = [
   "@yielded/auth-simplewebauthn",
   "@yielded/crypto",
   "effect",
+  "@effect/platform-bun",
   "@effect/platform-node",
   "@effect/platform-node-shared",
   "@effect/sql-d1",

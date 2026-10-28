@@ -4,7 +4,6 @@
     "infra/alchemy/alchemy.run.ts",
     "infra/turbo-cache/aws.ts",
     "apps/ui/src/entry.ts",
-    // The Website's Worker, deployed by path from the Alchemy stack.
     "apps/ui/src/worker.ts",
     "apps/ui/vite.config.ts",
     "apps/ui/vite.shared.ts",
@@ -16,16 +15,12 @@
     "packages/coffee/presentation/actions/src/**/*.test.ts",
   ],
   "ignorePatterns": ["**/*.d.ts", "**/*.generated.ts", "**/dist/**"],
-  // The Alchemy workspace builds the UI by path (`Cloudflare.Website.Vite`) rather than
-  // importing it; the dependency exists so Turbo hashes UI changes into the smoke test.
   "ignoreDependencies": [
-    // Runtime peers used by the Yielded WebAuthn server/browser adapters.
+    "@foldkit/vite-plugin",
+    "happy-dom",
+    "@effect/platform-bun",
     "@simplewebauthn/server",
     "@simplewebauthn/browser",
-    // Loaded by the Vite plugin chain in vite.config.ts, not imported from source.
-    "@foldkit/vite-plugin",
-    // happy-dom is the Vitest environment named in vitest.config.ts.
-    "happy-dom",
     "oxlint-tsgolint",
     "@effect-coffee-shop/web",
   ],
@@ -53,7 +48,6 @@
     "unresolved-catalog-references": "error",
     "unused-dependency-overrides": "warn",
     "misconfigured-dependency-overrides": "error",
-    // No rule packs are configured; state that the policy detector is intentionally unused.
     "policy-violation": "off",
   },
   "duplicates": {
@@ -63,7 +57,7 @@
     "minOccurrences": 3,
     "threshold": 14.5,
     "ignoreImports": true,
-    "ignore": ["apps/ui/src/**/*.stories.tsx", "packages/ui-kit/src/**/*.stories.tsx"],
+    "ignore": [],
   },
   "health": {
     "maxCyclomatic": 20,
@@ -81,7 +75,6 @@
       "packages/http-routing/tsconfig.json",
       "packages/coffee/domain/tsconfig.json",
       "packages/coffee/application/tsconfig.json",
-      "packages/ui-kit/tsconfig.json",
       "packages/coffee/auth/tsconfig.json",
       "packages/coffee/server/tsconfig.json",
       "packages/coffee/presentation/mcp/tsconfig.json",
@@ -116,10 +109,6 @@
       {
         "name": "infra",
         "patterns": ["infra/**"],
-      },
-      {
-        "name": "ui-kit",
-        "patterns": ["packages/ui-kit/**"],
       },
       {
         "name": "ui",
@@ -168,13 +157,8 @@
         "allow": ["server", "ui", "turbo-cache"],
       },
       {
-        "from": "ui-kit",
-        "allow": [],
-      },
-      {
         "from": "ui",
-        // The app is a client of the domain's Apis: it imports their declarations, ids and values.
-        "allow": ["ui-kit", "auth-contract", "domain"],
+        "allow": ["auth-contract", "domain"],
       },
       {
         "from": "http-routing",
@@ -210,7 +194,7 @@
       },
       {
         "from": "tooling",
-        "allow": ["ui", "ui-kit"],
+        "allow": ["ui"],
       },
       {
         "from": "turbo-cache",

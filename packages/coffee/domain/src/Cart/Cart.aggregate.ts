@@ -1,6 +1,6 @@
 import * as Arr from "effect/Array";
 import * as DateTime from "effect/DateTime";
-import * as Domain from "alchemy/Domain";
+import * as Domain from "@alchemy.run/domain";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";

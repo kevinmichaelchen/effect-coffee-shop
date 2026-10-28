@@ -14,6 +14,7 @@ const coffeeProxyTarget = process.env.VITE_COFFEE_PROXY_TARGET ?? "http://localh
 const alchemyHostsVite = process.env.ALCHEMY_CLOUDFLARE_VITE_INJECTED === "1";
 
 const coffeeProxy = {
+  "/sync": { target: coffeeProxyTarget, changeOrigin: false, ws: true },
   "/api": {
     target: coffeeProxyTarget,
     changeOrigin: false,

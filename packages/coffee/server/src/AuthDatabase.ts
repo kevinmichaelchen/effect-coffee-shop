@@ -5,7 +5,7 @@
  *
  * @module
  */
-import * as Cloudflare from "alchemy/Cloudflare";
+import * as Cloudflare from "@alchemy.run/cloudflare";
 
 // Anchored on this module, so deploys from the repo root and tests from a
 // workspace directory resolve the same folder.
