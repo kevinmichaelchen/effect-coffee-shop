@@ -22,7 +22,6 @@ under `packages/coffee`, while shared utilities stay directly under `packages`.
   Durable Objects and serves the Apis, auth, REST, and MCP.
 - [`http-routing`](./http-routing): wide-event request logging and generic Web
   HTTP routing helpers.
-- [`ui-kit`](./ui-kit): reusable UI primitives, fields, theme controls, and stories.
 - [`turbo-cache`](./turbo-cache): the self-hosted Turborepo remote cache service.
 - [`tooling`](./tooling): shared Oxlint policy and Go custom lint rules.
 

@@ -3,7 +3,7 @@
 `@effect-coffee-shop/coffee-domain` is the coffee shop as an
 [`@alchemy.run/domain`](https://main.alchemy.run/domain/what-is-ddd/) model: commands that aggregates
 decide, events they record, views that fold those events into what people read, and a policy that
-reacts. It is pure: it imports only `@alchemy.run/domain` and `effect`. The same model runs in memory
+reacts. Its contracts use `@alchemy.run/domain`, `effect`, and `@yielded/sync`. The same model runs in memory
 for tests and on Cloudflare Durable Objects in production, hosted by
 [`coffee-server`](../server).
 

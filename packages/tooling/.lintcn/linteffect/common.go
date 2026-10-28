@@ -10,15 +10,6 @@ import (
 	"github.com/typescript-eslint/tsgolint/internal/rule"
 )
 
-var reactHookNames = map[string]struct{}{
-	"useState":             {},
-	"useReducer":           {},
-	"useContext":           {},
-	"useCallback":          {},
-	"useEffect":            {},
-	"useSyncExternalStore": {},
-}
-
 func isEffectFile(ctx rule.RuleContext) bool {
 	fileName := filepath.ToSlash(ctx.SourceFile.FileName())
 	if strings.Contains(fileName, "/vendor/") || strings.Contains(fileName, "/node_modules/") {
@@ -34,9 +25,7 @@ func isEffectFile(ctx rule.RuleContext) bool {
 	return strings.Contains(text, "\"effect\"") ||
 		strings.Contains(text, "'effect'") ||
 		strings.Contains(text, "\"effect/") ||
-		strings.Contains(text, "'effect/") ||
-		strings.Contains(text, "\"@effect-atom/atom-react\"") ||
-		strings.Contains(text, "'@effect-atom/atom-react'")
+		strings.Contains(text, "'effect/")
 }
 
 func reportRule(ctx rule.RuleContext, node *ast.Node, id string, description string) {
@@ -497,24 +486,5 @@ func hasNestedPipeArgument(node *ast.Node) bool {
 			return true
 		}
 	}
-	return false
-}
-
-func isReactHookCall(node *ast.Node) bool {
-	if !ast.IsCallExpression(node) {
-		return false
-	}
-
-	callee := node.AsCallExpression().Expression
-	if ast.IsIdentifier(callee) {
-		_, ok := reactHookNames[callee.Text()]
-		return ok
-	}
-
-	if ast.IsPropertyAccessExpression(callee) {
-		_, ok := reactHookNames[callee.AsPropertyAccessExpression().Name().Text()]
-		return ok
-	}
-
 	return false
 }

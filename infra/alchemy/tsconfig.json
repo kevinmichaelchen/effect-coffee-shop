@@ -14,7 +14,15 @@
     "exactOptionalPropertyTypes": false,
     "types": ["node"],
     "plugins": [
-      { "name": "@effect/language-service", "allowedUnstableApis": ["effect/Path", "effect/http"] }
+      {
+        "name": "@effect/language-service",
+        "allowedUnstableApis": [
+          "effect/Path",
+          "effect/http",
+          "effect/rpc",
+          "@effect/platform-node/NodeSocket"
+        ]
+      }
     ]
   },
   "include": ["./*.ts"]

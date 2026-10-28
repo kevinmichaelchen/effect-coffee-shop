@@ -3,38 +3,23 @@
   "entry": [
     "infra/alchemy/alchemy.run.ts",
     "infra/turbo-cache/aws.ts",
-    "apps/ui/src/main.tsx",
-    // The Website's Worker, deployed by path from the Alchemy stack.
+    "apps/ui/src/entry.ts",
     "apps/ui/src/worker.ts",
-    "apps/ui/src/**/*.stories.tsx",
-    "apps/ui/.storybook/**/*.{ts,tsx}",
     "apps/ui/vite.config.ts",
     "apps/ui/vite.shared.ts",
     "apps/ui/vitest.config.ts",
     "packages/http-routing/src/index.ts",
     "packages/coffee/domain/test/**/*.ts",
     "packages/coffee/server/test/**/*.ts",
-    "packages/ui-kit/src/**/*.stories.tsx",
     "packages/coffee/presentation/actions/src/index.ts",
     "packages/coffee/presentation/actions/src/**/*.test.ts",
   ],
-  "ignorePatterns": ["**/*.d.ts", "**/*.generated.ts", "**/dist/**", "**/storybook-static/**"],
-  // Fallow does not discover the aliased React JavaScript plugins in Oxlint JSON,
-  // and @shadcn/lint is loaded by the UI Oxlint configuration rather than source imports.
-  // The Alchemy workspace builds the UI by path (`Cloudflare.Website.Vite`) rather than
-  // importing it; the dependency exists so Turbo hashes UI changes into the smoke test.
+  "ignorePatterns": ["**/*.d.ts", "**/*.generated.ts", "**/dist/**"],
   "ignoreDependencies": [
-    // Loaded dynamically by Alchemy's Bun CLI bootstrap.
     "@effect/platform-bun",
-    // Runtime peers used by the Yielded WebAuthn server/browser adapters.
     "@simplewebauthn/server",
     "@simplewebauthn/browser",
-    // Loaded indirectly by @vitejs/plugin-react's reactCompilerPreset in vite.shared.ts.
-    "babel-plugin-react-compiler",
     "oxlint-tsgolint",
-    "@shadcn/lint",
-    "eslint-plugin-react-hooks",
-    "eslint-plugin-react-refresh",
     "@effect-coffee-shop/web",
   ],
   "rules": {
@@ -61,7 +46,6 @@
     "unresolved-catalog-references": "error",
     "unused-dependency-overrides": "warn",
     "misconfigured-dependency-overrides": "error",
-    // No rule packs are configured; state that the policy detector is intentionally unused.
     "policy-violation": "off",
   },
   "duplicates": {
@@ -71,7 +55,7 @@
     "minOccurrences": 3,
     "threshold": 14.5,
     "ignoreImports": true,
-    "ignore": ["apps/ui/src/**/*.stories.tsx", "packages/ui-kit/src/**/*.stories.tsx"],
+    "ignore": [],
   },
   "health": {
     "maxCyclomatic": 20,
@@ -89,7 +73,6 @@
       "packages/http-routing/tsconfig.json",
       "packages/coffee/domain/tsconfig.json",
       "packages/coffee/application/tsconfig.json",
-      "packages/ui-kit/tsconfig.json",
       "packages/coffee/auth/tsconfig.json",
       "packages/coffee/server/tsconfig.json",
       "packages/coffee/presentation/mcp/tsconfig.json",
@@ -119,16 +102,11 @@
           "**/vitest.config.ts",
           "**/vitest.setup.ts",
           "apps/ui/vite*.ts",
-          "apps/ui/.storybook/**",
         ],
       },
       {
         "name": "infra",
         "patterns": ["infra/**"],
-      },
-      {
-        "name": "ui-kit",
-        "patterns": ["packages/ui-kit/**"],
       },
       {
         "name": "ui",
@@ -177,13 +155,8 @@
         "allow": ["server", "ui", "turbo-cache"],
       },
       {
-        "from": "ui-kit",
-        "allow": [],
-      },
-      {
         "from": "ui",
-        // The app is a client of the domain's Apis: it imports their declarations, ids and values.
-        "allow": ["ui-kit", "auth-contract", "domain"],
+        "allow": ["auth-contract", "domain"],
       },
       {
         "from": "http-routing",
@@ -219,7 +192,7 @@
       },
       {
         "from": "tooling",
-        "allow": ["ui", "ui-kit"],
+        "allow": ["ui"],
       },
       {
         "from": "turbo-cache",

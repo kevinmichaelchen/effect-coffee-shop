@@ -280,23 +280,6 @@ const fiber = Runtime.runFork(task);
 			},
 		},
 		{
-			name: "no-react-state",
-			rule: &NoReactStateRule,
-			valid: []rule_tester.ValidTestCase{
-				validCase(`
-declare function useAtomValue<T>(atom: T): T;
-declare const counterAtom: number;
-const value = useAtomValue(counterAtom);
-        `),
-			},
-			invalid: []rule_tester.InvalidTestCase{
-				invalidRuleCase(`
-declare function useState<T>(value: T): [T, (next: T) => void];
-const [value, setValue] = useState(0);
-        `, "no-react-state"),
-			},
-		},
-		{
 			name: "no-string-sentinel-return",
 			rule: &NoStringSentinelReturnRule,
 			valid: []rule_tester.ValidTestCase{

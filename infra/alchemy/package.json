@@ -21,6 +21,7 @@
     "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-domain": "workspace:*",
     "@effect-coffee-shop/web": "workspace:*",
+    "@effect/platform-node": "catalog:",
     "@types/node": "catalog:",
     "@yielded/auth": "catalog:",
     "oxfmt": "catalog:",

@@ -10,7 +10,7 @@ Run `bun run lint` for workspace and infrastructure lint, or `bun run ci:static`
 for the same checks with formatting and TypeScript/Effect diagnostics. Turbo
 tracks the shared configuration; the infrastructure workspaces lint like any
 other package.
-The React UI retains its separate policy; it does not inherit backend-only rules.
+The Foldkit UI retains its separate policy; it does not inherit backend-only rules.
 
 Every Oxlint policy used by the workspaces enables `options.typeAware` and
 `options.typeCheck`. The former runs rules that need TypeScript types; the latter
@@ -96,13 +96,10 @@ content-addressed cache outside the checkout; generated Go module files and
 `.tsgolint` links are ignored, never committed. The core path checks target
 `packages/coffee/domain/src` and `packages/coffee/application/src` regardless of rule location.
 
-## React and test safeguards
+## UI and test safeguards
 
-The UI runs native Oxlint checks plus the React Hooks `rules-of-hooks` and React
-Refresh `only-export-components` JavaScript-plugin rules. The obsolete ESLint
-configuration was removed: its TypeScript-ESLint parser does not support the
-pinned TypeScript 7 compiler. React Refresh permits constant exports, matching the
-Vite preset. Unused disable directives fail UI lint as they do backend lint.
+The UI uses its own Oxlint policy for unsafe TypeScript escapes and boundary safety.
+Foldkit Scene tests verify labeled controls and command-driven interactions.
 
 Vitest's focused-test rule is enabled. Test files and helpers additionally forbid
 `.only` property access, covering wrappers such as `it.effect.only` that the
@@ -115,7 +112,7 @@ Effect smoke tests can assert success by executing without a failed effect.
 Fallow requires every reachable file to belong to an architecture zone; unused
 files fail its dead-code check.
 The infrastructure workspaces and the Turbo cache implementation have explicit
-zones; tool configuration and Storybook support form a tooling zone. Production/application
+zones; tool configuration form a tooling zone. Production/application
 zones cannot import tooling. Semantic queries are configured for all compiler
 projects and require complete evidence. The push gate runs the full scan;
 `fallow:audit` remains available for a quick, syntactic changed-file review.
@@ -143,9 +140,7 @@ Knip configuration comments explain the limited exceptions: the embedded Effect
 language-service settings key, Bun-wrapped Oxlint binaries, ambient Cloudflare
 types, and externally installed Portless. Source-owned files and exports remain checked. Both Knip modes and
 full Fallow must pass before a push, and Knip treats configuration hints as
-errors. Fallow explicitly recognizes the two React plugin dependencies because
-its Oxlint config discovery misses aliased JavaScript plugins; the UI lint
-command executes both plugins. Workspaces whose `oxlint.config.ts` imports the
+errors. Workspaces whose `oxlint.config.ts` imports the
 Effect lint plugin declare it themselves through the catalog, so no Fallow
 exemption is needed for it. The Fallow policy detector is explicitly off because
 no rule packs are configured.
@@ -161,8 +156,4 @@ The domain and application are separate Bun workspaces. Domain has no workspace
 dependencies; application depends on domain. Fallow enforces the same direction:
 `server` is the only zone that may import auth and presentation, and the UI may
 import the domain (for its Api clients) and the auth contract.
-The UI kit has its own UI lint policy and a zone allowing no app imports; the app
-may import the kit. The app hosts all Storybook tests, including kit stories. Both
-UI custom-lint tasks depend on the app custom-rule build for cache invalidation.
-The kit lint task retains `$TURBO_DEFAULT$` and adds the single app theme CSS
-file it reads, preserving gitignore handling while invalidating token checks.
+The app owns its Foldkit components, themes, and Scene tests.

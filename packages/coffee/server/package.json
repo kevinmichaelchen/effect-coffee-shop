@@ -26,6 +26,9 @@
     "@effect-coffee-shop/coffee-mcp": "workspace:*",
     "@effect-coffee-shop/http-routing": "workspace:*",
     "@yielded/auth-persistence": "catalog:",
+    "@yielded/sync": "catalog:",
+    "@yielded/sync-platform-alchemy-cf": "catalog:",
+    "@yielded/sync-platform-cloudflare": "catalog:",
     "alchemy": "catalog:",
     "effect": "catalog:",
     "effect-wide-event": "catalog:"

@@ -33,7 +33,7 @@ const now = new Date();
 		`,
 	},
 	{
-		FileName: "apps/ui/src/features/coffee-shop/lib/coffee.ts",
+		FileName: "apps/ui/src/api.ts",
 		Code: `
 const createdAt = new Date(value);
 		`,

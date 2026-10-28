@@ -17,7 +17,6 @@
       "error",
       {
         "patterns": [
-          "@better-auth/*",
           "@cloudflare/*",
           "@effect-coffee-shop/backend",
           "@effect-coffee-shop/backend/*",
@@ -33,9 +32,6 @@
           "@effect-coffee-shop/coffee-http/*",
           "@effect-coffee-shop/coffee-mcp",
           "@effect-coffee-shop/coffee-mcp/*",
-          "@tanstack/*",
-          "better-auth",
-          "better-auth/*",
           "bun:*",
           "effect/ai",
           "effect/ai/*",

@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@alchemy.run/domain": "catalog:",
+    "@yielded/sync": "catalog:",
     "alchemy": "catalog:",
     "effect": "catalog:"
   },

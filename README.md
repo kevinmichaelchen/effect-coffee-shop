@@ -6,7 +6,7 @@ with TypeScript and Effect.
 The Coffee domain is an event-sourced [`@alchemy.run/domain`](https://main.alchemy.run/domain/what-is-ddd/)
 model: aggregates decide commands, views fold their events, and a policy starts a durable checkout saga.
 One Cloudflare Worker hosts that model on Durable Objects and serves it to the
-browser UI, remote MCP clients, and a small REST surface, with Yielded Auth
+Foldkit UI with Yielded Sync order feeds, remote MCP clients, and a small REST surface, with Yielded Auth
 passkeys on D1.
 
 ## What This Repo Demonstrates
@@ -17,8 +17,8 @@ passkeys on D1.
   Cloudflare Durable Objects in production.
 - One Coffee action catalog projected into Effect MCP tools over a thin
   application service.
-- A Vite/React browser app that calls the domain Apis directly through
-  generated Effect RPC clients.
+- A Vite/Foldkit browser app that calls the domain Apis directly through
+  generated Effect RPC clients, with live orders delivered by Yielded Sync.
 
 > Alchemy core and the Cloudflare, AWS, and Domain packages are pinned together at
 > `2.0.0-beta.84` in the workspace catalog. Providers use their own `@alchemy.run/*` packages.
@@ -39,7 +39,7 @@ bun run dev
 
 This runs `alchemy dev ./infra/alchemy/cloudflare.ts`: the Coffee Worker
 (domain on Durable Objects, auth on D1), the Vite UI, and the Website Worker
-that forwards `/api`, `/mcp`, `/oauth/`, and `/.well-known/` to the Coffee
+that forwards `/api`, `/sync/`, `/mcp`, `/oauth/`, and `/.well-known/` to the Coffee
 Worker. Alchemy prints the local URLs.
 
 For passkey sign-in, set `APP_ORIGIN` to the exact UI origin and an independent
@@ -73,8 +73,7 @@ Editable sources live in [`docs/architecture`](./docs/architecture).
 | Auth                 | [`packages/coffee/auth`](./packages/coffee/auth)                                 | Yielded Auth passkeys, sessions, MCP OAuth, D1 migrations, customer/staff identities.    |
 | Server               | [`packages/coffee/server`](./packages/coffee/server)                             | The Coffee Worker: hosts the model on Durable Objects and routes every backend path.     |
 | HTTP routing         | [`packages/http-routing`](./packages/http-routing)                               | Wide-event request logging used by the Worker.                                           |
-| UI kit               | [`packages/ui-kit`](./packages/ui-kit)                                           | Shared React primitives, fields, and theme controls.                                     |
-| Browser app          | [`apps/ui`](./apps/ui)                                                           | Vite/React UI, Domain Api clients, passkey sign-in, and the Website Worker.              |
+| Browser app          | [`apps/ui`](./apps/ui)                                                           | Vite/Foldkit UI, Domain Api clients, passkey sign-in, and the Website Worker.              |
 | Infrastructure       | [`infra/alchemy`](./infra/alchemy)                                               | The Alchemy stack that deploys both Workers, D1, and Secrets Store.                      |
 
 ## Why Coffee Actions Exists
@@ -114,8 +113,6 @@ protocol-neutral shape.
 | Command                   | Purpose                                                            |
 | ------------------------- | ------------------------------------------------------------------ |
 | `bun run dev`             | Run the full stack locally with Alchemy (Workers, Vite, D1, DOs).  |
-| `bun run storybook`       | Run the UI Storybook dev server.                                   |
-| `bun run build-storybook` | Build the UI Storybook static site.                                |
 | `bun run test`            | Run every workspace's tests through Turborepo.                     |
 | `bun run cf:test`         | Deploy the stack locally and run its smoke and end-to-end tests.   |
 | `bun run check`           | Run typecheck, lint, format check, tests, custom lint, and Fallow. |
@@ -152,10 +149,9 @@ CI runs three jobs in parallel on every PR and push to `main`:
 | -------------------- | --------------------------------------------------------------------------------------------------------- |
 | `bun run ci:static`  | Native TypeScript 7 + Effect diagnostics, type-aware Oxlint, Oxfmt, and infrastructure typechecking.      |
 | `bun run ci:backend` | All package tests (domain stories, Apis over `Domain.InMemory`, auth on D1) plus the local Alchemy stack. |
-| `bun run ci:ui`      | Storybook browser tests in light/dark themes and the production Vite build.                               |
+| `bun run ci:ui` | Foldkit Scene interaction tests and production build. |
 
-For local browser tests, first run `bunx --no-install playwright install --with-deps --only-shell chromium`
-from `apps/ui`. The custom `lintcn` and Fallow audits remain available through `bun run check`.
+UI tests use Foldkit Scene. The custom `lintcn` and Fallow audits remain available through `bun run check`.
 
 CI restores Turborepo task caches and cancels superseded PR runs. Shared lint
 configuration and dependency typechecks participate in cache invalidation.

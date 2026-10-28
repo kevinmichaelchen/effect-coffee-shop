@@ -15,7 +15,6 @@ concurrency:
 env:
   TURBO_TELEMETRY_DISABLED: "1"
   DO_NOT_TRACK: "1"
-  STORYBOOK_DISABLE_TELEMETRY: "1"
 
 jobs:
   checks:
@@ -45,10 +44,6 @@ jobs:
             turbo-${{ runner.os }}-${{ runner.arch }}-${{ matrix.check }}-${{ hashFiles('bun.lock', 'turbo.json', '.node-version') }}-
       - name: Install dependencies and patch the Effect compiler
         run: bun install --frozen-lockfile
-      - name: Install Chromium
-        if: matrix.check == 'ui'
-        working-directory: apps/ui
-        run: bunx --no-install playwright install --with-deps --only-shell chromium
       - name: Run ${{ matrix.check }} checks
         run: bun run ci:${{ matrix.check }}
 

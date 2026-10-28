@@ -1,20 +1,16 @@
 {
   "$schema": "./node_modules/knip/schema.json",
-  // Effect-tsgo embeds the language service; this name configures its built-in diagnostics.
-  // Knip does not credit oxlint/tsgolint invoked via our Bun interpreter wrapper.
   "ignoreDependencies": ["@effect/language-service", "oxlint", "oxlint-tsgolint"],
-  // Portless is a developer-installed local reverse proxy, not application code.
   "ignoreBinaries": ["portless"],
   "workspaces": {
     ".": {
-      // Ambient Cloudflare declarations used by the deployment toolchain.
       "ignoreDependencies": ["@cloudflare/workers-types"],
     },
-    "packages/coffee/domain": { "project": ["src/**/*.ts!", "!src/**/*.test.ts!", "*.ts"] },
-    "packages/coffee/application": { "project": ["src/**/*.ts!", "!src/**/*.test.ts!", "*.ts"] },
-    "packages/ui-kit": {
-      "entry": ["src/**/*.stories.tsx"],
-      "project": ["src/**/*.{ts,tsx}!", "!src/**/*.stories.tsx!"],
+    "packages/coffee/domain": {
+      "project": ["src/**/*.ts!", "!src/**/*.test.ts!", "*.ts"],
+    },
+    "packages/coffee/application": {
+      "project": ["src/**/*.ts!", "!src/**/*.test.ts!", "*.ts"],
     },
     "packages/tooling": {
       "project": ["*.ts"],
@@ -22,8 +18,6 @@
     "infra/alchemy": {
       "entry": ["alchemy.run.ts!", "cloudflare.ts!"],
       "project": ["*.ts!", "!*.test.ts!", "!vitest.config.ts!"],
-      // The UI is built by path (`Cloudflare.Website.Vite`), not imported; the dependency
-      // gives Turbo the workspace edge that hashes UI changes into the smoke test.
       "ignoreDependencies": ["@effect-coffee-shop/web"],
     },
     "infra/turbo-cache": {
@@ -31,15 +25,8 @@
       "project": ["*.ts!", "!*.test.ts!", "!vitest.config.ts!"],
     },
     "apps/ui": {
-      // The Website's Worker, deployed by path from the Alchemy stack.
       "entry": ["src/worker.ts!"],
-      "project": [
-        "src/**/*.{ts,tsx,css,mdx}!",
-        "!src/**/*.stories.tsx!",
-        "!src/**/*StoryData.ts!",
-        "*.ts",
-        ".storybook/**/*.{ts,tsx}",
-      ],
+      "project": ["src/**/*.{ts,css}!", "*.ts"],
     },
     "packages/**": {
       "project": [
@@ -50,8 +37,8 @@
       ],
     },
   },
-  // Retain explicitly documented types required by exported signatures.
   "tags": ["-public"],
-  // Include dynamic imports when checking for circular dependencies.
-  "cycles": { "dynamicImports": true },
+  "cycles": {
+    "dynamicImports": true,
+  },
 }

@@ -11,12 +11,14 @@ import { OrderSummary } from "./Order/OrderSummary.view.ts";
 import { Shop } from "./Shop/Shop.aggregate.ts";
 
 /** The coffee shop: every aggregate, view and policy, hosted together. */
-export class CoffeeShop extends Domain.Model("CoffeeShop", {
+export const coffeeShopMembers = {
   aggregates: [Order, Cart, Customer, Shop],
   views: [OrderSummary, CustomerOrders, OrderQueue],
   policies: [CheckoutFulfillment],
   sagas: [FulfillCheckout],
-}) {}
+};
+
+export class CoffeeShop extends Domain.Model("CoffeeShop", coffeeShopMembers) {}
 
 /** Every policy and saga implementation, as one Layer. */
 export const CoffeeShopHandlers = Layer.mergeAll(CheckoutFulfillmentLive, FulfillCheckoutLive);

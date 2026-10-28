@@ -15,7 +15,6 @@
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
-    "jsx": "react-jsx",
 
     /* Linting */
     "strict": true,
@@ -26,7 +25,12 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "plugins": [{ "name": "@effect/language-service", "allowedUnstableApis": ["effect/http"] }]
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "allowedUnstableApis": ["effect/http", "effect/socket"]
+      }
+    ]
   },
-  "include": ["src", ".storybook/**/*.tsx"]
+  "include": ["src"]
 }
