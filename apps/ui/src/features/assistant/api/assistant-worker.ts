@@ -1,4 +1,4 @@
-import { Data, Effect, Option, PubSub, Schema, Stream } from "effect";
+import { Data, Effect, Option, PubSub, Ref, Schema, Stream } from "effect";
 import { ManagedResource } from "foldkit";
 import type { ChatMessage } from "#features/assistant/lib/prompt.ts";
 import { type LocalModel, WorkerEvent, WorkerRequest } from "#features/assistant/lib/protocol.ts";
@@ -15,6 +15,8 @@ export interface AssistantWorkerHandle {
     transfer?: readonly Transferable[],
   ) => Effect.Effect<void>;
   readonly events: PubSub.PubSub<WorkerEvent>;
+  /** Latched on the first crash, so a request that subscribes afterwards still fails. */
+  readonly crashed: Ref.Ref<Option.Option<string>>;
 }
 
 /** Lives while the assistant is switched on; the Model decides when. */
@@ -36,17 +38,22 @@ export const acquireAssistantWorker = Effect.gen(function* () {
     ),
     (running) => Effect.sync(() => running.terminate()),
   );
+  const crashed = yield* Ref.make(Option.none<string>());
+  const publish = (event: WorkerEvent) => {
+    if (event._tag === "Crashed") Effect.runSync(Ref.set(crashed, Option.some(event.message)));
+    PubSub.publishUnsafe(events, event);
+  };
   worker.onmessage = (message: MessageEvent<unknown>) =>
-    Option.map(decodeEvent(message.data), (event) => PubSub.publishUnsafe(events, event));
+    Option.map(decodeEvent(message.data), publish);
   worker.onerror = (error: ErrorEvent) =>
-    PubSub.publishUnsafe(
-      events,
+    publish(
       WorkerEvent.cases.Crashed.make({ message: error.message || "The local AI worker stopped." }),
     );
   const handle: AssistantWorkerHandle = {
     send: (request, transfer = []) =>
       Effect.sync(() => worker.postMessage(encodeRequest(request), [...transfer])),
     events,
+    crashed,
   };
   return handle;
 });
@@ -63,6 +70,9 @@ const ask = <A>(
       const id = yield* Effect.sync(() => crypto.randomUUID());
       // Subscribe before sending so a fast answer cannot slip past.
       const subscription = yield* PubSub.subscribe(worker.events);
+      const crash = yield* Ref.get(worker.crashed);
+      if (Option.isSome(crash))
+        return yield* Effect.fail(new AssistantError({ message: crash.value }));
       yield* worker.send(request(id), transfer);
       const answer: Effect.Effect<A, AssistantError> = PubSub.take(subscription).pipe(
         Effect.flatMap((event) =>

@@ -22,6 +22,8 @@ export const AssistantState = Schema.Struct({
   /** The one request whose answer is still wanted; anything else that arrives is stale. */
   pendingRequest: Schema.Option(Schema.Int),
   requestCount: Schema.Int,
+  /** The recording being transcribed; its id must match the transcript that comes back. */
+  pendingRecording: Schema.Option(Schema.Int),
   recording: RecordingState,
   heard: Schema.Option(Schema.String),
   turn: Schema.Option(AssistantTurn),
@@ -38,6 +40,7 @@ export const initialAssistant: AssistantState = {
   isThinking: false,
   pendingRequest: Option.none(),
   requestCount: 0,
+  pendingRecording: Option.none(),
   recording: "idle",
   heard: Option.none(),
   turn: Option.none(),

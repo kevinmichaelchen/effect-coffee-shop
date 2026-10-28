@@ -47,6 +47,7 @@ import {
   receiveProgress,
   receiveRecordingFailed,
   receiveTranscript,
+  receiveTranscriptFailed,
   receiveTurn,
   receiveTurnFailed,
   receiveWebGpu,
@@ -358,8 +359,9 @@ export const update = (model: Model, message: Message): UpdateReturn =>
     FailedAcquireMicrophone: ({ message }) => receiveRecordingFailed(model, message),
     ReleasedMicrophone: () => ({ model }),
     ClickedStopRecording: () => stopRecording(model),
-    GotTranscript: ({ text }) => receiveTranscript(model, text),
-    FailedTranscript: ({ message }) => receiveRecordingFailed(model, message),
+    GotTranscript: ({ recordingId, text }) => receiveTranscript(model, recordingId, text),
+    FailedTranscript: ({ recordingId, message }) =>
+      receiveTranscriptFailed(model, recordingId, message),
 
     CompletedNavigateInternal: () => ({ model }),
     CompletedLoadExternal: () => ({ model }),

@@ -192,10 +192,12 @@ export const AskAssistant = Command.define("AskAssistant", {
 });
 
 export const TranscribeRecording = Command.define("TranscribeRecording", {
+  args: { recordingId: Schema.Int },
   messages: [Message.GotTranscript, Message.FailedTranscript],
-  execute: finishRecording.pipe(
-    Effect.flatMap(transcribeSamples),
-    Effect.map((text) => Message.GotTranscript({ text })),
-    recoverWith(Message.FailedTranscript),
-  ),
+  execute: ({ recordingId }) =>
+    finishRecording.pipe(
+      Effect.flatMap(transcribeSamples),
+      Effect.map((text) => Message.GotTranscript({ recordingId, text })),
+      recoverWith(({ message }) => Message.FailedTranscript({ recordingId, message })),
+    ),
 });

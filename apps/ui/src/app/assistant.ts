@@ -178,6 +178,7 @@ export const abandonInteraction = (model: Model): Model =>
   withAssistant(settleTurn(model), {
     isThinking: false,
     pendingRequest: Option.none(),
+    pendingRecording: Option.none(),
     recording: "idle",
     error: Option.none(),
   });
@@ -211,11 +212,24 @@ export const stopRecording = (model: Model): Return =>
   model.assistant.recording === "acquiring"
     ? { model: withAssistant(model, { recording: "idle" }) }
     : model.assistant.recording === "recording"
-      ? {
-          model: withAssistant(model, { recording: "transcribing" }),
-          commands: [TranscribeRecording()],
-        }
+      ? transcribe(model)
       : { model };
+
+/** Each recording gets an id, so a transcript that outlived its recording is recognized. */
+const transcribe = (model: Model): Return => {
+  const recordingId = model.assistant.requestCount + 1;
+  return {
+    model: withAssistant(model, {
+      recording: "transcribing",
+      pendingRecording: Option.some(recordingId),
+      requestCount: recordingId,
+    }),
+    commands: [TranscribeRecording({ recordingId })],
+  };
+};
+
+const isPendingRecording = (model: Model, recordingId: number): boolean =>
+  Option.contains(model.assistant.pendingRecording, recordingId);
 
 export const receiveRecordingFailed = (model: Model, message: string): Return => ({
   model:
@@ -224,12 +238,20 @@ export const receiveRecordingFailed = (model: Model, message: string): Return =>
       : withAssistant(model, { recording: "idle", error: Option.some(message) }),
 });
 
+export const receiveTranscriptFailed = (
+  model: Model,
+  recordingId: number,
+  message: string,
+): Return =>
+  isPendingRecording(model, recordingId)
+    ? receiveRecordingFailed(withAssistant(model, { pendingRecording: Option.none() }), message)
+    : { model };
+
 /** What was heard becomes the prompt, shown to the customer and sent at once. */
-export const receiveTranscript = (model: Model, text: string): Return => {
-  // A transcript that outlived its recording (the page changed) is stale.
-  if (model.assistant.recording !== "transcribing") return { model };
+export const receiveTranscript = (model: Model, recordingId: number, text: string): Return => {
+  if (!isPendingRecording(model, recordingId)) return { model };
   const heard = text.trim();
-  const idle = withAssistant(model, { recording: "idle" });
+  const idle = withAssistant(model, { recording: "idle", pendingRecording: Option.none() });
   return heard.length === 0
     ? { model: withAssistant(idle, { error: Option.some("I didn't catch that. Try again.") }) }
     : submitPrompt(withAssistant(idle, { prompt: heard, heard: Option.some(heard) }));

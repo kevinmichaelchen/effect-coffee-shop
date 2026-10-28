@@ -100,7 +100,12 @@ const awaiting = {
 };
 const transcribing = {
   ...voiceReady,
-  assistant: { ...voiceReady.assistant, recording: "transcribing" },
+  assistant: {
+    ...voiceReady.assistant,
+    recording: "transcribing",
+    pendingRecording: Option.some(1),
+    requestCount: 1,
+  },
 } as const;
 
 const replied = AssistantTurn.cases.Replied.make({ text: "One oat latte coming up." });
@@ -218,7 +223,7 @@ describe("voice", () => {
     story(
       update,
       given(transcribing),
-      message(Message.GotTranscript({ text: "a latte" })),
+      message(Message.GotTranscript({ recordingId: 1, text: "a latte" })),
       Command.expectExact(AskAssistant),
       model((next) => {
         expect(next.assistant.heard).toEqual(Option.some("a latte"));
@@ -234,7 +239,7 @@ describe("voice", () => {
     story(
       update,
       given(transcribing),
-      message(Message.GotTranscript({ text: "  " })),
+      message(Message.GotTranscript({ recordingId: 1, text: "  " })),
       Command.expectNone(),
       model((next) => {
         expect(next.assistant.error).toEqual(Option.some("I didn't catch that. Try again."));
@@ -275,9 +280,27 @@ describe("stale work", () => {
       given(transcribing),
       message(Message.ChangedUrl({ url: url("/staff") })),
       model((next) => expect(next.assistant.recording).toBe("idle")),
-      message(Message.GotTranscript({ text: "a latte" })),
+      message(Message.GotTranscript({ recordingId: 1, text: "a latte" })),
       Command.expectNone(),
       model((next) => expect(next.assistant.prompt).toBe("")),
+    );
+  });
+
+  test("a transcript from an earlier recording does not answer for a newer one", () => {
+    story(
+      update,
+      given({
+        ...transcribing,
+        assistant: { ...transcribing.assistant, pendingRecording: Option.some(2), requestCount: 2 },
+      }),
+      message(Message.GotTranscript({ recordingId: 1, text: "cancel everything" })),
+      Command.expectNone(),
+      model((next) => {
+        expect(next.assistant.recording).toBe("transcribing");
+        expect(next.assistant.prompt).toBe("");
+      }),
+      message(Message.FailedTranscript({ recordingId: 1, message: "old failure" })),
+      model((next) => expect(next.assistant.recording).toBe("transcribing")),
     );
   });
 

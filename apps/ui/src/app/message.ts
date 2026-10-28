@@ -96,7 +96,7 @@ export const Message = defineMessageUnion({
   FailedAcquireMicrophone: { message: Schema.String },
   ReleasedMicrophone: {},
   ClickedStopRecording: {},
-  GotTranscript: { text: Schema.String },
-  FailedTranscript: { message: Schema.String },
+  GotTranscript: { recordingId: Schema.Int, text: Schema.String },
+  FailedTranscript: { recordingId: Schema.Int, message: Schema.String },
 });
 export type Message = typeof Message.Type;
