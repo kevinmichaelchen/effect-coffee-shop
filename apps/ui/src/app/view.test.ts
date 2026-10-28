@@ -6,9 +6,7 @@ vi.mock("#features/coffee-shop/api/coffee.ts", async () => {
   const { Effect } = await import("effect");
   return {
     createOrder: () => Effect.never,
-    fetchCustomerOrders: () => Effect.never,
     fetchMenu: Effect.never,
-    fetchStaffQueue: Effect.never,
     updateOrderStatus: () => Effect.never,
   };
 });

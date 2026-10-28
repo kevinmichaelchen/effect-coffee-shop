@@ -8,9 +8,6 @@ import { AppRoute } from "#app/route.ts";
 export const AuthAction = Schema.Literals(["create-account", "sign-in", "sign-out"]);
 export type AuthAction = typeof AuthAction.Type;
 
-export const OrdersSource = Schema.Literals(["customer", "staff"]);
-export type OrdersSource = typeof OrdersSource.Type;
-
 export const CopyState = Schema.Literals(["idle", "copied", "failed"]);
 
 export const Toast = Schema.Struct({
@@ -32,7 +29,6 @@ export const Model = Schema.Struct({
   menuError: Schema.Option(Schema.String),
   orders: Schema.Array(OrderTicket),
   ordersError: Schema.Option(Schema.String),
-  isRefreshingOrders: Schema.Boolean,
   draft: Schema.Option(OrderDraft),
   isPlacingOrder: Schema.Boolean,
   receipt: Schema.Option(OrderTicket),

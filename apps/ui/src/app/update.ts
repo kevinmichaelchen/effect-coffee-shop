@@ -1,7 +1,8 @@
-import { Equal, Match, Option, Schema } from "effect";
+import { Equal, Option, Schema } from "effect";
 import { Update } from "foldkit";
 import { UrlRequest } from "foldkit/navigation";
 import { toString as urlToString } from "foldkit/url";
+import { FeedId } from "@effect-coffee-shop/coffee-domain/Order/OrderFeed";
 import { toggledTheme } from "@effect-coffee-shop/ui-kit/components/theme";
 import { anonymousViewer } from "#features/auth/lib/viewer.ts";
 import { DrinkSize, Milk, Temperature } from "#features/coffee-shop/lib/coffee-schemas.ts";
@@ -11,9 +12,7 @@ import type { OrderDraft, OrderTicket } from "#features/coffee-shop/lib/coffee.t
 import {
   ApplyTheme,
   CopyUserId,
-  FetchCustomerOrders,
   FetchMenu,
-  FetchStaffQueue,
   FetchViewer,
   LoadExternal,
   NavigateInternal,
@@ -35,8 +34,9 @@ import {
   withToast,
 } from "#app/dialogs.ts";
 import { composerFor, selectDrink, toInt } from "#app/draft.ts";
+import { feedFor } from "#app/feed.ts";
 import { Message } from "#app/message.ts";
-import type { AuthAction, Model, OrdersSource } from "#app/model.ts";
+import type { AuthAction, Model } from "#app/model.ts";
 import { AppRoute, mcpAuthorizePath, urlToAppRoute } from "#app/route.ts";
 
 type UpdateReturn = Update.Return<Model, Message>;
@@ -47,47 +47,6 @@ type UpdateStep = Update.Step<Model, Message>;
 const userIdOf = (model: Model): Option.Option<string> =>
   model.viewer.kind === "anonymous" ? Option.none() : Option.some(model.viewer.userId);
 
-const isStaff = (model: Model): boolean => model.viewer.kind === "staff";
-
-/** What the orders list on the current page should be fetched from. */
-export const ordersSource = (model: Model): Option.Option<OrdersSource> =>
-  Match.value(model.route).pipe(
-    Match.tag("Shop", () =>
-      Option.isSome(userIdOf(model)) ? Option.some("customer" as const) : Option.none(),
-    ),
-    Match.tag("Staff", () => (isStaff(model) ? Option.some("staff" as const) : Option.none())),
-    Match.orElse(() => Option.none()),
-  );
-
-const refreshOrders = (model: Model): UpdateReturn =>
-  Option.match(ordersSource(model), {
-    onNone: () => ({ model }),
-    onSome: (source) => ({
-      model: { ...model, isRefreshingOrders: true },
-      commands:
-        source === "staff"
-          ? [FetchStaffQueue({ userId: Option.getOrElse(userIdOf(model), () => "") })]
-          : [FetchCustomerOrders({ userId: Option.getOrElse(userIdOf(model), () => "") })],
-    }),
-  });
-
-/** A poll tick never overlaps a fetch that is still in flight. */
-const refreshOnTick = (model: Model): UpdateReturn => {
-  const refreshed = model.isRefreshingOrders ? { model } : refreshOrders(model);
-  // A failed menu load is retried on the next tick instead of stranding the composer.
-  return wantsMenu(model) && Option.isSome(model.menuError)
-    ? { model: refreshed.model, commands: [...(refreshed.commands ?? []), FetchMenu()] }
-    : refreshed;
-};
-
-/** A reply counts only if it answers the question the page is asking right now. */
-const answersCurrentPage = (
-  model: Model,
-  reply: { readonly source: OrdersSource; readonly userId: string },
-): boolean =>
-  Option.contains(ordersSource(model), reply.source) &&
-  Option.contains(userIdOf(model), reply.userId);
-
 const wantsMenu = (model: Model): boolean =>
   (model.route._tag === "Shop" || model.route._tag === "McpLogin") && model.menu.length === 0;
 
@@ -96,9 +55,17 @@ const withMenuFetch = (result: UpdateReturn): UpdateReturn =>
     ? { model: result.model, commands: [...(result.commands ?? []), FetchMenu()] }
     : result;
 
-/** Stores fresh orders; an open drawer whose ticket disappeared closes. */
+/** Orders survive only a move that keeps the same account watching the same feed. */
+const keepsOrders = (before: Model, after: Model): boolean =>
+  Equal.equals(userIdOf(before), userIdOf(after)) && Equal.equals(feedFor(before), feedFor(after));
+
+/** A feed message counts only for the account and feed the page shows now. */
+const isCurrentFeed = (model: Model, feedId: FeedId, userId: string): boolean =>
+  Option.contains(feedFor(model), feedId) && Option.contains(userIdOf(model), userId);
+
+/** Stores the feed's snapshot; an open drawer whose ticket disappeared closes. */
 const applyOrders = (model: Model, orders: readonly OrderTicket[]): UpdateReturn => {
-  const next: Model = { ...model, orders, ordersError: Option.none(), isRefreshingOrders: false };
+  const next: Model = { ...model, orders, ordersError: Option.none() };
   const vanished = Option.exists(
     next.selectedOrderId,
     (id) => !orders.some((order) => order.id === id),
@@ -110,7 +77,6 @@ const withoutOrders = (model: Model): Model => ({
   ...model,
   orders: [],
   ordersError: Option.none(),
-  isRefreshingOrders: false,
   selectedOrderId: Option.none(),
 });
 
@@ -137,11 +103,6 @@ const continueMcp = (result: UpdateReturn): UpdateReturn =>
         commands: [...(result.commands ?? []), LoadExternal({ href: mcpAuthorizePath })],
       }
     : result;
-
-const upsertOrder = (orders: readonly OrderTicket[], order: OrderTicket): readonly OrderTicket[] =>
-  orders.some((existing) => existing.id === order.id)
-    ? orders.map((existing) => (existing.id === order.id ? order : existing))
-    : [...orders, order];
 
 // COMPOSER
 
@@ -178,7 +139,9 @@ const startAuth =
 const afterAuth =
   (action: AuthAction) =>
   (model: Model): UpdateReturn => {
-    const cleared: Model = { ...withoutAccountState(model), pendingAuth: Option.none() };
+    // Signing out drops the viewer at once, so the open feed closes before it can refill orders.
+    const signedOut: Model = action === "sign-out" ? { ...model, viewer: anonymousViewer } : model;
+    const cleared: Model = { ...withoutAccountState(signedOut), pendingAuth: Option.none() };
     return action !== "sign-out" && cleared.route._tag === "McpLogin"
       ? { model: cleared, commands: [LoadExternal({ href: mcpAuthorizePath })] }
       : { model: cleared, commands: [FetchViewer()] };
@@ -189,13 +152,7 @@ const receiveOrderPlaced = (model: Model, order: OrderTicket): UpdateReturn =>
   model.route._tag !== "Shop" || !Option.contains(userIdOf(model), order.ownerUserId)
     ? { model: { ...model, isPlacingOrder: false } }
     : Update.combine(
-        {
-          ...model,
-          isPlacingOrder: false,
-          draft: Option.none(),
-          orders: upsertOrder(model.orders, order),
-          receipt: Option.some(order),
-        },
+        { ...model, isPlacingOrder: false, draft: Option.none(), receipt: Option.some(order) },
         [openReceipt, withToast("success", `Ticket ${order.id} queued for your account.`)],
       );
 
@@ -228,8 +185,9 @@ export const update = (model: Model, message: Message): UpdateReturn =>
       }),
 
     ChangedUrl: ({ url }) => {
-      const left = closeOverlays({ ...model, route: urlToAppRoute(url) });
-      const arrived = continueMcp(withMenuFetch(refreshOrders(withoutOrders(left.model))));
+      const moved: Model = { ...model, route: urlToAppRoute(url) };
+      const left = closeOverlays(keepsOrders(model, moved) ? moved : withoutOrders(moved));
+      const arrived = continueMcp(withMenuFetch({ model: left.model }));
       return {
         model: arrived.model,
         commands: [...(left.commands ?? []), ...(arrived.commands ?? [])],
@@ -242,16 +200,12 @@ export const update = (model: Model, message: Message): UpdateReturn =>
     },
 
     SucceededFetchViewer: ({ viewer }) => {
-      const sameAccount = JSON.stringify(viewer) === JSON.stringify(model.viewer);
-      const next: Model = {
-        ...(sameAccount ? model : withoutAccountState(model)),
-        viewer,
-        viewerError: Option.none(),
-      };
+      const settled: Model = { ...model, viewer, viewerError: Option.none() };
+      const next = keepsOrders(model, settled) ? settled : withoutAccountState(settled);
       // Someone already signed in who lands on the MCP login page continues straight on.
       return next.route._tag === "McpLogin" && viewer.kind !== "anonymous"
         ? { model: next, commands: [LoadExternal({ href: mcpAuthorizePath })] }
-        : refreshOrders(next);
+        : withMenuFetch({ model: next });
     },
     FailedFetchViewer: ({ message }) => ({
       model: { ...model, viewer: anonymousViewer, viewerError: Option.some(message) },
@@ -269,14 +223,12 @@ export const update = (model: Model, message: Message): UpdateReturn =>
     SucceededFetchMenu: ({ menu }) => ({ model: { ...model, menu, menuError: Option.none() } }),
     FailedFetchMenu: ({ message }) => ({ model: { ...model, menuError: Option.some(message) } }),
 
-    TickedOrdersRefresh: () => refreshOnTick(model),
-    SucceededFetchOrders: (reply) =>
-      answersCurrentPage(model, reply) ? applyOrders(model, reply.orders) : { model },
-    FailedFetchOrders: (reply) =>
-      answersCurrentPage(model, reply)
-        ? {
-            model: { ...model, ordersError: Option.some(reply.message), isRefreshingOrders: false },
-          }
+    // A feed message counts only while the page still shows that feed.
+    LoadedOrders: ({ feedId, userId, orders }) =>
+      isCurrentFeed(model, feedId, userId) ? applyOrders(model, orders) : { model },
+    FailedOrders: ({ feedId, userId, message }) =>
+      isCurrentFeed(model, feedId, userId)
+        ? { model: { ...model, ordersError: Option.some(message) } }
         : { model },
 
     ClickedSelectDrink: ({ drinkId }) => ({
@@ -332,12 +284,7 @@ export const update = (model: Model, message: Message): UpdateReturn =>
       withToast(
         "success",
         `${getOrderTitle(order)} moved to ${order.status}.`,
-      )({
-        ...model,
-        pendingOrderId: Option.none(),
-        detailsError: Option.none(),
-        orders: model.route._tag === "Staff" ? upsertOrder(model.orders, order) : model.orders,
-      }),
+      )({ ...model, pendingOrderId: Option.none(), detailsError: Option.none() }),
     // A modal drawer hides the toast region, so a failure also shows inside the drawer.
     FailedOrderAction: ({ message }) => receiveOrderActionFailed(model, message),
     ClickedCopyUserId: () =>

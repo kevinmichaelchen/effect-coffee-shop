@@ -58,13 +58,7 @@ export function ordersCard(model: Model, h: Builder) {
   return card(
     { className: "w-full" },
     [
-      cardTitleHeader(
-        "My tickets",
-        model.isRefreshingOrders
-          ? "Refreshing tickets..."
-          : "Only your account-scoped tickets appear here.",
-        h,
-      ),
+      cardTitleHeader("My tickets", "Only your account-scoped tickets appear here.", h),
       cardContent(
         { className: "grid gap-5" },
         [

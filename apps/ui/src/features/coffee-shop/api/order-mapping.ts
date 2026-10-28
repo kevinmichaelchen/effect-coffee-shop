@@ -33,10 +33,3 @@ export function toCoffeeOrder(order: DomainCoffeeOrder): OrderTicket {
     createdAt: DateTime.formatIso(order.createdAt),
   };
 }
-
-/** A view's order list (`null` when nothing was placed yet), mapped for the components. */
-export function toCoffeeOrders(
-  view: { readonly orders: ReadonlyArray<DomainCoffeeOrder> } | null,
-): readonly OrderTicket[] {
-  return view === null ? [] : view.orders.map(toCoffeeOrder);
-}

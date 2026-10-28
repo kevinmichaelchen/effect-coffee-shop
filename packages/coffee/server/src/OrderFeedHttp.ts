@@ -29,7 +29,8 @@ export const orderFeedHttp = Effect.fn("OrderFeed.http")(function* () {
       identity: {
         actorId: actor.userId,
         principal: { role: actor.kind, userId: actor.userId },
-        expiresAtMillis: (yield* Clock.currentTimeMillis) + 30_000,
+        // A live subscription outlives the request that opened it; the cookie is re-checked on reconnect.
+        expiresAtMillis: (yield* Clock.currentTimeMillis) + 12 * 60 * 60 * 1000,
       },
     });
     return yield* feeds.getByName(`orders:${address.value.id}`).fetch(prepared);

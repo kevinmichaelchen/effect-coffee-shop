@@ -41,7 +41,6 @@ export const init: Runtime.RoutingApplicationInit<Model, Message, Flags> = (
       menuError: Option.none(),
       orders: [],
       ordersError: Option.none(),
-      isRefreshingOrders: false,
       draft: Option.none(),
       isPlacingOrder: false,
       receipt: Option.none(),

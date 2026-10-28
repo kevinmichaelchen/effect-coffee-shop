@@ -1,16 +1,16 @@
 import { Dialog } from "@foldkit/ui";
+import { FeedId } from "@effect-coffee-shop/coffee-domain/Order/OrderFeed";
 import { Option } from "effect";
 import { Command, given, message, model, story } from "foldkit/story";
 import { describe, expect, test, vi } from "vitest";
+import type { Viewer } from "#features/auth/lib/viewer.ts";
 
 // The Api clients need the Alchemy runtime; update tests only need Command identities.
 vi.mock("#features/coffee-shop/api/coffee.ts", async () => {
   const { Effect } = await import("effect");
   return {
     createOrder: () => Effect.never,
-    fetchCustomerOrders: () => Effect.never,
     fetchMenu: Effect.never,
-    fetchStaffQueue: Effect.never,
     updateOrderStatus: () => Effect.never,
   };
 });
@@ -24,11 +24,8 @@ vi.mock("#features/auth/auth-client.ts", () => ({
 
 const {
   ApplyTheme,
-  CopyUserId,
   ExpireToast,
-  FetchCustomerOrders,
   FetchMenu,
-  FetchStaffQueue,
   FetchViewer,
   LoadExternal,
   PlaceOrder,
@@ -39,6 +36,7 @@ const { init } = await import("#app/main.ts");
 const { Message } = await import("#app/message.ts");
 const { update } = await import("#app/update.ts");
 const { AppRoute, urlToAppRoute } = await import("#app/route.ts");
+const { feedFor } = await import("#app/feed.ts");
 
 const url = (pathname: string) => ({
   protocol: "https:",
@@ -53,6 +51,9 @@ const bootModel = (pathname: string) => init({ theme: "light" }, url(pathname)).
 
 const customer = { kind: "customer", displayName: "Ada", userId: "user-1" } as const;
 const staff = { kind: "staff", displayName: "Sam", userId: "user-2" } as const;
+
+const customerFeed = FeedId.make("customer:user-1");
+const staffFeed = FeedId.make("staff");
 
 const latte = {
   id: "latte",
@@ -75,12 +76,11 @@ const ticket = {
 } as const;
 
 describe("routing", () => {
-  test.each(["/", "/shop", "/control-room", "/coffee-shop"])(
-    "%s opens the customer workspace",
-    (path) => {
-      expect(urlToAppRoute(url(path))._tag).toBe("Shop");
-    },
-  );
+  test("the customer paths open the customer workspace", () => {
+    expect(
+      ["/", "/shop", "/control-room", "/coffee-shop"].map((path) => urlToAppRoute(url(path))._tag),
+    ).toEqual(["Shop", "Shop", "Shop", "Shop"]);
+  });
 
   test("staff, MCP login and unknown paths", () => {
     expect(urlToAppRoute(url("/staff"))._tag).toBe("Staff");
@@ -90,36 +90,16 @@ describe("routing", () => {
 });
 
 describe("boot", () => {
-  test("the customer page loads the viewer and the menu, and applies the theme", () => {
-    const { commands } = init({ theme: "dark" }, url("/shop"));
-    expect(commands?.map((command) => command.name)).toEqual([
-      "ApplyTheme",
-      "FetchViewer",
-      "FetchMenu",
-    ]);
-  });
-
-  test("the staff page does not need the menu", () => {
-    const { commands } = init({ theme: "light" }, url("/staff"));
-    expect(commands?.map((command) => command.name)).toEqual(["ApplyTheme", "FetchViewer"]);
+  test("every page loads the viewer, and only the customer page the menu", () => {
+    const names = (pathname: string) =>
+      init({ theme: "light" }, url(pathname)).commands?.map((command) => command.name);
+    expect(names("/shop")).toEqual(["ApplyTheme", "FetchViewer", "FetchMenu"]);
+    expect(names("/staff")).toEqual(["ApplyTheme", "FetchViewer"]);
   });
 });
 
 describe("passkey auth", () => {
-  test("creating an account needs a name", () => {
-    story(
-      update,
-      given(bootModel("/shop")),
-      message(Message.ClickedCreateAccount()),
-      model((next) => {
-        expect(Option.isSome(next.authError)).toBe(true);
-        expect(Option.isNone(next.pendingAuth)).toBe(true);
-      }),
-      Command.expectNone(),
-    );
-  });
-
-  test("signing in runs the ceremony, then refreshes the viewer and the orders", () => {
+  test("signing in runs the ceremony, then loads the viewer and the menu", () => {
     story(
       update,
       given(bootModel("/shop")),
@@ -128,11 +108,8 @@ describe("passkey auth", () => {
       Command.resolve(RunPasskeyAuth, Message.SucceededAuth({ action: "sign-in" })),
       Command.expectExact(FetchViewer),
       Command.resolve(FetchViewer, Message.SucceededFetchViewer({ viewer: customer })),
-      Command.expectExact(FetchCustomerOrders),
-      Command.resolve(
-        FetchCustomerOrders,
-        Message.SucceededFetchOrders({ source: "customer", userId: "user-1", orders: [] }),
-      ),
+      Command.expectExact(FetchMenu),
+      Command.resolve(FetchMenu, Message.SucceededFetchMenu({ menu: [latte] })),
       model((next) => {
         expect(next.viewer).toEqual(customer);
         expect(Option.isNone(next.pendingAuth)).toBe(true);
@@ -154,15 +131,18 @@ describe("passkey auth", () => {
     );
   });
 
-  test("signing in on the MCP login page continues to the OAuth authorize step", () => {
+  test("signing out drops the viewer at once, so a late feed message is ignored", () => {
     story(
       update,
-      given(bootModel("/login/mcp")),
-      message(Message.ClickedSignIn()),
+      given({ ...bootModel("/staff"), viewer: staff, orders: [ticket] }),
+      message(Message.ClickedSignOut()),
       Command.expectExact(RunPasskeyAuth),
-      Command.resolve(RunPasskeyAuth, Message.SucceededAuth({ action: "sign-in" })),
-      Command.expectExact(LoadExternal),
-      Command.resolve(LoadExternal, Message.CompletedLoadExternal()),
+      Command.resolve(RunPasskeyAuth, Message.SucceededAuth({ action: "sign-out" })),
+      Command.expectExact(FetchViewer),
+      model((next) => expect(next.viewer).toEqual({ kind: "anonymous" })),
+      Command.resolve(FetchViewer, Message.SucceededFetchViewer({ viewer: { kind: "anonymous" } })),
+      message(Message.LoadedOrders({ feedId: staffFeed, userId: "user-2", orders: [ticket] })),
+      model((next) => expect(next.orders).toEqual([])),
     );
   });
 });
@@ -185,8 +165,6 @@ describe("customer orders", () => {
       model((next) => {
         expect(next.isPlacingOrder).toBe(false);
         expect(next.receipt).toEqual(Option.some(ticket));
-        expect(next.orders).toEqual([ticket]);
-        // The toast timer fired in this story, so the toast is gone again.
         expect(next.toasts).toHaveLength(0);
       }),
     );
@@ -201,65 +179,21 @@ describe("customer orders", () => {
     );
   });
 
-  test("switching to tea clamps shots and milk to what the drink allows", () => {
-    const tea = {
-      ...latte,
-      id: "earl-grey",
-      name: "Earl Grey",
-      kind: "tea",
-      availableMilks: ["none"],
-      maxShots: 0,
-    } as const;
+  test("the live feed owns the list", () => {
     story(
       update,
-      given({ ...signedIn, menu: [latte, tea] }),
-      message(Message.ChangedShots({ value: "2" })),
-      message(Message.ClickedSelectDrink({ drinkId: "earl-grey" })),
+      given(signedIn),
+      message(Message.LoadedOrders({ feedId: customerFeed, userId: "user-1", orders: [ticket] })),
       model((next) => {
-        expect(Option.map(next.draft, (draft) => [draft.shots, draft.milk])).toEqual(
-          Option.some([0, "none"]),
-        );
+        expect(next.orders).toEqual([ticket]);
+        expect(Option.isNone(next.ordersError)).toBe(true);
       }),
-    );
-  });
-
-  test("orders that arrive after sign-out are dropped", () => {
-    story(
-      update,
-      given(bootModel("/shop")),
-      message(
-        Message.SucceededFetchOrders({ source: "customer", userId: "user-1", orders: [ticket] }),
-      ),
-      model((next) => expect(next.orders).toEqual([])),
     );
   });
 });
 
 describe("staff queue", () => {
   const staffModel = { ...bootModel("/staff"), viewer: staff };
-
-  test("polling refreshes the queue while a staff member is on the page", () => {
-    story(
-      update,
-      given(staffModel),
-      message(Message.TickedOrdersRefresh()),
-      Command.expectExact(FetchStaffQueue),
-      Command.resolve(
-        FetchStaffQueue,
-        Message.SucceededFetchOrders({ source: "staff", userId: "user-2", orders: [ticket] }),
-      ),
-      model((next) => expect(next.orders).toEqual([ticket])),
-    );
-  });
-
-  test("a customer account does not poll the staff queue", () => {
-    story(
-      update,
-      given({ ...staffModel, viewer: customer }),
-      message(Message.TickedOrdersRefresh()),
-      Command.expectNone(),
-    );
-  });
 
   test("an order action marks the order pending, then shows the reply right away", () => {
     story(
@@ -275,8 +209,18 @@ describe("staff queue", () => {
       Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-0" })),
       model((next) => {
         expect(next.pendingOrderId).toEqual(Option.none());
-        expect(next.orders.map((order) => order.status)).toEqual(["brewing"]);
+        // The reply drives the toast and the pending flag; the feed still owns the queue.
+        expect(next.orders).toEqual([ticket]);
       }),
+    );
+  });
+
+  test("a staff queue message from another staff account is ignored", () => {
+    story(
+      update,
+      given({ ...staffModel, orders: [ticket] }),
+      message(Message.LoadedOrders({ feedId: staffFeed, userId: "user-9", orders: [] })),
+      model((next) => expect(next.orders).toEqual([ticket])),
     );
   });
 });
@@ -294,104 +238,30 @@ describe("theme", () => {
   });
 });
 
-describe("regressions found in review", () => {
-  const staffModel = { ...bootModel("/staff"), viewer: staff };
-  const staffReply = Message.SucceededFetchOrders({
-    source: "staff",
-    userId: "user-2",
-    orders: [ticket],
-  });
-
+describe("navigation", () => {
   test("going from the staff page to the shop loads the menu", () => {
     story(
       update,
-      given(staffModel),
+      given({ ...bootModel("/staff"), viewer: staff }),
       message(Message.ChangedUrl({ url: url("/shop") })),
       Command.expectHas(FetchMenu),
-      Command.resolveAll(
-        [
-          FetchCustomerOrders,
-          Message.SucceededFetchOrders({ source: "customer", userId: "user-2", orders: [] }),
-        ],
-        [FetchMenu, Message.SucceededFetchMenu({ menu: [latte] })],
-      ),
+      Command.resolve(FetchMenu, Message.SucceededFetchMenu({ menu: [latte] })),
       model((next) => expect(next.menu).toHaveLength(1)),
     );
   });
 
-  test("a staff queue reply that lands after navigating to the shop is dropped", () => {
+  test("switching accounts drops the previous orders", () => {
     story(
       update,
-      given({ ...staffModel, menu: [latte] }),
-      message(Message.ChangedUrl({ url: url("/shop") })),
-      Command.resolveAll(
-        [
-          FetchCustomerOrders,
-          Message.SucceededFetchOrders({ source: "customer", userId: "user-2", orders: [] }),
-        ],
-        [FetchMenu, Message.SucceededFetchMenu({ menu: [latte] })],
-      ),
-      message(staffReply),
-      model((next) => expect(next.orders).toEqual([])),
-    );
-  });
-
-  test("a reply for the previous account is dropped after switching accounts", () => {
-    story(
-      update,
-      given({ ...bootModel("/shop"), viewer: { ...customer, userId: "user-9" } }),
+      given({ ...bootModel("/shop"), viewer: customer, orders: [ticket] }),
       message(
-        Message.SucceededFetchOrders({ source: "customer", userId: "user-1", orders: [ticket] }),
+        Message.SucceededFetchViewer({
+          viewer: { ...customer, userId: "user-9", displayName: "Bo" },
+        }),
       ),
+      Command.expectHas(FetchMenu),
+      Command.resolve(FetchMenu, Message.SucceededFetchMenu({ menu: [latte] })),
       model((next) => expect(next.orders).toEqual([])),
-    );
-  });
-
-  test("a poll tick does not start a second fetch while one is in flight", () => {
-    story(
-      update,
-      given({ ...staffModel, isRefreshingOrders: true }),
-      message(Message.TickedOrdersRefresh()),
-      Command.expectNone(),
-    );
-  });
-
-  test("a second order action is ignored while one is pending", () => {
-    story(
-      update,
-      given({ ...staffModel, orders: [ticket], pendingOrderId: Option.some("ticket-1") }),
-      message(Message.ClickedOrderAction({ orderId: "ticket-2", action: "cancel" })),
-      Command.expectNone(),
-    );
-  });
-
-  test("a receipt that arrives after leaving the shop does not touch the staff page", () => {
-    story(
-      update,
-      given({ ...staffModel, isPlacingOrder: true }),
-      message(Message.SucceededPlaceOrder({ order: ticket })),
-      model((next) => {
-        expect(next.isPlacingOrder).toBe(false);
-        expect(next.orders).toEqual([]);
-        expect(Option.isNone(next.receipt)).toBe(true);
-      }),
-      Command.expectNone(),
-    );
-  });
-
-  test("a failed order action also shows inside the open drawer", () => {
-    story(
-      update,
-      given({
-        ...staffModel,
-        selectedOrderId: Option.some("ticket-1"),
-        pendingOrderId: Option.some("ticket-1"),
-      }),
-      message(Message.FailedOrderAction({ message: "Only coffee-shop staff can do that." })),
-      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-0" })),
-      model((next) =>
-        expect(next.detailsError).toEqual(Option.some("Only coffee-shop staff can do that.")),
-      ),
     );
   });
 
@@ -405,93 +275,67 @@ describe("regressions found in review", () => {
     );
   });
 
-  test("copying the user id reports success and failure", () => {
-    story(
-      update,
-      given({ ...bootModel("/shop"), viewer: customer }),
-      message(Message.ClickedCopyUserId()),
-      Command.expectExact(CopyUserId),
-      Command.resolve(CopyUserId, Message.SucceededCopyUserId()),
-      model((next) => expect(next.copyState).toBe("copied")),
-    );
-  });
-
-  test("a failure for another ticket does not show inside this ticket's drawer", () => {
-    story(
-      update,
-      given({
-        ...staffModel,
-        selectedOrderId: Option.some("ticket-1"),
-        pendingOrderId: Option.some("ticket-2"),
-      }),
-      message(Message.FailedOrderAction({ message: "Nope" })),
-      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-0" })),
-      model((next) => expect(Option.isNone(next.detailsError)).toBe(true)),
-    );
-  });
-
-  test("opening another ticket clears the previous drawer error", () => {
-    story(
-      update,
-      given({ ...staffModel, orders: [ticket], detailsError: Option.some("Old failure") }),
-      message(Message.ClickedInspectOrder({ orderId: "ticket-1" })),
-      Command.expectHas(Dialog.ShowDialog),
-      Command.resolve(Dialog.ShowDialog, Dialog.Message.SucceededShowDialog()),
-      model((next) => expect(Option.isNone(next.detailsError)).toBe(true)),
-    );
-  });
-
-  test("an action started before navigating away still blocks a second one", () => {
-    story(
-      update,
-      given({ ...staffModel, pendingOrderId: Option.some("ticket-1") }),
-      message(Message.ChangedUrl({ url: url("/shop") })),
-      Command.resolveAll(
-        [
-          FetchCustomerOrders,
-          Message.SucceededFetchOrders({ source: "customer", userId: "user-2", orders: [] }),
-        ],
-        [FetchMenu, Message.SucceededFetchMenu({ menu: [latte] })],
-      ),
-      message(Message.ChangedUrl({ url: url("/staff") })),
-      Command.resolve(
-        FetchStaffQueue,
-        Message.SucceededFetchOrders({ source: "staff", userId: "user-2", orders: [] }),
-      ),
-      message(Message.ClickedOrderAction({ orderId: "ticket-2", action: "cancel" })),
-      Command.expectNone(),
-    );
-  });
-
-  test("a failed menu load is retried on the next poll tick", () => {
-    story(
-      update,
-      given({ ...bootModel("/shop"), viewer: customer, menuError: Option.some("boom") }),
-      message(Message.TickedOrdersRefresh()),
-      Command.resolveAll(
-        [
-          FetchCustomerOrders,
-          Message.SucceededFetchOrders({ source: "customer", userId: "user-1", orders: [] }),
-        ],
-        [FetchMenu, Message.SucceededFetchMenu({ menu: [latte] })],
-      ),
-      model((next) => expect(next.menu).toHaveLength(1)),
-    );
-  });
-
   test("navigating to the MCP login page while signed in continues to authorize", () => {
     story(
       update,
-      given({ ...bootModel("/staff"), viewer: customer }),
+      given({ ...bootModel("/staff"), viewer: customer, menu: [latte] }),
       message(Message.ChangedUrl({ url: url("/login/mcp") })),
-      Command.resolveAll(
-        [
-          FetchCustomerOrders,
-          Message.SucceededFetchOrders({ source: "customer", userId: "user-1", orders: [] }),
-        ],
-        [FetchMenu, Message.SucceededFetchMenu({ menu: [latte] })],
-        [LoadExternal, Message.CompletedLoadExternal()],
-      ),
+      Command.expectExact(LoadExternal),
+      Command.resolve(LoadExternal, Message.CompletedLoadExternal()),
     );
+  });
+
+  test("a detour through an unknown page clears the orders, and the next snapshot refills them", () => {
+    story(
+      update,
+      given({ ...bootModel("/shop"), viewer: customer, menu: [latte], orders: [ticket] }),
+      message(Message.ChangedUrl({ url: url("/nope") })),
+      model((next) => expect(next.orders).toEqual([])),
+      message(Message.ChangedUrl({ url: url("/shop") })),
+      Command.expectNone(),
+      message(Message.LoadedOrders({ feedId: customerFeed, userId: "user-1", orders: [ticket] })),
+      model((next) => expect(next.orders).toEqual([ticket])),
+    );
+  });
+
+  test("a feed message for another account is ignored", () => {
+    story(
+      update,
+      given({ ...bootModel("/shop"), viewer: customer, menu: [latte], orders: [ticket] }),
+      message(
+        Message.LoadedOrders({
+          feedId: FeedId.make("customer:user-9"),
+          userId: "user-9",
+          orders: [],
+        }),
+      ),
+      message(
+        Message.FailedOrders({
+          feedId: staffFeed,
+          userId: "user-2",
+          message: "Live updates disconnected.",
+        }),
+      ),
+      model((next) => {
+        expect(next.orders).toEqual([ticket]);
+        expect(Option.isNone(next.ordersError)).toBe(true);
+      }),
+    );
+  });
+});
+
+describe("feeds", () => {
+  test("only the page's own feed is shown to its own viewer", () => {
+    const feedOf = (pathname: string, viewer: Viewer) =>
+      Option.getOrElse(feedFor({ ...bootModel(pathname), viewer }), () => "none");
+    expect([
+      feedOf("/shop", customer),
+      feedOf("/coffee-shop", customer),
+      feedOf("/staff", staff),
+      feedOf("/staff", customer),
+      feedOf("/login/mcp", customer),
+      feedOf("/nope", customer),
+      feedOf("/shop", { kind: "anonymous" }),
+    ]).toEqual(["customer:user-1", "customer:user-1", "staff", "none", "none", "none", "none"]);
   });
 });

@@ -1,16 +1,10 @@
-import { Effect, Schema } from "effect";
+import { Effect, Schedule, Schema } from "effect";
 import { Command } from "foldkit";
 import { load, pushUrl } from "foldkit/navigation";
 import { ThemePreference, themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
 import { authClient } from "#features/auth/auth-client.ts";
 import { fetchViewer } from "#features/auth/api/viewer.ts";
-import {
-  createOrder,
-  fetchCustomerOrders,
-  fetchMenu,
-  fetchStaffQueue,
-  updateOrderStatus,
-} from "#features/coffee-shop/api/coffee.ts";
+import { createOrder, fetchMenu, updateOrderStatus } from "#features/coffee-shop/api/coffee.ts";
 import { PlaceOrderRequest } from "#features/coffee-shop/lib/coffee-schemas.ts";
 import { AuthAction } from "#app/model.ts";
 import { Message, OrderActionName } from "#app/message.ts";
@@ -95,32 +89,10 @@ export const RunPasskeyAuth = Command.define("RunPasskeyAuth", {
 export const FetchMenu = Command.define("FetchMenu", {
   messages: [Message.SucceededFetchMenu, Message.FailedFetchMenu],
   execute: fetchMenu.pipe(
+    Effect.retry(Schedule.exponential("250 millis").pipe(Schedule.upTo({ times: 2 }))),
     Effect.map((menu) => Message.SucceededFetchMenu({ menu })),
     recoverWith(Message.FailedFetchMenu),
   ),
-});
-
-export const FetchCustomerOrders = Command.define("FetchCustomerOrders", {
-  args: { userId: Schema.String },
-  messages: [Message.SucceededFetchOrders, Message.FailedFetchOrders],
-  execute: ({ userId }) =>
-    fetchCustomerOrders(userId).pipe(
-      Effect.map((orders) => Message.SucceededFetchOrders({ source: "customer", userId, orders })),
-      recoverWith(({ message }) =>
-        Message.FailedFetchOrders({ source: "customer", userId, message }),
-      ),
-    ),
-});
-
-/** The staff queue is shared, so the response is tied to the staff member who asked. */
-export const FetchStaffQueue = Command.define("FetchStaffQueue", {
-  args: { userId: Schema.String },
-  messages: [Message.SucceededFetchOrders, Message.FailedFetchOrders],
-  execute: ({ userId }) =>
-    fetchStaffQueue.pipe(
-      Effect.map((orders) => Message.SucceededFetchOrders({ source: "staff", userId, orders })),
-      recoverWith(({ message }) => Message.FailedFetchOrders({ source: "staff", userId, message })),
-    ),
 });
 
 export const PlaceOrder = Command.define("PlaceOrder", {

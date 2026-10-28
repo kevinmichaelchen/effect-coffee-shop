@@ -1,11 +1,12 @@
 import { Dialog } from "@foldkit/ui";
+import { FeedId } from "@effect-coffee-shop/coffee-domain/Order/OrderFeed";
 import { Schema } from "effect";
 import { defineMessageUnion } from "foldkit/message";
 import { UrlRequest } from "foldkit/navigation";
 import { Url } from "foldkit/url";
 import { Viewer } from "#features/auth/lib/viewer.ts";
 import { MenuItem, OrderTicket } from "#features/coffee-shop/lib/coffee-schemas.ts";
-import { AuthAction, OrdersSource } from "#app/model.ts";
+import { AuthAction } from "#app/model.ts";
 
 export const OrderActionName = Schema.Literals([
   "start-brewing",
@@ -36,13 +37,8 @@ export const Message = defineMessageUnion({
   // Menu and orders
   SucceededFetchMenu: { menu: Schema.Array(MenuItem) },
   FailedFetchMenu: { message: Schema.String },
-  TickedOrdersRefresh: {},
-  SucceededFetchOrders: {
-    source: OrdersSource,
-    userId: Schema.String,
-    orders: Schema.Array(OrderTicket),
-  },
-  FailedFetchOrders: { source: OrdersSource, userId: Schema.String, message: Schema.String },
+  LoadedOrders: { feedId: FeedId, userId: Schema.String, orders: Schema.Array(OrderTicket) },
+  FailedOrders: { feedId: FeedId, userId: Schema.String, message: Schema.String },
   // Order composer
   ClickedSelectDrink: { drinkId: Schema.String },
   ChangedDrinkSize: { value: Schema.String },

@@ -1,7 +1,5 @@
-import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.id";
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
 import { makeOrderId, OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
-import { mainShop } from "@effect-coffee-shop/coffee-domain/Shop/Shop.aggregate";
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -25,16 +23,10 @@ import {
   staffRuntime,
 } from "./domain-clients.ts";
 import { OrderRequestError, toOrderRequestError } from "./order-failures.ts";
-import { toCoffeeOrder, toCoffeeOrders } from "./order-mapping.ts";
+import { toCoffeeOrder } from "./order-mapping.ts";
 
 function readApiErrorMessage(error: CoffeeApiError): string {
   return error.message ?? error._tag ?? "Unknown API error";
-}
-
-function decodeCustomerId(userId: string): Effect.Effect<CustomerId, OrderRequestError> {
-  return Schema.decodeEffect(CustomerId)(userId).pipe(
-    Effect.mapError(() => new OrderRequestError({ message: "Sign in to place and view orders." })),
-  );
 }
 
 function decodeOrderId(orderId: string): Effect.Effect<OrderId, OrderRequestError> {
@@ -59,32 +51,6 @@ export const fetchMenu: Effect.Effect<
   readErrorMessage: readApiErrorMessage,
   schema: Menu,
 });
-
-/** The signed-in customer's orders, oldest first. */
-export const fetchCustomerOrders = (
-  userId: string,
-): Effect.Effect<readonly OrderTicket[], OrderRequestError> =>
-  onRuntime(customerRuntime)(
-    Effect.gen(function* () {
-      const customerId = yield* decodeCustomerId(userId);
-      const api = yield* CustomerApi.Client;
-      const view = yield* api.CustomerOrders.get(customerId).pipe(
-        Effect.mapError(toOrderRequestError),
-      );
-      return toCoffeeOrders(view);
-    }),
-  );
-
-/** The shop's queue for the baristas: open orders and recent history, oldest first. */
-export const fetchStaffQueue: Effect.Effect<readonly OrderTicket[], OrderRequestError> = onRuntime(
-  staffRuntime,
-)(
-  Effect.gen(function* () {
-    const api = yield* StaffApi.Client;
-    const view = yield* api.OrderQueue.get(mainShop).pipe(Effect.mapError(toOrderRequestError));
-    return toCoffeeOrders(view);
-  }),
-);
 
 export const createOrder = (
   payload: PlaceOrderRequest,
