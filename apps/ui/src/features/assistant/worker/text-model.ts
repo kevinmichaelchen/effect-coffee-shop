@@ -1,10 +1,14 @@
 import {
+  env,
   pipeline,
   type ProgressInfo,
   type TextGenerationPipeline,
 } from "@huggingface/transformers";
 import { Data, Effect, Schema } from "effect";
 import type { WorkerRequest } from "#features/assistant/lib/protocol.ts";
+import { fetchWithoutReferrer } from "#features/assistant/worker/fetch.ts";
+
+env.fetch = fetchWithoutReferrer;
 
 export const textModelId = "onnx-community/LFM3-1.7B-ONNX";
 

@@ -1,5 +1,6 @@
 import * as ort from "onnxruntime-web/webgpu";
 import { Data, Effect } from "effect";
+import { fetchWithoutReferrer } from "#features/assistant/worker/fetch.ts";
 import { aggregateProgress } from "#features/assistant/worker/progress.ts";
 import {
   type AudioTranscriber,
@@ -54,7 +55,7 @@ const fetchBytes = async (url: string, onProgress: (loaded: number, total: numbe
   const cache = await caches.open(cacheName);
   const cached = await cache.match(url);
   if (cached !== undefined) return readAll(cached, onProgress);
-  const response = await fetch(url);
+  const response = await fetchWithoutReferrer(url);
   if (!response.ok)
     throw new Error(`Could not download ${url.split("/").at(-1)} (${response.status}).`);
   const bytes = await readAll(response, onProgress);
