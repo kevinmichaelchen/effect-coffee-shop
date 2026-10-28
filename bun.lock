@@ -32,6 +32,7 @@
         "@effect-coffee-shop/ui-kit": "workspace:*",
         "@effect/platform-browser": "catalog:",
         "@foldkit/ui": "catalog:",
+        "@huggingface/tokenizers": "catalog:",
         "@huggingface/transformers": "catalog:",
         "@huggingface/transformers-structured-output": "catalog:",
         "@simplewebauthn/browser": "catalog:",
@@ -50,6 +51,7 @@
         "@yielded/effect-tsrs": "catalog:",
         "happy-dom": "catalog:",
         "lintcn": "catalog:",
+        "onnxruntime-node": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",
@@ -362,6 +364,7 @@
     "@effect/vitest": "4.0.7",
     "@foldkit/ui": "0.169.0",
     "@foldkit/vite-plugin": "0.28.0",
+    "@huggingface/tokenizers": "0.2.0",
     "@huggingface/transformers": "4.3.2",
     "@huggingface/transformers-structured-output": "4.3.2",
     "@mpsuesser/oxlint-plugin-effect": "0.6.0",
@@ -387,6 +390,7 @@
     "foldkit": "0.169.0",
     "happy-dom": "^20.14.5",
     "lintcn": "^0.10.1",
+    "onnxruntime-node": "1.30.0",
     "onnxruntime-web": "1.31.0-dev.20260914-8d85527a0",
     "oxfmt": "0.75.0",
     "oxlint": "1.90.0",
@@ -1220,7 +1224,7 @@
 
     "obug": ["obug@3.0.0", "", {}, "sha512-5vvB5+W7ePv+p3uqxi+RcW1XAzLW0/hxt3/4X4Lc4qHudzOhmBiBwOY6DRob4WnanAEGvNcLjF+KNOufrUoEQw=="],
 
-    "onnxruntime-common": ["onnxruntime-common@1.31.0-dev.20260911-2a43ec07e", "", {}, "sha512-gBuF6U32YErKIAt+yD7DeGBpjRxhJ1uJwako6ygjokSZULDU6Pd+KWComX8Tumk1hYVHRxjPj7mdMnD0ryAPOw=="],
+    "onnxruntime-common": ["onnxruntime-common@1.30.0", "", {}, "sha512-7fdVWjAID1dVhH/G8qK3APARunV4VkBFoCQAP7qp4Wkab0mrorvmc+sqiT+mKXOzDqdjN5j+/Z9nb4gzNPWcyA=="],
 
     "onnxruntime-node": ["onnxruntime-node@1.30.0", "", { "dependencies": { "adm-zip": "^0.6.0", "global-agent": "^4.1.3", "onnxruntime-common": "1.30.0" }, "os": [ "linux", "win32", "darwin", ] }, "sha512-twhs1C2C/BFkz1yc5OY0KIU2GUq6DURO7hD4bx5Q2Qy3nAMJwRXW8xU3NVczE29VA9lolLOYepoD8fjTGOfIqw=="],
 
@@ -1480,7 +1484,7 @@
 
     "miniflare/undici": ["undici@7.28.0", "", {}, "sha512-cRZYrTDwWznlnRiPjggAGxZXanty6M8RV1ff8Wm4LWXBp7/IG8v5DnOm74DtUBp9OONpK75YlPnIjQqX0dBDtA=="],
 
-    "onnxruntime-node/onnxruntime-common": ["onnxruntime-common@1.30.0", "", {}, "sha512-7fdVWjAID1dVhH/G8qK3APARunV4VkBFoCQAP7qp4Wkab0mrorvmc+sqiT+mKXOzDqdjN5j+/Z9nb4gzNPWcyA=="],
+    "onnxruntime-web/onnxruntime-common": ["onnxruntime-common@1.31.0-dev.20260911-2a43ec07e", "", {}, "sha512-gBuF6U32YErKIAt+yD7DeGBpjRxhJ1uJwako6ygjokSZULDU6Pd+KWComX8Tumk1hYVHRxjPj7mdMnD0ryAPOw=="],
 
     "oxc-parser/@oxc-project/types": ["@oxc-project/types@0.150.0", "", {}, "sha512-rDS5/31E9HfPl/CIzGrn0DOlvBbXFseQ5URJ9sYMfstbKLD/c6Gm9vmRzRGDdAXyOIL4zmO37lc9RIwYqVruZw=="],
 
