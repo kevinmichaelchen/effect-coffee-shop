@@ -56,6 +56,10 @@ const staffPrompt = (request: AssistantRequest): string => {
     "Rules:",
     "- To move a ticket along, call the one tool for that step with the ticket's id. Match tickets by customer name or drink.",
     "- For questions about the queue, answer in one short sentence and call no tool.",
+    "Examples:",
+    "- \"start Ada's latte\" → start_brewing with that ticket's id",
+    "- \"Sam's order is ready\" → mark_ready with that ticket's id",
+    '- "what\'s waiting?", "how many are brewing?" → answer in words, no tool',
   ].join("\n");
 };
 

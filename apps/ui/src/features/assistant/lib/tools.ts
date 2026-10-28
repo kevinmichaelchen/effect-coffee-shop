@@ -184,7 +184,10 @@ export const toolsFor = (request: AssistantRequest): readonly Tool[] =>
 export const toolDefinitions = (tools: readonly Tool[]): readonly ToolDefinition[] =>
   tools.map((entry) => entry.definition);
 
-const fallback = "Sorry, I couldn't turn that into an order. Try saying it another way.";
+const fallbacks: Record<AssistantPage, string> = {
+  shop: "Sorry, I couldn't turn that into an order. Try saying it another way.",
+  staff: "No ticket can take that step right now. Check the queue below.",
+};
 
 const turnFromCall = (tools: readonly Tool[], reply: ParsedReply) =>
   Arr.head(reply.calls).pipe(
@@ -199,11 +202,15 @@ const turnFromCall = (tools: readonly Tool[], reply: ParsedReply) =>
  * Decodes model output into a turn. The first tool call wins; a call the
  * schemas reject becomes an apology rather than an error.
  */
-export const decodeTurn = (tools: readonly Tool[], output: string): AssistantTurn => {
+export const decodeTurn = (
+  page: AssistantPage,
+  tools: readonly Tool[],
+  output: string,
+): AssistantTurn => {
   const reply = parseReply(output);
   return Option.getOrElse(turnFromCall(tools, reply), () =>
     AssistantTurn.cases.Replied.make({
-      text: reply.calls.length === 0 && reply.text.length > 0 ? reply.text : fallback,
+      text: reply.calls.length === 0 && reply.text.length > 0 ? reply.text : fallbacks[page],
     }),
   );
 };

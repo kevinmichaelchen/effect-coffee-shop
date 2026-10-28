@@ -183,7 +183,9 @@ export const AskAssistant = Command.define("AskAssistant", {
   execute: ({ request }) => {
     const tools = toolsFor(request);
     return generateReply(messagesFor(request), toolDefinitions(tools)).pipe(
-      Effect.map((output) => Message.GotAssistantTurn({ turn: decodeTurn(tools, output) })),
+      Effect.map((output) =>
+        Message.GotAssistantTurn({ turn: decodeTurn(request.page, tools, output) }),
+      ),
       recoverWith(Message.FailedAssistantTurn),
     );
   },
