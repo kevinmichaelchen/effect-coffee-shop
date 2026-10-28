@@ -32,6 +32,7 @@ export const DraftPatch = Schema.Struct({
   milk: Schema.optionalKey(Milk),
   temperature: Schema.optionalKey(Temperature),
   shots: Schema.optionalKey(Schema.Int),
+  extraShots: Schema.optionalKey(Schema.Int),
   quantity: Schema.optionalKey(Schema.Int),
   notes: Schema.optionalKey(Schema.String),
 });
@@ -88,8 +89,8 @@ const tool = <A, I>(
     ),
 });
 
-const between = (minimum: number, maximum: number, description: string) =>
-  Schema.Int.check(Schema.isBetween({ minimum, maximum })).annotate({ description });
+/** Ranges go in the description, not the decoder: the composer clamps, so a near miss still lands. */
+const count = (description: string) => Schema.Int.annotate({ description });
 
 const shopTools = (menu: readonly MenuItem[]): readonly Tool[] =>
   Arr.match(
@@ -105,8 +106,13 @@ const shopTools = (menu: readonly MenuItem[]): readonly Tool[] =>
             size: Schema.optionalKey(DrinkSize),
             milk: Schema.optionalKey(Milk),
             temperature: Schema.optionalKey(Temperature),
-            shots: Schema.optionalKey(between(0, 4, "Total espresso shots")),
-            quantity: Schema.optionalKey(between(1, 9, "How many of this drink")),
+            shots: Schema.optionalKey(
+              count("Total espresso shots, 0 to 4, only when the customer names a number"),
+            ),
+            extraShots: Schema.optionalKey(
+              count('Shots on top of the usual: 1 for "an extra shot", 2 for "a double"'),
+            ),
+            quantity: Schema.optionalKey(count("How many of this drink, 1 to 9")),
             notes: Schema.optionalKey(
               Schema.String.annotate({ description: "Anything else for the barista" }),
             ),

@@ -33,11 +33,15 @@ const parseCall = ([, name = "", body = ""]: RegExpExecArray): RawToolCall => ({
   ),
 });
 
+/** A leaked reasoning trace (`…</think>`) is not part of the answer. */
+const withoutThinking = (output: string): string =>
+  output.replace(/^[\s\S]*<\/think>/, "").replace(/<\/?think>/g, "");
+
 /**
  * Splits LFM3 output into prose and tool calls. LFM3 and LFM3-Audio share this
  * format: `<tool_call><function=name><parameter=key>value</parameter></function></tool_call>`.
  */
 export const parseReply = (output: string): ParsedReply => ({
-  text: output.replace(callPattern, "").trim(),
+  text: withoutThinking(output.replace(callPattern, "")).trim(),
   calls: Array.from(output.matchAll(callPattern), parseCall),
 });

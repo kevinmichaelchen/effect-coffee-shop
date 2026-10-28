@@ -35,9 +35,15 @@ const shopPrompt = (request: AssistantRequest): string =>
     `Menu: ${request.menu.map(describeItem).join(", ")}.`,
     `Current draft: ${Option.match(request.draft, { onNone: () => "none yet", onSome: describeDraft })}.`,
     "Rules:",
-    '- To change the draft, call update_order with only the changed fields. "An extra shot" means one more than the draft has now.',
-    '- To send the draft, call place_order. "Send it", "that\'s it", "order it" and "check out" all mean place_order.',
+    "- To change the draft, call update_order with only the fields the customer mentioned.",
+    "- To send the draft, call place_order.",
     "- For questions, answer in one short sentence and call no tool.",
+    "Examples:",
+    '- "a large oat latte" → update_order with drinkId latte, size large, milk oat',
+    '- "with an extra shot" → update_order with extraShots 1',
+    '- "two of those" → update_order with quantity 2',
+    '- "a small tea, extra hot" → update_order with drinkId tea, size small, temperature extra-hot',
+    '- "send it", "that\'s it", "check out" → place_order',
   ].join("\n");
 
 const staffPrompt = (request: AssistantRequest): string => {

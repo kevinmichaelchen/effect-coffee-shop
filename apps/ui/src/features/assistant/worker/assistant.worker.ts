@@ -2,6 +2,7 @@
 import type { ProgressInfo } from "@huggingface/transformers";
 import { Effect, Option, Queue, Schema, Semaphore, Stream } from "effect";
 import { type LocalModel, WorkerEvent, WorkerRequest } from "#features/assistant/lib/protocol.ts";
+import { aggregateProgress } from "#features/assistant/worker/progress.ts";
 import {
   generate,
   loadTextModel,
@@ -27,8 +28,9 @@ const post = (event: WorkerEvent) => Effect.sync(() => self.postMessage(encodeEv
 const progressOf = (model: LocalModel) => (loaded: number, total: number) =>
   self.postMessage(encodeEvent(WorkerEvent.cases.Progressed.make({ model, loaded, total })));
 
+const textProgress = aggregateProgress(progressOf("text"));
 const onTextProgress = (info: ProgressInfo) => {
-  if (info.status === "progress_total") progressOf("text")(info.loaded, info.total);
+  if (info.status === "progress") textProgress(info.file, info.loaded, info.total);
 };
 
 const messageOf = (error: { readonly message: string }) => error.message;
@@ -67,7 +69,11 @@ const program = Effect.gen(function* () {
                 }),
               ),
             onSuccess: (reply) =>
-              post(WorkerEvent.cases.Generated.make({ id: generateRequest.id, text: reply })),
+              Effect.log("LFM3 reply", reply).pipe(
+                Effect.andThen(
+                  post(WorkerEvent.cases.Generated.make({ id: generateRequest.id, text: reply })),
+                ),
+              ),
           }),
         ),
       Transcribe: ({ id, samples }) =>
