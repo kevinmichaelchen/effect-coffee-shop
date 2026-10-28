@@ -41,7 +41,7 @@ export const acquireAssistantWorker = Effect.gen(function* () {
   worker.onerror = (error: ErrorEvent) =>
     PubSub.publishUnsafe(
       events,
-      WorkerEvent.cases.FailedLoad.make({ model: "text", message: error.message }),
+      WorkerEvent.cases.Crashed.make({ message: error.message || "The local AI worker stopped." }),
     );
   const handle: AssistantWorkerHandle = {
     send: (request, transfer = []) =>
@@ -66,7 +66,9 @@ const ask = <A>(
       yield* worker.send(request(id), transfer);
       const answer: Effect.Effect<A, AssistantError> = PubSub.take(subscription).pipe(
         Effect.flatMap((event) =>
-          Option.getOrElse(pick(event, id), () => Effect.suspend(() => answer)),
+          event._tag === "Crashed"
+            ? Effect.fail(new AssistantError({ message: event.message }))
+            : Option.getOrElse(pick(event, id), () => Effect.suspend(() => answer)),
         ),
       );
       return yield* answer;
@@ -105,10 +107,17 @@ export const transcribeSamples = (samples: Float32Array) =>
     samples.buffer,
   ]);
 
-/** Download progress for either model, for the loading bar. */
-export const progressEvents = Stream.unwrap(
+/** What the UI hears without asking: download progress, and the worker breaking. */
+export type WorkerNotice = Extract<WorkerEvent, { readonly _tag: "Progressed" | "Crashed" }>;
+
+const toNotice = (event: WorkerEvent): Option.Option<WorkerNotice> =>
+  event._tag === "Progressed" || event._tag === "Crashed" ? Option.some(event) : Option.none();
+
+export const workerNotices = Stream.unwrap(
   AssistantWorker.get.pipe(Effect.map((worker) => Stream.fromPubSub(worker.events))),
 ).pipe(
-  Stream.filter((event) => event._tag === "Progressed"),
+  Stream.flatMap((event) =>
+    Option.match(toNotice(event), { onNone: () => Stream.empty, onSome: Stream.make }),
+  ),
   Stream.catchTag("ResourceNotAvailable", () => Stream.empty),
 );

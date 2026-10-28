@@ -37,8 +37,12 @@ import {
 import {
   enableAssistant,
   enableVoice,
-  loadTextModel,
+  abandonInteraction,
+  receiveCrash,
   receiveLoadFailed,
+  receiveMicrophone,
+  receiveWorkerAcquired,
+  receiveWorkerReleased,
   receiveLoaded,
   receiveProgress,
   receiveRecordingFailed,
@@ -102,7 +106,7 @@ const withoutOrders = (model: Model): Model => ({
 
 /** Leaving an account behind: its pending action, copy feedback and orders go with it. */
 const withoutAccountState = (model: Model): Model => ({
-  ...withoutOrders(model),
+  ...withoutOrders(abandonInteraction(model)),
   pendingOrderId: Option.none(),
   detailsError: Option.none(),
   copyState: "idle",
@@ -205,7 +209,7 @@ export const update = (model: Model, message: Message): UpdateReturn =>
       }),
 
     ChangedUrl: ({ url }) => {
-      const moved: Model = settleTurn({ ...model, route: urlToAppRoute(url) });
+      const moved: Model = abandonInteraction({ ...model, route: urlToAppRoute(url) });
       const left = closeOverlays(keepsOrders(model, moved) ? moved : withoutOrders(moved));
       const arrived = continueMcp(withMenuFetch({ model: left.model }));
       return {
@@ -331,9 +335,10 @@ export const update = (model: Model, message: Message): UpdateReturn =>
 
     ClickedEnableAssistant: () => enableAssistant(model),
     DetectedWebGpu: ({ isSupported }) => receiveWebGpu(model, isSupported),
-    AcquiredAssistantWorker: () => loadTextModel(model),
+    AcquiredAssistantWorker: () => receiveWorkerAcquired(model),
     FailedAcquireAssistantWorker: ({ message }) => receiveLoadFailed(model, "text", message),
-    ReleasedAssistantWorker: () => ({ model }),
+    ReleasedAssistantWorker: () => receiveWorkerReleased(model),
+    CrashedAssistantWorker: ({ message }) => receiveCrash(model, message),
     GotModelProgress: ({ model: which, loaded, total }) =>
       receiveProgress(model, which, loaded, total),
     LoadedLocalModel: ({ model: which }) => receiveLoaded(model, which),
@@ -343,13 +348,13 @@ export const update = (model: Model, message: Message): UpdateReturn =>
       model: { ...model, assistant: { ...model.assistant, prompt: value } },
     }),
     SubmittedAssistantPrompt: () => submitPrompt(model),
-    GotAssistantTurn: ({ turn }) => receiveTurn(model, turn),
-    FailedAssistantTurn: ({ message }) => receiveTurnFailed(model, message),
+    GotAssistantTurn: ({ requestId, turn }) => receiveTurn(model, requestId, turn),
+    FailedAssistantTurn: ({ requestId, message }) => receiveTurnFailed(model, requestId, message),
     ClickedUndoAssistantEdit: () => undoEdit(model),
     ClickedDismissAssistantTurn: () => ({ model: settleTurn(model) }),
     ClickedUseUsual: () => useUsual(model),
     ClickedStartRecording: () => startRecording(model),
-    AcquiredMicrophone: () => ({ model }),
+    AcquiredMicrophone: () => receiveMicrophone(model),
     FailedAcquireMicrophone: ({ message }) => receiveRecordingFailed(model, message),
     ReleasedMicrophone: () => ({ model }),
     ClickedStopRecording: () => stopRecording(model),

@@ -17,7 +17,7 @@ import {
 } from "effect";
 import * as Socket from "effect/socket/Socket";
 import { Subscription } from "foldkit";
-import { progressEvents } from "#features/assistant/api/assistant-worker.ts";
+import { workerNotices } from "#features/assistant/api/assistant-worker.ts";
 import { toCoffeeOrder } from "#features/coffee-shop/api/order-mapping.ts";
 import { feedFor } from "#app/feed.ts";
 import { Message } from "#app/message.ts";
@@ -123,18 +123,22 @@ export const subscriptions = Subscription.make<Model, Message, AppServices>()((e
         Option.match(connection, { onNone: () => Stream.empty, onSome: observe }),
     },
   ),
-  modelProgress: entry(
-    { isLoading: Schema.Boolean },
+  // Listens from the moment the worker exists, so no download progress or crash is missed.
+  assistantWorker: entry(
+    { workerAcquired: Schema.Boolean },
     {
-      modelToDependencies: (model) => ({
-        isLoading:
-          model.assistant.text._tag === "Loading" || model.assistant.voice._tag === "Loading",
-      }),
-      dependenciesToStream: ({ isLoading }) =>
-        isLoading
-          ? progressEvents.pipe(
-              Stream.map(({ model, loaded, total }) =>
-                Message.GotModelProgress({ model, loaded, total }),
+      modelToDependencies: (model) => ({ workerAcquired: model.assistant.workerAcquired }),
+      dependenciesToStream: ({ workerAcquired }) =>
+        workerAcquired
+          ? workerNotices.pipe(
+              Stream.map((notice) =>
+                notice._tag === "Crashed"
+                  ? Message.CrashedAssistantWorker({ message: notice.message })
+                  : Message.GotModelProgress({
+                      model: notice.model,
+                      loaded: notice.loaded,
+                      total: notice.total,
+                    }),
               ),
             )
           : Stream.empty,

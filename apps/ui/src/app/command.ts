@@ -178,15 +178,15 @@ export const LoadLocalModel = Command.define("LoadLocalModel", {
 });
 
 export const AskAssistant = Command.define("AskAssistant", {
-  args: { request: AssistantRequest },
+  args: { requestId: Schema.Int, request: AssistantRequest },
   messages: [Message.GotAssistantTurn, Message.FailedAssistantTurn],
-  execute: ({ request }) => {
+  execute: ({ requestId, request }) => {
     const tools = toolsFor(request);
     return generateReply(messagesFor(request), toolDefinitions(tools)).pipe(
       Effect.map((output) =>
-        Message.GotAssistantTurn({ turn: decodeTurn(request.page, tools, output) }),
+        Message.GotAssistantTurn({ requestId, turn: decodeTurn(request.page, tools, output) }),
       ),
-      recoverWith(Message.FailedAssistantTurn),
+      recoverWith(({ message }) => Message.FailedAssistantTurn({ requestId, message })),
     );
   },
 });

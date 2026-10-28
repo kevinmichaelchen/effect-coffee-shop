@@ -11,13 +11,17 @@ export const LocalModelStatus = Schema.TaggedUnion({
 });
 export type LocalModelStatus = typeof LocalModelStatus.Type;
 
-const RecordingState = Schema.Literals(["idle", "recording", "transcribing"]);
+const RecordingState = Schema.Literals(["idle", "acquiring", "recording", "transcribing"]);
 
 export const AssistantState = Schema.Struct({
   text: LocalModelStatus,
   voice: LocalModelStatus,
+  workerAcquired: Schema.Boolean,
   prompt: Schema.String,
   isThinking: Schema.Boolean,
+  /** The one request whose answer is still wanted; anything else that arrives is stale. */
+  pendingRequest: Schema.Option(Schema.Int),
+  requestCount: Schema.Int,
   recording: RecordingState,
   heard: Schema.Option(Schema.String),
   turn: Schema.Option(AssistantTurn),
@@ -29,8 +33,11 @@ export type AssistantState = typeof AssistantState.Type;
 export const initialAssistant: AssistantState = {
   text: LocalModelStatus.cases.Off.make({}),
   voice: LocalModelStatus.cases.Off.make({}),
+  workerAcquired: false,
   prompt: "",
   isThinking: false,
+  pendingRequest: Option.none(),
+  requestCount: 0,
   recording: "idle",
   heard: Option.none(),
   turn: Option.none(),

@@ -34,5 +34,7 @@ export const WorkerEvent = Schema.TaggedUnion({
   Generated: { id: Schema.String, text: Schema.String },
   Transcribed: { id: Schema.String, text: Schema.String },
   Failed: { id: Schema.String, message: Schema.String },
+  /** The worker itself broke; every request still waiting has failed. */
+  Crashed: { message: Schema.String },
 });
 export type WorkerEvent = typeof WorkerEvent.Type;

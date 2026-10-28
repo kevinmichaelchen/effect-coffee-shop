@@ -126,6 +126,13 @@ function voiceControl(assistant: AssistantState, h: Builder) {
             h,
           ),
         ),
+        Match.when("acquiring", () =>
+          button(
+            { attributes: [h.OnClick(Message.ClickedStopRecording())], variant: "outline" },
+            ["Starting mic… cancel"],
+            h,
+          ),
+        ),
         Match.when("transcribing", () =>
           button({ disabled: true, variant: "outline" }, ["Listening…"], h),
         ),

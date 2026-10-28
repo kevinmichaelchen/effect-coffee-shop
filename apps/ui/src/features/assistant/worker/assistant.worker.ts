@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import type { ProgressInfo } from "@huggingface/transformers";
-import { Effect, Option, Queue, Schema, Semaphore, Stream } from "effect";
+import { Cause, Effect, Option, Queue, Ref, Schema, Semaphore, Stream } from "effect";
 import { type LocalModel, WorkerEvent, WorkerRequest } from "#features/assistant/lib/protocol.ts";
 import { aggregateProgress } from "#features/assistant/worker/progress.ts";
 import {
@@ -35,10 +35,26 @@ const onTextProgress = (info: ProgressInfo) => {
 
 const messageOf = (error: { readonly message: string }) => error.message;
 
+/** Loads at most once at a time and keeps only a success, so "Try again" really retries. */
+const loadOnce = <A, E>(load: Effect.Effect<A, E>) =>
+  Effect.gen(function* () {
+    const loaded = yield* Ref.make(Option.none<A>());
+    const lock = yield* Semaphore.make(1);
+    return lock.withPermit(
+      Ref.get(loaded).pipe(
+        Effect.flatMap(
+          Option.match({
+            onSome: Effect.succeed,
+            onNone: () => load.pipe(Effect.tap((value) => Ref.set(loaded, Option.some(value)))),
+          }),
+        ),
+      ),
+    );
+  });
+
 const program = Effect.gen(function* () {
-  // Each model loads once per worker; a failed load is retried by restarting the worker.
-  const text = yield* Effect.cached(loadTextModel(onTextProgress));
-  const voice = yield* Effect.cached(loadVoiceModel(progressOf("voice")));
+  const text = yield* loadOnce(loadTextModel(onTextProgress));
+  const voice = yield* loadOnce(loadVoiceModel(progressOf("voice")));
   // One sequence at a time per model: generation state is not shareable.
   const textLock = yield* Semaphore.make(1);
   const voiceLock = yield* Semaphore.make(1);
@@ -101,7 +117,15 @@ const program = Effect.gen(function* () {
     Stream.runForEach(
       Option.match({
         onNone: () => Effect.void,
-        onSome: (request) => Effect.forkDetach(handle(request)),
+        onSome: (request) =>
+          Effect.forkDetach(
+            // A defect has no request-shaped answer, so it fails everything still waiting.
+            handle(request).pipe(
+              Effect.catchCause((cause) =>
+                post(WorkerEvent.cases.Crashed.make({ message: Cause.pretty(cause) })),
+              ),
+            ),
+          ),
       }),
     ),
   );

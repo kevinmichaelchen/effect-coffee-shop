@@ -45,9 +45,13 @@ export const receiveWebGpu = (model: Model, isSupported: boolean): Return => ({
   ),
 });
 
-export const loadTextModel = (model: Model): Return => ({
-  model,
+export const receiveWorkerAcquired = (model: Model): Return => ({
+  model: withAssistant(model, { workerAcquired: true }),
   commands: [LoadLocalModel({ model: "text" })],
+});
+
+export const receiveWorkerReleased = (model: Model): Return => ({
+  model: withAssistant(model, { workerAcquired: false }),
 });
 
 export const enableVoice = (model: Model): Return =>
@@ -78,6 +82,14 @@ export const receiveLoadFailed = (model: Model, which: LocalModel, message: stri
   model: setStatus(model, which, LocalModelStatus.cases.Failed.make({ message })),
 });
 
+/** Waiting requests already failed with the crash; the text model's failure releases the worker. */
+export const receiveCrash = (model: Model, message: string): Return => ({
+  model: withAssistant(abandonInteraction(model), {
+    text: LocalModelStatus.cases.Failed.make({ message }),
+    voice: LocalModelStatus.cases.Off.make({}),
+  }),
+});
+
 // ASKING
 
 const requestFor = (model: Model): AssistantRequest => ({
@@ -88,24 +100,37 @@ const requestFor = (model: Model): AssistantRequest => ({
   orders: model.orders,
 });
 
-export const submitPrompt = (model: Model): Return =>
-  !isReady(model.assistant.text) ||
-  model.assistant.isThinking ||
-  model.assistant.prompt.trim().length === 0
-    ? { model }
-    : {
-        model: withAssistant(model, {
-          isThinking: true,
-          error: Option.none(),
-          turn: Option.none(),
-        }),
-        commands: [AskAssistant({ request: requestFor(model) })],
-      };
+export const submitPrompt = (model: Model): Return => {
+  if (
+    !isReady(model.assistant.text) ||
+    model.assistant.isThinking ||
+    model.assistant.prompt.trim().length === 0
+  ) {
+    return { model };
+  }
+  const requestId = model.assistant.requestCount + 1;
+  return {
+    model: withAssistant(model, {
+      isThinking: true,
+      pendingRequest: Option.some(requestId),
+      requestCount: requestId,
+      error: Option.none(),
+      turn: Option.none(),
+    }),
+    commands: [AskAssistant({ requestId, request: requestFor(model) })],
+  };
+};
+
+/** Only the answer to the request still pending counts; a page or account change orphans it. */
+const isPending = (model: Model, requestId: number): boolean =>
+  Option.contains(model.assistant.pendingRequest, requestId);
 
 /** Draft edits apply now and keep the old draft for undo; proposals wait for a tap. */
-export const receiveTurn = (model: Model, turn: AssistantTurn): Return => {
+export const receiveTurn = (model: Model, requestId: number, turn: AssistantTurn): Return => {
+  if (!isPending(model, requestId)) return { model };
   const settled = withAssistant(model, {
     isThinking: false,
+    pendingRequest: Option.none(),
     prompt: "",
     turn: Option.some(turn),
     undo: Option.none(),
@@ -120,8 +145,14 @@ export const receiveTurn = (model: Model, turn: AssistantTurn): Return => {
   };
 };
 
-export const receiveTurnFailed = (model: Model, message: string): Return => ({
-  model: withAssistant(model, { isThinking: false, error: Option.some(message) }),
+export const receiveTurnFailed = (model: Model, requestId: number, message: string): Return => ({
+  model: isPending(model, requestId)
+    ? withAssistant(model, {
+        isThinking: false,
+        pendingRequest: Option.none(),
+        error: Option.some(message),
+      })
+    : model,
 });
 
 export const undoEdit = (model: Model): Return =>
@@ -135,9 +166,21 @@ export const undoEdit = (model: Model): Return =>
     }),
   });
 
-/** Acting on a proposal (or leaving the page) settles the turn. */
+/** Acting on a proposal settles the turn. */
 export const settleTurn = (model: Model): Model =>
   withAssistant(model, { turn: Option.none(), undo: Option.none(), heard: Option.none() });
+
+/**
+ * Leaving the page or the account drops everything in flight: the turn, the
+ * pending answer, and the microphone (setting `recording` idle releases it).
+ */
+export const abandonInteraction = (model: Model): Model =>
+  withAssistant(settleTurn(model), {
+    isThinking: false,
+    pendingRequest: Option.none(),
+    recording: "idle",
+    error: Option.none(),
+  });
 
 /** The frequency table's pick: the drink this customer has ordered most. */
 export const useUsual = (model: Model): Return =>
@@ -152,23 +195,39 @@ export const startRecording = (model: Model): Return =>
   isReady(model.assistant.voice) &&
   model.assistant.recording === "idle" &&
   !model.assistant.isThinking
-    ? { model: withAssistant(model, { recording: "recording", error: Option.none() }) }
+    ? { model: withAssistant(model, { recording: "acquiring", error: Option.none() }) }
     : { model };
 
+/** Recording starts once the browser hands over the microphone, not on the click. */
+export const receiveMicrophone = (model: Model): Return => ({
+  model:
+    model.assistant.recording === "acquiring"
+      ? withAssistant(model, { recording: "recording" })
+      : model,
+});
+
+/** Stopping while still asking for the microphone cancels; otherwise it transcribes. */
 export const stopRecording = (model: Model): Return =>
-  model.assistant.recording === "recording"
-    ? {
-        model: withAssistant(model, { recording: "transcribing" }),
-        commands: [TranscribeRecording()],
-      }
-    : { model };
+  model.assistant.recording === "acquiring"
+    ? { model: withAssistant(model, { recording: "idle" }) }
+    : model.assistant.recording === "recording"
+      ? {
+          model: withAssistant(model, { recording: "transcribing" }),
+          commands: [TranscribeRecording()],
+        }
+      : { model };
 
 export const receiveRecordingFailed = (model: Model, message: string): Return => ({
-  model: withAssistant(model, { recording: "idle", error: Option.some(message) }),
+  model:
+    model.assistant.recording === "idle"
+      ? model
+      : withAssistant(model, { recording: "idle", error: Option.some(message) }),
 });
 
 /** What was heard becomes the prompt, shown to the customer and sent at once. */
 export const receiveTranscript = (model: Model, text: string): Return => {
+  // A transcript that outlived its recording (the page changed) is stale.
+  if (model.assistant.recording !== "transcribing") return { model };
   const heard = text.trim();
   const idle = withAssistant(model, { recording: "idle" });
   return heard.length === 0
