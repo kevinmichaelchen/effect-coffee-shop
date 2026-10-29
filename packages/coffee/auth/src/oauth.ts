@@ -1,5 +1,6 @@
 import * as Match from "effect/Match";
 import { InternalAppError } from "@effect-coffee-shop/coffee-application/errors";
+import * as OAuthScope from "@yielded/auth/OAuthScope";
 import * as OAuthServer from "@yielded/auth/OAuthServer";
 import { OAuthServerPersistence } from "@yielded/auth-persistence";
 import * as Effect from "effect/Effect";
@@ -13,7 +14,10 @@ import { CoffeeAuth } from "./auth.ts";
 import { actorFromIdentity } from "./yielded/identity.ts";
 import type { AuthServerConfig, CoffeeAuthLayers } from "./server.ts";
 
-export const CoffeeOAuth = OAuthServer.make("coffee", { scopes: ["coffee:access"] });
+/** The one scope MCP clients ask for: act on Coffee as the signed-in person. */
+export const coffeeAccess = OAuthScope.make("coffee:access");
+
+export const CoffeeOAuth = OAuthServer.make("coffee", { scopes: [coffeeAccess] });
 
 export const makeCoffeeOAuth = <E>(
   config: AuthServerConfig,

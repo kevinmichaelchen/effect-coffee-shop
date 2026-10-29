@@ -8,7 +8,7 @@
  */
 import * as Arr from "effect/Array";
 import { AuthAdaptersLive } from "@effect-coffee-shop/coffee-auth/adapters";
-import { CoffeeOAuth, makeCoffeeOAuth } from "@effect-coffee-shop/coffee-auth/oauth";
+import { CoffeeOAuth, coffeeAccess, makeCoffeeOAuth } from "@effect-coffee-shop/coffee-auth/oauth";
 import { type AuthServerConfig, makeCoffeeAuth } from "@effect-coffee-shop/coffee-auth/server";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { CurrentActor, anonymousActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
@@ -114,7 +114,7 @@ const routesFor = (input: CoffeeHttpInput) =>
         browser,
         CoffeeMcpHttpLive(oauth.allowedOrigins).pipe(
           Layer.provide(mcpActor),
-          Layer.provide(CoffeeOAuth.middleware(["coffee:access"]).layer),
+          Layer.provide(CoffeeOAuth.middleware([coffeeAccess]).layer),
         ),
         CoffeeOAuth.routes,
       ).pipe(

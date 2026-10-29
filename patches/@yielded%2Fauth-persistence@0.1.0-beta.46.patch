@@ -1,0 +1,18 @@
+diff --git a/dist/internal/passkey-native-registration.mjs b/dist/internal/passkey-native-registration.mjs
+index 6f65f06..632fc46 100644
+--- a/dist/internal/passkey-native-registration.mjs
++++ b/dist/internal/passkey-native-registration.mjs
+@@ -102,9 +102,11 @@ const makePasskeyNativeRegistration = (base, mapping) => {
+ 				registration,
+ 				subjectId: nativeId
+ 			}));
+-			yield* write(flow.consume(access, ceremony, sql`${flow.exact(mapping.applicationSnapshot, encoded)} and ${subjectCondition(revision)} and ${count} < ${cap} and ${finalEligibility}`), 1);
++			// Patched: subjectCondition returns an Effect since #238; run it before interpolating.
++			const subjectGuard = yield* subjectCondition(revision);
++			yield* write(flow.consume(access, ceremony, sql`${flow.exact(mapping.applicationSnapshot, encoded)} and ${subjectGuard} and ${count} < ${cap} and ${finalEligibility}`), 1);
+ 			const inserted = yield* insertCredential(nativeId, ceremony, verified, revision, value.displayName, nowMillis, subjectRow);
+-			yield* postcondition("passkey-registration-subject", sql`${inserted.condition} and ${flow.absent(access)} and ${subjectCondition(revision)} and ${count} <= ${cap} and ${finalEligibility} and ${state.now} < ${ceremony.expiresAtMillis}`);
++			yield* postcondition("passkey-registration-subject", sql`${inserted.condition} and ${flow.absent(access)} and ${subjectGuard} and ${count} <= ${cap} and ${finalEligibility} and ${state.now} < ${ceremony.expiresAtMillis}`);
+ 			return yield* preparePasskeyNative({ _tag: "RegistrationAccepted" }, prepare);
+ 		}))
+ 	} };

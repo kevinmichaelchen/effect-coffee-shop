@@ -343,6 +343,7 @@
     },
   },
   "patchedDependencies": {
+    "@yielded/auth-persistence@0.1.0-beta.46": "patches/@yielded%2Fauth-persistence@0.1.0-beta.46.patch",
     "@alchemy.run/domain@2.0.0-beta.84": "patches/@alchemy.run%2Fdomain@2.0.0-beta.84.patch",
     "alchemy@2.0.0-beta.84": "patches/alchemy@2.0.0-beta.84.patch",
   },
@@ -373,10 +374,10 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/bun": "^1.4.2",
     "@types/node": "^26.6.3",
-    "@yielded/auth": "0.1.0-beta.32",
-    "@yielded/auth-persistence": "0.1.0-beta.32",
-    "@yielded/auth-simplewebauthn": "0.1.0-beta.32",
-    "@yielded/crypto": "0.1.0-beta.32",
+    "@yielded/auth": "0.1.0-beta.46",
+    "@yielded/auth-persistence": "0.1.0-beta.46",
+    "@yielded/auth-simplewebauthn": "0.1.0-beta.46",
+    "@yielded/crypto": "0.1.0-beta.46",
     "@yielded/effect-tsrs": "0.2.2",
     "@yielded/sync": "0.1.0-beta.4",
     "@yielded/sync-platform-alchemy-cf": "0.1.0-beta.4",
@@ -1026,13 +1027,13 @@
 
     "@vitest/spy": ["@vitest/spy@5.0.5", "", {}, "sha512-lwJRExuH417257Q5wv9QYugN9IMJkoxcrKrYxGPQkBzl7wlNpTUxD/5yNX4ESKVUIShKPgkGchYPFMWOOk0wzw=="],
 
-    "@yielded/auth": ["@yielded/auth@0.1.0-beta.32", "", { "dependencies": { "@yielded/crypto": "0.1.0-beta.32", "@yielded/jose": "0.1.0-beta.32", "@yielded/oauth": "0.1.0-beta.32" }, "peerDependencies": { "effect": "^4.0.0" } }, "sha512-HnXi2oJmtaLbmvNaaymx0mWyyIalmIpCAYa1+8OErq2ABFZX1YeUOo03bC9Rx2yb04kA7wNUQPHlSoPoLbjnuA=="],
+    "@yielded/auth": ["@yielded/auth@0.1.0-beta.46", "", { "dependencies": { "@yielded/crypto": "0.1.0-beta.46", "@yielded/jose": "0.1.0-beta.46", "@yielded/oauth": "0.1.0-beta.46" }, "peerDependencies": { "effect": "^4.0.3" } }, "sha512-l89/0Gu5LX/1kRQAVRE60J0W9aQSuYwgClrqAkO5doODlFlTrIAt3GDWO4Cg79Zre4Rm1BWt+RuT/cMW43wn/A=="],
 
-    "@yielded/auth-persistence": ["@yielded/auth-persistence@0.1.0-beta.32", "", { "dependencies": { "@yielded/auth": "0.1.0-beta.32", "@yielded/crypto": "0.1.0-beta.32" }, "peerDependencies": { "effect": "^4.0.0" } }, "sha512-WzJUn1K6+2PK+VNq1RiTJJPvKmju6UvQzoP2Vas4g9HIoO/dk19nphkYAnaYXBj681U3mXw/yyqNVDiTNx+XXA=="],
+    "@yielded/auth-persistence": ["@yielded/auth-persistence@0.1.0-beta.46", "", { "dependencies": { "@yielded/auth": "0.1.0-beta.46", "@yielded/crypto": "0.1.0-beta.46" }, "peerDependencies": { "effect": "^4.0.3" } }, "sha512-60ada8qelAKXyB8A9BIJteB784vSnJYeXY2GFPoQHYfuk2HkQPjVAOjPYJ/GKewpQD66cwZat+UEKxXMJ1HjjQ=="],
 
-    "@yielded/auth-simplewebauthn": ["@yielded/auth-simplewebauthn@0.1.0-beta.32", "", { "dependencies": { "@yielded/auth": "0.1.0-beta.32", "tldts": "7.4.11" }, "peerDependencies": { "@simplewebauthn/browser": ">=14.0.0 <15", "@simplewebauthn/server": ">=14.0.1 <15", "effect": "^4.0.0" }, "optionalPeers": ["@simplewebauthn/browser", "@simplewebauthn/server"] }, "sha512-DTbsU5PjPrubT46huO/w/JhKl0+NBkTI0tEdkr+uAV5xJzWm5+9pdDNS+kYhNAoTwPwlvlCK6AsDT2vZRIgYgA=="],
+    "@yielded/auth-simplewebauthn": ["@yielded/auth-simplewebauthn@0.1.0-beta.46", "", { "dependencies": { "@yielded/auth": "0.1.0-beta.46", "tldts": "7.4.11" }, "peerDependencies": { "@simplewebauthn/browser": ">=14.0.0 <15", "@simplewebauthn/server": ">=14.0.1 <15", "effect": "^4.0.3" }, "optionalPeers": ["@simplewebauthn/browser", "@simplewebauthn/server"] }, "sha512-jVxUkSxzKHugGVmjxAb6N9UKRNV+7B2Wfl1VLKOmhOnlE1TUXL628W9ZyRdScnLMqW6bYLv4Fw6erJDZhG2Zwg=="],
 
-    "@yielded/crypto": ["@yielded/crypto@0.1.0-beta.32", "", { "peerDependencies": { "effect": "^4.0.0" } }, "sha512-m3N1s94E0RPqgCFqHtQmBq3GQiXApzb2rYJOkTEtAyqtj9Yv22FWBdEUT7s5Y/lR3YbQK0JReymp/Saj0Kwu5g=="],
+    "@yielded/crypto": ["@yielded/crypto@0.1.0-beta.46", "", { "peerDependencies": { "effect": "^4.0.3" } }, "sha512-7S2jUzC9znjMCJqsNB2iPAmxyCH5TkSABMbmR8p8/RvJ1ARlMULg4HC5tlQYUs7gcG20s5MosjVFPsl4NQXBwA=="],
 
     "@yielded/effect-tsrs": ["@yielded/effect-tsrs@0.2.2", "", { "optionalDependencies": { "@yielded/effect-tsrs-darwin-arm64": "0.2.2", "@yielded/effect-tsrs-darwin-x64": "0.2.2", "@yielded/effect-tsrs-linux-arm64": "0.2.2", "@yielded/effect-tsrs-linux-x64": "0.2.2", "@yielded/effect-tsrs-win32-x64": "0.2.2" }, "bin": { "effect-tsrs": "bin/effect-tsrs.js" } }, "sha512-F0woy23jX5bMMVOo4Wh+PXhUPvnsH3pNZn7IUamUB2K0sKijui4YNz7dib8Tb6y90+0/pbnIU3iKrZTAsI1phw=="],
 
@@ -1046,9 +1047,9 @@
 
     "@yielded/effect-tsrs-win32-x64": ["@yielded/effect-tsrs-win32-x64@0.2.2", "", { "os": "win32", "cpu": "x64" }, "sha512-5Vb0JusFTEPUJ6LREP94qO2hX4gMMTx06cg7dPt5OU9Xb0eiBcqi1m8xegw3maK1fEFc8rd2hYN+ikTleSlPDw=="],
 
-    "@yielded/jose": ["@yielded/jose@0.1.0-beta.32", "", { "dependencies": { "@yielded/crypto": "0.1.0-beta.32" }, "peerDependencies": { "effect": "^4.0.0" } }, "sha512-bOtE4GJldDM+Mcb5UirTfNapRPmRJ4RPic/XcPamIdpqI0G/37DcaIMlyVX6Jc1xQFExVW7mQsl9VO61F3e9LA=="],
+    "@yielded/jose": ["@yielded/jose@0.1.0-beta.46", "", { "dependencies": { "@yielded/crypto": "0.1.0-beta.46" }, "peerDependencies": { "effect": "^4.0.3" } }, "sha512-qoON8svDiVWxpX1GN9QxbdMxTkzf8VhSXcrRiNIvi9WuMs7h5SMq5bfgrNIA6DQSly7+jaXxepObdl73Tr6ZFA=="],
 
-    "@yielded/oauth": ["@yielded/oauth@0.1.0-beta.32", "", { "dependencies": { "@yielded/jose": "0.1.0-beta.32" }, "peerDependencies": { "effect": "^4.0.0" } }, "sha512-4vCkTwY0Cs3wixMAGU6KywFuVG+m0QuuH8lV166wXCSPbk24DKAK/faZqtiVmwwpRVjJSeonvcGNI4II01mzHw=="],
+    "@yielded/oauth": ["@yielded/oauth@0.1.0-beta.46", "", { "dependencies": { "@yielded/jose": "0.1.0-beta.46" }, "peerDependencies": { "effect": "^4.0.3" } }, "sha512-Z//WkyO8qFhkeJeqWcDSyqM1zU41nXtOWLKDZ6khVMDtMIl2uLav3NuB8f1aFKxpZJitnf6OnInLIY7tXXhNKQ=="],
 
     "@yielded/sync": ["@yielded/sync@0.1.0-beta.4", "", { "peerDependencies": { "effect": "4.0.6" } }, "sha512-XSi3qPq4ILqUwVhdxnHIYlBM38DIkGaRKoz1KptpPrZfyj4ycAxVytFGh+/Jb16+1GqG2l1ShX8yhcucMjMjTA=="],
 

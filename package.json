@@ -37,10 +37,10 @@
       "@tailwindcss/vite": "^4.3.3",
       "@types/bun": "^1.4.2",
       "@types/node": "^26.6.3",
-      "@yielded/auth": "0.1.0-beta.32",
-      "@yielded/auth-persistence": "0.1.0-beta.32",
-      "@yielded/auth-simplewebauthn": "0.1.0-beta.32",
-      "@yielded/crypto": "0.1.0-beta.32",
+      "@yielded/auth": "0.1.0-beta.46",
+      "@yielded/auth-persistence": "0.1.0-beta.46",
+      "@yielded/auth-simplewebauthn": "0.1.0-beta.46",
+      "@yielded/crypto": "0.1.0-beta.46",
       "@yielded/effect-tsrs": "0.2.2",
       "@yielded/sync": "0.1.0-beta.4",
       "@yielded/sync-platform-alchemy-cf": "0.1.0-beta.4",
@@ -157,6 +157,7 @@
   "patchedDependencies": {
     "@just-be/effect-typed-id@0.5.0": "patches/@just-be%2Feffect-typed-id@0.5.0.patch",
     "@alchemy.run/domain@2.0.0-beta.84": "patches/@alchemy.run%2Fdomain@2.0.0-beta.84.patch",
-    "alchemy@2.0.0-beta.84": "patches/alchemy@2.0.0-beta.84.patch"
+    "alchemy@2.0.0-beta.84": "patches/alchemy@2.0.0-beta.84.patch",
+    "@yielded/auth-persistence@0.1.0-beta.46": "patches/@yielded%2Fauth-persistence@0.1.0-beta.46.patch"
   }
 }
