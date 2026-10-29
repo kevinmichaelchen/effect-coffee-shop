@@ -10,6 +10,7 @@ import * as McpServer from "effect/ai/McpServer";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { CoffeeActionToolsLive } from "./action-tools.ts";
 import { McpActor } from "./actor.ts";
+import { CoffeeMcpVisibility } from "./visibility.ts";
 import { MenuResource, OpenOrdersResource, OrderResource } from "./resources.ts";
 import { RecommendDrinkPrompt, SummarizeOpenOrdersPrompt } from "./prompts.ts";
 
@@ -35,14 +36,14 @@ const CoffeeMcpServices = McpServer.middleware<{ provides: CoffeeOrderApp | McpA
   }),
 );
 
-const CoffeeMcpFeaturesLive = Layer.mergeAll(
+export const CoffeeMcpFeaturesLive = Layer.mergeAll(
   MenuResource,
   OpenOrdersResource,
   OrderResource,
   RecommendDrinkPrompt,
   SummarizeOpenOrdersPrompt,
   CoffeeActionToolsLive,
-).pipe(Layer.provide(CoffeeMcpServices.layer));
+).pipe(Layer.provide(CoffeeMcpVisibility.combine(CoffeeMcpServices).layer));
 
 export const CoffeeMcpHttpLive = (allowedOrigins: ReadonlyArray<string>) =>
   McpServer.layerHttp({

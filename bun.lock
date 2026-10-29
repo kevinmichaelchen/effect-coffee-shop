@@ -225,6 +225,7 @@
         "effect": "catalog:",
       },
       "devDependencies": {
+        "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
         "@yielded/effect-tsrs": "catalog:",
         "oxfmt": "catalog:",
