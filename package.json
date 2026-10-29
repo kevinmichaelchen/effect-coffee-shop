@@ -21,11 +21,11 @@
       "@alchemy.run/cloudflare": "2.0.0-beta.84",
       "@alchemy.run/domain": "2.0.0-beta.84",
       "@cloudflare/workers-types": "5.20260930.1",
-      "@effect/platform-browser": "4.0.7",
-      "@effect/platform-bun": "4.0.7",
-      "@effect/platform-node": "4.0.7",
-      "@effect/sql-d1": "4.0.7",
-      "@effect/vitest": "4.0.7",
+      "@effect/platform-browser": "4.1.0",
+      "@effect/platform-bun": "4.1.0",
+      "@effect/platform-node": "4.1.0",
+      "@effect/sql-d1": "4.1.0",
+      "@effect/vitest": "4.1.0",
       "@foldkit/ui": "0.169.0",
       "@foldkit/vite-plugin": "0.28.0",
       "@huggingface/tokenizers": "0.2.0",
@@ -48,7 +48,7 @@
       "alchemy": "2.0.0-beta.84",
       "class-variance-authority": "^0.7.1",
       "clsx": "^2.1.1",
-      "effect": "4.0.7",
+      "effect": "4.1.0",
       "effect-wide-event": "0.6.0",
       "fallow": "3.30.0",
       "foldkit": "0.169.0",
@@ -136,7 +136,7 @@
     "@cloudflare/workers-types": "catalog:",
     "@effect/platform-bun": "catalog:",
     "@effect/platform-node": "catalog:",
-    "@effect/sql-d1": "4.0.7",
+    "@effect/sql-d1": "4.1.0",
     "@j178/prek": "0.5.5",
     "@yielded/effect-tsrs": "catalog:",
     "alchemy": "catalog:",
@@ -148,16 +148,18 @@
     "varlock": "1.21.1"
   },
   "overrides": {
-    "@effect/platform-browser": "4.0.6",
-    "@effect/sql-d1": "4.0.6",
-    "@effect/vitest": "4.0.6",
-    "effect": "4.0.6"
+    "@effect/platform-browser": "4.1.0",
+    "@effect/sql-d1": "4.1.0",
+    "@effect/sql-sqlite-do": "4.1.0",
+    "@effect/vitest": "4.1.0",
+    "effect": "4.1.0"
   },
   "packageManager": "bun@1.4.2",
   "patchedDependencies": {
     "@just-be/effect-typed-id@0.5.0": "patches/@just-be%2Feffect-typed-id@0.5.0.patch",
     "@alchemy.run/domain@2.0.0-beta.84": "patches/@alchemy.run%2Fdomain@2.0.0-beta.84.patch",
     "alchemy@2.0.0-beta.84": "patches/alchemy@2.0.0-beta.84.patch",
-    "@yielded/auth-persistence@0.1.0-beta.46": "patches/@yielded%2Fauth-persistence@0.1.0-beta.46.patch"
+    "@yielded/auth-persistence@0.1.0-beta.46": "patches/@yielded%2Fauth-persistence@0.1.0-beta.46.patch",
+    "effect@4.1.0": "patches/effect@4.1.0.patch"
   }
 }

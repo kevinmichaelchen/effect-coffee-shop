@@ -6,6 +6,7 @@ import { SqlClient } from "effect/sql";
 
 const Rows = Schema.Array(Schema.Struct({ value: Schema.String }));
 const Count = Schema.Tuple([Schema.Struct({ count: Schema.FiniteFromString })]);
+const Keys = Schema.Array(Schema.Struct({ id: Schema.String }));
 const storageError = (method: string) =>
   Effect.mapError(
     (cause) =>
@@ -47,10 +48,16 @@ export const AuthRateLimitStoreLive = Layer.effect(
       Effect.map(([row]) => row.count),
       storageError("size"),
     );
+    const keys = sql`select id from coffee_auth_rate_limits`.pipe(
+      Effect.flatMap(Schema.decodeUnknownEffect(Keys)),
+      Effect.map((rows) => rows.map((row) => row.id)),
+      storageError("keys"),
+    );
     return KeyValueStore.makeStringOnly({
       get,
       set,
       remove,
+      keys,
       size,
       clear: sql`delete from coffee_auth_rate_limits`.pipe(Effect.asVoid, storageError("clear")),
     });

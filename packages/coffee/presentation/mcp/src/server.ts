@@ -3,10 +3,13 @@
  *
  * @module
  */
+import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as McpProtocol from "effect/ai/McpProtocol";
 import * as McpServer from "effect/ai/McpServer";
+import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { CoffeeActionToolsLive } from "./action-tools.ts";
+import { McpActor } from "./actor.ts";
 import { MenuResource, OpenOrdersResource, OrderResource } from "./resources.ts";
 import { RecommendDrinkPrompt, SummarizeOpenOrdersPrompt } from "./prompts.ts";
 
@@ -16,24 +19,36 @@ const mcpServerInfo = {
   version: "0.1.0",
 } as const;
 
-const CoffeeMcpSharedFeaturesLive = Layer.mergeAll(
+/**
+ * Supplies every handler's request-level services. The actor is still resolved
+ * per invocation by `withMcpActor`; this only hands handlers the resolver.
+ */
+const CoffeeMcpServices = McpServer.middleware<{ provides: CoffeeOrderApp | McpActor }>()(
+  Effect.gen(function* () {
+    const app = yield* CoffeeOrderApp;
+    const actor = yield* McpActor;
+    return (effect) =>
+      effect.pipe(
+        Effect.provideService(CoffeeOrderApp, app),
+        Effect.provideService(McpActor, actor),
+      );
+  }),
+);
+
+const CoffeeMcpFeaturesLive = Layer.mergeAll(
   MenuResource,
   OpenOrdersResource,
   OrderResource,
   RecommendDrinkPrompt,
   SummarizeOpenOrdersPrompt,
-);
-
-const CoffeeMcpFeaturesLive = Layer.mergeAll(CoffeeMcpSharedFeaturesLive, CoffeeActionToolsLive);
+  CoffeeActionToolsLive,
+).pipe(Layer.provide(CoffeeMcpServices.layer));
 
 export const CoffeeMcpHttpLive = (allowedOrigins: ReadonlyArray<string>) =>
-  CoffeeMcpFeaturesLive.pipe(
-    Layer.provide(
-      McpServer.layerHttp({
-        ...mcpServerInfo,
-        protocols: [McpProtocol.v2026_07_28],
-        path: "/mcp",
-        allowedOrigins,
-      }),
-    ),
-  );
+  McpServer.layerHttp({
+    ...mcpServerInfo,
+    protocols: [McpProtocol.v2026_07_28],
+    path: "/mcp",
+    allowedOrigins,
+    registrations: CoffeeMcpFeaturesLive,
+  });
