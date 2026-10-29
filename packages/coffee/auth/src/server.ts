@@ -2,7 +2,7 @@ import type * as OAuthServer from "@yielded/auth/OAuthServer";
 import { Auth, Http, Passkey } from "@yielded/auth";
 import { SqlBatchCommit } from "@yielded/auth-persistence/Adapter";
 import * as Effect from "effect/Effect";
-import * as Crypto from "effect/Crypto";
+import { Digest } from "effect/crypto";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
@@ -36,9 +36,9 @@ export const makeCoffeeAuth = <E>(
       yield* Schema.decodeEffect(Schema.String.check(Schema.isMinLength(32)))(
         Redacted.value(config.secret),
       ).pipe(Effect.mapError(() => new AuthUnavailable()));
-      const cryptography = yield* Crypto.Crypto;
-      const digest = yield* cryptography.digest(
-        "SHA-256",
+      const digests = yield* Digest.Digest;
+      const digest = yield* digests.digest(
+        Digest.sha256,
         new TextEncoder().encode(`coffee/request-binding/v1:${Redacted.value(config.secret)}`),
       );
       return Auth.RequestBindingConfig.layer({
@@ -65,7 +65,7 @@ export const makeCoffeeAuth = <E>(
     developmentLocalhost: origin.protocol === "http:",
   });
   const dependencies = Layer.mergeAll(
-    binding.pipe(Layer.provide(crypto)),
+    binding.pipe(Layer.provide(Digest.layerWebCrypto)),
     database,
     crypto,
     passkeyConfig,

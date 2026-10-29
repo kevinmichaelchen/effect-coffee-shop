@@ -19,7 +19,7 @@
         "allowedUnstableApis": [
           "@effect/vitest",
           "@effect/platform-node",
-          "effect/Crypto",
+          "effect/crypto",
           "effect/http",
           "effect/sql",
           "@effect/sql-d1",
