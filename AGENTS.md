@@ -16,3 +16,5 @@ Code style for agents:
 - At async interop boundaries, prefer `Effect.promise`, `Effect.async`, or `Effect.callback`. Use `Effect.tryPromise` only when you intentionally need to translate a thrown or rejected cause into a typed domain error.
 - Prefer tagged unions, schema decoders, `Option`/`Either`, and Effect error channels over sentinel strings and defensive object spelunking.
 - Keep lint policy workspace-local: backend rules can be stricter and Effect-specific, while UI rules should focus on boundary safety and unsafe TypeScript escape hatches.
+
+Dependency patches live in `patches/`. After upgrading any patched package, run `bun run patches:check` and delete patches it reports as unused or no longer needed.
