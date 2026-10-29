@@ -128,7 +128,8 @@
     "knip": "knip --cache --treat-config-hints-as-errors --include nsExports,nsTypes --cycles",
     "fmt:root": "oxfmt --write package.json knip.jsonc .fallowrc.jsonc turbo.json",
     "fmt:check:root": "oxfmt --check package.json knip.jsonc .fallowrc.jsonc turbo.json",
-    "knip:production": "knip --cache --strict --treat-config-hints-as-errors --include nsExports,nsTypes --cycles"
+    "knip:production": "knip --cache --strict --treat-config-hints-as-errors --include nsExports,nsTypes --cycles",
+    "patches:check": "bun patches/check.ts"
   },
   "devDependencies": {
     "@alchemy.run/aws": "catalog:",
@@ -156,7 +157,6 @@
   },
   "packageManager": "bun@1.4.2",
   "patchedDependencies": {
-    "@just-be/effect-typed-id@0.5.0": "patches/@just-be%2Feffect-typed-id@0.5.0.patch",
     "@alchemy.run/domain@2.0.0-beta.84": "patches/@alchemy.run%2Fdomain@2.0.0-beta.84.patch",
     "alchemy@2.0.0-beta.84": "patches/alchemy@2.0.0-beta.84.patch",
     "@yielded/auth-persistence@0.1.0-beta.46": "patches/@yielded%2Fauth-persistence@0.1.0-beta.46.patch",
