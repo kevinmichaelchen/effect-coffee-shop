@@ -15,7 +15,10 @@ Code style for agents:
 - Avoid classic `for (...)` loops, `++`, bitwise operators, and non-null assertions in normal application code. Prefer recursion, `for...of`, total helpers, and explicit boundary failures over imperative mutation-heavy control flow.
 - At async interop boundaries, prefer `Effect.promise`, `Effect.async`, or `Effect.callback`. Use `Effect.tryPromise` only when you intentionally need to translate a thrown or rejected cause into a typed domain error.
 - Prefer tagged unions, schema decoders, `Option`/`Either`, and Effect error channels over sentinel strings and defensive object spelunking.
-- Keep lint policy workspace-local: backend rules can be stricter and Effect-specific, while UI rules should focus on boundary safety and unsafe TypeScript escape hatches.
+- Lint policy has two profiles in `packages/tooling/oxlint.profiles.ts`: `backend` adds the Effect house-style plugin, while `ui` focuses on boundary safety and unsafe TypeScript escape hatches. Both run every Effect language-service rule through `effect-tsrs oxlint`. Change the profile instead of adding per-workspace Oxlint configs.
+- Big, deep modules are welcome. Do not split files or functions just to satisfy a tool; no linter enforces file or function length, and Fallow's "split" refactoring targets are advisory.
+- Fallow owns architecture: zones and allowed imports live in `.fallowrc.jsonc`, runtime import and side-effect bans live in `.fallow/rules/`. Put every new file in a zone, and use these instead of `no-restricted-imports`.
+- Every lint suppression names its rule and gives a reason after `--`.
 
 Dependency patches live in `patches/`. After upgrading any patched package, run `bun run patches:check` and delete patches it reports as unused or no longer needed.
 

@@ -1,4 +1,5 @@
-/* oxlint-disable effect/avoid-native-object-helpers -- The test cookie jar implements browser cookie replacement using a native Map. */
+import * as Arr from "effect/Array";
+import * as HashMap from "effect/HashMap";
 import * as Schema from "effect/Schema";
 import * as Option from "effect/Option";
 
@@ -6,13 +7,15 @@ export function makeAuthClient(
   auth: { readonly handler: (request: Request) => Promise<Response> },
   origin: string,
 ) {
-  const cookies = new Map<string, string>();
+  // The browser cookie jar: one `name=value` pair per cookie name.
+  let cookies = HashMap.empty<string, string>();
+  const cookieHeader = () => Arr.join(Arr.fromIterable(HashMap.values(cookies)), "; ");
   const send = async (path: string, body?: Schema.Json) => {
     const headers = {
       origin,
       "content-type": "application/json",
       "x-effect-auth-csrf": "1",
-      cookie: [...cookies.values()].join("; "),
+      cookie: cookieHeader(),
     };
     const options = Option.match(Option.fromUndefinedOr(body), {
       onNone: (): RequestInit => ({ headers }),
@@ -30,10 +33,10 @@ export function makeAuthClient(
         Option.liftPredicate(cookie, (value) => /max-age=0/i.test(value)),
         {
           onNone: () => {
-            cookies.set(name, pair);
+            cookies = HashMap.set(cookies, name, pair);
           },
           onSome: () => {
-            cookies.delete(name);
+            cookies = HashMap.remove(cookies, name);
           },
         },
       );
@@ -44,7 +47,7 @@ export function makeAuthClient(
     send,
     request: () =>
       new Request(`${origin}/api/me`, {
-        headers: { cookie: [...cookies.values()].join("; ") },
+        headers: { cookie: cookieHeader() },
       }),
   };
 }

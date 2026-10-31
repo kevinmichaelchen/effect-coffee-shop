@@ -1,6 +1,6 @@
 import type { Tokenizer } from "@huggingface/tokenizers";
 import type { InferenceSession, Tensor } from "onnxruntime-web";
-import { extractAudioFeatures } from "./log-mel";
+import { extractAudioFeatures } from "./log-mel.kernel";
 import { createDecoder } from "./decoder";
 import { createSession, loadTokenizer } from "./model-assets";
 import { disposeTensors, required } from "./ort";
@@ -32,23 +32,25 @@ const promptTokens = (tokenizer: Tokenizer, count: number) =>
     `<|startoftext|><|im_start|>system\nPerform ASR in English.<|im_end|>\n<|im_start|>user\n${"<|audio|>".repeat(count)}<|im_end|>\n<|im_start|>assistant\n`,
     { add_special_tokens: false },
   ).ids;
+const maxNewTokens = 256;
+const prefillChunk = 1024;
+
+/** Autoregressive decoding: each step needs the previous token, so it is sequential by nature. */
 const generate = async (
   step: (ids: number[]) => Promise<number>,
   promptIds: number[],
   stops: Set<number>,
 ) => {
-  let token = 0;
-  let offset = 0;
-  while (offset < promptIds.length) {
-    token = await step(promptIds.slice(offset, offset + 1024));
-    offset += 1024;
-  }
-  const generated: number[] = [];
-  while (generated.length < 256 && !stops.has(token)) {
-    generated.push(token);
-    if (generated.length < 256) token = await step([token]);
-  }
-  return generated;
+  const prefill = async (offset: number, token: number): Promise<number> =>
+    offset < promptIds.length
+      ? prefill(offset + prefillChunk, await step(promptIds.slice(offset, offset + prefillChunk)))
+      : token;
+  const decode = async (token: number, generated: number[]): Promise<number[]> => {
+    if (generated.length >= maxNewTokens || stops.has(token)) return generated;
+    const next = [...generated, token];
+    return next.length < maxNewTokens ? decode(await step([token]), next) : next;
+  };
+  return decode(await prefill(0, 0), []);
 };
 const makeInference = (
   options: AudioTranscriberOptions,

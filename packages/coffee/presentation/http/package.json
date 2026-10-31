@@ -8,9 +8,9 @@
     "./api": "./src/api.ts"
   },
   "scripts": {
-    "typecheck": "tsrs --noEmit && effect-tsrs diagnostics --project tsconfig.json",
-    "lint": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
-    "lint:fix": "bun --bun oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
+    "typecheck": "tsrs --noEmit",
+    "lint": "effect-tsrs oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config .",
+    "lint:fix": "effect-tsrs oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --fix .",
     "lint:custom": "bun run --cwd ../../../tooling lint:custom:run --tsconfig ../coffee/presentation/http/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",

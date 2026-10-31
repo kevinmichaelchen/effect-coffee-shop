@@ -18,7 +18,9 @@
         "allowedDuplicatedPackages": ["effect"]
       }
     ],
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    // effect-tsrs's preset typings import `oxlint` without declaring it.
+    "paths": { "oxlint": ["./node_modules/oxlint"] }
   },
   "include": ["*.ts"]
 }

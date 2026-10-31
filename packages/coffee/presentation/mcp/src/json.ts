@@ -4,6 +4,6 @@
  * @module
  */
 import * as Formatter from "effect/Formatter";
+import type * as Schema from "effect/Schema";
 
-// oxlint-disable-next-line effect/no-unknown-parameters -- Serialization boundary accepts arbitrary values and validates/formats them before transport.
-export const prettyJson = (value: unknown): string => Formatter.formatJson(value, { space: 2 });
+export const prettyJson = (value: Schema.Json): string => Formatter.formatJson(value, { space: 2 });

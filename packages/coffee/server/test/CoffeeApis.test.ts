@@ -118,16 +118,16 @@ describe("the application service over the model", () => {
       const cart = yield* app.addCartItem({ drinkId: "espresso", size: "small", quantity: 2 });
       expect(cart.items).toHaveLength(2);
 
-      const session = yield* app.prepareCartCheckout();
+      const session = yield* app.prepareCartCheckout;
       expect(session.totalPrice).toEqual(cart.totalPrice);
 
       const order = yield* app.checkoutCart({ checkoutSessionId: session.id });
       expect(order.items.map((item) => item.drinkId)).toEqual(["latte", "espresso"]);
       expect(order.ownerUserId).toBe(sam.userId);
 
-      const emptied = yield* app.getCart();
+      const emptied = yield* app.getCart;
       expect(emptied.items).toEqual([]);
-      expect(Option.isNone(yield* app.getCurrentCheckoutSession())).toBe(true);
+      expect(Option.isNone(yield* app.getCurrentCheckoutSession)).toBe(true);
 
       const again = yield* app.checkoutCart({ checkoutSessionId: session.id }).pipe(Effect.flip);
       expect(again._tag).toBe("InvalidOrderInputError");

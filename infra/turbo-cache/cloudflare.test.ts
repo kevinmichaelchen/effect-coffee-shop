@@ -1,21 +1,18 @@
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "@alchemy.run/cloudflare";
 import * as Test from "alchemy/Test/Vitest";
+import * as SecureRandom from "effect/crypto/SecureRandom";
 import * as Effect from "effect/Effect";
+import * as FileSystem from "effect/FileSystem";
+import * as HttpBody from "effect/http/HttpBody";
+import * as HttpClient from "effect/http/HttpClient";
+import * as HttpClientRequest from "effect/http/HttpClientRequest";
+import type { HttpMethod } from "effect/http/HttpMethod";
+import * as Path from "effect/Path";
+import * as ChildProcess from "effect/process/ChildProcess";
 import * as Schema from "effect/Schema";
+import * as Stream from "effect/Stream";
 import { expect } from "vitest";
-// oxlint-disable-next-line effect/use-command-executor-service -- Native CLI integration adapter exercises the real Turbo process, filesystem and Node byte APIs; cleanup is acquireRelease-scoped.
-import { execFile } from "node:child_process";
-// oxlint-disable-next-line effect/avoid-node-imports -- Native CLI integration adapter exercises the real Turbo process, filesystem and Node byte APIs; cleanup is acquireRelease-scoped.
-import { randomBytes } from "node:crypto";
-// oxlint-disable-next-line effect/use-filesystem-service -- Native CLI integration adapter exercises the real Turbo process, filesystem and Node byte APIs; cleanup is acquireRelease-scoped.
-import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
-// oxlint-disable-next-line effect/use-temp-file-scoped -- Native CLI integration adapter exercises the real Turbo process, filesystem and Node byte APIs; cleanup is acquireRelease-scoped.
-import { tmpdir } from "node:os";
-// oxlint-disable-next-line effect/use-path-service -- Native CLI integration adapter exercises the real Turbo process, filesystem and Node byte APIs; cleanup is acquireRelease-scoped.
-import { join, resolve } from "node:path";
-// oxlint-disable-next-line effect/avoid-node-imports -- Native CLI integration adapter exercises the real Turbo process, filesystem and Node byte APIs; cleanup is acquireRelease-scoped.
-import { promisify } from "node:util";
 import Stack from "./cloudflare.ts";
 
 const { afterAll, beforeAll, deploy, destroy, test } = Test.make({
@@ -29,75 +26,103 @@ afterAll(destroy(Stack), { timeout: 120_000 });
 
 const writeToken = "test-write-token-not-a-real-secret-0001";
 const readToken = "test-read-token-not-a-real-secret-00002";
-const request = (url: string, path: string, init: RequestInit = {}) =>
-  // oxlint-disable-next-line effect/avoid-native-fetch -- Native HTTP probe checks the deployed wire protocol; rejection is handled at this adapter boundary.
-  Effect.promise((signal) => fetch(new URL(path, url), { ...init, signal }));
+const request = Effect.fn(function* (
+  url: string,
+  path: string,
+  init: {
+    readonly method?: HttpMethod;
+    readonly body?: HttpBody.HttpBody;
+    readonly headers?: Record<string, string>;
+  } = {},
+) {
+  const client = yield* HttpClient.HttpClient;
+  return yield* client
+    .execute(
+      HttpClientRequest.make(init.method ?? "GET")(new URL(path, url), {
+        headers: init.headers ?? {},
+        body: init.body ?? HttpBody.empty,
+      }),
+    )
+    .pipe(Effect.orDie);
+});
 
-const execute = promisify(execFile);
+const readMethods: ReadonlyArray<HttpMethod> = ["GET", "HEAD"];
+const sameBytes = (left: Uint8Array, right: Uint8Array) =>
+  left.length === right.length && left.every((byte, index) => byte === right[index]);
+
 const encodeJsonString = Schema.encodeUnknownSync(Schema.fromJsonString(Schema.Unknown));
+
+// Runs the real Turbo CLI and fails, like execFile, when it exits non-zero.
+const runTurbo = Effect.fn(
+  function* (input: { readonly cwd: string; readonly turbo: string; readonly url: string }) {
+    const handle = yield* ChildProcess.make(
+      input.turbo,
+      ["run", "build", "--cache=remote:rw", "--preflight"],
+      {
+        cwd: input.cwd,
+        extendEnv: true,
+        env: {
+          TURBO_API: input.url,
+          TURBO_TEAM: "cache-test",
+          TURBO_TOKEN: writeToken,
+          TURBO_REMOTE_CACHE_SIGNATURE_KEY: "test-signing-key-never-use-in-production",
+          TURBO_TELEMETRY_DISABLED: "1",
+        },
+      },
+    );
+    const [stdout, stderr, exitCode] = yield* Effect.all(
+      [
+        Stream.mkString(Stream.decodeText(handle.stdout)),
+        Stream.mkString(Stream.decodeText(handle.stderr)),
+        handle.exitCode,
+      ],
+      { concurrency: "unbounded" },
+    );
+    if (exitCode !== 0) return yield* Effect.die(`turbo exited with ${exitCode}: ${stderr}`);
+    return { stdout };
+  },
+  Effect.scoped,
+  Effect.timeout("30 seconds"),
+  Effect.orDie,
+);
 
 test(
   "the real Turbo CLI restores a signed multipart artifact from an empty local cache",
   Effect.gen(function* () {
+    const fs = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
     const url = yield* Schema.decodeUnknownEffect(Schema.String)((yield* deployed).url);
-    const cwd = yield* Effect.acquireRelease(
-      Effect.promise(() => mkdtemp(join(tmpdir(), "effect-turbo-cache-"))),
-      (directory) => Effect.promise(() => rm(directory, { recursive: true, force: true })),
+    const cwd = yield* fs.makeTempDirectoryScoped({ prefix: "effect-turbo-cache-" });
+    const bytes = SecureRandom.randomBytesUnsafe(9 * 1024 * 1024 + 7);
+    yield* fs.writeFile(path.join(cwd, "input.bin"), bytes);
+    yield* fs.writeFileString(
+      path.join(cwd, "package.json"),
+      encodeJsonString({
+        name: "signed-cache-fixture",
+        private: true,
+        packageManager: "bun@1.4.4",
+        scripts: { build: "node build.mjs" },
+      }),
     );
-    const bytes = randomBytes(9 * 1024 * 1024 + 7);
-    yield* Effect.promise(() => writeFile(join(cwd, "input.bin"), bytes));
-    yield* Effect.promise(() =>
-      writeFile(
-        join(cwd, "package.json"),
-        encodeJsonString({
-          name: "signed-cache-fixture",
-          private: true,
-          packageManager: "bun@1.4.4",
-          scripts: { build: "node build.mjs" },
-        }),
-      ),
+    yield* fs.writeFileString(
+      path.join(cwd, "turbo.json"),
+      encodeJsonString({
+        remoteCache: { signature: true },
+        tasks: { build: { outputs: ["dist/**"], inputs: ["input.bin", "build.mjs"] } },
+      }),
     );
-    yield* Effect.promise(() =>
-      writeFile(
-        join(cwd, "turbo.json"),
-        encodeJsonString({
-          remoteCache: { signature: true },
-          tasks: { build: { outputs: ["dist/**"], inputs: ["input.bin", "build.mjs"] } },
-        }),
-      ),
+    yield* fs.writeFileString(
+      path.join(cwd, "build.mjs"),
+      'import { mkdirSync, copyFileSync, appendFileSync } from "node:fs"; mkdirSync("dist", {recursive:true}); copyFileSync("input.bin", "dist/output.bin"); appendFileSync("executions", "built\\n");',
     );
-    yield* Effect.promise(() =>
-      writeFile(
-        join(cwd, "build.mjs"),
-        'import { mkdirSync, copyFileSync, appendFileSync } from "node:fs"; mkdirSync("dist", {recursive:true}); copyFileSync("input.bin", "dist/output.bin"); appendFileSync("executions", "built\\n");',
-      ),
-    );
-    const turbo = resolve(import.meta.dirname, "../../node_modules/.bin/turbo");
-    const run = () =>
-      Effect.promise((signal) =>
-        execute(turbo, ["run", "build", "--cache=remote:rw", "--preflight"], {
-          cwd,
-          signal,
-          timeout: 30_000,
-          env: {
-            ...process.env,
-            TURBO_API: url,
-            TURBO_TEAM: "cache-test",
-            TURBO_TOKEN: writeToken,
-            TURBO_REMOTE_CACHE_SIGNATURE_KEY: "test-signing-key-never-use-in-production",
-            TURBO_TELEMETRY_DISABLED: "1",
-          },
-        }),
-      );
-    yield* run();
-    yield* Effect.promise(() => rm(join(cwd, "dist"), { recursive: true }));
-    yield* Effect.promise(() => rm(join(cwd, ".turbo"), { recursive: true, force: true }));
-    const restored = yield* run();
+    const turbo = path.resolve(import.meta.dirname, "../../node_modules/.bin/turbo");
+    yield* runTurbo({ cwd, turbo, url });
+    yield* fs.remove(path.join(cwd, "dist"), { recursive: true });
+    yield* fs.remove(path.join(cwd, ".turbo"), { recursive: true, force: true });
+    const restored = yield* runTurbo({ cwd, turbo, url });
     expect(restored.stdout).toContain("1 cached");
-    expect(
-      (yield* Effect.promise(() => readFile(join(cwd, "dist/output.bin")))).equals(bytes),
-    ).toBe(true);
-    expect(yield* Effect.promise(() => readFile(join(cwd, "executions"), "utf8"))).toBe("built\n");
+    expect(sameBytes(yield* fs.readFile(path.join(cwd, "dist/output.bin")), bytes)).toBe(true);
+    expect(yield* fs.readFileString(path.join(cwd, "executions"))).toBe("built\n");
   }),
 );
 
@@ -109,7 +134,7 @@ test(
     const path = "/v8/artifacts/large-artifact?slug=cache-test";
     const put = yield* request(url, path, {
       method: "PUT",
-      body: bytes,
+      body: HttpBody.uint8Array(bytes),
       headers: {
         authorization: `Bearer ${writeToken}`,
         "content-length": String(bytes.byteLength),
@@ -124,23 +149,23 @@ test(
       method: "HEAD",
       headers: { authorization: `Bearer ${readToken}` },
     });
-    expect(head.headers.get("content-length")).toBe(String(bytes.byteLength));
+    expect(head.headers["content-length"]).toBe(String(bytes.byteLength));
     yield* Effect.forEach(
-      ["GET", "HEAD"],
+      readMethods,
       Effect.fnUntraced(function* (method) {
         const result = yield* request(url, path, {
           method,
           headers: { authorization: `Bearer ${readToken}` },
         });
         expect(result.status).toBe(200);
-        expect(result.headers.get("x-artifact-tag")).toBe("signature-preserved-at-9-MiB");
-        expect(result.headers.get("x-artifact-duration")).toBe("1234");
-        expect(result.headers.get("x-artifact-sha")).toBe("abcdef");
-        expect(result.headers.get("x-artifact-dirty-hash")).toBe("dirty123");
-        const body = yield* Effect.promise(() => result.arrayBuffer());
-        expect(
-          Buffer.from(body).equals(Buffer.from(method === "GET" ? bytes : new Uint8Array())),
-        ).toBe(true);
+        expect(result.headers["x-artifact-tag"]).toBe("signature-preserved-at-9-MiB");
+        expect(result.headers["x-artifact-duration"]).toBe("1234");
+        expect(result.headers["x-artifact-sha"]).toBe("abcdef");
+        expect(result.headers["x-artifact-dirty-hash"]).toBe("dirty123");
+        const body = yield* result.arrayBuffer.pipe(Effect.orDie);
+        expect(sameBytes(new Uint8Array(body), method === "GET" ? bytes : new Uint8Array())).toBe(
+          true,
+        );
       }),
       { concurrency: 1, discard: true },
     );
@@ -151,10 +176,10 @@ test(
   "enforces authentication, tenant boundaries, write permissions and preflight",
   Effect.gen(function* () {
     const url = yield* Schema.decodeUnknownEffect(Schema.String)((yield* deployed).url);
-    const status = Effect.fn(function* (path: string, init: RequestInit = {}) {
+    const status = Effect.fn(function* (path: string, init: Parameters<typeof request>[2] = {}) {
       const response = yield* request(url, path, init);
       // Consume error responses so the test itself does not hold open connections.
-      yield* Effect.promise(() => response.text());
+      yield* response.text.pipe(Effect.orDie);
       return response.status;
     });
     expect(yield* status("/v8/artifacts/status?slug=cache-test")).toBe(401);
@@ -169,7 +194,7 @@ test(
         expect(
           yield* status(`/v8/artifacts/forbidden-${attempt}?slug=cache-test`, {
             method: "PUT",
-            body: "bad",
+            body: HttpBody.text("bad"),
             headers: { authorization: `Bearer ${readToken}` },
           }),
         ).toBe(403);
@@ -179,9 +204,9 @@ test(
         });
         expect({
           status: preflight.status,
-          body: yield* Effect.promise(() => preflight.text()),
+          body: yield* preflight.text.pipe(Effect.orDie),
         }).toEqual({ status: 204, body: "" });
-        expect(preflight.headers.get("access-control-allow-headers")).toContain("Authorization");
+        expect(preflight.headers["access-control-allow-headers"]).toContain("Authorization");
       }),
       { concurrency: 1, discard: true },
     );

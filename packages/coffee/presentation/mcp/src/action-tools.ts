@@ -7,6 +7,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as McpServer from "effect/ai/McpServer";
+import type * as Tool from "effect/ai/Tool";
+import type * as Toolkit from "effect/ai/Toolkit";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { McpActor, withMcpActor } from "./actor.ts";
 import {
@@ -26,8 +28,7 @@ const noCheckoutSessionView: NoCheckoutSessionView = {
   status: "no_checkout_session",
 };
 
-// oxlint-disable-next-line effect/prefer-option-over-null -- MCP callback contract permits an explicitly undefined toolCallId.
-const annotateToolCall = (context: { readonly toolCallId?: string | undefined }) =>
+const annotateToolCall = (context: Toolkit.HandlerContext<Tool.Any>) =>
   Effect.annotateSpans("mcp.tool_call_id", context.toolCallId);
 
 export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe(
@@ -40,7 +41,7 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
           effect.pipe(withMcpActor, Effect.provideService(McpActor, actor));
         return {
           list_menu: (_input, context) =>
-            app.listMenu().pipe(
+            app.listMenu.pipe(
               Effect.map((menu) => ({ menu: toMenuView(menu) })),
               annotateToolCall(context),
               runWithActor,
@@ -88,7 +89,7 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
               .cancelOrder(orderId)
               .pipe(Effect.map(toCoffeeOrderView), annotateToolCall(context), runWithActor),
           get_cart: (_input, context) =>
-            app.getCart().pipe(Effect.map(toCartView), annotateToolCall(context), runWithActor),
+            app.getCart.pipe(Effect.map(toCartView), annotateToolCall(context), runWithActor),
           add_cart_item: (input, context) =>
             app
               .addCartItem(input)
@@ -102,13 +103,15 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
               .removeCartItem(input)
               .pipe(Effect.map(toCartView), annotateToolCall(context), runWithActor),
           clear_cart: (_input, context) =>
-            app.clearCart().pipe(Effect.map(toCartView), annotateToolCall(context), runWithActor),
+            app.clearCart.pipe(Effect.map(toCartView), annotateToolCall(context), runWithActor),
           prepare_cart_checkout: (_input, context) =>
-            app
-              .prepareCartCheckout()
-              .pipe(Effect.map(toCheckoutSessionView), annotateToolCall(context), runWithActor),
+            app.prepareCartCheckout.pipe(
+              Effect.map(toCheckoutSessionView),
+              annotateToolCall(context),
+              runWithActor,
+            ),
           get_checkout_session: (_input, context) =>
-            app.getCurrentCheckoutSession().pipe(
+            app.getCurrentCheckoutSession.pipe(
               Effect.map((session) =>
                 Option.match(session, {
                   onNone: () => noCheckoutSessionView,

@@ -3,7 +3,6 @@ import { expect } from "vitest";
 import * as Effect from "effect/Effect";
 import * as Deferred from "effect/Deferred";
 import * as Fiber from "effect/Fiber";
-import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as Stream from "effect/Stream";
 import { CacheConfig } from "./config.ts";
@@ -34,15 +33,13 @@ const fixture = (failure?: "write" | "complete" | "read") => {
         state.completes += 1;
         return failure === "complete" ? Effect.fail(storageFailure()) : Effect.void;
       }),
-    abort: () =>
-      Effect.sync(() => {
-        state.aborts += 1;
-      }),
+    abort: Effect.sync(() => {
+      state.aborts += 1;
+    }),
   };
   const store = ArtifactStore.of({
-    head: () =>
-      failure === "read" ? Effect.fail(storageFailure()) : Effect.succeed(Option.none()),
-    get: () => (failure === "read" ? Effect.fail(storageFailure()) : Effect.succeed(Option.none())),
+    head: () => (failure === "read" ? Effect.fail(storageFailure()) : Effect.succeedNone),
+    get: () => (failure === "read" ? Effect.fail(storageFailure()) : Effect.succeedNone),
     begin: () =>
       Effect.sync(() => {
         state.begins += 1;
@@ -78,17 +75,15 @@ it.effect("packs multipart uploads and completes only after the final byte", () 
 );
 
 it.effect("aborts uploads for truncated and oversized bodies", () =>
-  Effect.gen(function* () {
-    yield* Effect.forEach(
-      ["1", "100"],
-      Effect.fnUntraced(function* (declared) {
-        const test = fixture();
-        expect((yield* test.run(put(new Uint8Array(10), declared))).status).toBe(400);
-        expect(test.state).toEqual({ begins: 1, completes: 0, aborts: 1 });
-      }),
-      { concurrency: 1, discard: true },
-    );
-  }),
+  Effect.forEach(
+    ["1", "100"],
+    Effect.fnUntraced(function* (declared) {
+      const test = fixture();
+      expect((yield* test.run(put(new Uint8Array(10), declared))).status).toBe(400);
+      expect(test.state).toEqual({ begins: 1, completes: 0, aborts: 1 });
+    }),
+    { concurrency: 1, discard: true },
+  ),
 );
 
 it.effect("aborts failed writes and failed completion without returning success", () =>
@@ -113,10 +108,9 @@ it.effect("aborts multipart state when the request fiber is interrupted", () =>
         Effect.succeed({
           write: () => Deferred.succeed(started, undefined).pipe(Effect.andThen(Effect.never)),
           complete: () => Effect.die("Interrupted upload must never complete"),
-          abort: () =>
-            Effect.sync(() => {
-              aborted = true;
-            }),
+          abort: Effect.sync(() => {
+            aborted = true;
+          }),
         }),
     });
     const fiber = yield* handleRequest(put(new Uint8Array(PART_BYTES))).pipe(
@@ -156,23 +150,21 @@ it.effect("rejects invalid lengths and metadata before creating an upload", () =
 );
 
 it.effect("distinguishes storage outages from cache misses, including HEAD", () =>
-  Effect.gen(function* () {
-    yield* Effect.forEach(
-      ["GET", "HEAD"],
-      Effect.fnUntraced(function* (method) {
-        const request = () =>
-          new Request("http://cache/v8/artifacts/hash?teamId=test", {
-            method,
-            headers: { authorization: `Bearer ${Redacted.value(config.readToken)}` },
-          });
-        expect((yield* fixture("read").run(request())).status).toBe(503);
-        const miss = yield* fixture().run(request());
-        expect(miss.status).toBe(404);
-        expect(miss.body).toBeNull();
-      }),
-      { concurrency: 1, discard: true },
-    );
-  }),
+  Effect.forEach(
+    ["GET", "HEAD"],
+    Effect.fnUntraced(function* (method) {
+      const request = () =>
+        new Request("http://cache/v8/artifacts/hash?teamId=test", {
+          method,
+          headers: { authorization: `Bearer ${Redacted.value(config.readToken)}` },
+        });
+      expect((yield* fixture("read").run(request())).status).toBe(503);
+      const miss = yield* fixture().run(request());
+      expect(miss.status).toBe(404);
+      expect(miss.body).toBeNull();
+    }),
+    { concurrency: 1, discard: true },
+  ),
 );
 
 it.effect("rejects unauthenticated writes, read-only writes, and conflicting tenants", () =>
@@ -205,8 +197,8 @@ it.effect("preserves download metadata and stream bytes", () =>
     const metadata = { duration: "12", tag: "signed", sha: "sha", dirtyHash: "dirty" };
     const object = { size: 3, metadata, body: Stream.make(new Uint8Array([1, 2, 3])) };
     const store = ArtifactStore.of({
-      head: () => Effect.succeed(Option.some(object)),
-      get: () => Effect.succeed(Option.some(object)),
+      head: () => Effect.succeedSome(object),
+      get: () => Effect.succeedSome(object),
       begin: () => Effect.fail(storageFailure()),
     });
     const response = yield* handleRequest(
@@ -216,7 +208,7 @@ it.effect("preserves download metadata and stream bytes", () =>
     ).pipe(Effect.provideService(ArtifactStore, store), Effect.provideService(CacheConfig, config));
     expect(response.headers.get("x-artifact-tag")).toBe("signed");
     expect(response.headers.get("content-length")).toBe("3");
-    expect(new Uint8Array(yield* Effect.promise(() => response.arrayBuffer()))).toEqual(
+    expect(new Uint8Array(yield* Effect.promise(async () => response.arrayBuffer()))).toEqual(
       new Uint8Array([1, 2, 3]),
     );
   }),

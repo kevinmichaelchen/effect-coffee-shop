@@ -5,50 +5,60 @@
  */
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "@alchemy.run/cloudflare";
+import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
+import * as HttpClient from "effect/http/HttpClient";
+import * as HttpClientRequest from "effect/http/HttpClientRequest";
+import type * as HttpClientResponse from "effect/http/HttpClientResponse";
+import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 import CoffeeWorker from "@effect-coffee-shop/coffee-server/CoffeeWorker";
 import { booleanWithDefault, numberBetweenWithDefault } from "./config.ts";
 import { coffeeStackName } from "./shared.ts";
 
-const state = () =>
-  // oxlint-disable-next-line effect/avoid-process-env -- Alchemy state-backend bootstrap runs before the stack Effect or Config provider exists.
-  process.env.ALCHEMY_LOCAL_STATE === "1" ? Alchemy.localState() : Cloudflare.state();
+// The state layer reads its backend choice from Config when Alchemy builds it.
+const state = Layer.unwrap(
+  Config.String("ALCHEMY_LOCAL_STATE").pipe(
+    Config.withDefault(""),
+    Effect.orDie,
+    Effect.map((local) => (local === "1" ? Alchemy.localState() : Cloudflare.state())),
+  ),
+);
 
-class DeploySmokeCheckError extends Schema.TaggedError<DeploySmokeCheckError>()(
-  "DeploySmokeCheckError",
-  {
-    message: Schema.String,
-    cause: Schema.optionalKey(Schema.Unknown),
-  },
-) {}
+class DeploySmokeCheckError extends Schema.TaggedError<
+  DeploySmokeCheckError,
+  { readonly brand: unique symbol }
+>()("DeploySmokeCheckError", {
+  message: Schema.String,
+  cause: Schema.optionalKey(Schema.Unknown),
+}) {}
 
 const fetchSmokeResponse = (input: {
-  readonly init?: RequestInit;
+  readonly method?: "GET" | "POST";
   readonly label: string;
   readonly url: string;
 }) =>
-  Effect.tryPromise({
-    // oxlint-disable-next-line effect/avoid-native-fetch -- Native HTTP probe checks the deployed wire protocol; rejection is handled at this adapter boundary.
-    try: () => fetch(input.url, input.init),
-    catch: (cause) =>
-      new DeploySmokeCheckError({
-        message: `Unable to run ${input.label} smoke check for ${input.url}.`,
-        cause,
-      }),
-  });
+  HttpClient.execute(HttpClientRequest.make(input.method ?? "GET")(input.url)).pipe(
+    Effect.mapError(
+      (cause) =>
+        new DeploySmokeCheckError({
+          message: `Unable to run ${input.label} smoke check for ${input.url}.`,
+          cause,
+        }),
+    ),
+  );
 
 const requireOkSmokeResponse = (input: {
   readonly label: string;
-  readonly response: Response;
+  readonly response: HttpClientResponse.HttpClientResponse;
   readonly url: string;
 }) =>
-  input.response.ok
+  input.response.status >= 200 && input.response.status < 300
     ? Effect.void
     : Effect.fail(
         new DeploySmokeCheckError({
-          message: `${input.label} smoke check failed for ${input.url}: ${input.response.status} ${input.response.statusText}`,
+          message: `${input.label} smoke check failed for ${input.url}: ${input.response.status}`,
         }),
       );
 
@@ -86,11 +96,11 @@ const CloudflareDeploymentSmokeCheck = Alchemy.Action(
 
     const mcpUrl = new URL("/mcp", input.url).toString();
     const mcp = yield* fetchSmokeResponse({
-      init: { method: "POST" },
+      method: "POST",
       label: "MCP OAuth discovery",
       url: mcpUrl,
     });
-    if (mcp.status !== 401 || !mcp.headers.get("www-authenticate")) {
+    if (mcp.status !== 401 || (mcp.headers["www-authenticate"] ?? "") === "") {
       return yield* new DeploySmokeCheckError({
         message: "MCP must reject unauthenticated requests with OAuth discovery.",
       });
@@ -107,7 +117,7 @@ export default Alchemy.Stack(
   coffeeStackName,
   {
     providers: Cloudflare.providers(),
-    state: state(),
+    state,
   },
   Effect.gen(function* () {
     // Alchemy resolves relative paths against the working directory, which is

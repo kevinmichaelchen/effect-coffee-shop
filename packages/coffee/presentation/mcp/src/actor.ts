@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect";
 import {
   CurrentActor,
   type AppActor,
-  AuthenticationRequiredError,
+  type AuthenticationRequiredError,
 } from "@effect-coffee-shop/coffee-application/CurrentActor";
 
 /** Resolve authority for each invocation; MCP client/session IDs are not identities. */
@@ -13,7 +13,7 @@ export class McpActor extends Context.Service<
   {
     readonly current: Effect.Effect<AppActor, AuthenticationRequiredError | InternalAppError>;
   }
->()("coffee/mcp/Actor") {}
+>()("@effect-coffee-shop/coffee-mcp/actor/McpActor") {}
 
 export const withMcpActor = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
   Effect.flatMap(McpActor, ({ current }) =>

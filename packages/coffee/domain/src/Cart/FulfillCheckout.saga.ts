@@ -17,12 +17,13 @@ export class FulfillCheckout extends Domain.Saga("FulfillCheckout", {
 export const FulfillCheckoutLive = FulfillCheckout.toLayer(
   Effect.gen(function* () {
     const orders = yield* Order;
+    // The payload is annotated so type-aware lint can resolve the handler's input.
     return Effect.fn("FulfillCheckout.run")(function* ({
       key,
       customerId,
       customerName,
       checkout,
-    }) {
+    }: typeof FulfillCheckout.workflow.payloadSchema.Type) {
       yield* Activity.make({
         name: "PlaceCheckedOutOrder",
         execute: orders

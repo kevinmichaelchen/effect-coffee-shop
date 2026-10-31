@@ -75,11 +75,11 @@ import type {
 } from "./contracts.ts";
 import {
   type AuthenticatedActor,
-  AuthenticationRequiredError,
-  CurrentActor,
+  type AuthenticationRequiredError,
+  type CurrentActor,
   requireSignedInActor,
   requireStaffActor,
-  StaffRoleRequiredError,
+  type StaffRoleRequiredError,
   staffRoleRequiredError,
 } from "./CurrentActor.ts";
 import {
@@ -108,7 +108,7 @@ type OrderStatusError =
 /** How long a checkout waits for its order to be placed by the domain's policy. */
 const checkoutPlacementTimeout = "10 seconds";
 
-const defaultQuantity = Schema.decodeUnknownSync(Quantity)(1);
+const defaultQuantity = Schema.decodeSync(Quantity)(1);
 const decodeOrderStatus = Schema.decodeUnknownOption(OrderStatus);
 
 const internal = (message: string) => (cause: unknown) => new InternalAppError({ message, cause });
@@ -180,7 +180,7 @@ const quote = (items: ReadonlyArray<OrderItemInput>) =>
 export class CoffeeOrderApp extends Context.Service<
   CoffeeOrderApp,
   {
-    readonly listMenu: () => Effect.Effect<Menu, InternalAppError>;
+    readonly listMenu: Effect.Effect<Menu, InternalAppError>;
     readonly getItemOptions: (
       input: ItemOptionsRequest,
     ) => Effect.Effect<ItemOptions, DrinkNotFoundError | InternalAppError>;
@@ -217,7 +217,7 @@ export class CoffeeOrderApp extends Context.Service<
     readonly cancelOrder: (
       orderId: OrderId,
     ) => Effect.Effect<CoffeeOrder, OrderStatusError, CurrentActor>;
-    readonly getCart: () => Effect.Effect<CartSnapshot, CartError, CurrentActor>;
+    readonly getCart: Effect.Effect<CartSnapshot, CartError, CurrentActor>;
     readonly addCartItem: (
       input: OrderItemInput,
     ) => Effect.Effect<CartSnapshot, CartError, CurrentActor>;
@@ -227,18 +227,18 @@ export class CoffeeOrderApp extends Context.Service<
     readonly removeCartItem: (
       input: CartItemIdRequest,
     ) => Effect.Effect<CartSnapshot, CartError, CurrentActor>;
-    readonly clearCart: () => Effect.Effect<CartSnapshot, CartError, CurrentActor>;
+    readonly clearCart: Effect.Effect<CartSnapshot, CartError, CurrentActor>;
     readonly checkoutCart: (
       input: CheckoutCartRequest,
     ) => Effect.Effect<CoffeeOrder, CartError, CurrentActor>;
-    readonly prepareCartCheckout: () => Effect.Effect<CheckoutSession, CartError, CurrentActor>;
-    readonly getCurrentCheckoutSession: () => Effect.Effect<
+    readonly prepareCartCheckout: Effect.Effect<CheckoutSession, CartError, CurrentActor>;
+    readonly getCurrentCheckoutSession: Effect.Effect<
       Option.Option<CheckoutSession>,
       AuthenticationRequiredError | InternalAppError,
       CurrentActor
     >;
   }
->()("effect-coffee-shop/application/CoffeeOrderApp") {
+>()("@effect-coffee-shop/coffee-application/CoffeeOrderApp") {
   static readonly layer = Layer.effect(
     this,
     Effect.gen(function* () {
@@ -305,7 +305,7 @@ export class CoffeeOrderApp extends Context.Service<
       });
 
       return CoffeeOrderApp.of({
-        listMenu: () => Effect.succeed(menuItems),
+        listMenu: Effect.succeed(menuItems),
         getItemOptions: (input) =>
           Effect.fromOption(findMenuItem(input.drinkId)).pipe(
             Effect.mapError(() => new DrinkNotFoundError({ drinkId: input.drinkId })),
@@ -382,7 +382,7 @@ export class CoffeeOrderApp extends Context.Service<
                       message: `status "${requested}" is not supported`,
                     }),
                 ),
-                Effect.map(Option.some),
+                Effect.asSome,
               ),
           });
           const listed = yield* (
@@ -401,7 +401,7 @@ export class CoffeeOrderApp extends Context.Service<
         markReady: (orderId) => moveOrder(orderId, new MarkReady()),
         pickUpOrder: (orderId) => moveOrder(orderId, new PickUpOrder()),
         cancelOrder: (orderId) => moveOrder(orderId, new CancelOrder()),
-        getCart: () => cartOf().pipe(Effect.map(({ actor, cart }) => toCartSnapshot(actor, cart))),
+        getCart: cartOf().pipe(Effect.map(({ actor, cart }) => toCartSnapshot(actor, cart))),
         addCartItem: (input) =>
           changeCart((actor) =>
             Effect.flatMap(makeCartItemId, (cartItemId) =>
@@ -414,25 +414,26 @@ export class CoffeeOrderApp extends Context.Service<
           ),
         removeCartItem: ({ cartItemId }) =>
           changeCart((actor) => carts.send(actor.userId, new RemoveCartItem({ cartItemId }))),
-        clearCart: () => changeCart((actor) => carts.send(actor.userId, new ClearCart())),
-        prepareCartCheckout: Effect.fn("CoffeeOrders.prepareCartCheckout")(function* () {
-          const actor = yield* requireSignedInActor();
-          const checkoutId = yield* makeCheckoutId;
-          const { reply } = yield* carts
-            .send(actor.userId, new PrepareCheckout({ checkoutId }))
-            .pipe(
+        clearCart: changeCart((actor) => carts.send(actor.userId, new ClearCart())),
+        prepareCartCheckout: Effect.all([requireSignedInActor(), makeCheckoutId], {
+          concurrency: 1,
+        }).pipe(
+          Effect.flatMap(([actor, checkoutId]) =>
+            carts.send(actor.userId, new PrepareCheckout({ checkoutId })).pipe(
               asDomainActor(actor),
               Effect.mapError(fromCartRejection("Unable to save checkout session right now")),
-            );
-          return toCheckoutSession(actor, reply.checkout);
-        }),
-        getCurrentCheckoutSession: Effect.fn("CoffeeOrders.getCurrentCheckoutSession")(
-          function* () {
-            const { actor, cart } = yield* cartOf();
-            return Option.map(Option.fromNullishOr(cart.checkout), (checkout) =>
+              Effect.map(({ reply }) => toCheckoutSession(actor, reply.checkout)),
+            ),
+          ),
+          Effect.withSpan("CoffeeOrders.prepareCartCheckout"),
+        ),
+        getCurrentCheckoutSession: cartOf().pipe(
+          Effect.map(({ actor, cart }) =>
+            Option.map(Option.fromNullishOr(cart.checkout), (checkout) =>
               toCheckoutSession(actor, checkout),
-            );
-          },
+            ),
+          ),
+          Effect.withSpan("CoffeeOrders.getCurrentCheckoutSession"),
         ),
         checkoutCart: Effect.fn("CoffeeOrders.checkoutCart")(function* (input) {
           const actor = yield* requireSignedInActor();

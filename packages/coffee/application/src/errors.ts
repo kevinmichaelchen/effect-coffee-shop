@@ -8,7 +8,10 @@ import * as Schema from "effect/Schema";
 import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import { OrderStatus } from "@effect-coffee-shop/coffee-domain/Order/OrderStatus";
 
-export class InternalAppError extends Schema.TaggedError<InternalAppError>()(
+export class InternalAppError extends Schema.TaggedError<
+  InternalAppError,
+  { readonly brand: unique symbol }
+>()(
   "InternalAppError",
   {
     message: Schema.String,
@@ -17,7 +20,10 @@ export class InternalAppError extends Schema.TaggedError<InternalAppError>()(
   { httpApiStatus: 500 },
 ) {}
 
-export class DrinkNotFoundError extends Schema.TaggedError<DrinkNotFoundError>()(
+export class DrinkNotFoundError extends Schema.TaggedError<
+  DrinkNotFoundError,
+  { readonly brand: unique symbol }
+>()(
   "DrinkNotFoundError",
   {
     drinkId: Schema.String,
@@ -25,7 +31,10 @@ export class DrinkNotFoundError extends Schema.TaggedError<DrinkNotFoundError>()
   { httpApiStatus: 404 },
 ) {}
 
-export class InvalidOrderInputError extends Schema.TaggedError<InvalidOrderInputError>()(
+export class InvalidOrderInputError extends Schema.TaggedError<
+  InvalidOrderInputError,
+  { readonly brand: unique symbol }
+>()(
   "InvalidOrderInputError",
   {
     message: Schema.String,
@@ -33,7 +42,10 @@ export class InvalidOrderInputError extends Schema.TaggedError<InvalidOrderInput
   { httpApiStatus: 400 },
 ) {}
 
-export class OrderNotFoundError extends Schema.TaggedError<OrderNotFoundError>()(
+export class OrderNotFoundError extends Schema.TaggedError<
+  OrderNotFoundError,
+  { readonly brand: unique symbol }
+>()(
   "OrderNotFoundError",
   {
     orderId: OrderId,
@@ -41,7 +53,10 @@ export class OrderNotFoundError extends Schema.TaggedError<OrderNotFoundError>()
   { httpApiStatus: 404 },
 ) {}
 
-export class InvalidOrderStatusTransitionError extends Schema.TaggedError<InvalidOrderStatusTransitionError>()(
+export class InvalidOrderStatusTransitionError extends Schema.TaggedError<
+  InvalidOrderStatusTransitionError,
+  { readonly brand: unique symbol }
+>()(
   "InvalidOrderStatusTransitionError",
   {
     orderId: OrderId,

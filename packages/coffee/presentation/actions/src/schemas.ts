@@ -6,16 +6,6 @@
 import * as Schema from "effect/Schema";
 import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import {
-  CartItemIdRequest,
-  CheckoutCartRequest,
-  ItemOptionsRequest,
-  ListOrdersRequest,
-  OrderItemInput,
-  PlaceOrderRequest,
-  QuoteOrderRequest,
-  UpdateCartItemRequest,
-} from "@effect-coffee-shop/coffee-application/contracts";
-import {
   AuthenticationRequiredError,
   StaffRoleRequiredError,
 } from "@effect-coffee-shop/coffee-application/CurrentActor";
@@ -42,27 +32,6 @@ export const EmptyActionInput = Schema.Record(Schema.String, Schema.Never);
 export const OrderIdActionInput = Schema.Struct({
   orderId: OrderId,
 });
-
-// oxlint-disable-next-line effect/require-schema-type-alias -- Schema decoder functions have no .Type member.
-export const decodeEmptyActionInput = Schema.decodeUnknownEffect(EmptyActionInput);
-// oxlint-disable-next-line effect/require-schema-type-alias -- Schema decoder functions have no .Type member.
-export const decodeOrderIdInput = Schema.decodeUnknownEffect(OrderIdActionInput);
-// oxlint-disable-next-line effect/require-schema-type-alias -- Schema decoder functions have no .Type member.
-export const decodeCartItemIdInput = Schema.decodeUnknownEffect(CartItemIdRequest);
-// oxlint-disable-next-line effect/require-schema-type-alias -- Schema decoder functions have no .Type member.
-export const decodeCheckoutCartInput = Schema.decodeUnknownEffect(CheckoutCartRequest);
-// oxlint-disable-next-line effect/require-schema-type-alias -- Schema decoder functions have no .Type member.
-export const decodeItemOptionsInput = Schema.decodeUnknownEffect(ItemOptionsRequest);
-// oxlint-disable-next-line effect/require-schema-type-alias -- Schema decoder functions have no .Type member.
-export const decodeListOrdersInput = Schema.decodeUnknownEffect(ListOrdersRequest);
-// oxlint-disable-next-line effect/require-schema-type-alias -- Schema decoder functions have no .Type member.
-export const decodeOrderItemInput = Schema.decodeUnknownEffect(OrderItemInput);
-// oxlint-disable-next-line effect/require-schema-type-alias -- Schema decoder functions have no .Type member.
-export const decodePlaceOrderInput = Schema.decodeUnknownEffect(PlaceOrderRequest);
-// oxlint-disable-next-line effect/require-schema-type-alias -- Schema decoder functions have no .Type member.
-export const decodeQuoteOrderInput = Schema.decodeUnknownEffect(QuoteOrderRequest);
-// oxlint-disable-next-line effect/require-schema-type-alias -- Schema decoder functions have no .Type member.
-export const decodeUpdateCartItemInput = Schema.decodeUnknownEffect(UpdateCartItemRequest);
 
 export type AppError = typeof AppError.Type;
 

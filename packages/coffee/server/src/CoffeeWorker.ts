@@ -139,11 +139,12 @@ export default class CoffeeWorker extends Cloudflare.Worker<CoffeeWorker>()(
       deployment: yield* readAuthDeployment(),
       db: yield* Cloudflare.D1.QueryDatabase(yield* AuthDatabase),
       readAuthSecret: yield* Cloudflare.SecretsStore.ReadSecret(yield* authSecret()),
-      orderFeed: yield* orderFeedHttp(),
+      orderFeed: yield* orderFeedHttp,
       customerApi: (yield* CustomerApi).fetch,
       staffApi: (yield* StaffApi).fetch,
       app: yield* CoffeeOrderApp,
     };
     return { fetch: serve(services) };
+    // oxlint-disable-next-line effecttsgo/strict-effect-provide -- The Worker definition is the application entry point that composes CoffeeLive.
   }).pipe(Effect.provide(CoffeeLive)),
 ) {}

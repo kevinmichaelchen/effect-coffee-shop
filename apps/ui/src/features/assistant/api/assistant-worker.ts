@@ -1,15 +1,16 @@
-import { Data, Effect, Option, PubSub, Ref, Schema, Stream } from "effect";
+import { Effect, Option, PubSub, Ref, Schema, Stream } from "effect";
 import { ManagedResource } from "foldkit";
 import type { ChatMessage } from "#features/assistant/lib/prompt.ts";
 import { type LocalModel, WorkerEvent, WorkerRequest } from "#features/assistant/lib/protocol.ts";
 import type { ToolDefinition } from "#features/assistant/lib/tools.ts";
 
-export class AssistantError extends Data.TaggedError("AssistantError")<{
-  readonly message: string;
-}> {}
+class AssistantError extends Schema.TaggedError<
+  AssistantError,
+  { readonly brand: unique symbol }
+>()("AssistantError", { message: Schema.String }) {}
 
 /** The running worker: send a request, or listen to everything it says. */
-export interface AssistantWorkerHandle {
+interface AssistantWorkerHandle {
   readonly send: (
     request: WorkerRequest,
     transfer?: readonly Transferable[],
@@ -17,6 +18,8 @@ export interface AssistantWorkerHandle {
   readonly events: PubSub.PubSub<WorkerEvent>;
   /** Latched on the first crash, so a request that subscribes afterwards still fails. */
   readonly crashed: Ref.Ref<Option.Option<string>>;
+  /** Correlates a request with its answer; unique for this worker's lifetime. */
+  readonly nextId: Effect.Effect<string>;
 }
 
 /** Lives while the assistant is switched on; the Model decides when. */
@@ -39,21 +42,27 @@ export const acquireAssistantWorker = Effect.gen(function* () {
     (running) => Effect.sync(() => running.terminate()),
   );
   const crashed = yield* Ref.make(Option.none<string>());
+  const requestCount = yield* Ref.make(0);
+  const context = yield* Effect.context();
   const publish = (event: WorkerEvent) => {
-    if (event._tag === "Crashed") Effect.runSync(Ref.set(crashed, Option.some(event.message)));
+    if (event._tag === "Crashed")
+      Effect.runSyncWith(context)(Ref.set(crashed, Option.some(event.message)));
     PubSub.publishUnsafe(events, event);
   };
-  worker.onmessage = (message: MessageEvent<unknown>) =>
-    Option.map(decodeEvent(message.data), publish);
-  worker.onerror = (error: ErrorEvent) =>
+  worker.addEventListener("message", (message: MessageEvent<unknown>) =>
+    Option.map(decodeEvent(message.data), publish),
+  );
+  worker.addEventListener("error", (error: ErrorEvent) =>
     publish(
       WorkerEvent.cases.Crashed.make({ message: error.message || "The local AI worker stopped." }),
-    );
+    ),
+  );
   const handle: AssistantWorkerHandle = {
     send: (request, transfer = []) =>
       Effect.sync(() => worker.postMessage(encodeRequest(request), [...transfer])),
     events,
     crashed,
+    nextId: Ref.getAndUpdate(requestCount, (count) => count + 1).pipe(Effect.map(String)),
   };
   return handle;
 });
@@ -67,12 +76,11 @@ const ask = <A>(
   Effect.scoped(
     Effect.gen(function* () {
       const worker = yield* AssistantWorker.get;
-      const id = yield* Effect.sync(() => crypto.randomUUID());
+      const id = yield* worker.nextId;
       // Subscribe before sending so a fast answer cannot slip past.
       const subscription = yield* PubSub.subscribe(worker.events);
       const crash = yield* Ref.get(worker.crashed);
-      if (Option.isSome(crash))
-        return yield* Effect.fail(new AssistantError({ message: crash.value }));
+      if (Option.isSome(crash)) return yield* new AssistantError({ message: crash.value });
       yield* worker.send(request(id), transfer);
       const answer: Effect.Effect<A, AssistantError> = PubSub.take(subscription).pipe(
         Effect.flatMap((event) =>
@@ -118,7 +126,7 @@ export const transcribeSamples = (samples: Float32Array) =>
   ]);
 
 /** What the UI hears without asking: download progress, and the worker breaking. */
-export type WorkerNotice = Extract<WorkerEvent, { readonly _tag: "Progressed" | "Crashed" }>;
+type WorkerNotice = Extract<WorkerEvent, { readonly _tag: "Progressed" | "Crashed" }>;
 
 const toNotice = (event: WorkerEvent): Option.Option<WorkerNotice> =>
   event._tag === "Progressed" || event._tag === "Crashed" ? Option.some(event) : Option.none();

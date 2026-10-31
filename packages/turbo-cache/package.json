@@ -14,8 +14,9 @@
     "./store": "./src/store.ts"
   },
   "scripts": {
-    "typecheck": "tsrs --noEmit && effect-tsrs diagnostics --project tsconfig.json",
-    "lint": "bun --bun oxlint -c ../tooling/oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
+    "typecheck": "tsrs --noEmit",
+    "lint": "effect-tsrs oxlint -c ../tooling/oxlint.config.ts --disable-nested-config .",
+    "lint:fix": "effect-tsrs oxlint -c ../tooling/oxlint.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run"

@@ -1,5 +1,6 @@
 import { Effect, Option, Schema } from "effect";
-import { ManagedResource } from "foldkit";
+import type { HttpClient } from "effect/http";
+import { Http, ManagedResource, type Update } from "foldkit";
 import {
   acquireAssistantWorker,
   AssistantWorker,
@@ -17,8 +18,19 @@ const reason = (error: unknown): string =>
     Option.match({ onNone: () => "Something went wrong.", onSome: ({ message }) => message }),
   );
 
-/** The services Commands and Subscriptions may use while their resource is held. */
-export type AppServices = ManagedResource.ServicesOf<typeof managedResources>;
+/** Services every Command may use for the app's whole lifetime. */
+export const resources = Http.layer;
+
+/**
+ * The services Commands and Subscriptions may use: the app-wide HttpClient,
+ * plus each managed resource while it is held.
+ */
+export type AppServices =
+  | HttpClient.HttpClient
+  | ManagedResource.ServicesOf<typeof managedResources>;
+
+/** What every update function returns: the next Model and the Commands to run. */
+export type UpdateReturn = Update.Return<Model, Message, AppServices>;
 
 /** The model decides when the worker and the microphone exist. */
 export const managedResources = ManagedResource.make<Model, Message>()((entry) => ({

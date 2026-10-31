@@ -48,25 +48,25 @@ export const s3Store = ({ head, get, create, write, complete, abort }: S3Operati
   ArtifactStore.of({
     head: Effect.fn("S3.head")(function* (key) {
       const object = yield* head({ Key: key }).pipe(
-        Effect.map(Option.some),
-        Effect.catchTag("NotFound", () => Effect.succeed(Option.none())),
+        Effect.asSome,
+        Effect.catchTag("NotFound", () => Effect.succeedNone),
         Effect.mapError(storageFailure),
       );
       if (Option.isNone(object)) return Option.none();
       const size = object.value.ContentLength;
-      if (size === undefined) return yield* Effect.fail(storageFailure());
+      if (size === undefined) return yield* storageFailure();
       return Option.some({ size, metadata: yield* decodeStored(object.value.Metadata) });
     }),
     get: Effect.fn("S3.get")(function* (key) {
       const object = yield* get({ Key: key }).pipe(
-        Effect.map(Option.some),
-        Effect.catchTag("NoSuchKey", () => Effect.succeed(Option.none())),
+        Effect.asSome,
+        Effect.catchTag("NoSuchKey", () => Effect.succeedNone),
         Effect.mapError(storageFailure),
       );
       if (Option.isNone(object)) return Option.none();
       const size = object.value.ContentLength;
       const body = object.value.Body;
-      if (size === undefined || body === undefined) return yield* Effect.fail(storageFailure());
+      if (size === undefined || body === undefined) return yield* storageFailure();
       return Option.some({
         size,
         metadata: yield* decodeStored(object.value.Metadata),
@@ -86,7 +86,7 @@ export const s3Store = ({ head, get, create, write, complete, abort }: S3Operati
         },
       }).pipe(Effect.mapError(storageFailure));
       const UploadId = result.UploadId;
-      if (UploadId === undefined) return yield* Effect.fail(storageFailure());
+      if (UploadId === undefined) return yield* storageFailure();
       return {
         write: Effect.fn("S3.writePart")(function* (bytes, partNumber) {
           const part = yield* write({
@@ -96,7 +96,7 @@ export const s3Store = ({ head, get, create, write, complete, abort }: S3Operati
             Body: bytes,
             ContentLength: bytes.byteLength,
           }).pipe(Effect.mapError(storageFailure));
-          if (part.ETag === undefined) return yield* Effect.fail(storageFailure());
+          if (part.ETag === undefined) return yield* storageFailure();
           return { partNumber, etag: part.ETag };
         }),
         complete: Effect.fn("S3.complete")((parts) =>
@@ -108,8 +108,10 @@ export const s3Store = ({ head, get, create, write, complete, abort }: S3Operati
             },
           }).pipe(Effect.asVoid, Effect.mapError(storageFailure)),
         ),
-        abort: Effect.fn("S3.abort")(() =>
-          abort({ Key: key, UploadId }).pipe(Effect.asVoid, Effect.mapError(storageFailure)),
+        abort: abort({ Key: key, UploadId }).pipe(
+          Effect.asVoid,
+          Effect.mapError(storageFailure),
+          Effect.withSpan("S3.abort"),
         ),
       };
     }),

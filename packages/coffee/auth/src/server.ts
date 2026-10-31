@@ -1,7 +1,8 @@
 import type * as OAuthServer from "@yielded/auth/OAuthServer";
 import { Auth, Http, Passkey } from "@yielded/auth";
-import { SqlBatchCommit } from "@yielded/auth-persistence/Adapter";
+import type { SqlBatchCommit } from "@yielded/auth-persistence/Adapter";
 import * as Effect from "effect/Effect";
+import type * as HashSet from "effect/HashSet";
 import { Digest } from "effect/crypto";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
@@ -16,13 +17,16 @@ import type { AuthAdapters } from "./adapters.ts";
 
 export interface AuthServerConfig {
   readonly origin: string;
-  readonly oauthSecret: Redacted.Redacted<string>;
+  readonly oauthSecret: Redacted.Redacted;
   readonly mcpClients: ReadonlyArray<OAuthServer.Client>;
-  readonly secret: Redacted.Redacted<string>;
-  readonly staffUserIds: ReadonlySet<string>;
+  readonly secret: Redacted.Redacted;
+  readonly staffUserIds: HashSet.HashSet<string>;
 }
 
-export class AuthUnavailable extends Schema.TaggedError<AuthUnavailable>()("AuthUnavailable", {}) {}
+export class AuthUnavailable extends Schema.TaggedError<
+  AuthUnavailable,
+  { readonly brand: unique symbol }
+>()("AuthUnavailable", {}) {}
 
 export const makeCoffeeAuth = <E>(
   config: AuthServerConfig,

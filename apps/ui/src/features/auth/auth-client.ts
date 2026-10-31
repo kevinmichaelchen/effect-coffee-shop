@@ -10,10 +10,10 @@ import * as Schema from "effect/Schema";
 const AuthClient = Client.make(CoffeeAuthApi, { baseUrl: window.location.origin });
 const runtime = ManagedRuntime.make(Layer.merge(AuthClient.layerFetch, passkeyBrowserLayer));
 
-class AuthenticationIncomplete extends Schema.TaggedError<AuthenticationIncomplete>()(
-  "AuthenticationIncomplete",
-  {},
-) {}
+class AuthenticationIncomplete extends Schema.TaggedError<
+  AuthenticationIncomplete,
+  { readonly brand: unique symbol }
+>()("AuthenticationIncomplete", {}) {}
 
 const flow = () => ({
   flowId: crypto.randomUUID(),
@@ -25,11 +25,14 @@ const signIn = Effect.fn("CoffeeAuth.signIn")(function* () {
   const browser = yield* PasskeyBrowser;
   const started = yield* auth.signIn(flow());
   const response = yield* browser.authenticate({ started, mediation: "required" });
-  const result = yield* auth.completeSignIn({
-    flowId: response.flowId,
-    response: Redacted.value(response.response),
-  });
-  if (result._tag !== "Authenticated") return yield* new AuthenticationIncomplete();
+  yield* auth
+    .completeSignIn({ flowId: response.flowId, response: Redacted.value(response.response) })
+    .pipe(
+      Effect.filterOrFail(
+        (result) => result._tag === "Authenticated",
+        () => new AuthenticationIncomplete(),
+      ),
+    );
 });
 
 const register = Effect.fn("CoffeeAuth.register")(function* (displayName: string) {

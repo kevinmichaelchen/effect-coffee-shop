@@ -1,6 +1,6 @@
-/* oxlint-disable effect/avoid-native-object-helpers -- The actor port accepts a native ReadonlySet. */
 import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
+import * as HashSet from "effect/HashSet";
 import * as Schema from "effect/Schema";
 import { actorFromIdentity, CoffeeAuthIdentity } from "./identity.ts";
 
@@ -13,16 +13,16 @@ describe("Yielded identity boundary", () => {
         role: "staff",
         kind: "system",
       });
-      expect(yield* actorFromIdentity(identity, new Set())).toEqual({
+      expect(yield* actorFromIdentity(identity, HashSet.empty())).toEqual({
         userId: "opaque-AbC-123",
         displayName: "Alice",
         kind: "customer",
       });
-      expect(yield* actorFromIdentity(identity, new Set([identity.subjectId]))).toHaveProperty(
+      expect(yield* actorFromIdentity(identity, HashSet.make(identity.subjectId))).toHaveProperty(
         "kind",
         "staff",
       );
-      expect(yield* actorFromIdentity(identity, new Set(["opaque-abc-123"]))).toHaveProperty(
+      expect(yield* actorFromIdentity(identity, HashSet.make("opaque-abc-123"))).toHaveProperty(
         "kind",
         "customer",
       );

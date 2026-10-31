@@ -1,9 +1,12 @@
 import * as RpcMiddleware from "effect/rpc/RpcMiddleware";
 import * as Schema from "effect/Schema";
-import { CurrentActor } from "./CurrentActor.context.ts";
+import type { CurrentActor } from "./CurrentActor.context.ts";
 
 /** The request has no signed-in session. */
-export class Unauthorized extends Schema.TaggedError<Unauthorized>()("Unauthorized", {}) {}
+export class Unauthorized extends Schema.TaggedError<
+  Unauthorized,
+  { readonly brand: unique symbol }
+>()("Unauthorized", {}) {}
 
 /**
  * Authenticates a request and provides who is making it as the

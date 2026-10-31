@@ -89,10 +89,11 @@ describe("routing", () => {
   });
 });
 
+const names = (pathname: string) =>
+  init({ theme: "light" }, url(pathname)).commands?.map((command) => command.name);
+
 describe("boot", () => {
   test("every page loads the viewer, and only the customer page the menu", () => {
-    const names = (pathname: string) =>
-      init({ theme: "light" }, url(pathname)).commands?.map((command) => command.name);
     expect(names("/shop")).toEqual(["ApplyTheme", "FetchViewer", "FetchMenu"]);
     expect(names("/staff")).toEqual(["ApplyTheme", "FetchViewer"]);
   });
@@ -324,10 +325,11 @@ describe("navigation", () => {
   });
 });
 
+const feedOf = (pathname: string, viewer: Viewer) =>
+  Option.getOrElse(feedFor({ ...bootModel(pathname), viewer }), () => "none");
+
 describe("feeds", () => {
   test("only the page's own feed is shown to its own viewer", () => {
-    const feedOf = (pathname: string, viewer: Viewer) =>
-      Option.getOrElse(feedFor({ ...bootModel(pathname), viewer }), () => "none");
     expect([
       feedOf("/shop", customer),
       feedOf("/coffee-shop", customer),

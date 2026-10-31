@@ -21,7 +21,7 @@ export interface UploadedPart {
 export interface Upload {
   readonly write: (part: Uint8Array, partNumber: number) => Effect.Effect<UploadedPart, CacheError>;
   readonly complete: (parts: ReadonlyArray<UploadedPart>) => Effect.Effect<void, CacheError>;
-  readonly abort: () => Effect.Effect<void, CacheError>;
+  readonly abort: Effect.Effect<void, CacheError>;
 }
 
 export class ArtifactStore extends Context.Service<
@@ -31,4 +31,4 @@ export class ArtifactStore extends Context.Service<
     readonly get: (key: string) => Effect.Effect<Option.Option<Download>, CacheError>;
     readonly begin: (key: string, metadata: ArtifactMetadata) => Effect.Effect<Upload, CacheError>;
   }
->()("TurboCache/ArtifactStore") {}
+>()("@effect-coffee-shop/turbo-cache/store/ArtifactStore") {}

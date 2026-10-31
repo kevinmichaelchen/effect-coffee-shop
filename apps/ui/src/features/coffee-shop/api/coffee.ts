@@ -2,6 +2,7 @@ import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
 import { makeOrderId, OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
 import * as Effect from "effect/Effect";
+import type * as HttpClient from "effect/http/HttpClient";
 import * as Schema from "effect/Schema";
 import type { MenuItem, OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 import {
@@ -44,7 +45,8 @@ const staffActions = {
 
 export const fetchMenu: Effect.Effect<
   readonly MenuItem[],
-  HttpRequestError | HttpResponseDecodeError
+  HttpRequestError | HttpResponseDecodeError,
+  HttpClient.HttpClient
 > = requestJson({
   errorSchema: CoffeeApiError,
   path: `${apiBaseUrl}/menu`,

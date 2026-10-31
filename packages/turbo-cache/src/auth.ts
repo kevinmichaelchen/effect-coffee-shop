@@ -1,23 +1,25 @@
-// Cryptographic adapter shared by Bun and Workers' nodejs_compat runtime.
-// oxlint-disable-next-line effect/avoid-node-imports -- Cryptographic boundary: Workers nodejs_compat and Bun provide timingSafeEqual.
-import { createHash, timingSafeEqual } from "node:crypto";
 import * as Effect from "effect/Effect";
+import * as Mac from "effect/crypto/Mac";
 import * as Redacted from "effect/Redacted";
 import { CacheConfig } from "./config.ts";
 import { CacheError } from "./domain.ts";
 
-const digest = (value: string) => createHash("sha256").update(value).digest();
+// Web Crypto is available in both Bun and Workers, so no Node API is needed.
+const digest = (value: string) =>
+  Effect.promise(async () => crypto.subtle.digest("SHA-256", new TextEncoder().encode(value))).pipe(
+    Effect.map((buffer) => new Uint8Array(buffer)),
+  );
 
 export const authorize = Effect.fn("TurboCache.authorize")(function* (request: Request, url: URL) {
   const config = yield* CacheConfig;
   const header = request.headers.get("authorization") ?? "";
   const match = /^Bearer ([a-zA-Z0-9_-]{32,256})$/i.exec(header);
-  const presented = digest(match?.[1] ?? "");
-  // Compare both digests even when one matches; never compare raw secret strings.
-  const writer = timingSafeEqual(presented, digest(Redacted.value(config.writeToken)));
-  const reader = timingSafeEqual(presented, digest(Redacted.value(config.readToken)));
+  const presented = yield* digest(match?.[1] ?? "");
+  // Compare both fixed-length digests even when one matches; never compare raw secret strings.
+  const writer = Mac.timingSafeEqual(presented, yield* digest(Redacted.value(config.writeToken)));
+  const reader = Mac.timingSafeEqual(presented, yield* digest(Redacted.value(config.readToken)));
   if (!writer && !reader) {
-    return yield* Effect.fail(new CacheError({ status: 401, message: "Unauthorized" }));
+    return yield* new CacheError({ status: 401, message: "Unauthorized" });
   }
   // Turbo preflights before adding team query parameters. Authenticate the
   // token here; the subsequent artifact request still enforces its tenant.
@@ -29,10 +31,10 @@ export const authorize = Effect.fn("TurboCache.authorize")(function* (request: R
     (teamId !== null && teamId !== config.team) ||
     (slug !== null && slug !== config.team)
   ) {
-    return yield* Effect.fail(new CacheError({ status: 403, message: "Team access denied" }));
+    return yield* new CacheError({ status: 403, message: "Team access denied" });
   }
   if (request.method === "PUT" && !writer) {
-    return yield* Effect.fail(new CacheError({ status: 403, message: "Write access denied" }));
+    return yield* new CacheError({ status: 403, message: "Write access denied" });
   }
   return config;
 });

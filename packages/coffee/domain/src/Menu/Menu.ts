@@ -42,7 +42,7 @@ export type MenuItem = typeof MenuItem.Type;
 const Menu = Schema.Array(MenuItem).annotate({ identifier: "Menu" });
 export type Menu = typeof Menu.Type;
 
-export const menuItems = Schema.decodeUnknownSync(Menu)([
+export const menuItems = Schema.decodeSync(Menu)([
   {
     id: "espresso",
     name: "Espresso",

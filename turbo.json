@@ -26,6 +26,11 @@
       "outputLogs": "new-only",
       "dependsOn": ["^typecheck"]
     },
+    "lint:fix": {
+      "description": "Apply safe Oxlint fixes in each workspace.",
+      "cache": false,
+      "dependsOn": ["^typecheck"]
+    },
     "lint:custom": {
       "description": "Run workspace-specific custom lint rules.",
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
@@ -59,7 +64,7 @@
       "interruptible": true
     },
     "//#fmt:check:root": {
-      "inputs": ["package.json", "knip.jsonc", ".fallowrc.jsonc", "turbo.json"],
+      "inputs": ["package.json", ".fallowrc.jsonc", "turbo.json"],
       "outputs": []
     },
     "@effect-coffee-shop/tooling#lint:custom:build": {
@@ -78,12 +83,7 @@
       "outputs": []
     }
   },
-  "globalDependencies": [
-    "packages/tooling/.oxlintrc.json",
-    "bunfig.toml",
-    ".node-version",
-    "packages/tooling/oxlint.config.ts"
-  ],
+  "globalDependencies": ["bunfig.toml", ".node-version", "packages/tooling/oxlint*.ts"],
   "remoteCache": {
     "signature": true
   }

@@ -27,16 +27,15 @@ const uploadArtifact = Effect.fn("TurboCache.upload")(function* (
 ) {
   const length = request.headers.get("content-length");
   if (length === null)
-    return yield* Effect.fail(new CacheError({ status: 411, message: "Content-Length required" }));
-  if (!/^\d+$/.test(length)) return yield* Effect.fail(invalidRequest());
-  const size = yield* Schema.decodeUnknownEffect(ByteLength)(Number(length)).pipe(
+    return yield* new CacheError({ status: 411, message: "Content-Length required" });
+  if (!/^\d+$/.test(length)) return yield* invalidRequest();
+  const size = yield* Schema.decodeEffect(ByteLength)(Number(length)).pipe(
     Effect.mapError(() => new CacheError({ status: 413, message: "Artifact too large or empty" })),
   );
-  if (size > maxBytes)
-    return yield* Effect.fail(new CacheError({ status: 413, message: "Artifact too large" }));
+  if (size > maxBytes) return yield* new CacheError({ status: 413, message: "Artifact too large" });
   const body = request.body;
-  if (body === null) return yield* Effect.fail(invalidRequest());
-  const metadata = yield* Schema.decodeUnknownEffect(ArtifactMetadata)({
+  if (body === null) return yield* invalidRequest();
+  const metadata = yield* Schema.decodeEffect(ArtifactMetadata)({
     duration: request.headers.get("x-artifact-duration") ?? "0",
     tag: request.headers.get("x-artifact-tag") ?? "",
     sha: request.headers.get("x-artifact-sha") ?? "",
@@ -61,9 +60,9 @@ const uploadArtifact = Effect.fn("TurboCache.upload")(function* (
       }),
     (upload, exit) =>
       Exit.isFailure(exit)
-        ? upload
-            .abort()
-            .pipe(Effect.catch(() => Effect.logWarning("Turbo cache multipart cleanup failed")))
+        ? upload.abort.pipe(
+            Effect.catch(() => Effect.logWarning("Turbo cache multipart cleanup failed")),
+          )
         : Effect.void,
   );
   return new Response(null, { status: 200 });
@@ -90,7 +89,7 @@ const route = Effect.fn("TurboCache.route")(function* (request: Request) {
     return new Response(null, { status: 204 });
   const match = /^\/artifacts\/([^/]+)$/.exec(path);
   if (match?.[1] === undefined) return new Response(null, { status: 404 });
-  const hash = yield* Schema.decodeUnknownEffect(Identifier)(match[1]).pipe(
+  const hash = yield* Schema.decodeEffect(Identifier)(match[1]).pipe(
     Effect.mapError(invalidRequest),
   );
   const key = `${config.team}/${hash}`;

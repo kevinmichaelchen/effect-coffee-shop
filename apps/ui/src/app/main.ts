@@ -1,13 +1,14 @@
 import { Dialog } from "@foldkit/ui";
 import { Effect, Option, Schema } from "effect";
-import { type Runtime } from "foldkit";
-import { Url } from "foldkit/url";
+import type { Runtime } from "foldkit";
+import type { Url } from "foldkit/url";
 import { ThemePreference, themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
 import { initialAssistant } from "#features/assistant/lib/state.ts";
 import { anonymousViewer } from "#features/auth/lib/viewer.ts";
 import { ApplyTheme } from "#app/command.ts";
 import type { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
+import type { AppServices } from "#app/resources.ts";
 import { urlToAppRoute } from "#app/route.ts";
 import { bootCommands } from "#app/update.ts";
 
@@ -24,7 +25,7 @@ export const flags: Effect.Effect<Flags> = Effect.sync(() =>
   }),
 );
 
-export const init: Runtime.RoutingApplicationInit<Model, Message, Flags> = (
+export const init: Runtime.RoutingApplicationInit<Model, Message, Flags, AppServices> = (
   flags: Flags,
   url: Url,
 ) => {

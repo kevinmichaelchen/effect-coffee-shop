@@ -2,17 +2,17 @@ import * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as SecureRandom from "effect/crypto/SecureRandom";
 import { WideEvent, withWideEvent } from "effect-wide-event";
 
-// oxlint-disable-next-line effect/prefer-option-over-null -- Trusted structured log fields may explicitly include JSON null.
-export type StructuredLogValue = boolean | number | string | null;
+export type StructuredLogValue = boolean | number | string;
 export type StructuredLogRecord = Readonly<Record<string, StructuredLogValue>>;
 
 export const logStructuredEvent = (record: StructuredLogRecord) =>
   Effect.logInfo("structured event").pipe(Effect.annotateLogs(record));
 
 class HttpRequestEvent extends Context.Service<HttpRequestEvent, { readonly requestId: string }>()(
-  "http-routing/HttpRequestEvent",
+  "@effect-coffee-shop/http-routing/logging/HttpRequestEvent",
 ) {}
 
 export const withResponseRequestId = (response: Response) =>
@@ -46,7 +46,7 @@ export const withHttpWideEvent =
       const existing = yield* Effect.serviceOption(HttpRequestEvent);
       if (Option.isSome(existing))
         return yield* effect.pipe(Effect.provideService(HttpRequestEvent, existing.value));
-      const requestId = request.requestId ?? crypto.randomUUID();
+      const requestId = request.requestId ?? SecureRandom.uuidV4Unsafe();
       return yield* withWideEvent(effect, {
         service: "http-routing",
         method: request.method,

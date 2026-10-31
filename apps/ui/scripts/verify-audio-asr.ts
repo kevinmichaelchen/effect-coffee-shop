@@ -86,10 +86,7 @@ const transcriber = await loadAudioTranscriber({
 });
 console.log(`CPU load: ${((performance.now() - start) / 1000).toFixed(2)}s`);
 const transcribeStart = performance.now();
-await transcriber
-  .transcribe(pcm)
-  .then((text) => {
-    console.log(`Transcript: ${text}`);
-    console.log(`CPU transcription: ${((performance.now() - transcribeStart) / 1000).toFixed(2)}s`);
-  })
-  .finally(async () => transcriber.dispose());
+const transcript = await transcriber.transcribe(pcm);
+console.log(`Transcript: ${transcript}`);
+console.log(`CPU transcription: ${((performance.now() - transcribeStart) / 1000).toFixed(2)}s`);
+await transcriber.dispose();

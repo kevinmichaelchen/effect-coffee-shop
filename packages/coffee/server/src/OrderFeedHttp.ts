@@ -11,9 +11,8 @@ import { OrderFeedObject } from "./OrderFeed.ts";
 import { actorHeader } from "./Session.ts";
 
 /** Called only inside domainApi, after it replaces the untrusted actor header. */
-export const orderFeedHttp = Effect.fn("OrderFeed.http")(function* () {
-  const feeds = yield* OrderFeedObject;
-  return Effect.gen(function* () {
+export const orderFeedHttp = Effect.map(OrderFeedObject, (feeds) =>
+  Effect.gen(function* () {
     const request = yield* HttpServerRequest.HttpServerRequest;
     const actor = yield* Schema.decodeUnknownEffect(Schema.fromJsonString(Actor))(
       request.headers[actorHeader],
@@ -42,5 +41,5 @@ export const orderFeedHttp = Effect.fn("OrderFeed.http")(function* () {
       InternalError: () => Effect.succeed(HttpServerResponse.empty({ status: 502 })),
       RouteNotFound: () => Effect.succeed(HttpServerResponse.empty({ status: 404 })),
     }),
-  );
-});
+  ),
+);

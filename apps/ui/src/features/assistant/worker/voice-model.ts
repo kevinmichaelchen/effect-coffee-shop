@@ -1,5 +1,5 @@
 import * as ort from "onnxruntime-web/webgpu";
-import { Data, Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { fetchWithoutReferrer } from "#features/assistant/worker/fetch.ts";
 import { aggregateProgress } from "#features/assistant/worker/progress.ts";
 import {
@@ -7,9 +7,10 @@ import {
   loadAudioTranscriber,
 } from "#features/assistant/worker/audio/transcriber.ts";
 
-export class VoiceModelError extends Data.TaggedError("VoiceModelError")<{
-  readonly message: string;
-}> {}
+export class VoiceModelError extends Schema.TaggedError<
+  VoiceModelError,
+  { readonly brand: unique symbol }
+>()("VoiceModelError", { message: Schema.String }) {}
 
 export type VoiceModel = AudioTranscriber;
 
@@ -67,7 +68,7 @@ const fetchBytes = async (url: string, onProgress: (loaded: number, total: numbe
 export const loadVoiceModel = (onProgress: (loaded: number, total: number) => void) => {
   const progress = aggregateProgress(onProgress);
   return Effect.tryPromise({
-    try: () =>
+    try: async () =>
       loadAudioTranscriber({
         ort,
         modelBaseUrl,
@@ -80,4 +81,4 @@ export const loadVoiceModel = (onProgress: (loaded: number, total: number) => vo
 };
 
 export const transcribe = (model: VoiceModel, samples: Float32Array) =>
-  Effect.tryPromise({ try: () => model.transcribe(samples), catch: failure });
+  Effect.tryPromise({ try: async () => model.transcribe(samples), catch: failure });
