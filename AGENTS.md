@@ -20,3 +20,5 @@ Code style for agents:
 Dependency patches live in `patches/`. After upgrading any patched package, run `bun run patches:check` and delete patches it reports as unused or no longer needed.
 
 For PR descriptions and review materials, use the project skill at `.agents/skills/pr-visual-review/SKILL.md`: prefer Pele diagram images in tables, concise FAQs, and an honest validation table over long prose.
+
+For creating or revising GitHub issues and proposing issue cleanup, use `.agents/skills/issue-visual-writing/SKILL.md`: prefer Pele diagrams uploaded with `gh issue create --attach`, image tables, concise FAQs, and verifiable acceptance criteria. Keep generated images uncommitted unless an SVG is intentionally included in a README.
