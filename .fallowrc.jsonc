@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/fallow/schema.json",
   "entry": [
+    "docs/diagrams/render.mjs",
     "infra/alchemy/alchemy.run.ts",
     "infra/turbo-cache/aws.ts",
     "apps/ui/src/entry.ts",
@@ -101,6 +102,7 @@
       {
         "name": "tooling",
         "patterns": [
+          "docs/diagrams/render.mjs",
           "packages/tooling/**",
           "**/oxlint.config.ts",
           "**/vitest.config.ts",
