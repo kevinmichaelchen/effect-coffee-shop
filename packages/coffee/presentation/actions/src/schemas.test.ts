@@ -1,7 +1,14 @@
 import { assert, describe, expect, it } from "@effect/vitest";
 import * as Exit from "effect/Exit";
 import * as Effect from "effect/Effect";
-import { decodePlaceOrderInput, decodeQuoteOrderInput } from "./schemas.ts";
+import * as Schema from "effect/Schema";
+import {
+  PlaceOrderRequest,
+  QuoteOrderRequest,
+} from "@effect-coffee-shop/coffee-application/contracts";
+
+const decodePlaceOrderInput = Schema.decodeUnknownEffect(PlaceOrderRequest);
+const decodeQuoteOrderInput = Schema.decodeUnknownEffect(QuoteOrderRequest);
 
 describe("coffee action schemas", () => {
   it.effect("trims order boundary strings before application use cases run", () =>

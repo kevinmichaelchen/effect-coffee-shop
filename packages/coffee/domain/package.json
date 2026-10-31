@@ -8,9 +8,9 @@
     "./*": "./src/*.ts"
   },
   "scripts": {
-    "typecheck": "tsrs --noEmit && effect-tsrs diagnostics --project tsconfig.json",
-    "lint": "bun --bun oxlint -c oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error .",
-    "lint:fix": "bun --bun oxlint -c oxlint.config.ts --disable-nested-config --report-unused-disable-directives-severity error --fix .",
+    "typecheck": "tsrs --noEmit",
+    "lint": "effect-tsrs oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config .",
+    "lint:fix": "effect-tsrs oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config --fix .",
     "lint:custom": "bun run --cwd ../../tooling lint:custom:run --tsconfig ../coffee/domain/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
@@ -24,7 +24,6 @@
   },
   "devDependencies": {
     "@effect/vitest": "catalog:",
-    "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/bun": "catalog:",
     "@yielded/effect-tsrs": "catalog:",
     "oxfmt": "catalog:",

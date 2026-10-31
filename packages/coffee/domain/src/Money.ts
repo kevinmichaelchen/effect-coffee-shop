@@ -15,7 +15,7 @@ export const MinorUnits = MinorUnitsInput.pipe(Schema.brand("MinorUnits"));
 export type MinorUnits = typeof MinorUnits.Type;
 
 export class Money
-  extends Schema.Class<Money>("Money")({
+  extends Schema.Class<Money, { readonly brand: unique symbol }>("Money")({
     currency: Currency,
     minorUnits: MinorUnits,
   })
@@ -23,9 +23,8 @@ export class Money
 {
   [Eq.symbol](that: Eq.Equal): boolean {
     return (
-      Schema.is(Money)(that) &&
-      this.currency === that.currency &&
-      this.minorUnits === that.minorUnits
+      // Currency is the single literal "USD", so minor units decide equality.
+      Schema.is(Money)(that) && this.minorUnits === that.minorUnits
     );
   }
 
@@ -54,8 +53,7 @@ export const zeroMoney: Money = new Money({
   minorUnits: minorUnitsFromNumber(0),
 });
 
-export const moneyFromCents = (cents: number): Money =>
-  Schema.decodeUnknownSync(MoneyFromCents)(cents);
+export const moneyFromCents = (cents: number): Money => Schema.decodeSync(MoneyFromCents)(cents);
 
 export const moneyToCents = (money: Money): number => money.minorUnits;
 

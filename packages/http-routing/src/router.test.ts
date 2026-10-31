@@ -38,7 +38,7 @@ const readEvents = (captured: MutableRef.MutableRef<Array<LogEvent>>) =>
     MutableRef.get(captured).map((event) => event.annotations),
   );
 
-const makeRouter = (handle: () => HttpRouteEffect, name = "api") =>
+const makeRouter = <E = never>(handle: () => HttpRouteEffect<E>, name = "api") =>
   createHttpRouter([{ name, matches: () => true, handle }]);
 
 const throwMatcherDefect = (): boolean => {
@@ -77,7 +77,7 @@ describe("HTTP wide events", () => {
       );
       assert.match(events[0]?.requestId ?? "", /^[0-9a-f-]{36}$/);
       assert.strictEqual(routed.headers.get("x-request-id"), events[0]?.requestId);
-      assert.strictEqual(yield* Effect.promise(() => response.text()), "coffee");
+      assert.strictEqual(yield* Effect.promise(async () => response.text()), "coffee");
     }).pipe(Effect.provide(WideEventLogger.Capture(captured)));
   });
 
@@ -106,7 +106,7 @@ describe("HTTP wide events", () => {
     return Effect.gen(function* () {
       const response = yield* createHttpRouter([])(request(), undefined);
       assert.strictEqual(response.status, 404);
-      assert.strictEqual(yield* Effect.promise(() => response.text()), "Not Found");
+      assert.strictEqual(yield* Effect.promise(async () => response.text()), "Not Found");
       const events = yield* readEvents(captured);
       assert.deepStrictEqual(
         events.map(({ route_kind, http_status, status, outcome }) => ({

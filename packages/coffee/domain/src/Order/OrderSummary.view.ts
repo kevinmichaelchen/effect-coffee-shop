@@ -43,10 +43,15 @@ export class OrderSummary extends Domain.View("OrderSummary", {
     OrderPickedUp: (summary) => withStatus(summary, "picked-up"),
     OrderCancelled: (summary) => withStatus(summary, "cancelled"),
   },
-  validate: Effect.fn(function* (_request, summary) {
-    const actor = yield* CurrentActor;
-    const owner = summary?.order?.ownerUserId;
-    if (isStaff(actor) || owner === undefined || owner === actor.userId) return;
-    return yield* new NotYourOrder();
-  }),
+  validate: (_request, summary) =>
+    CurrentActor.pipe(
+      Effect.filterOrFail(
+        (actor) => {
+          const owner = summary?.order?.ownerUserId;
+          return isStaff(actor) || owner === undefined || owner === actor.userId;
+        },
+        () => new NotYourOrder(),
+      ),
+      Effect.asVoid,
+    ),
 }) {}

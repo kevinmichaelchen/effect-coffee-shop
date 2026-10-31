@@ -39,9 +39,9 @@ it.effect(
           }),
         write: (input) =>
           Effect.sync(() => {
-            expect(input?.UploadId).toBe("upload-id");
-            expect(input?.ContentLength).toBe(5 * 1024 * 1024);
-            return { ETag: `etag-${input?.PartNumber}` };
+            expect(input.UploadId).toBe("upload-id");
+            expect(input.ContentLength).toBe(5 * 1024 * 1024);
+            return { ETag: `etag-${input.PartNumber}` };
           }),
         complete: (input) =>
           Effect.sync(() => {
@@ -71,10 +71,11 @@ it.effect("decodes lowercase S3 metadata and streams the downloaded bytes", () =
     expect(yield* store.head("team/hash")).toEqual(
       Option.some({ size: 1, metadata: domainMetadata }),
     );
-    const result = yield* store.get("team/hash");
-    if (Option.isNone(result)) return yield* Effect.die("Expected an artifact");
-    expect(result.value.metadata).toEqual(domainMetadata);
-    expect(yield* Stream.runCollect(result.value.body)).toEqual([new Uint8Array([9])]);
+    const artifact = yield* store
+      .get("team/hash")
+      .pipe(Effect.flatMap(Effect.fromOption), Effect.orDie);
+    expect(artifact.metadata).toEqual(domainMetadata);
+    expect(yield* Stream.runCollect(artifact.body)).toEqual([new Uint8Array([9])]);
   }),
 );
 
@@ -111,7 +112,7 @@ it.effect("aborts the correct upload", () =>
           return {};
         }),
     });
-    yield* (yield* store.begin("team/hash", domainMetadata)).abort();
+    yield* (yield* store.begin("team/hash", domainMetadata)).abort;
     expect(aborted).toBe(true);
   }),
 );

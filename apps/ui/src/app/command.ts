@@ -1,4 +1,4 @@
-import { Effect, Schedule, Schema } from "effect";
+import { Effect, Option, Schedule, Schema } from "effect";
 import { Command } from "foldkit";
 import { load, pushUrl } from "foldkit/navigation";
 import { ThemePreference, themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
@@ -162,8 +162,15 @@ export const ExpireToast = Command.define("ExpireToast", {
 
 export const DetectWebGpu = Command.define("DetectWebGpu", {
   messages: [Message.DetectedWebGpu],
-  execute: Effect.promise(async () =>
-    navigator.gpu === undefined ? false : (await navigator.gpu.requestAdapter()) !== null,
+  // lib.dom declares `navigator.gpu` unconditionally, but browsers without WebGPU
+  // (or outside a secure context) leave it undefined, so read it as an Option.
+  execute: Effect.suspend(() =>
+    Option.fromNullishOr(navigator.gpu).pipe(
+      Option.match({
+        onNone: () => Effect.succeed(false),
+        onSome: (gpu) => Effect.promise(async () => (await gpu.requestAdapter()) !== null),
+      }),
+    ),
   ).pipe(Effect.map((isSupported) => Message.DetectedWebGpu({ isSupported }))),
 });
 

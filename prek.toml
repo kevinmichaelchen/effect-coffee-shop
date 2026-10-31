@@ -42,7 +42,7 @@ pass_filenames = false
 stages = ["pre-commit"]
 
 [[repos.hooks]]
-# Workspace tests/builds are affected-scoped; Fallow and both Knip modes scan the full graph.
+# Workspace tests/builds are affected-scoped; Fallow (default and production passes) scans the full graph.
 id = "check-affected"
 name = "affected checks and full codebase audits"
 entry = "bun run check:affected"

@@ -17,9 +17,11 @@ import * as Domain from "@alchemy.run/domain";
 import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
 import * as FetchHttpClient from "effect/http/FetchHttpClient";
+import * as HttpBody from "effect/http/HttpBody";
 import * as HttpClient from "effect/http/HttpClient";
 import * as HttpClientRequest from "effect/http/HttpClientRequest";
 import * as HttpClientResponse from "effect/http/HttpClientResponse";
@@ -71,51 +73,79 @@ test(
 const Started = <A extends Schema.Top>(value: A) => Schema.TaggedStruct("Success", { value });
 const encodeJson = Schema.encodeSync(Schema.fromJsonString(Schema.Json));
 
-/** Register and sign in a passkey user against the deployed Worker, as the browser would. */
-const signedInCustomer = (api: string) =>
-  Effect.promise(async () => {
-    // The Worker trusts APP_ORIGIN (see vitest.config.ts); requests go to its own URL.
-    const appOrigin = "http://localhost:5173";
-    const client = makeAuthClient(
-      {
-        handler: async (request) =>
-          // oxlint-disable-next-line effect/avoid-native-fetch -- The auth test client speaks Fetch; this forwards its requests to the deployed Worker.
-          fetch(new URL(new URL(request.url).pathname, api), {
-            method: request.method,
-            headers: request.headers,
-            body: request.method === "GET" ? null : await request.text(),
-          }),
-      },
-      appOrigin,
+const decodeJsonResponse =
+  <S extends Schema.Top>(schema: S) =>
+  (response: Response) =>
+    Effect.promise(async () => response.text()).pipe(
+      Effect.flatMap(Schema.decodeEffect(Schema.fromJsonString(schema))),
     );
-    const flow = () => ({
-      flowId: crypto.randomUUID(),
-      commandId: crypto.randomUUID(),
-      profileId: "default",
+
+const flow = () => ({
+  flowId: crypto.randomUUID(),
+  commandId: crypto.randomUUID(),
+  profileId: "default",
+});
+
+const AuthMethod = Schema.Literals(["GET", "POST"]);
+
+/** Forward an auth-client request to the deployed Worker through the Fetch HttpClient. */
+const forwardToWorker = (api: string, request: Request) =>
+  Effect.gen(function* () {
+    const method = yield* Schema.decodeUnknownEffect(AuthMethod)(request.method);
+    const body =
+      method === "GET"
+        ? HttpBody.empty
+        : HttpBody.text(
+            yield* Effect.promise(async () => request.text()),
+            request.headers.get("content-type") ?? undefined,
+          );
+    const response = yield* HttpClient.execute(
+      HttpClientRequest.make(method)(new URL(new URL(request.url).pathname, api), {
+        headers: request.headers,
+        body,
+      }),
+    );
+    return yield* Option.match(HttpClientResponse.toWeb(response), {
+      onNone: () => Effect.die("The Fetch HttpClient always yields a web Response."),
+      onSome: Effect.succeed,
     });
-    const registration = Schema.decodeUnknownSync(Started(Passkey.PasskeyRegistrationStarted))(
-      await (
-        await client.send("/register", { ...flow(), registration: { displayName: "Sam" } })
-      ).json(),
-    ).value;
-    const authenticator = makeTestPasskey(appOrigin, registration.options.user.id);
-    const registered = await client.send("/completeRegistration", {
-      flowId: registration.flowId,
-      response: encodeJson(authenticator.register(registration.options.challenge)),
-    });
-    const login = Schema.decodeUnknownSync(Started(Passkey.PasskeyAuthenticationStarted))(
-      await (await client.send("/signIn", flow())).json(),
-    ).value;
-    const signedIn = await client.send("/completeSignIn", {
-      flowId: login.flowId,
-      response: encodeJson(authenticator.authenticate(login.options.challenge, 1)),
-    });
-    return {
-      statuses: [registered.status, signedIn.status],
-      appOrigin,
-      cookie: client.request().headers.get("cookie") ?? "",
-    };
+  }).pipe(Effect.provide(FetchHttpClient.layer), Effect.orDie);
+
+/** Register and sign in a passkey user against the deployed Worker, as the browser would. */
+const signedInCustomer = Effect.fnUntraced(function* (api: string) {
+  // The Worker trusts APP_ORIGIN (see vitest.config.ts); requests go to its own URL.
+  const appOrigin = "http://localhost:5173";
+  const services = yield* Effect.context();
+  const client = makeAuthClient(
+    {
+      handler: async (request) => Effect.runPromiseWith(services)(forwardToWorker(api, request)),
+    },
+    appOrigin,
+  );
+  const send = (path: string, body: Schema.Json) =>
+    Effect.promise(async () => client.send(path, body));
+  const { value: registration } = yield* send("/register", {
+    ...flow(),
+    registration: { displayName: "Sam" },
+  }).pipe(Effect.flatMap(decodeJsonResponse(Started(Passkey.PasskeyRegistrationStarted))));
+  const authenticator = yield* makeTestPasskey(appOrigin, registration.options.user.id);
+  const registered = yield* send("/completeRegistration", {
+    flowId: registration.flowId,
+    response: encodeJson(authenticator.register(registration.options.challenge)),
   });
+  const { value: login } = yield* send("/signIn", flow()).pipe(
+    Effect.flatMap(decodeJsonResponse(Started(Passkey.PasskeyAuthenticationStarted))),
+  );
+  const signedIn = yield* send("/completeSignIn", {
+    flowId: login.flowId,
+    response: encodeJson(yield* authenticator.authenticate(login.options.challenge, 1)),
+  });
+  return {
+    statuses: [registered.status, signedIn.status],
+    appOrigin,
+    cookie: client.request().headers.get("cookie") ?? "",
+  };
+}, Effect.orDie);
 
 /** Confirm checkout through CustomerApi, then wait for its durable workflow to place the order. */
 const orderThroughCustomerApi = (

@@ -28,10 +28,13 @@ export const anonymousActor: AnonymousActor = {
 export { systemActor } from "@effect-coffee-shop/coffee-domain/Actor";
 
 export class CurrentActor extends Context.Service<CurrentActor, AppActor>()(
-  "effect-coffee-shop/application/CurrentActor",
+  "@effect-coffee-shop/coffee-application/CurrentActor",
 ) {}
 
-export class AuthenticationRequiredError extends Schema.TaggedError<AuthenticationRequiredError>()(
+export class AuthenticationRequiredError extends Schema.TaggedError<
+  AuthenticationRequiredError,
+  { readonly brand: unique symbol }
+>()(
   "AuthenticationRequiredError",
   {
     message: Schema.String,
@@ -39,7 +42,10 @@ export class AuthenticationRequiredError extends Schema.TaggedError<Authenticati
   { httpApiStatus: 401 },
 ) {}
 
-export class StaffRoleRequiredError extends Schema.TaggedError<StaffRoleRequiredError>()(
+export class StaffRoleRequiredError extends Schema.TaggedError<
+  StaffRoleRequiredError,
+  { readonly brand: unique symbol }
+>()(
   "StaffRoleRequiredError",
   {
     message: Schema.String,

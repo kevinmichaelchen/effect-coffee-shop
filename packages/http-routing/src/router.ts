@@ -28,13 +28,13 @@ const createRequestContext = <TEnv>(
   runtime,
 });
 
-const findMatchingRoute = <TEnv>(
-  routes: ReadonlyArray<HttpRoute<TEnv>>,
+const findMatchingRoute = <TEnv, E>(
+  routes: ReadonlyArray<HttpRoute<TEnv, E>>,
   request: Request,
-): Option.Option<HttpRoute<TEnv>> => Arr.findFirst(routes, (route) => route.matches(request));
+): Option.Option<HttpRoute<TEnv, E>> => Arr.findFirst(routes, (route) => route.matches(request));
 
 export const createHttpRouter =
-  <TEnv>(routes: ReadonlyArray<HttpRoute<TEnv>>) =>
+  <TEnv, E = never>(routes: ReadonlyArray<HttpRoute<TEnv, E>>) =>
   (request: Request, env: TEnv, runtime: HttpRuntimeContext = {}) =>
     Effect.gen(function* () {
       const route = findMatchingRoute(routes, request);

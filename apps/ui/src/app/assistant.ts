@@ -1,16 +1,12 @@
 import { Option } from "effect";
-import type { Update } from "foldkit";
 import { type AssistantState, isReady, LocalModelStatus } from "#features/assistant/lib/state.ts";
 import type { LocalModel } from "#features/assistant/lib/protocol.ts";
 import type { AssistantRequest, AssistantTurn } from "#features/assistant/lib/tools.ts";
 import { usualDraft } from "#features/coffee-shop/lib/usual.ts";
 import { AskAssistant, DetectWebGpu, LoadLocalModel, TranscribeRecording } from "#app/command.ts";
 import { composerFor, patchDraft } from "#app/draft.ts";
-import type { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
-import type { AppServices } from "#app/resources.ts";
-
-type Return = Update.Return<Model, Message, AppServices>;
+import type { UpdateReturn as Return } from "#app/resources.ts";
 
 const withAssistant = (model: Model, change: Partial<AssistantState>): Model => ({
   ...model,

@@ -1,37 +1,88 @@
-/* oxlint-disable effect/effect-run-in-body, effect/avoid-native-object-helpers -- Vitest owns the native Promise boundary and fixtures use the actor port's ReadonlySet. */
 import { Miniflare } from "miniflare";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { AppActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import { Passkey } from "@yielded/auth";
+import { assert, describe, expect, it } from "@effect/vitest";
+import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as HashSet from "effect/HashSet";
+import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
-import { assert, describe, expect, it } from "vitest";
+import { SecureRandom } from "effect/crypto";
+import { HttpRouter, HttpServer, HttpServerResponse } from "effect/http";
 import { migrateCloudflareD1 } from "./testing/migrate.ts";
 import { d1AuthDatabase } from "./database.ts";
-import { makeCoffeeAuthServer } from "./testing/server.ts";
 import { makeAuthClient } from "./testing/auth-client.ts";
 import { makeTestPasskey } from "./testing/passkey.ts";
+import { AuthAdaptersLive } from "./adapters.ts";
+import { makeCoffeeAuth, type AuthServerConfig } from "./server.ts";
 
-const resolveActor = async (auth: ReturnType<typeof makeCoffeeAuthServer>, request: Request) => {
-  const response = await auth.handler(
-    new Request(new URL("/api/auth/actor", request.url), { headers: request.headers }),
+type AuthServer = Effect.Success<ReturnType<typeof authServer>>;
+
+/** The auth routes plus an actor probe, served as a scoped Fetch handler. */
+const authServer = (config: AuthServerConfig, database: ReturnType<typeof d1AuthDatabase>) => {
+  const auth = makeCoffeeAuth(config, database, AuthAdaptersLive);
+  const routes = Layer.merge(
+    auth.routes,
+    HttpRouter.add(
+      "GET",
+      "/api/auth/actor",
+      Effect.flatMap(auth.actor(), HttpServerResponse.schemaJson(AppActor)),
+    ).pipe(auth.http.middleware, Layer.provide(auth.auth)),
+  ).pipe(Layer.provide(HttpServer.layerServices));
+  return Effect.map(
+    Effect.acquireRelease(
+      Effect.sync(() => HttpRouter.toWebHandler(routes, { disableLogger: true })),
+      (server) => Effect.promise(async () => server.dispose()),
+    ),
+    (server) => ({
+      handler: async (request: Request) => server.handler(request, Context.empty()),
+    }),
   );
-  return Schema.decodeUnknownSync(AppActor)(await response.json());
 };
+
+const encodeJson = Schema.encodeSync(Schema.fromJsonString(Schema.Json));
+const respond = (auth: AuthServer, request: Request) =>
+  Effect.promise(async () => auth.handler(request));
+const decodeBody =
+  <S extends Schema.Top>(schema: S) =>
+  (response: Response) =>
+    Effect.promise(async () => response.text()).pipe(
+      Effect.flatMap(Schema.decodeEffect(Schema.fromJsonString(schema))),
+      Effect.orDie,
+    );
+const expectOk = (response: Response) =>
+  Effect.map(
+    Effect.promise(async () => response.clone().text()),
+    (body) => {
+      assert.equal(response.status, 200, body);
+    },
+  );
+const resolveActor = (auth: AuthServer, request: Request) =>
+  respond(
+    auth,
+    new Request(new URL("/api/auth/actor", request.url), { headers: request.headers }),
+  ).pipe(Effect.flatMap(decodeBody(AppActor)));
+
 const origin = "http://localhost";
 const config = {
   origin,
   oauthSecret: Redacted.make("A".repeat(43)),
   mcpClients: [],
   secret: Redacted.make("coffee-auth-test-secret-at-least-32-characters"),
-  staffUserIds: new Set<string>(),
+  staffUserIds: HashSet.empty<string>(),
 };
-const flow = () => ({
-  flowId: crypto.randomUUID(),
-  commandId: crypto.randomUUID(),
-  profileId: "default",
-});
+const flow = SecureRandom.SecureRandom.use((random) =>
+  Effect.map(
+    Effect.all([random.uuidV4(), random.uuidV4()], { concurrency: 1 }),
+    ([flowId, commandId]) => ({
+      flowId,
+      commandId,
+      profileId: "default",
+    }),
+  ),
+).pipe(Effect.provide(SecureRandom.layerWebCrypto));
 const registrationResult = Schema.TaggedStruct("Success", {
   value: Passkey.PasskeyRegistrationStarted,
 });
@@ -39,137 +90,135 @@ const authenticationResult = Schema.TaggedStruct("Success", {
   value: Passkey.PasskeyAuthenticationStarted,
 });
 
-const d1Fixture = async () => {
-  const proxy = new Miniflare({
-    modules: true,
-    script: "export default { fetch() { return new Response(); } }",
-    d1Databases: ["DB"],
-  });
-  const db = await proxy.getD1Database("DB");
-  await Effect.runPromise(migrateCloudflareD1(db).pipe(Effect.provide(NodeServices.layer)));
+const d1Fixture = Effect.fnUntraced(function* () {
+  const proxy = yield* Effect.acquireRelease(
+    Effect.sync(
+      () =>
+        new Miniflare({
+          modules: true,
+          script: "export default { fetch() { return new Response(); } }",
+          d1Databases: ["DB"],
+        }),
+    ),
+    (proxy) => Effect.promise(async () => proxy.dispose()),
+  );
+  const db = yield* Effect.promise(async () => proxy.getD1Database("DB"));
+  yield* migrateCloudflareD1(db).pipe(Effect.provide(NodeServices.layer));
   return {
     database: d1AuthDatabase(db),
-    expire: () => db.prepare("update coffee_auth_sessions set expires_at = 0").run(),
-    dispose: () => proxy.dispose(),
+    expire: Effect.promise(async () =>
+      db.prepare("update coffee_auth_sessions set expires_at = 0").run(),
+    ),
   };
-};
+});
 
 describe.each([{ name: "D1", fixture: d1Fixture }])(
   "Yielded $name authentication",
   ({ fixture }) => {
-    it("verifies passkeys, binds ceremonies, enforces staff authority, revokes and expires sessions", async () => {
-      const data = await fixture();
-      const auth = makeCoffeeAuthServer<unknown>(config, data.database);
-      const staffIds = new Set<string>();
-      const staffAuth = makeCoffeeAuthServer<unknown>(
-        { ...config, staffUserIds: staffIds },
-        data.database,
-      );
-      const check = async () => {
-        const client = makeAuthClient(auth, origin);
-        const begun = await client.send("/register", {
-          ...flow(),
-          registration: { displayName: " Alice ", role: "staff", userId: "chosen-staff-id" },
-        });
-        assert.equal(begun.status, 200, await begun.clone().text());
-        const registration = Schema.decodeUnknownSync(registrationResult)(await begun.json()).value;
-        const authenticator = makeTestPasskey(origin, registration.options.user.id);
-        const enrollment = {
-          flowId: registration.flowId,
-          response: Schema.encodeSync(Schema.fromJsonString(Schema.Json))(
-            authenticator.register(registration.options.challenge),
-          ),
-        };
-        const outsider = makeAuthClient(auth, origin);
-        expect((await outsider.send("/completeRegistration", enrollment)).status).not.toBe(200);
-        const registered = await client.send("/completeRegistration", enrollment);
-        assert.equal(registered.status, 200, await registered.clone().text());
-        expect(await resolveActor(auth, client.request())).toEqual({
-          kind: "anonymous",
-        });
-        expect((await client.send("/completeRegistration", enrollment)).status).not.toBe(200);
-        const signIn = async (counter: number) => {
-          const login = await client.send("/signIn", flow());
-          assert.equal(login.status, 200, await login.clone().text());
-          const assertion = Schema.decodeUnknownSync(authenticationResult)(
-            await login.json(),
-          ).value;
-          const signedIn = await client.send("/completeSignIn", {
-            flowId: assertion.flowId,
-            response: Schema.encodeSync(Schema.fromJsonString(Schema.Json))(
-              authenticator.authenticate(assertion.options.challenge, counter),
-            ),
+    it.live(
+      "verifies passkeys, binds ceremonies, enforces staff authority, revokes and expires sessions",
+      () =>
+        Effect.gen(function* () {
+          const data = yield* fixture();
+          const auth = yield* authServer(config, data.database);
+          const client = makeAuthClient(auth, origin);
+          const send = (path: string, body: Schema.Json) =>
+            Effect.promise(async () => client.send(path, body));
+
+          const begun = yield* send("/register", {
+            ...(yield* flow),
+            registration: { displayName: " Alice ", role: "staff", userId: "chosen-staff-id" },
           });
-          assert.equal(signedIn.status, 200, await signedIn.clone().text());
-        };
-        await signIn(1);
-        const actor = await resolveActor(auth, client.request());
-        expect(actor).toMatchObject({ kind: "customer", displayName: "Alice" });
-        assert(actor.kind === "customer");
-        expect(actor.userId).not.toBe("chosen-staff-id");
-        staffIds.add(actor.userId);
-        expect(await resolveActor(staffAuth, client.request())).toMatchObject({
-          kind: "staff",
-          userId: actor.userId,
-        });
-        const oldRequest = client.request();
-        expect((await client.send("/signOut", {})).status).toBe(200);
-        expect(await resolveActor(auth, oldRequest)).toEqual({ kind: "anonymous" });
-        await signIn(2);
-        await data.expire();
-        expect(await resolveActor(auth, client.request())).toEqual({
-          kind: "anonymous",
-        });
-        const forgedLogin = await client.send("/signIn", flow());
-        const forgedChallenge = Schema.decodeUnknownSync(authenticationResult)(
-          await forgedLogin.json(),
-        ).value;
-        const assertion = authenticator.authenticate(forgedChallenge.options.challenge, 3);
-        const invalidSignature = makeTestPasskey(origin, registration.options.user.id).authenticate(
-          forgedChallenge.options.challenge,
-          3,
-        ).response.signature;
-        const forged = await client.send("/completeSignIn", {
-          flowId: forgedChallenge.flowId,
-          response: Schema.encodeSync(Schema.fromJsonString(Schema.Json))({
-            ...assertion,
-            response: { ...assertion.response, signature: invalidSignature },
-          }),
-        });
-        expect(forged.status).toBe(400);
-        expect(await resolveActor(auth, client.request())).toEqual({
-          kind: "anonymous",
-        });
-        const missingCsrf = await auth.handler(
-          new Request(`${origin}/api/auth/register`, {
-            method: "POST",
-            headers: { origin, "content-type": "application/json" },
-            body: Schema.encodeSync(Schema.fromJsonString(Schema.Json))({
-              payload: { ...flow(), registration: { displayName: "Mallory" } },
+          yield* expectOk(begun);
+          const registration = (yield* decodeBody(registrationResult)(begun)).value;
+          const authenticator = yield* makeTestPasskey(origin, registration.options.user.id);
+          const enrollment = {
+            flowId: registration.flowId,
+            response: encodeJson(authenticator.register(registration.options.challenge)),
+          };
+          const outsider = makeAuthClient(auth, origin);
+          expect(
+            (yield* Effect.promise(async () => outsider.send("/completeRegistration", enrollment)))
+              .status,
+          ).not.toBe(200);
+          yield* expectOk(yield* send("/completeRegistration", enrollment));
+          expect(yield* resolveActor(auth, client.request())).toEqual({ kind: "anonymous" });
+          expect((yield* send("/completeRegistration", enrollment)).status).not.toBe(200);
+
+          const signIn = Effect.fnUntraced(function* (counter: number) {
+            const login = yield* send("/signIn", yield* flow);
+            yield* expectOk(login);
+            const assertion = (yield* decodeBody(authenticationResult)(login)).value;
+            yield* expectOk(
+              yield* send("/completeSignIn", {
+                flowId: assertion.flowId,
+                response: encodeJson(
+                  yield* authenticator.authenticate(assertion.options.challenge, counter),
+                ),
+              }),
+            );
+          });
+          yield* signIn(1);
+          const actor = yield* resolveActor(auth, client.request());
+          expect(actor).toMatchObject({ kind: "customer", displayName: "Alice" });
+          assert(actor.kind === "customer");
+          expect(actor.userId).not.toBe("chosen-staff-id");
+
+          // Staff authority is deployment configuration, never a session claim.
+          const staffAuth = yield* authServer(
+            { ...config, staffUserIds: HashSet.make(actor.userId) },
+            data.database,
+          );
+          expect(yield* resolveActor(staffAuth, client.request())).toMatchObject({
+            kind: "staff",
+            userId: actor.userId,
+          });
+
+          const oldRequest = client.request();
+          expect((yield* send("/signOut", {})).status).toBe(200);
+          expect(yield* resolveActor(auth, oldRequest)).toEqual({ kind: "anonymous" });
+          yield* signIn(2);
+          yield* data.expire;
+          expect(yield* resolveActor(auth, client.request())).toEqual({ kind: "anonymous" });
+
+          const forgedChallenge = (yield* decodeBody(authenticationResult)(
+            yield* send("/signIn", yield* flow),
+          )).value;
+          const assertion = yield* authenticator.authenticate(forgedChallenge.options.challenge, 3);
+          const impostor = yield* makeTestPasskey(origin, registration.options.user.id);
+          const invalidSignature = (yield* impostor.authenticate(
+            forgedChallenge.options.challenge,
+            3,
+          )).response.signature;
+          const forged = yield* send("/completeSignIn", {
+            flowId: forgedChallenge.flowId,
+            response: encodeJson({
+              ...assertion,
+              response: { ...assertion.response, signature: invalidSignature },
             }),
-          }),
-        );
-        expect(missingCsrf.status).toBe(403);
-        const rejected = await auth.handler(
-          new Request(`${origin}/api/auth/register`, {
-            method: "POST",
-            headers: {
-              origin: "https://attacker.example",
-              "content-type": "application/json",
-              "x-effect-auth-csrf": "1",
-            },
-            body: Schema.encodeSync(Schema.fromJsonString(Schema.Json))({
-              payload: { ...flow(), registration: { displayName: "Mallory" } },
-            }),
-          }),
-        );
-        expect(rejected.status).toBe(403);
-      };
-      await check().finally(async () => {
-        await staffAuth.dispose();
-        await auth.dispose();
-        await data.dispose();
-      });
-    }, 60_000);
+          });
+          expect(forged.status).toBe(400);
+          expect(yield* resolveActor(auth, client.request())).toEqual({ kind: "anonymous" });
+
+          const register = Effect.fnUntraced(function* (headers: Record<string, string>) {
+            return yield* respond(
+              auth,
+              new Request(`${origin}/api/auth/register`, {
+                method: "POST",
+                headers: { "content-type": "application/json", ...headers },
+                body: encodeJson({
+                  payload: { ...(yield* flow), registration: { displayName: "Mallory" } },
+                }),
+              }),
+            );
+          });
+          expect((yield* register({ origin })).status).toBe(403);
+          expect(
+            (yield* register({ origin: "https://attacker.example", "x-effect-auth-csrf": "1" }))
+              .status,
+          ).toBe(403);
+        }),
+      60_000,
+    );
   },
 );

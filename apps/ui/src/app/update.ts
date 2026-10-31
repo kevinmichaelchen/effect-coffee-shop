@@ -2,7 +2,7 @@ import { Equal, Option, Schema } from "effect";
 import { Update } from "foldkit";
 import { UrlRequest } from "foldkit/navigation";
 import { toString as urlToString } from "foldkit/url";
-import { FeedId } from "@effect-coffee-shop/coffee-domain/Order/OrderFeed";
+import type { FeedId } from "@effect-coffee-shop/coffee-domain/Order/OrderFeed";
 import { toggledTheme } from "@effect-coffee-shop/ui-kit/components/theme";
 import { anonymousViewer } from "#features/auth/lib/viewer.ts";
 import { DrinkSize, Milk, Temperature } from "#features/coffee-shop/lib/coffee-schemas.ts";
@@ -62,10 +62,8 @@ import { composerFor, selectDrink, toInt } from "#app/draft.ts";
 import { feedFor } from "#app/feed.ts";
 import { Message } from "#app/message.ts";
 import type { AuthAction, Model } from "#app/model.ts";
-import type { AppServices } from "#app/resources.ts";
-import { AppRoute, mcpAuthorizePath, urlToAppRoute } from "#app/route.ts";
-
-export type UpdateReturn = Update.Return<Model, Message, AppServices>;
+import type { UpdateReturn } from "#app/resources.ts";
+import { type AppRoute, mcpAuthorizePath, urlToAppRoute } from "#app/route.ts";
 
 // SESSION
 

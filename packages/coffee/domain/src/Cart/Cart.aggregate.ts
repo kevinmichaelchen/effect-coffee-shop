@@ -42,10 +42,14 @@ const CartState = Schema.Struct({
 export type CartState = typeof CartState.Type;
 
 /** Each person changes only their own cart: a cart is keyed by its owner. */
-const mustOwn = Effect.fn(function* (owner: CustomerId) {
-  const actor = yield* CurrentActor;
-  if (actor.userId !== owner) return yield* new NotYourCart();
-});
+const mustOwn = (owner: CustomerId) =>
+  CurrentActor.pipe(
+    Effect.filterOrFail(
+      (actor) => actor.userId === owner,
+      () => new NotYourCart(),
+    ),
+    Effect.asVoid,
+  );
 
 const lineOf = (state: CartState, cartItemId: CartItemId) =>
   Effect.fromOption(Arr.findFirst(state.lines, (line) => line.cartItemId === cartItemId)).pipe(

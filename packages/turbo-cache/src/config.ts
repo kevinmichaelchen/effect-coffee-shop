@@ -10,11 +10,11 @@ export class CacheConfig extends Context.Service<
   CacheConfig,
   {
     readonly team: string;
-    readonly writeToken: Redacted.Redacted<string>;
-    readonly readToken: Redacted.Redacted<string>;
+    readonly writeToken: Redacted.Redacted;
+    readonly readToken: Redacted.Redacted;
     readonly maxBytes: number;
   }
->()("TurboCache/Config") {}
+>()("@effect-coffee-shop/turbo-cache/config/CacheConfig") {}
 
 const token = (name: string) =>
   Config.Redacted(name).pipe(

@@ -1,96 +1,145 @@
-/* oxlint-disable effect/avoid-native-object-helpers -- The CBOR encoder requires native Maps. */
-// oxlint-disable-next-line effect/avoid-node-imports -- Node crypto belongs to this software-authenticator test adapter.
-import { createHash, generateKeyPairSync, randomBytes, sign } from "node:crypto";
 import { encodeCBOR, type CBORType } from "@levischuck/tiny-cbor";
+import * as Arr from "effect/Array";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
+import { Digest, KeyFormat, SecureRandom, Signature } from "effect/crypto";
+import * as Base64Url from "effect/encoding/Base64Url";
 
-const Coordinates = Schema.Struct({ x: Schema.String, y: Schema.String });
+/** The P-256 public point, from the key's JWK. */
+const Coordinates = Schema.Struct({
+  x: Schema.Uint8ArrayFromBase64Url,
+  y: Schema.Uint8ArrayFromBase64Url,
+});
+
+/** The WebAuthn clientDataJSON wire shape. */
+const ClientData = Schema.fromJsonString(
+  Schema.Struct({
+    type: Schema.String,
+    challenge: Schema.String,
+    origin: Schema.String,
+    isCrossOrigin: Schema.Boolean,
+  }).pipe(Schema.encodeKeys({ isCrossOrigin: "crossOrigin" })),
+);
+const encodeClientData = Schema.encodeSync(ClientData);
+
+const CryptoLive = Layer.mergeAll(Signature.layerWebCrypto, Digest.layerWebCrypto).pipe(
+  Layer.provideMerge(SecureRandom.layerWebCrypto),
+);
+
+const concat = (parts: ReadonlyArray<Uint8Array>) =>
+  Uint8Array.from(Arr.flatMap(parts, (part) => Arr.fromIterable(part)));
+
+const bigEndianUint32 = (value: number) => {
+  const bytes = new Uint8Array(4);
+  new DataView(bytes.buffer).setUint32(0, value);
+  return bytes;
+};
+
+/** One DER INTEGER: minimal big-endian bytes, with a 0x00 pad when the sign bit is set. */
+const derInteger = (bytes: Uint8Array): Uint8Array => {
+  const minimal = Arr.dropWhile(
+    Arr.fromIterable(bytes),
+    (byte, index) => byte === 0 && index < bytes.length - 1,
+  );
+  const positive = (minimal[0] ?? 0) >= 0x80 ? [0, ...minimal] : minimal;
+  return Uint8Array.from([0x02, positive.length, ...positive]);
+};
+
+/** WebAuthn ES256 signatures are DER `SEQUENCE { r, s }`; WebCrypto signs raw `r‖s`. */
+const derSignature = (raw: Uint8Array) => {
+  const body = concat([derInteger(raw.subarray(0, 32)), derInteger(raw.subarray(32))]);
+  return concat([Uint8Array.from([0x30, body.length]), body]);
+};
 
 /** A software ES256 authenticator: production code still verifies every signature. */
-export function makeTestPasskey(origin: string, userHandle: string) {
-  const rpId = new URL(origin).hostname;
-  const { publicKey, privateKey } = generateKeyPairSync("ec", { namedCurve: "prime256v1" });
-  const coordinates = Schema.decodeUnknownSync(Coordinates)(publicKey.export({ format: "jwk" }));
-  const credentialId = randomBytes(32);
+export const makeTestPasskey = Effect.fn("CoffeeAuth.makeTestPasskey")(function* (
+  origin: string,
+  userHandle: string,
+) {
+  const signature = yield* Signature.Signature;
+  const digest = yield* Digest.Digest;
+  const random = yield* SecureRandom.SecureRandom;
+  const keys = yield* signature.generateKeyPair(Signature.ecdsaP256);
+  const coordinates = yield* Schema.decodeUnknownEffect(Coordinates)(
+    yield* KeyFormat.encode(KeyFormat.jwk, keys.publicKey),
+  );
+  const credentialId = yield* random.randomBytes(32);
   const coseKey = encodeCBOR(
+    // oxlint-disable-next-line effect/avoid-native-object-helpers -- tiny-cbor's CBORType models CBOR maps only as native Map.
     new Map<number, CBORType>([
       [1, 2],
       [3, -7],
       [-1, 1],
-      [-2, Buffer.from(coordinates.x, "base64url")],
-      [-3, Buffer.from(coordinates.y, "base64url")],
+      [-2, coordinates.x],
+      [-3, coordinates.y],
     ]),
   );
-  const rpHash = createHash("sha256").update(rpId).digest();
-  const encodeClientData = Schema.encodeSync(
-    Schema.fromJsonString(
-      Schema.Struct({
-        type: Schema.String,
-        challenge: Schema.String,
-        origin: Schema.String,
-        // oxlint-disable-next-line effect/require-is-prefix-for-boolean-schema-field -- This is the WebAuthn clientDataJSON wire field.
-        crossOrigin: Schema.Boolean,
-      }),
-    ),
+  const rpHash = yield* digest.digest(
+    Digest.sha256,
+    new TextEncoder().encode(new URL(origin).hostname),
   );
   const clientData = (type: string, challenge: string) =>
-    Buffer.from(encodeClientData({ type, challenge, origin, crossOrigin: false }));
+    new TextEncoder().encode(encodeClientData({ type, challenge, origin, isCrossOrigin: false }));
+  const id = Base64Url.encode(credentialId);
 
   return {
-    credentialId: credentialId.toString("base64url"),
-    publicKey: Buffer.from(coseKey).toString("base64url"),
+    credentialId: id,
+    publicKey: Base64Url.encode(coseKey),
     register: (challenge: string) => {
       // UP + UV + AT, zero counter, zero AAGUID, 32-byte credential ID, COSE key.
-      const authData = Buffer.concat([
+      const authData = concat([
         rpHash,
-        Buffer.from([69, 0, 0, 0, 0]),
-        Buffer.alloc(16),
-        Buffer.from([0, 32]),
+        Uint8Array.from([69, 0, 0, 0, 0]),
+        new Uint8Array(16),
+        Uint8Array.from([0, 32]),
         credentialId,
         coseKey,
       ]);
       const attestation = encodeCBOR(
+        // oxlint-disable-next-line effect/avoid-native-object-helpers -- tiny-cbor's CBORType models CBOR maps only as native Map.
         new Map<string, CBORType>([
           ["fmt", "none"],
+          // oxlint-disable-next-line effect/avoid-native-object-helpers -- tiny-cbor's CBORType models CBOR maps only as native Map.
           ["attStmt", new Map()],
           ["authData", authData],
         ]),
       );
       return {
-        id: credentialId.toString("base64url"),
-        rawId: credentialId.toString("base64url"),
+        id,
+        rawId: id,
         type: "public-key",
         response: {
-          clientDataJSON: clientData("webauthn.create", challenge).toString("base64url"),
-          attestationObject: Buffer.from(attestation).toString("base64url"),
+          clientDataJSON: Base64Url.encode(clientData("webauthn.create", challenge)),
+          attestationObject: Base64Url.encode(attestation),
           transports: ["internal"],
         },
         clientExtensionResults: {},
         authenticatorAttachment: "platform",
       };
     },
-    authenticate: (challenge: string, counter = 1) => {
-      const count = Buffer.alloc(4);
-      count.writeUInt32BE(counter);
-      const authenticatorData = Buffer.concat([rpHash, Buffer.from([5]), count]);
+    authenticate: Effect.fn("CoffeeAuth.TestPasskey.authenticate")(function* (
+      challenge: string,
+      counter: number,
+    ) {
+      const authenticatorData = concat([rpHash, Uint8Array.from([5]), bigEndianUint32(counter)]);
       const data = clientData("webauthn.get", challenge);
-      const signature = sign(
-        "sha256",
-        Buffer.concat([authenticatorData, createHash("sha256").update(data).digest()]),
-        privateKey,
+      const signed = yield* signature.sign(
+        keys.privateKey,
+        concat([authenticatorData, yield* digest.digest(Digest.sha256, data)]),
       );
       return {
-        id: credentialId.toString("base64url"),
-        rawId: credentialId.toString("base64url"),
+        id,
+        rawId: id,
         type: "public-key",
         response: {
-          clientDataJSON: data.toString("base64url"),
-          authenticatorData: authenticatorData.toString("base64url"),
-          signature: signature.toString("base64url"),
+          clientDataJSON: Base64Url.encode(data),
+          authenticatorData: Base64Url.encode(authenticatorData),
+          signature: Base64Url.encode(derSignature(signed)),
           userHandle,
         },
         clientExtensionResults: {},
       };
-    },
+    }),
   };
-}
+}, Effect.provide(CryptoLive));

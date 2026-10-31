@@ -9,7 +9,8 @@ import { moneyFromCents } from "@effect-coffee-shop/coffee-domain/Money";
 import { OrderFeed, FeedId } from "@effect-coffee-shop/coffee-domain/Order/OrderFeed";
 const address = OrderFeed.address(FeedId.make("customer:alice"));
 const publisher = { role: "publisher", userId: "publisher" };
-const order = Schema.decodeUnknownSync(CoffeeOrder)({
+const encode = Schema.encodeSync(Schema.toCodecJson(OrderFeed.actions.publish.payload));
+const order = Schema.decodeSync(CoffeeOrder)({
   id: "order_01j9z3k6a0x8s5v2c4b7n1m3p6",
   ownerUserId: "alice",
   customerName: "Alice",
@@ -74,11 +75,12 @@ it.effect(
   () =>
     Effect.gen(function* () {
       const server = yield* OrderFeedServer.acquire;
-      const slot = server.slots[0];
-      if (slot === undefined) return yield* Effect.die("Missing source slot");
-      const publish = slot.actions.get("publish");
-      if (publish === undefined) return yield* Effect.die("Missing publish action");
-      const encode = Schema.encodeSync(Schema.toCodecJson(OrderFeed.actions.publish.payload));
+      const slot = yield* Effect.fromNullishOr(server.slots[0]).pipe(
+        Effect.catch(() => Effect.die("Missing source slot")),
+      );
+      const publish = yield* Effect.fromNullishOr(slot.actions.get("publish")).pipe(
+        Effect.catch(() => Effect.die("Missing publish action")),
+      );
       const initial = yield* slot.initialize;
       const first = yield* publish(
         initial,
@@ -103,7 +105,7 @@ it.effect(
       expect(stalePlan.events).toEqual([]);
       expect(stalePlan.state).toEqual(firstPlan.state);
       const snapshot = yield* slot.snapshot(stalePlan.state);
-      const decoded = Schema.decodeUnknownSync(Schema.toCodecJson(OrderFeed.spec.snapshot))(
+      const decoded = yield* Schema.decodeEffect(Schema.toCodecJson(OrderFeed.spec.snapshot))(
         snapshot,
       );
       expect(decoded.orders[0]?.status).toBe("ready");

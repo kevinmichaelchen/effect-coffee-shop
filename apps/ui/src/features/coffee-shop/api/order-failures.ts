@@ -5,10 +5,10 @@ import { getStatusLabel } from "#features/coffee-shop/lib/coffee.ts";
 import type { CustomerClient, StaffClient } from "./domain-clients.ts";
 
 /** What the order screens show when an Api call fails: one readable message. */
-export class OrderRequestError extends Schema.TaggedError<OrderRequestError>()(
-  "OrderRequestError",
-  { message: Schema.String },
-) {}
+export class OrderRequestError extends Schema.TaggedError<
+  OrderRequestError,
+  { readonly brand: unique symbol }
+>()("OrderRequestError", { message: Schema.String }) {}
 
 export type FailureOf<Call> = Call extends (...args: never[]) => infer Result
   ? Effect.Error<Result>

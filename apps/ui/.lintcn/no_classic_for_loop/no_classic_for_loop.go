@@ -4,6 +4,8 @@
 package no_classic_for_loop
 
 import (
+	"strings"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/typescript-eslint/tsgolint/internal/rule"
 )
@@ -11,6 +13,11 @@ import (
 var NoClassicForLoopRule = rule.Rule{
 	Name: "no-classic-for-loop",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
+		// Numeric kernels (`*.kernel.ts`) are not application code: indexed loops
+		// over typed arrays are the algorithm, and the alternatives are 2-12x slower.
+		if strings.HasSuffix(ctx.SourceFile.FileName(), ".kernel.ts") {
+			return rule.RuleListeners{}
+		}
 		return rule.RuleListeners{
 			ast.KindForStatement: func(node *ast.Node) {
 				ctx.ReportNode(node, rule.RuleMessage{

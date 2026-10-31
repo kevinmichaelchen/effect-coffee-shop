@@ -20,7 +20,10 @@ import { SqlClient } from "effect/sql";
 import type { D1Database } from "@cloudflare/workers-types";
 import { D1Client } from "@effect/sql-d1";
 
-class SqlMigrationError extends Schema.TaggedError<SqlMigrationError>()("SqlMigrationError", {
+class SqlMigrationError extends Schema.TaggedError<
+  SqlMigrationError,
+  { readonly brand: unique symbol }
+>()("SqlMigrationError", {
   message: Schema.String,
   cause: Schema.optional(Schema.Defect()),
 }) {}

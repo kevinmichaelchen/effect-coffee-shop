@@ -17,7 +17,6 @@ minimumReleaseAgeExcludes = [
   "@fallow-cli/win32-arm64-msvc",
   "@fallow-cli/win32-x64-msvc",
   "fallow-type-aware",
-  "knip",
   "varlock",
   "@yielded/jose",
   "@yielded/oauth",
@@ -25,7 +24,6 @@ minimumReleaseAgeExcludes = [
   "effect-wide-event",
   # LFM3 support landed in Transformers.js 4.3.2 (2026-10-27); pinned in the workspace catalog.
   "@huggingface/transformers",
-  "@huggingface/transformers-structured-output",
   # Explicitly adopted launch release; version pinned in the workspace catalog.
   "foldkit",
   "@foldkit/ui",
@@ -95,6 +93,9 @@ minimumReleaseAgeExcludes = [
   # prek, oxlint and oxfmt are adopted as soon as they publish (decision 2026-09-15).
   # Each ships platform binaries as separate exact-version packages, so every
   # binding must be listed; oxlint-tsgolint is oxlint's type-aware companion.
+  # Exception: oxlint tracks the newest release `effect-tsrs oxlint` supports
+  # (node_modules/@yielded/effect-tsrs/bin/oxlint-metadata.json), since every
+  # lint script runs through that adapter.
   "@j178/prek",
   "@j178/prek-android-arm64",
   "@j178/prek-darwin-arm64",

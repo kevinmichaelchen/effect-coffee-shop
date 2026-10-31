@@ -196,6 +196,7 @@ export const domainApi = (input: CoffeeHttpInput, api: HttpEffect) =>
         Effect.catchTag("OperationHttpError", () =>
           Effect.succeed(HttpServerResponse.empty({ status: 403 })),
         ),
+        // oxlint-disable-next-line effecttsgo/strict-effect-provide -- The auth secret is read from Secrets Store on every request, so this per-request auth Layer is built here, the request's composition root.
         Effect.provide(auth.auth),
       );
       return Effect.flatMap(HttpServerRequest, (request) =>

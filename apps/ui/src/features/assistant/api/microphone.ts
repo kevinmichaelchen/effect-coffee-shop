@@ -1,12 +1,13 @@
-import { Data, Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { ManagedResource } from "foldkit";
 
-export class MicrophoneError extends Data.TaggedError("MicrophoneError")<{
-  readonly message: string;
-}> {}
+class MicrophoneError extends Schema.TaggedError<
+  MicrophoneError,
+  { readonly brand: unique symbol }
+>()("MicrophoneError", { message: Schema.String }) {}
 
 /** A live recording: the recorder plus the chunks it has produced so far. */
-export interface Recording {
+interface Recording {
   readonly recorder: MediaRecorder;
   readonly chunks: Blob[];
 }
@@ -22,12 +23,14 @@ const stopTracks = (recorder: MediaRecorder) =>
 /** Asks for the microphone and starts recording; the tracks stop when the scope closes. */
 export const acquireMicrophone = Effect.acquireRelease(
   Effect.tryPromise({
-    try: () => navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1 } }),
+    try: async () => navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1 } }),
     catch: () => new MicrophoneError({ message: "Microphone access was blocked." }),
   }).pipe(
     Effect.map((stream) => {
       const recording: Recording = { recorder: new MediaRecorder(stream), chunks: [] };
-      recording.recorder.ondataavailable = (event) => recording.chunks.push(event.data);
+      recording.recorder.addEventListener("dataavailable", (event) =>
+        recording.chunks.push(event.data),
+      );
       recording.recorder.start();
       return recording;
     }),
@@ -38,7 +41,7 @@ export const acquireMicrophone = Effect.acquireRelease(
 const stopped = (recorder: MediaRecorder) =>
   Effect.callback<void>((resume) => {
     if (recorder.state === "inactive") return resume(Effect.void);
-    recorder.onstop = () => resume(Effect.void);
+    recorder.addEventListener("stop", () => resume(Effect.void), { once: true });
     recorder.stop();
   });
 

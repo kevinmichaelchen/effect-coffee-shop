@@ -16,8 +16,7 @@ export function discardRejectedBody(body: ReadableStream<Uint8Array>) {
     }),
     Stream.runDrain,
     Effect.timeoutOption("100 millis"),
-    Effect.asVoid,
-    Effect.catch(() => Effect.void),
+    Effect.ignore,
   );
 }
 

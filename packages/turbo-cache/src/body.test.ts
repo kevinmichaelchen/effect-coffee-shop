@@ -8,8 +8,8 @@ import { discardRejectedBody } from "./body.ts";
 it.effect("finishes a small rejected body", () =>
   Effect.gen(function* () {
     const request = new Request("http://cache/", { method: "PUT", body: "rejected" });
-    if (request.body === null) return yield* Effect.die("Expected a body");
-    yield* discardRejectedBody(request.body);
+    const body = request.body ?? (yield* Effect.die("Expected a body"));
+    yield* discardRejectedBody(body);
     expect(request.bodyUsed).toBe(true);
   }),
 );

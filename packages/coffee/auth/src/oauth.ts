@@ -39,7 +39,7 @@ export const makeCoffeeOAuth = <E>(
         if (cookie === undefined) return undefined;
         return yield* service.verifySession(Redacted.make(cookie)).pipe(
           Effect.map((session) => session.subjectId),
-          Effect.catchTag("SessionInvalid", () => Effect.succeed(undefined)),
+          Effect.catchTag("SessionInvalid", () => Effect.undefined),
           Effect.mapError(() => OAuthServer.Unavailable.make({})),
         );
       });

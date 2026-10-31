@@ -11,8 +11,9 @@
     "./lib/utils": "./src/lib/utils.ts"
   },
   "scripts": {
-    "typecheck": "tsrs --noEmit && effect-tsrs diagnostics --project tsconfig.json",
-    "lint": "bun --bun oxlint -c .oxlintrc.json .",
+    "typecheck": "tsrs --noEmit",
+    "lint": "effect-tsrs oxlint -c ../tooling/oxlint.ui.config.ts --disable-nested-config .",
+    "lint:fix": "effect-tsrs oxlint -c ../tooling/oxlint.ui.config.ts --disable-nested-config --fix .",
     "lint:custom": "bun run --cwd ../../apps/ui lint:custom:run --tsconfig ../../packages/ui-kit/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",

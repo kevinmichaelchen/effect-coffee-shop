@@ -28,9 +28,12 @@ export class CustomerOrders extends Domain.View("CustomerOrders", {
     OrderSummary: (view, _, { state }) =>
       state?.order ? { orders: upsertOrder(view.orders, state.order) } : view,
   },
-  validate: Effect.fn(function* (request) {
-    const actor = yield* CurrentActor;
-    if (isStaff(actor) || request.key.id === actor.userId) return;
-    return yield* new NotYourOrder();
-  }),
+  validate: (request) =>
+    CurrentActor.pipe(
+      Effect.filterOrFail(
+        (actor) => isStaff(actor) || request.key.id === actor.userId,
+        () => new NotYourOrder(),
+      ),
+      Effect.asVoid,
+    ),
 }) {}

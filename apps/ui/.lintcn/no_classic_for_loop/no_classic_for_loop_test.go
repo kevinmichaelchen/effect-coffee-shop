@@ -34,6 +34,14 @@ const walk = (index: number): number =>
 	index >= 3 ? index : walk(index + 1);
 		`,
 	},
+	{
+		FileName: "fft.kernel.ts",
+		Code: `
+for (let index = 0; index < 3; index += 1) {
+	console.log(index);
+}
+		`,
+	},
 }
 
 var invalidCases = []rule_tester.InvalidTestCase{

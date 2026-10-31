@@ -3,7 +3,7 @@ import {
   coffeeShopMembers,
   CoffeeShopHandlers,
 } from "@effect-coffee-shop/coffee-domain/CoffeeShop.model";
-import { CoffeeOrder } from "@effect-coffee-shop/coffee-domain/Order/CoffeeOrder";
+import type { CoffeeOrder } from "@effect-coffee-shop/coffee-domain/Order/CoffeeOrder";
 import { OrderSummary } from "@effect-coffee-shop/coffee-domain/Order/OrderSummary.view";
 import { OrderPlaced } from "@effect-coffee-shop/coffee-domain/Order/PlaceOrder.command";
 import { BrewingStarted } from "@effect-coffee-shop/coffee-domain/Order/StartBrewing.command";

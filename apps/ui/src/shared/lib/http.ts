@@ -1,92 +1,92 @@
 import * as Effect from "effect/Effect";
+import * as HttpClient from "effect/http/HttpClient";
+import type * as HttpClientResponse from "effect/http/HttpClientResponse";
 import * as Schema from "effect/Schema";
 
-export class HttpRequestError extends Schema.TaggedError<HttpRequestError>()("HttpRequestError", {
+export class HttpRequestError extends Schema.TaggedError<
+  HttpRequestError,
+  { readonly brand: unique symbol }
+>()("HttpRequestError", {
   message: Schema.String,
-  status: Schema.Number,
+  status: Schema.Finite,
 }) {}
 
-export class HttpResponseDecodeError extends Schema.TaggedError<HttpResponseDecodeError>()(
-  "HttpResponseDecodeError",
-  {
-    message: Schema.String,
-    status: Schema.Number,
-  },
-) {}
+export class HttpResponseDecodeError extends Schema.TaggedError<
+  HttpResponseDecodeError,
+  { readonly brand: unique symbol }
+>()("HttpResponseDecodeError", {
+  message: Schema.String,
+  status: Schema.Finite,
+}) {}
 
 /** @public Named type used by an exported component or request contract. */
-export interface JsonRequestInputBase<
-  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
-> {
+export interface JsonRequestInputBase<SuccessSchema extends Schema.ConstraintDecoder<unknown>> {
   readonly errorMessage?: string;
-  readonly init?: RequestInit;
   readonly path: string;
   readonly schema: SuccessSchema;
 }
 
 export interface JsonRequestInputWithError<
-  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
-  ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
+  SuccessSchema extends Schema.ConstraintDecoder<unknown>,
+  ErrorSchema extends Schema.ConstraintDecoder<unknown>,
 > extends JsonRequestInputBase<SuccessSchema> {
   readonly errorSchema: ErrorSchema;
   readonly readErrorMessage: (error: ErrorSchema["Type"]) => string;
 }
 
 export interface JsonRequestInputWithoutError<
-  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
+  SuccessSchema extends Schema.ConstraintDecoder<unknown>,
 > extends JsonRequestInputBase<SuccessSchema> {
   readonly errorSchema?: undefined;
   readonly readErrorMessage?: undefined;
 }
 
 export type JsonRequestInput<
-  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
-  ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
+  SuccessSchema extends Schema.ConstraintDecoder<unknown>,
+  ErrorSchema extends Schema.ConstraintDecoder<unknown>,
 > =
   | JsonRequestInputWithError<SuccessSchema, ErrorSchema>
   | JsonRequestInputWithoutError<SuccessSchema>;
 
+/** GETs `path` with the app's HttpClient and decodes the JSON body. */
 export function requestJson<
-  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
-  ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
+  SuccessSchema extends Schema.ConstraintDecoder<unknown>,
+  ErrorSchema extends Schema.ConstraintDecoder<unknown>,
 >(
   input: JsonRequestInput<SuccessSchema, ErrorSchema>,
-): Effect.Effect<SuccessSchema["Type"], HttpRequestError | HttpResponseDecodeError> {
-  return fetchResponse(input).pipe(
+): Effect.Effect<
+  SuccessSchema["Type"],
+  HttpRequestError | HttpResponseDecodeError,
+  HttpClient.HttpClient
+> {
+  return HttpClient.get(input.path).pipe(
+    Effect.mapError(
+      () =>
+        new HttpRequestError({
+          message: input.errorMessage ?? `Unable to request ${input.path}.`,
+          status: 0,
+        }),
+    ),
     Effect.flatMap(
       (
         response,
       ): Effect.Effect<SuccessSchema["Type"], HttpRequestError | HttpResponseDecodeError> =>
-        response.ok
+        response.status >= 200 && response.status < 300
           ? readResponseJson(response, input.path, input.schema)
           : rejectRequestError(response, input),
     ),
   );
 }
 
-function fetchResponse(input: {
-  readonly errorMessage?: string;
-  readonly init?: RequestInit;
-  readonly path: string;
-}): Effect.Effect<Response, HttpRequestError> {
-  return Effect.tryPromise({
-    try: async () => fetch(input.path, input.init),
-    catch: () =>
-      new HttpRequestError({
-        message: input.errorMessage ?? `Unable to request ${input.path}.`,
-        status: 0,
-      }),
-  });
-}
-
 function rejectRequestError<
-  SuccessSchema extends Schema.ConstraintDecoder<unknown, never>,
-  ErrorSchema extends Schema.ConstraintDecoder<unknown, never>,
+  SuccessSchema extends Schema.ConstraintDecoder<unknown>,
+  ErrorSchema extends Schema.ConstraintDecoder<unknown>,
 >(
-  response: Response,
+  response: HttpClientResponse.HttpClientResponse,
   input: JsonRequestInput<SuccessSchema, ErrorSchema>,
 ): Effect.Effect<never, HttpRequestError> {
-  const fallbackMessage = input.errorMessage ?? `${response.status} ${response.statusText}`;
+  const fallbackMessage =
+    input.errorMessage ?? `Request to ${input.path} failed with status ${response.status}.`;
   const errorSchema = input.errorSchema;
   const readErrorMessage = input.readErrorMessage;
 
@@ -104,9 +104,9 @@ function rejectRequestError<
       onFailure: () => Effect.succeed(fallbackMessage),
       onSuccess: (rawBody) =>
         decodeJsonText(rawBody, response.status, input.path, errorSchema).pipe(
-          Effect.matchEffect({
-            onFailure: () => Effect.succeed(fallbackMessage),
-            onSuccess: (error) => Effect.succeed(readErrorMessage(error)),
+          Effect.match({
+            onFailure: () => fallbackMessage,
+            onSuccess: readErrorMessage,
           }),
         ),
     }),
@@ -121,8 +121,8 @@ function rejectRequestError<
   );
 }
 
-function readResponseJson<SuccessSchema extends Schema.ConstraintDecoder<unknown, never>>(
-  response: Response,
+function readResponseJson<SuccessSchema extends Schema.ConstraintDecoder<unknown>>(
+  response: HttpClientResponse.HttpClientResponse,
   path: string,
   schema: SuccessSchema,
 ): Effect.Effect<SuccessSchema["Type"], HttpResponseDecodeError> {
@@ -132,26 +132,27 @@ function readResponseJson<SuccessSchema extends Schema.ConstraintDecoder<unknown
 }
 
 function readResponseText(
-  response: Response,
+  response: HttpClientResponse.HttpClientResponse,
   path: string,
 ): Effect.Effect<string, HttpResponseDecodeError> {
-  return Effect.tryPromise({
-    try: async () => response.text(),
-    catch: () =>
-      new HttpResponseDecodeError({
-        message: `Unable to read response body from ${path}.`,
-        status: response.status,
-      }),
-  });
+  return response.text.pipe(
+    Effect.mapError(
+      () =>
+        new HttpResponseDecodeError({
+          message: `Unable to read response body from ${path}.`,
+          status: response.status,
+        }),
+    ),
+  );
 }
 
-function decodeJsonText<SchemaType extends Schema.ConstraintDecoder<unknown, never>>(
+function decodeJsonText<SchemaType extends Schema.ConstraintDecoder<unknown>>(
   rawBody: string,
   status: number,
   path: string,
   schema: SchemaType,
 ): Effect.Effect<SchemaType["Type"], HttpResponseDecodeError> {
-  return Schema.decodeUnknownEffect(Schema.fromJsonString(Schema.Unknown))(rawBody).pipe(
+  return Schema.decodeEffect(Schema.fromJsonString(Schema.Unknown))(rawBody).pipe(
     Effect.flatMap(Schema.decodeUnknownEffect(schema)),
     Effect.mapError(
       () =>

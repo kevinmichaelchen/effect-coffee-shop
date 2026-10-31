@@ -10,7 +10,7 @@ import {
 import { getOrderActions, type OrderAction } from "#features/coffee-shop/lib/coffee.ts";
 import { type ParsedReply, parseReply } from "#features/assistant/lib/tool-call.ts";
 
-export const AssistantPage = Schema.Literals(["shop", "staff"]);
+const AssistantPage = Schema.Literals(["shop", "staff"]);
 export type AssistantPage = typeof AssistantPage.Type;
 
 /** Everything the assistant may read for one request: the page and what it shows. */
@@ -26,7 +26,7 @@ export type AssistantRequest = typeof AssistantRequest.Type;
 const OrderActionName = Schema.Literals(["start-brewing", "mark-ready", "pick-up", "cancel"]);
 
 /** The draft fields the customer asked to change; everything else stays. */
-export const DraftPatch = Schema.Struct({
+const DraftPatch = Schema.Struct({
   drinkId: Schema.optionalKey(Schema.String),
   size: Schema.optionalKey(DrinkSize),
   milk: Schema.optionalKey(Milk),
@@ -60,7 +60,8 @@ export interface ToolDefinition {
   };
 }
 
-interface Tool {
+/** A tool the model may call, and how its arguments become an assistant turn. */
+export interface Tool {
   readonly definition: ToolDefinition;
   readonly toTurn: (args: unknown, text: string) => Option.Option<AssistantTurn>;
 }
@@ -80,7 +81,8 @@ const tool = <A, I>(
     function: {
       name,
       description,
-      parameters: options.empty ? emptyParameters : Schema.toJsonSchemaDocument(parameters).schema,
+      parameters:
+        options.empty === true ? emptyParameters : Schema.toJsonSchemaDocument(parameters).schema,
     },
   },
   toTurn: (args, text) =>

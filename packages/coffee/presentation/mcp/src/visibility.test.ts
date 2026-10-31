@@ -49,12 +49,12 @@ describe("MCP tool visibility", () => {
       const resources = yield* client.listResources();
       expect(resources.resources.map((resource) => resource.uri)).toContain(uri);
       const result = yield* client.readResource({ uri });
-      expect(result.contents).toEqual([
-        expect.objectContaining({
-          uri,
-          text: expect.stringContaining("name: order-coffee"),
-        }),
-      ]);
+      expect(result.contents).toHaveLength(1);
+      expect(result.contents[0]).toHaveProperty("uri", uri);
+      expect(result.contents[0]).toHaveProperty(
+        "text",
+        expect.stringContaining("name: order-coffee"),
+      );
     }),
   );
 

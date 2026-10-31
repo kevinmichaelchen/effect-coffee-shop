@@ -15,10 +15,13 @@ export const ArtifactMetadata = Schema.Struct({
 });
 export type ArtifactMetadata = typeof ArtifactMetadata.Type;
 
-export class CacheError extends Schema.TaggedError<CacheError>()("CacheError", {
-  status: Schema.Number,
-  message: Schema.String,
-}) {}
+export class CacheError extends Schema.TaggedError<CacheError, { readonly brand: unique symbol }>()(
+  "CacheError",
+  {
+    status: Schema.Finite,
+    message: Schema.String,
+  },
+) {}
 
 export const storageFailure = () =>
   new CacheError({ status: 503, message: "Artifact storage unavailable" });

@@ -23,12 +23,13 @@ export interface HttpRouteResult {
   readonly logFields?: StructuredLogRecord;
 }
 
-export type HttpRouteEffect = ReturnType<typeof Effect.suspend<HttpRouteResult, unknown, never>>;
+/** Route failures stay typed; the router reports them and passes them through. */
+export type HttpRouteEffect<E = never> = Effect.Effect<HttpRouteResult, E>;
 
-export interface HttpRoute<TEnv> {
+export interface HttpRoute<TEnv, E = never> {
   readonly name: string;
   readonly matches: (request: Request) => boolean;
-  readonly handle: (context: HttpRequestContext<TEnv>) => HttpRouteEffect;
+  readonly handle: (context: HttpRequestContext<TEnv>) => HttpRouteEffect<E>;
 }
 
 export const requestPathname = (request: Request): string => new URL(request.url).pathname;

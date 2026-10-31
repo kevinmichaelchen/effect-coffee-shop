@@ -1,5 +1,6 @@
 import { flow } from "effect/Function";
 import type { ReadWriteBucketClient } from "@alchemy.run/cloudflare/R2";
+import type { RuntimeContext } from "alchemy/RuntimeContext";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -11,7 +12,7 @@ import { ArtifactStore } from "../store.ts";
 export const makeR2Store = Effect.fn("TurboCache.makeR2Store")(function* (
   bucket: ReadWriteBucketClient,
 ) {
-  const runtime = yield* Effect.context<import("alchemy/RuntimeContext").RuntimeContext>();
+  const runtime = yield* Effect.context<RuntimeContext>();
   const metadata = flow(
     Schema.decodeUnknownEffect(ArtifactMetadata),
     Effect.mapError(storageFailure),
@@ -54,7 +55,10 @@ export const makeR2Store = Effect.fn("TurboCache.makeR2Store")(function* (
         complete: Effect.fn("R2.complete")((parts) =>
           upload.complete([...parts]).pipe(Effect.asVoid, Effect.mapError(storageFailure)),
         ),
-        abort: Effect.fn("R2.abort")(() => upload.abort().pipe(Effect.mapError(storageFailure))),
+        abort: Effect.suspend(() => upload.abort()).pipe(
+          Effect.mapError(storageFailure),
+          Effect.withSpan("R2.abort"),
+        ),
       };
     }),
   });

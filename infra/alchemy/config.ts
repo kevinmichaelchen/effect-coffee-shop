@@ -17,7 +17,7 @@ export const numberBetweenWithDefault = (input: {
   readonly name: string;
 }) =>
   Config.schema(
-    Schema.Number.check(
+    Schema.Finite.check(
       Schema.isBetween({
         maximum: input.maximum,
         minimum: input.minimum,

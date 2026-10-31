@@ -3,7 +3,6 @@ import { FeedId, OrderFeed } from "@effect-coffee-shop/coffee-domain/Order/Order
 import { Client } from "@yielded/sync/client";
 import {
   Array as Arr,
-  Data,
   DateTime,
   Duration,
   Effect,
@@ -59,7 +58,10 @@ const failed = (connection: Connection): Message =>
   });
 
 /** A parked replica is a dead connection: failing the stream makes the retry open a fresh one. */
-class FeedParked extends Data.TaggedError("FeedParked")<{}> {}
+class FeedParked extends Schema.TaggedError<FeedParked, { readonly brand: unique symbol }>()(
+  "FeedParked",
+  {},
+) {}
 
 /** One connection to the feed: its snapshot, later changes, and a message if it drops. */
 const connect = (connection: Connection) =>

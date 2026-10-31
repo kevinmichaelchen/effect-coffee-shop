@@ -1,11 +1,14 @@
 import * as OAuthServer from "@yielded/auth/OAuthServer";
 import * as Config from "effect/Config";
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
+import * as HashSet from "effect/HashSet";
 import * as Option from "effect/Option";
-import * as Redacted from "effect/Redacted";
+import type * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import * as SchemaTransformation from "effect/SchemaTransformation";
 import * as Result from "effect/Result";
+import * as Str from "effect/String";
 import * as Base64Url from "effect/encoding/Base64Url";
 
 const PublicOrigin = Schema.URL.check(
@@ -46,17 +49,11 @@ const Clients = Schema.fromJsonString(Schema.Array(OAuthServer.Client));
 
 const StaffUserIds = Schema.String.pipe(
   Schema.decodeTo(
-    Schema.ReadonlySet(Schema.String),
+    Schema.HashSet(Schema.String),
     SchemaTransformation.transform({
-      decode: (csv): ReadonlySet<string> =>
-        // oxlint-disable-next-line effect/avoid-native-object-helpers -- The actor port requires a native ReadonlySet; Effect HashSet has a different contract.
-        new Set(
-          csv
-            .split(",")
-            .map((id) => id.trim())
-            .filter((id) => id !== ""),
-        ),
-      encode: (ids: ReadonlySet<string>) => Array.from(ids).join(","),
+      decode: (csv): HashSet.HashSet<string> =>
+        HashSet.fromIterable(Arr.filter(Arr.map(Str.split(csv, ","), Str.trim), Str.isNonEmpty)),
+      encode: (ids: HashSet.HashSet<string>) => Arr.join(Arr.fromIterable(ids), ","),
     }),
   ),
 );
@@ -76,19 +73,18 @@ const readOrigins = Effect.fn("CoffeeAuth.readOrigins")(function* () {
 export const readAuthDeployment = Effect.fn("CoffeeAuth.readAuthDeployment")(function* () {
   const origins = yield* readOrigins();
   const staffUserIds = yield* Config.schema(StaffUserIds, "COFFEE_STAFF_USER_IDS").pipe(
-    // oxlint-disable-next-line effect/avoid-native-object-helpers -- The actor port requires a native ReadonlySet; Effect HashSet has a different contract.
-    Config.withDefault(new Set<string>()),
+    Config.withDefault(HashSet.empty<string>()),
   );
   return { ...origins, staffUserIds };
 });
 export type AuthDeployment = Effect.Success<ReturnType<typeof readAuthDeployment>>;
 
 export const readAuthConfig = (
-  secret: Option.Option<Redacted.Redacted<string>>,
-  staffUserIds: ReadonlySet<string>,
+  secret: Option.Option<Redacted.Redacted>,
+  staffUserIds: HashSet.HashSet<string>,
 ) =>
   Option.match(secret, {
-    onNone: () => Effect.succeed(Option.none()),
+    onNone: () => Effect.succeedNone,
     onSome: (secret) =>
       readOrigins().pipe(
         Effect.map((origins) => Option.some({ ...origins, secret, staffUserIds })),

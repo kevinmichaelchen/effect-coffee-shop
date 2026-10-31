@@ -15,7 +15,7 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "allowedUnstableApis": ["@effect/vitest"]
+        "allowedUnstableApis": ["@effect/vitest", "effect/crypto"]
       }
     ],
     "types": ["node", "bun"]

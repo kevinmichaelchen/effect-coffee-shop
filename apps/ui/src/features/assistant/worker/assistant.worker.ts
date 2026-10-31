@@ -1,8 +1,8 @@
 /// <reference lib="webworker" />
-import "#features/assistant/worker/ort-env.ts";
 import type { ProgressInfo } from "@huggingface/transformers";
 import { Cause, Effect, Option, Queue, Ref, Schema, Semaphore, Stream } from "effect";
 import { type LocalModel, WorkerEvent, WorkerRequest } from "#features/assistant/lib/protocol.ts";
+import { configureOnnxRuntime } from "#features/assistant/worker/ort-env.ts";
 import { aggregateProgress } from "#features/assistant/worker/progress.ts";
 import {
   generate,
@@ -24,10 +24,14 @@ type LoadError = TextModelError | VoiceModelError;
 declare const self: DedicatedWorkerGlobalScope;
 
 const encodeEvent = Schema.encodeSync(WorkerEvent);
-const post = (event: WorkerEvent) => Effect.sync(() => self.postMessage(encodeEvent(event)));
+/** Worker-to-page messages; a dedicated worker's postMessage has no target origin. */
+const postEvent = (event: WorkerEvent) =>
+  // oxlint-disable-next-line unicorn/require-post-message-target-origin -- DedicatedWorkerGlobalScope.postMessage takes no targetOrigin; the rule assumes window.postMessage.
+  self.postMessage(encodeEvent(event));
+const post = (event: WorkerEvent) => Effect.sync(() => postEvent(event));
 
 const progressOf = (model: LocalModel) => (loaded: number, total: number) =>
-  self.postMessage(encodeEvent(WorkerEvent.cases.Progressed.make({ model, loaded, total })));
+  postEvent(WorkerEvent.cases.Progressed.make({ model, loaded, total }));
 
 const textProgress = aggregateProgress(progressOf("text"));
 const onTextProgress = (info: ProgressInfo) => {
@@ -38,22 +42,24 @@ const messageOf = (error: { readonly message: string }) => error.message;
 
 /** Loads at most once at a time and keeps only a success, so "Try again" really retries. */
 const loadOnce = <A, E>(load: Effect.Effect<A, E>) =>
-  Effect.gen(function* () {
-    const loaded = yield* Ref.make(Option.none<A>());
-    const lock = yield* Semaphore.make(1);
-    return lock.withPermit(
-      Ref.get(loaded).pipe(
-        Effect.flatMap(
-          Option.match({
-            onSome: Effect.succeed,
-            onNone: () => load.pipe(Effect.tap((value) => Ref.set(loaded, Option.some(value)))),
-          }),
+  Effect.all([Ref.make(Option.none<A>()), Semaphore.make(1)]).pipe(
+    Effect.map(([loaded, lock]) =>
+      lock.withPermit(
+        Ref.get(loaded).pipe(
+          Effect.flatMap(
+            Option.match({
+              onSome: Effect.succeed,
+              onNone: () => load.pipe(Effect.tap((value) => Ref.set(loaded, Option.some(value)))),
+            }),
+          ),
         ),
       ),
-    );
-  });
+    ),
+  );
 
 const program = Effect.gen(function* () {
+  // Models load lazily on the first request, so this runs before any session exists.
+  yield* configureOnnxRuntime;
   const text = yield* loadOnce(loadTextModel(onTextProgress));
   const voice = yield* loadOnce(loadVoiceModel(progressOf("voice")));
   // One sequence at a time per model: generation state is not shareable.
@@ -76,7 +82,7 @@ const program = Effect.gen(function* () {
       Generate: (generateRequest) =>
         text.pipe(
           Effect.flatMap((pipeline) => generate(pipeline, generateRequest)),
-          textLock.withPermit,
+          (generating) => textLock.withPermit(generating),
           Effect.matchEffect({
             onFailure: (error) =>
               post(
@@ -96,7 +102,7 @@ const program = Effect.gen(function* () {
       Transcribe: ({ id, samples }) =>
         voice.pipe(
           Effect.flatMap((transcriber) => transcribe(transcriber, samples)),
-          voiceLock.withPermit,
+          (transcribing) => voiceLock.withPermit(transcribing),
           Effect.matchEffect({
             onFailure: (error) =>
               post(WorkerEvent.cases.Failed.make({ id, message: messageOf(error) })),
@@ -107,9 +113,9 @@ const program = Effect.gen(function* () {
 
   const requests = Stream.callback<unknown>((queue) =>
     Effect.sync(() => {
-      self.onmessage = (event: MessageEvent<unknown>) => {
+      self.addEventListener("message", (event: MessageEvent<unknown>) => {
         Queue.offerUnsafe(queue, event.data);
-      };
+      });
     }),
   );
 

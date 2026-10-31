@@ -21,9 +21,11 @@ export const MenuResource = McpServer.resource({
   name: "Coffee Menu",
   description: "The current coffee menu",
   mimeType: "application/json",
-  content: CoffeeOrderApp.use((app) => app.listMenu())
-    .pipe(withMcpActor)
-    .pipe(Effect.map(toMenuView), Effect.map(prettyJson)),
+  content: CoffeeOrderApp.use((app) => app.listMenu).pipe(
+    withMcpActor,
+    Effect.map(toMenuView),
+    Effect.map(prettyJson),
+  ),
 });
 
 export const OpenOrdersResource = McpServer.resource({
@@ -31,15 +33,14 @@ export const OpenOrdersResource = McpServer.resource({
   name: "Open Orders",
   description: "Orders that have not been picked up or cancelled",
   mimeType: "application/json",
-  content: CoffeeOrderApp.use((app) => app.listOrders({}))
-    .pipe(withMcpActor)
-    .pipe(
-      Effect.map((orders) =>
-        orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
-      ),
-      Effect.map(toCoffeeOrdersView),
-      Effect.map(prettyJson),
+  content: CoffeeOrderApp.use((app) => app.listOrders({})).pipe(
+    withMcpActor,
+    Effect.map((orders) =>
+      orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
     ),
+    Effect.map(toCoffeeOrdersView),
+    Effect.map(prettyJson),
+  ),
 });
 
 const orderIdParam = McpSchema.param("orderId", OrderId);
@@ -50,9 +51,10 @@ export const OrderResource = McpServer.resource`coffee://orders/${orderIdParam}`
   mimeType: "application/json",
   completion: {
     orderId: () =>
-      CoffeeOrderApp.use((app) => app.listOrders({}))
-        .pipe(withMcpActor)
-        .pipe(Effect.map((orders) => orders.map((order) => order.id))),
+      CoffeeOrderApp.use((app) => app.listOrders({})).pipe(
+        withMcpActor,
+        Effect.map((orders) => orders.map((order) => order.id)),
+      ),
   },
   content: Effect.fn("CoffeeMcp.orderResource")(function* (_uri, orderId) {
     const app = yield* CoffeeOrderApp;

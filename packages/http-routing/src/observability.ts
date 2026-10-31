@@ -5,6 +5,7 @@ import { WideEventLogger } from "effect-wide-event";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Metric from "effect/Metric";
 import * as Option from "effect/Option";
+import * as SecureRandom from "effect/crypto/SecureRandom";
 import { FetchHttpClient } from "effect/http";
 import * as HttpServerError from "effect/http/HttpServerError";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
@@ -89,10 +90,10 @@ type MetricAttributes = Readonly<Record<string, string>>;
 export const runHttpEffect = HttpObservabilityRuntime.runPromise;
 
 /** Consume request failures after emission so native servers never receive a raw rejection. */
-export const runHttpRequest = <E>(request: Request, effect: Effect.Effect<Response, E>) =>
+export const runHttpRequest = async <E>(request: Request, effect: Effect.Effect<Response, E>) =>
   HttpObservabilityRuntime.runPromise(
     Effect.suspend(() => {
-      const requestId = crypto.randomUUID();
+      const requestId = SecureRandom.uuidV4Unsafe();
       return effect.pipe(
         withHttpWideEvent({ method: request.method, requestId }),
         Effect.catchCause((cause) =>

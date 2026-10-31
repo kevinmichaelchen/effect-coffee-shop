@@ -24,7 +24,7 @@ export const staffSnapshot = (model: Model) => {
   const active = model.orders.filter(isActiveOrder);
   return {
     active,
-    history: model.orders.filter((order) => !isActiveOrder(order)).reverse(),
+    history: model.orders.filter((order) => !isActiveOrder(order)).toReversed(),
     ready: active.filter((order) => order.status === "ready").length,
   };
 };

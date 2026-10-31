@@ -51,7 +51,7 @@ function orderGroup(
 
 export function ordersCard(model: Model, h: Builder) {
   const active = model.orders.filter(isActiveOrder);
-  const history = model.orders.filter((order) => !isActiveOrder(order)).reverse();
+  const history = model.orders.filter((order) => !isActiveOrder(order)).toReversed();
   return card(
     { className: "w-full" },
     [
