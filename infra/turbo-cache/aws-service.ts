@@ -51,7 +51,7 @@ export default class CacheApi extends AWS.ECS.Service<CacheApi>()(
       cpu: 256,
       memory: 512,
       desiredCount: 1,
-      image: "oven/bun:1.4.2",
+      image: "oven/bun:1.4.4",
       loadBalancer: { domain, health: { "3000/http": { path: "/health" } } },
       env: {
         CACHE_TEAM: config.team,

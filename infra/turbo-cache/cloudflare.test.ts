@@ -52,7 +52,7 @@ test(
         encodeJsonString({
           name: "signed-cache-fixture",
           private: true,
-          packageManager: "bun@1.4.2",
+          packageManager: "bun@1.4.4",
           scripts: { build: "node build.mjs" },
         }),
       ),

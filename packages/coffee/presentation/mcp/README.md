@@ -42,6 +42,9 @@ Worker routing belong in their owning packages.
 - [`src/action-tools.ts`](./src/action-tools.ts) adapts the toolkit into MCP tools.
 - [`src/resources.ts`](./src/resources.ts) defines menu and order MCP resources.
 - [`src/prompts.ts`](./src/prompts.ts) defines recommendation and open-order summary prompts.
+- [`src/skills.ts`](./src/skills.ts) publishes the ordering workflow through the MCP Skills
+  extension (SEP-2640), including cart review and confirmed checkout. Clients opt in with
+  `extensions: { skills: true }`; the skill is also a readable MCP resource.
 - [`src/actor.ts`](./src/actor.ts) defines `McpActor`, the per-invocation caller identity.
 - [`src/server.ts`](./src/server.ts) composes MCP features into the HTTP server layer.
 

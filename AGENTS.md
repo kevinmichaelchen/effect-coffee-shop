@@ -18,3 +18,5 @@ Code style for agents:
 - Keep lint policy workspace-local: backend rules can be stricter and Effect-specific, while UI rules should focus on boundary safety and unsafe TypeScript escape hatches.
 
 Dependency patches live in `patches/`. After upgrading any patched package, run `bun run patches:check` and delete patches it reports as unused or no longer needed.
+
+For PR descriptions and review materials, use the project skill at `.agents/skills/pr-visual-review/SKILL.md`: prefer Pele diagram images in tables, concise FAQs, and an honest validation table over long prose.

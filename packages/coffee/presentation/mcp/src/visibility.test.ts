@@ -42,6 +42,22 @@ const makeClient = (current: Effect.Effect<AppActor>) =>
   );
 
 describe("MCP tool visibility", () => {
+  it.effect("serves the ordering skill alongside existing resources", () =>
+    Effect.gen(function* () {
+      const client = yield* makeClient(Effect.succeed(customer));
+      const uri = "skill://coffee/order-coffee/SKILL.md";
+      const resources = yield* client.listResources();
+      expect(resources.resources.map((resource) => resource.uri)).toContain(uri);
+      const result = yield* client.readResource({ uri });
+      expect(result.contents).toEqual([
+        expect.objectContaining({
+          uri,
+          text: expect.stringContaining("name: order-coffee"),
+        }),
+      ]);
+    }),
+  );
+
   it.effect.each([
     { name: "customer", actor: customer, expected: customerTools },
     { name: "staff", actor: staff, expected: allTools },

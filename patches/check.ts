@@ -18,13 +18,15 @@ const installed = (spec: string) =>
 
 const workspaces = ["apps", "packages", "packages/coffee", "packages/coffee/presentation", "infra"]
   .flatMap((dir) => readdirSync(join(root, dir)).map((name) => join(root, dir, name)))
-  .filter((dir) => existsSync(join(dir, "node_modules")));
+  .filter((dir) => existsSync(join(dir, "node_modules")))
+  .concat(root);
 
 /** Files of the packages workspaces really resolve, not stale store entries. */
 const resolvedFiles = (scope: string): string[] => {
   const packages = new Set(
     workspaces.flatMap((dir) => {
       const scoped = join(dir, "node_modules", scope);
+      if (existsSync(join(scoped, "package.json"))) return [realpathSync(scoped)];
       return existsSync(scoped)
         ? readdirSync(scoped).map((name) => realpathSync(join(scoped, name)))
         : [];
@@ -36,18 +38,22 @@ const resolvedFiles = (scope: string): string[] => {
       return statSync(path).isDirectory() ? walk(path) : /\.(m?js)$/.test(name) ? [path] : [];
     });
   return [...packages].flatMap((dir) =>
-    existsSync(join(dir, "dist")) ? walk(join(dir, "dist")) : [],
+    ["dist", "lib"].flatMap((output) =>
+      existsSync(join(dir, output)) ? walk(join(dir, output)) : [],
+    ),
   );
 };
 
 /** Still needed while anything we install imports the module the patch restores. */
 const importsLegacyCrypto = () =>
-  [...resolvedFiles("@yielded"), ...resolvedFiles("@foldkit")].filter((file) => {
-    const source = readFileSync(file, "utf8");
-    return (
-      source.includes('"effect/Crypto"') || /\bCrypto\b[^;]*from\s*["']effect["']/.test(source)
-    );
-  });
+  [...resolvedFiles("@yielded"), ...resolvedFiles("@foldkit"), ...resolvedFiles("alchemy")].filter(
+    (file) => {
+      const source = readFileSync(file, "utf8");
+      return (
+        source.includes('"effect/Crypto"') || /\bCrypto\b[^;]*from\s*["']effect["']/.test(source)
+      );
+    },
+  );
 
 const neededBy: Record<string, () => string> = {
   effect: () => {

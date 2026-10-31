@@ -1,8 +1,7 @@
 import { AuthRateLimitStoreLive } from "./persistence/rate-limit-store.ts";
 import { Persistence } from "@yielded/auth";
 import * as PasskeyProtocol from "@yielded/auth-simplewebauthn/Server";
-import * as WebCrypto from "@yielded/crypto/WebCrypto";
-import * as KdfAdmission from "@yielded/crypto/KdfAdmission";
+import * as WebCrypto from "@yielded/auth/WebCrypto";
 import * as Layer from "effect/Layer";
 import { AuthStorageLive } from "./persistence/live.ts";
 
@@ -11,9 +10,6 @@ export const AuthAdaptersLive = {
   passkeys: PasskeyProtocol.layer,
   storage: AuthStorageLive,
   rateLimits: Persistence.keyValueRateLimiterStore.pipe(Layer.provide(AuthRateLimitStoreLive)),
-  crypto: Layer.merge(
-    WebCrypto.layerCryptoWeb,
-    WebCrypto.layer(globalThis.crypto.subtle).pipe(Layer.provide(KdfAdmission.layer())),
-  ),
+  crypto: WebCrypto.layer,
 };
 export type AuthAdapters = typeof AuthAdaptersLive;

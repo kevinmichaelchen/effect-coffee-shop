@@ -16,6 +16,8 @@
   ],
   "ignorePatterns": ["**/*.d.ts", "**/*.generated.ts", "**/dist/**"],
   "ignoreDependencies": [
+    // Fallow loads its required type-aware companion dynamically from its launcher.
+    "fallow-type-aware",
     "@foldkit/vite-plugin",
     "happy-dom",
     "@effect/platform-bun",

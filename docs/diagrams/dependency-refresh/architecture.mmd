@@ -1,0 +1,10 @@
+flowchart TB
+  UI["Foldkit browser app<br/>0.170.0"] -->|Customer and staff APIs| Worker["Cloudflare Worker<br/>Effect 4.1.1"]
+  AI["MCP client / assistant"] -->|/mcp| MCP["MCP resources + tools<br/>NEW: ordering skill"]
+  MCP --> Worker
+  Worker -->|Authenticated requests| Domain["Coffee domain<br/>Alchemy Durable Objects"]
+  Worker --> Auth["Yielded Auth beta.47<br/>Passkeys + sessions + OAuth"]
+  Auth --> D1["D1<br/>Auth persistence"]
+  Domain --> State["Orders + carts<br/>Checkout sessions + views"]
+  Domain -->|Order events| Sync["Yielded Sync feeds<br/>Customer + staff"]
+  Sync -->|Live order updates| UI
