@@ -9,6 +9,9 @@ and Yielded's SimpleWebAuthn browser adapter.
 - `src/server.ts`: shared HTTP auth layer and direct session-to-actor middleware.
 - `src/oauth.ts`: Yielded OAuth server, durable grants, and per-invocation MCP identity.
 - `src/adapters.ts`: replaceable WebCrypto, WebAuthn, and persistence layers.
+  Yielded's `WebCrypto.layer` preset supplies Effect 4.1 crypto services; the legacy
+  `@yielded/crypto` package is no longer needed. Alchemy OAuth and Yielded Cloudflare
+  Sync still require the Effect Crypto compatibility patch.
 - `src/config.ts`: schema-decoded origin and OAuth client configuration.
 - `src/persistence/`: Effect SQL mappings and atomic credential/session writes.
 - `src/database.ts`: D1 atomic batches (`d1AuthDatabase`) and a generic transactional SQL layer.

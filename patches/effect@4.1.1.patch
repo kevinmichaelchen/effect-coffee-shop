@@ -4,8 +4,8 @@ index 0000000..d8e9598
 --- /dev/null
 +++ b/dist/Crypto.d.ts
 @@ -0,0 +1,245 @@
-+// Patched in from effect@4.0.6: 4.1 removed effect/Crypto, which Yielded still imports.
-+// Drop this patch once Yielded moves to effect/crypto (SecureRandom, Digest).
++// Patched in from effect@4.0.6: 4.1 removed effect/Crypto, which Alchemy and Yielded Sync still import.
++// Drop this patch once Alchemy and Yielded Sync move to effect/crypto (SecureRandom, Digest).
 +/**
 + * Defines a platform-independent service for cryptographic operations.
 + *
@@ -255,8 +255,8 @@ index 0000000..7458637
 --- /dev/null
 +++ b/dist/Crypto.js
 @@ -0,0 +1,140 @@
-+// Patched in from effect@4.0.6: 4.1 removed effect/Crypto, which Yielded still imports.
-+// Drop this patch once Yielded moves to effect/crypto (SecureRandom, Digest).
++// Patched in from effect@4.0.6: 4.1 removed effect/Crypto, which Alchemy and Yielded Sync still import.
++// Drop this patch once Alchemy and Yielded Sync move to effect/crypto (SecureRandom, Digest).
 +/**
 + * Defines a platform-independent service for cryptographic operations.
 + *
@@ -403,7 +403,7 @@ index 24ff85b..1f609a4 100644
   * @since 2.0.0
   */
  export * as Cron from "./Cron.ts";
-+// Patched: re-export the 4.0 Crypto module restored by this patch (Foldkit's Vite plugin imports it).
++// Patched: re-export the 4.0 Crypto module restored by this patch (legacy dependency compatibility).
 +export * as Crypto from "./Crypto.ts";
  /**
   * @stability stable
@@ -416,7 +416,7 @@ index 5980e37..f7804b4 100644
   * @since 2.0.0
   */
  export * as Cron from "./Cron.js";
-+// Patched: re-export the 4.0 Crypto module restored by this patch (Foldkit's Vite plugin imports it).
++// Patched: re-export the 4.0 Crypto module restored by this patch (legacy dependency compatibility).
 +export * as Crypto from "./Crypto.js";
  /**
   * @stability stable

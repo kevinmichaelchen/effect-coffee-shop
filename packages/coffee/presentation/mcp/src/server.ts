@@ -13,6 +13,7 @@ import { McpActor } from "./actor.ts";
 import { CoffeeMcpVisibility } from "./visibility.ts";
 import { MenuResource, OpenOrdersResource, OrderResource } from "./resources.ts";
 import { RecommendDrinkPrompt, SummarizeOpenOrdersPrompt } from "./prompts.ts";
+import { CoffeeOrderingSkill } from "./skills.ts";
 
 const mcpServerInfo = {
   name: "Coffee Orders MCP",
@@ -43,6 +44,7 @@ export const CoffeeMcpFeaturesLive = Layer.mergeAll(
   RecommendDrinkPrompt,
   SummarizeOpenOrdersPrompt,
   CoffeeActionToolsLive,
+  CoffeeOrderingSkill,
 ).pipe(Layer.provide(CoffeeMcpVisibility.combine(CoffeeMcpServices).layer));
 
 export const CoffeeMcpHttpLive = (allowedOrigins: ReadonlyArray<string>) =>

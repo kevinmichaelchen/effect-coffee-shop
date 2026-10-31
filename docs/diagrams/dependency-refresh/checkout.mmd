@@ -1,0 +1,11 @@
+flowchart TB
+  Skill["NEW: order-coffee skill<br/>Published as an MCP resource"] --> Menu["Read current menu + options"]
+  Menu --> Cart["Read cart, then edit items"]
+  Cart --> Prepare["prepare_cart_checkout<br/>Returns summary + checkoutSessionId"]
+  Prepare --> Confirm{"Customer confirms<br/>items and total?"}
+  Confirm -->|No / changed cart| Cart
+  Confirm -->|Yes| Checkout["checkout_cart<br/>Pass prepared checkoutSessionId"]
+  Checkout --> Result{"Response known?"}
+  Result -->|Yes| Report["Report returned order ID + status"]
+  Result -->|No| Inspect["Inspect checkout session + orders<br/>before another attempt"]
+  Note["Skill = assistant guidance<br/>Server still enforces authorization<br/>Staff actions require staff authority"]

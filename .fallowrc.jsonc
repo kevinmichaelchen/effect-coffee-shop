@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/fallow/schema.json",
   "entry": [
+    "docs/diagrams/render.mjs",
     "infra/alchemy/alchemy.run.ts",
     "infra/turbo-cache/aws.ts",
     "apps/ui/src/entry.ts",
@@ -16,6 +17,8 @@
   ],
   "ignorePatterns": ["**/*.d.ts", "**/*.generated.ts", "**/dist/**"],
   "ignoreDependencies": [
+    // Fallow loads its required type-aware companion dynamically from its launcher.
+    "fallow-type-aware",
     "@foldkit/vite-plugin",
     "happy-dom",
     "@effect/platform-bun",
@@ -99,6 +102,7 @@
       {
         "name": "tooling",
         "patterns": [
+          "docs/diagrams/render.mjs",
           "packages/tooling/**",
           "**/oxlint.config.ts",
           "**/vitest.config.ts",

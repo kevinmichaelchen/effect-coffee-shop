@@ -1,0 +1,11 @@
+flowchart TB
+  Auth["CoffeeAuth<br/>Passkeys + stateful sessions"] --> Adapters["AuthAdaptersLive<br/>Services composed at the boundary"]
+  Adapters --> Crypto["NEW: @yielded/auth/WebCrypto.layer<br/>Effect crypto service preset"]
+  Crypto --> Host["Host Web Crypto"]
+  Adapters --> Passkeys["SimpleWebAuthn<br/>Passkey protocol adapter"]
+  Adapters --> Storage["AuthStorageLive<br/>Typed native persistence services"]
+  Adapters --> Rate["Rate-limit store"]
+  Storage --> SQL["Effect SQL D1 adapter"]
+  Rate --> SQL
+  SQL --> D1["D1 auth database"]
+  Storage -.-> Patch["Compatibility patch retained<br/>Schema-aware persistence mapping"]
