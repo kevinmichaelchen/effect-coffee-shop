@@ -1,5 +1,5 @@
 // Run from the repository root; see README.md for isolated tool installation.
-import { readFile, readdir, writeFile, copyFile, mkdir } from "node:fs/promises";
+import { readFile, readdir, writeFile, mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 
@@ -27,12 +27,11 @@ for (const file of (await readdir(directory)).filter((file) => file.endsWith(".m
     padding: 28,
     responsive: false,
   });
-  await writeFile(resolve(directory, `${name}.svg`), svg);
+  await writeFile(`.context/diagrams/${name}.svg`, svg);
   await page.setContent(
     `<html><head><style>body{margin:0;background:white}svg{display:block;background:white}</style></head><body>${svg}</body></html>`,
   );
   await page.locator("svg").screenshot({ path: `.context/diagrams/${name}.png` });
-  await copyFile(`.context/diagrams/${name}.png`, resolve(directory, `${name}.png`));
   console.log(`Rendered ${name} with Pele`);
 }
 await browser.close();
