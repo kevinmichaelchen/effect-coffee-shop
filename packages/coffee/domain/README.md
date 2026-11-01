@@ -83,18 +83,14 @@ in stories; Cloudflare hosts it on `DomainCloudflare.DurableObjects`' built-in w
 
 ## Statechart experiment
 
-[`FulfillmentMachine.test.ts`](test/FulfillmentMachine.test.ts) explores `@typeonce/effect-machine`
-with parallel preparation and notification regions, each containing a sequence of states. It is a
-standalone prototype; it does not change the order aggregate or fulfillment saga. The test replays
-example facts using the pure planner and verifies that it produces no commands.
-
-A possible integration would keep the aggregate event log authoritative, derive the chart state by
-replaying committed events, and use chart decisions to validate new commands before recording facts.
-The existing policy and durable saga would still own side effects and retries. This needs an adapter
-between real domain events and chart events, explicit rejection of unhandled transitions, and replay
-and redelivery tests before it can be used in production. In particular, machine snapshot resumption
-restarts timers and invocations, so a resumed in-memory machine is not a replacement for the durable
-workflow. The dependency is experimental and test-only.
+[`FulfillmentMachine.test.ts`](test/FulfillmentMachine.test.ts) models the order lifecycle with
+`@typeonce/effect-machine` and folds the aggregate's own events through it. It proves the chart
+accepts exactly what `canTransitionTo` allows and refuses the rest with the aggregate's own
+`InvalidStatusTransition`, replays picked-up and cancelled stories to the aggregate's last status,
+round-trips an in-progress snapshot, and catches duplicated facts that redelivery absorbs. The chart
+stays test-only: `Machine.plan` ignores unhandled events, so an adapter must gate on `Machine.can`.
+Wiring it into command validation and moving off the durable saga remain open, since a resumed
+snapshot restarts timers and invocations.
 
 ## Who may do what
 
