@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@effect/vitest": "catalog:",
+    "@typeonce/effect-machine": "0.46.0",
     "@types/bun": "catalog:",
     "@yielded/effect-tsrs": "catalog:",
     "oxfmt": "catalog:",

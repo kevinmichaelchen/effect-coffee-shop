@@ -157,6 +157,7 @@
       },
       "devDependencies": {
         "@effect/vitest": "catalog:",
+        "@typeonce/effect-machine": "0.46.0",
         "@types/bun": "catalog:",
         "@yielded/effect-tsrs": "catalog:",
         "oxfmt": "catalog:",
@@ -863,6 +864,8 @@
     "@turbo/windows-64": ["@turbo/windows-64@2.11.10", "", { "os": "win32", "cpu": "x64" }, "sha512-UJOP3BkbreY3/JlMgJR6ZiimxYIBn+c+B4tnBIxD0E9c3Estmk+XoVNVBNBottZLNRXe3/ScgOU4+/k8tIWysg=="],
 
     "@turbo/windows-arm64": ["@turbo/windows-arm64@2.11.10", "", { "os": "win32", "cpu": "arm64" }, "sha512-xOkEjF3ws/b/YNlc+bvJHMYBn+vL+QbEISZFVi0qS+ImmhA1X3/gmNmBrjjIG3dg6aeN+n6gQitzSkXQ286qJQ=="],
+
+    "@typeonce/effect-machine": ["@typeonce/effect-machine@0.46.0", "", { "peerDependencies": { "effect": "^4.0.0" } }, "sha512-Fsvvzf2htH6XqrROyBlEonneuVvZjlTqdoXlY7cNnttN6gb/jWVZJDGtssehfKiN83NRLqT4Df22/Y9UiuK2vg=="],
 
     "@types/aws-lambda": ["@types/aws-lambda@8.10.164", "", {}, "sha512-XOnrazWcOd6yWPnR7DxqCBPPYciDjHq+NN8LPwwqBCJNXLyPJgKo47fZpJ113+oyAn9Zti0Cf6H4k6yPcE3WFg=="],
 

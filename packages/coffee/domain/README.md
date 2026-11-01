@@ -81,6 +81,21 @@ redelivery or replay does not place another order. The in-memory platform runs t
 in stories; Cloudflare hosts it on `DomainCloudflare.DurableObjects`' built-in workflow engine.
 `PlaceCheckedOutOrder` is idempotent, because policies run at least once.
 
+## Statechart experiment
+
+[`FulfillmentMachine.test.ts`](test/FulfillmentMachine.test.ts) explores `@typeonce/effect-machine`
+with parallel preparation and notification regions, each containing a sequence of states. It is a
+standalone prototype; it does not change the order aggregate or fulfillment saga. The test replays
+example facts using the pure planner and verifies that it produces no commands.
+
+A possible integration would keep the aggregate event log authoritative, derive the chart state by
+replaying committed events, and use chart decisions to validate new commands before recording facts.
+The existing policy and durable saga would still own side effects and retries. This needs an adapter
+between real domain events and chart events, explicit rejection of unhandled transitions, and replay
+and redelivery tests before it can be used in production. In particular, machine snapshot resumption
+restarts timers and invocations, so a resumed in-memory machine is not a replacement for the durable
+workflow. The dependency is experimental and test-only.
+
 ## Who may do what
 
 `Session` ([`Session.middleware.ts`](src/Session.middleware.ts)) authenticates a request and
