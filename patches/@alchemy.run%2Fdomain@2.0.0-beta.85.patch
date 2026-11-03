@@ -1,0 +1,43 @@
+diff --git a/lib/Aggregate.d.ts b/lib/Aggregate.d.ts
+index 7700bb258c5fabdb160ca7e06b5addc7877502a8..3c6574714ec88520383d5983d9aa407a2f887ee4 100644
+--- a/lib/Aggregate.d.ts
++++ b/lib/Aggregate.d.ts
+@@ -242,7 +242,7 @@ export interface AnyDefinition {
+     readonly decide: AnyHandlers;
+     readonly evolve: AnyHandlers;
+     readonly reply?: AnyHandlers;
+-    readonly read?: Read.AnyContract;
++    readonly read?: Read.AnyContract | undefined;
+ }
+ /** An aggregate instance to address: its id, or a ref carrying it. */
+ export type Target<Def extends AnyDefinition> = Def["id"]["Type"] | {
+diff --git a/package.json b/package.json
+index 664dafeb11877d3c26cd0fb4c39d8eac4089fc4f..786adf3eda244c19b4906def9e40a9b472d0445a 100644
+--- a/package.json
++++ b/package.json
+@@ -32,7 +32,11 @@
+       "bun": "./src/index.ts",
+       "default": "./lib/index.js"
+     },
+-    "./internal": null,
++    "./internal": {
++      "types": "./lib/internal.d.ts",
++      "bun": "./src/internal.ts",
++      "default": "./lib/internal.js"
++    },
+     "./*": {
+       "types": "./lib/*.d.ts",
+       "bun": "./src/*.ts",
+diff --git a/src/Aggregate.ts b/src/Aggregate.ts
+index 7de9848ebc4cc661ccfb52f53a3ff3b087fb2cd7..a8aa3ff72b7edb89b5868e64bba65624daf0a773 100644
+--- a/src/Aggregate.ts
++++ b/src/Aggregate.ts
+@@ -265,7 +265,7 @@ export interface AnyDefinition {
+   readonly decide: AnyHandlers;
+   readonly evolve: AnyHandlers;
+   readonly reply?: AnyHandlers;
+-  readonly read?: Read.AnyContract;
++  readonly read?: Read.AnyContract | undefined;
+ }
+ 
+ /** An aggregate instance to address: its id, or a ref carrying it. */

@@ -6,7 +6,7 @@ import { CoffeeShop, CoffeeShopHandlers } from "@effect-coffee-shop/coffee-domai
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
 import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.id";
 import { makeOrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
-import { mainShop } from "@effect-coffee-shop/coffee-domain/Shop/Shop.aggregate";
+import { mainShop } from "@effect-coffee-shop/coffee-domain/Shop/Shop.id";
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
 import * as Domain from "@alchemy.run/domain";
 import * as Effect from "effect/Effect";
@@ -14,14 +14,23 @@ import * as Headers from "effect/http/Headers";
 import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as References from "effect/References";
 import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
 import { actorHeader, SessionLive, withActorHeader } from "../src/Session.ts";
 import { Actor as ActorSchema } from "@effect-coffee-shop/coffee-domain/Actor";
 
+/**
+ * The in-memory platform logs view backfill progress at Info. Keep it quiet:
+ * a progress line still in flight when the test ends races Vitest's worker
+ * teardown ("Closing rpc while onUserConsoleLog was pending").
+ */
+const QuietLogs = Layer.succeed(References.MinimumLogLevel, "Warn");
+
 const World = Layer.mergeAll(SessionLive, CoffeeOrderApp.layer).pipe(
   Layer.provideMerge(CoffeeShop.layer(CoffeeShopHandlers)),
   Layer.provide(Domain.InMemory),
+  Layer.provide(QuietLogs),
 );
 
 const person = (kind: Actor["kind"], userId: string, displayName: string): Actor => ({
@@ -47,12 +56,13 @@ const as = (actor: Actor) => ({ headers: { [actorHeader]: encodeActor(actor) } }
 describe("the domain Apis over the in-memory platform", () => {
   it.live("a customer orders, staff brew it, and both read the ticket", () =>
     Effect.gen(function* () {
-      const customers = yield* CustomerApi.testClient;
-      const staff = yield* StaffApi.testClient;
+      const customers = yield* CustomerApi.clientInProcess;
+      const staff = yield* StaffApi.clientInProcess;
       const orderId = yield* makeOrderId;
 
       const placed = yield* customers.PlaceOrder(
-        { target: orderId, items: [{ drinkId: "latte", size: "medium", milk: "oat" }] },
+        orderId,
+        { items: [{ drinkId: "latte", size: "medium", milk: "oat" }] },
         as(sam),
       );
       expect(placed.reply.order.customerName).toBe("Sam");
@@ -64,7 +74,7 @@ describe("the domain Apis over the in-memory platform", () => {
       );
       expect(mine?.orders.map((order) => order.id)).toEqual([orderId]);
 
-      const brewing = yield* staff.StartBrewing({ target: orderId }, as(barista));
+      const brewing = yield* staff.StartBrewing(orderId, {}, as(barista));
       expect(brewing.reply.order.status).toBe("brewing");
 
       const queue = yield* eventually(staff.OrderQueue.get(mainShop, as(barista)), (view) =>
@@ -78,21 +88,22 @@ describe("the domain Apis over the in-memory platform", () => {
 
   it.live("authorizes every entry: sessions, staff-only commands, and owners' reads", () =>
     Effect.gen(function* () {
-      const customers = yield* CustomerApi.testClient;
-      const staff = yield* StaffApi.testClient;
+      const customers = yield* CustomerApi.clientInProcess;
+      const staff = yield* StaffApi.clientInProcess;
       const orderId = yield* makeOrderId;
 
       const signedOut = yield* customers
-        .PlaceOrder({ target: orderId, items: [{ drinkId: "tea", size: "small" }] })
+        .PlaceOrder(orderId, { items: [{ drinkId: "tea", size: "small" }] })
         .pipe(Effect.flip);
       expect(signedOut._tag).toBe("Unauthorized");
 
       const placed = yield* customers.PlaceOrder(
-        { target: orderId, items: [{ drinkId: "tea", size: "small" }] },
+        orderId,
+        { items: [{ drinkId: "tea", size: "small" }] },
         as(sam),
       );
 
-      const notStaff = yield* staff.StartBrewing({ target: orderId }, as(sam)).pipe(Effect.flip);
+      const notStaff = yield* staff.StartBrewing(orderId, {}, as(sam)).pipe(Effect.flip);
       expect(notStaff._tag).toBe("StaffOnly");
 
       const queue = yield* staff.OrderQueue.get(mainShop, as(alex)).pipe(Effect.flip);

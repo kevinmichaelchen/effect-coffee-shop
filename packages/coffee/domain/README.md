@@ -12,22 +12,23 @@ with folders as subdomains. Import them by path, e.g.
 `@effect-coffee-shop/coffee-domain/Order/Order.aggregate`.
 
 > Alchemy core and the Cloudflare, AWS, and Domain packages are pinned together at
-> `2.0.0-beta.84` in the workspace catalog. Providers use their own `@alchemy.run/*` packages.
+> `2.0.0-beta.85` in the workspace catalog. Providers use their own `@alchemy.run/*` packages.
 
 ## The model
 
-| Building block | Files                                                                                                                          | What it does                                                                                                                              |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Aggregate      | [`Order/Order.aggregate.ts`](src/Order/Order.aggregate.ts)                                                                     | One ticket, keyed by `OrderId`: placed once, then moved along its lifecycle by staff.                                                     |
-| Aggregate      | [`Cart/Cart.aggregate.ts`](src/Cart/Cart.aggregate.ts)                                                                         | One person's cart, keyed by `CustomerId`: its lines and the checkout awaiting confirmation. Confirming empties the cart in the same step. |
-| Aggregate      | [`Customer/Customer.aggregate.ts`](src/Customer/Customer.aggregate.ts), [`Shop/Shop.aggregate.ts`](src/Shop/Shop.aggregate.ts) | Keys only: views about one customer, or the whole shop, are keyed by them. They decide nothing yet.                                       |
-| View           | [`Order/OrderSummary.view.ts`](src/Order/OrderSummary.view.ts)                                                                 | One ticket as people read it. Staff read any; a customer only their own.                                                                  |
-| View           | [`Order/CustomerOrders.view.ts`](src/Order/CustomerOrders.view.ts)                                                             | Every order one customer placed, folded from `OrderSummary`.                                                                              |
-| View           | [`Order/OrderQueue.view.ts`](src/Order/OrderQueue.view.ts)                                                                     | The baristas' queue: open orders plus the 200 most recent finished ones. Staff only.                                                      |
-| Policy         | [`Cart/CheckoutFulfillment.policy.ts`](src/Cart/CheckoutFulfillment.policy.ts)                                                 | Whenever a checkout is confirmed, start its fulfillment saga.                                                                             |
-| Saga           | [`Cart/FulfillCheckout.saga.ts`](src/Cart/FulfillCheckout.saga.ts)                                                             | Place the confirmed order in a durable workflow, keyed by order id.                                                                       |
-| Api            | [`CustomerApi.api.ts`](src/CustomerApi.api.ts), [`StaffApi.api.ts`](src/StaffApi.api.ts)                                       | What each audience may send and read.                                                                                                     |
-| Model          | [`CoffeeShop.model.ts`](src/CoffeeShop.model.ts)                                                                               | Everything hosted together, plus policy and saga implementations as one Layer.                                                            |
+| Building block | Files                                                                                    | What it does                                                                                                                              |
+| -------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Aggregate      | [`Order/Order.aggregate.ts`](src/Order/Order.aggregate.ts)                               | One ticket, keyed by `OrderId`: placed once, then moved along its lifecycle by staff.                                                     |
+| Aggregate      | [`Cart/Cart.aggregate.ts`](src/Cart/Cart.aggregate.ts)                                   | One person's cart, keyed by `CustomerId`: its lines and the checkout awaiting confirmation. Confirming empties the cart in the same step. |
+| Aggregate      | [`Customer/Customer.aggregate.ts`](src/Customer/Customer.aggregate.ts)                   | Key only: views about one customer are keyed by it. It decides nothing yet.                                                               |
+| Key            | [`Shop/Shop.id.ts`](src/Shop/Shop.id.ts)                                                 | A Schema key: views about the whole shop are keyed by `ShopId` directly, with no aggregate behind it.                                     |
+| View           | [`Order/OrderSummary.view.ts`](src/Order/OrderSummary.view.ts)                           | One ticket as people read it. Staff read any; a customer only their own.                                                                  |
+| View           | [`Order/CustomerOrders.view.ts`](src/Order/CustomerOrders.view.ts)                       | Every order one customer placed, folded from `OrderSummary`.                                                                              |
+| View           | [`Order/OrderQueue.view.ts`](src/Order/OrderQueue.view.ts)                               | The baristas' queue: open orders plus the 200 most recent finished ones. Staff only.                                                      |
+| Policy         | [`Cart/CheckoutFulfillment.policy.ts`](src/Cart/CheckoutFulfillment.policy.ts)           | Whenever a checkout is confirmed, start its fulfillment saga.                                                                             |
+| Saga           | [`Cart/FulfillCheckout.saga.ts`](src/Cart/FulfillCheckout.saga.ts)                       | Place the confirmed order in a durable workflow, keyed by order id.                                                                       |
+| Api            | [`CustomerApi.api.ts`](src/CustomerApi.api.ts), [`StaffApi.api.ts`](src/StaffApi.api.ts) | What each audience may send and read.                                                                                                     |
+| Model          | [`CoffeeShop.model.ts`](src/CoffeeShop.model.ts)                                         | Everything hosted together, plus policy and saga implementations as one Layer.                                                            |
 
 Commands live in `<Command>.command.ts` with the events they record and the rejections only they
 return. Shared rejections have their own `*.rejection.ts` files.
@@ -78,7 +79,7 @@ Emptying the cart and confirming happen in one `Cart` commit, so a confirmed car
 ordered twice. After the commit, the policy starts `FulfillCheckout`, a saga keyed by order id. Its
 `PlaceCheckedOutOrder` activity journals completion and uses workflow-derived command ids, so
 redelivery or replay does not place another order. The in-memory platform runs the same workflow
-in stories; Cloudflare hosts it on `DomainCloudflare.DurableObjects`' built-in workflow engine.
+in stories; Cloudflare hosts it on the built-in workflow engine of `DomainCloudflare.layerDurableObjects()`.
 `PlaceCheckedOutOrder` is idempotent, because policies run at least once.
 
 ## Who may do what

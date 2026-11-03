@@ -37,10 +37,10 @@ function decodeOrderId(orderId: string): Effect.Effect<OrderId, OrderRequestErro
 }
 
 const staffActions = {
-  "start-brewing": (api: StaffClient, target: OrderId) => api.StartBrewing({ target }),
-  "mark-ready": (api: StaffClient, target: OrderId) => api.MarkReady({ target }),
-  "pick-up": (api: StaffClient, target: OrderId) => api.PickUpOrder({ target }),
-  cancel: (api: StaffClient, target: OrderId) => api.CancelOrder({ target }),
+  "start-brewing": (api: StaffClient, target: OrderId) => api.StartBrewing(target),
+  "mark-ready": (api: StaffClient, target: OrderId) => api.MarkReady(target),
+  "pick-up": (api: StaffClient, target: OrderId) => api.PickUpOrder(target),
+  cancel: (api: StaffClient, target: OrderId) => api.CancelOrder(target),
 } satisfies Record<OrderAction, unknown>;
 
 export const fetchMenu: Effect.Effect<
@@ -62,7 +62,7 @@ export const createOrder = (
       const api = yield* CustomerApi.Client;
       const target = yield* makeOrderId;
       const { reply } = yield* api
-        .PlaceOrder({ target, items: payload.items })
+        .PlaceOrder(target, { items: payload.items })
         .pipe(Effect.mapError(toOrderRequestError));
       return toCoffeeOrder(reply.order);
     }),

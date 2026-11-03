@@ -41,6 +41,7 @@ minimumReleaseAgeExcludes = [
   "@alchemy.run/kubernetes",
   "@alchemy.run/sql",
   "@alchemy.run/frontend-frameworks",
+  "@alchemy.run/test",
   # alchemy pins its @alchemy.run/* and @distilled.cloud/* siblings to the same
   # release, so they ship together with each adopted alchemy version.
   "@alchemy.run/acme",
@@ -57,6 +58,8 @@ minimumReleaseAgeExcludes = [
   "@distilled.cloud/gcp",
   "@distilled.cloud/hetzner",
   "@distilled.cloud/infisical",
+  "@distilled.cloud/aws4signer",
+  "@distilled.cloud/iceberg",
   "@distilled.cloud/neon",
   "@distilled.cloud/planetscale",
   "@distilled.cloud/prisma",
@@ -84,18 +87,20 @@ minimumReleaseAgeExcludes = [
   "@tsrs/linux-x64-gnu",
   "@tsrs/linux-x64-musl",
   "@tsrs/win32-x64",
-  "@yielded/effect-tsrs",
-  "@yielded/effect-tsrs-darwin-arm64",
-  "@yielded/effect-tsrs-darwin-x64",
-  "@yielded/effect-tsrs-linux-arm64",
-  "@yielded/effect-tsrs-linux-x64",
-  "@yielded/effect-tsrs-win32-x64",
+  "@effect/tsgo",
+  "@effect/tsgo-darwin-arm64",
+  "@effect/tsgo-darwin-x64",
+  "@effect/tsgo-linux-arm",
+  "@effect/tsgo-linux-arm64",
+  "@effect/tsgo-linux-x64",
+  "@effect/tsgo-win32-arm64",
+  "@effect/tsgo-win32-x64",
   # prek, oxlint and oxfmt are adopted as soon as they publish (decision 2026-09-15).
   # Each ships platform binaries as separate exact-version packages, so every
   # binding must be listed; oxlint-tsgolint is oxlint's type-aware companion.
-  # Exception: oxlint tracks the newest release `effect-tsrs oxlint` supports
-  # (node_modules/@yielded/effect-tsrs/bin/oxlint-metadata.json), since every
-  # lint script runs through that adapter.
+  # Exception: oxlint tracks the newest release `effect-tsgo oxlint` supports
+  # (the "Supported Package Versions" table in node_modules/@effect/tsgo/README.md),
+  # since every lint script runs through that adapter.
   "@j178/prek",
   "@j178/prek-android-arm64",
   "@j178/prek-darwin-arm64",

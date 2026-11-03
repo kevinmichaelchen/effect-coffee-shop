@@ -32,6 +32,7 @@ import { CustomerName } from "../src/Menu/OrderPrimitives.ts";
 import { moneyFromCents } from "../src/Money.ts";
 import { BrewingStarted, StartBrewing } from "../src/Order/StartBrewing.command.ts";
 import { CancelOrder, OrderCancelled } from "../src/Order/CancelOrder.command.ts";
+import type { CoffeeOrder } from "../src/Order/CoffeeOrder.ts";
 import { CustomerOrders } from "../src/Order/CustomerOrders.view.ts";
 import { InvalidStatusTransition } from "../src/Order/InvalidStatusTransition.rejection.ts";
 import { MarkReady, OrderReady } from "../src/Order/MarkReady.command.ts";
@@ -42,7 +43,7 @@ import { OrderQueue } from "../src/Order/OrderQueue.view.ts";
 import { OrderSummary } from "../src/Order/OrderSummary.view.ts";
 import { OrderPickedUp, PickUpOrder } from "../src/Order/PickUpOrder.command.ts";
 import { AlreadyPlaced, OrderPlaced, PlaceOrder } from "../src/Order/PlaceOrder.command.ts";
-import { mainShop, Shop } from "../src/Shop/Shop.aggregate.ts";
+import { mainShop } from "../src/Shop/Shop.id.ts";
 import { StaffOnly } from "../src/StaffOnly.rejection.ts";
 
 const { clock, given, provide, rejected, replied, state, then, view, when } = Story;
@@ -74,6 +75,17 @@ const priced = (request: Parameters<typeof priceOrderItem>[0]): CoffeeOrderItem 
 
 const latte = priced({ drinkId: "latte", size: "medium", milk: "oat" });
 const twoEspressos = priced({ drinkId: "espresso", size: "small", quantity: 2 });
+const smallTea = priced({ drinkId: "tea", size: "small" });
+const plainLatte = priced({ drinkId: "latte", size: "medium" });
+
+/** A one-drink order, as `PlaceOrder` records it. */
+const placed = (actor: Actor, item: CoffeeOrderItem) =>
+  new OrderPlaced({
+    customerId: actor.userId,
+    customerName: CustomerName.make(actor.displayName),
+    items: [item],
+    totalPrice: item.lineTotal,
+  });
 const placedAt = "2026-10-18T09:00:00.000Z";
 
 const samPlaced = new OrderPlaced({
@@ -81,6 +93,17 @@ const samPlaced = new OrderPlaced({
   customerName: CustomerName.make("Sam"),
   items: [latte],
   totalPrice: latte.lineTotal,
+});
+
+/** Sam's latte ticket, as `PlaceOrder` replies with it. */
+const samsTicket = (orderId: OrderId): CoffeeOrder => ({
+  id: orderId,
+  customerName: samPlaced.customerName,
+  ownerUserId: sam.userId,
+  items: samPlaced.items,
+  status: "pending",
+  totalPrice: moneyFromCents(518),
+  createdAt: DateTime.makeUnsafe(placedAt),
 });
 
 describe("placing orders", () => {
@@ -91,22 +114,12 @@ describe("placing orders", () => {
       as(sam),
       when(o1, new PlaceOrder({ items: [{ drinkId: "latte", size: "medium", milk: "oat" }] })),
       then(o1, samPlaced),
-      replied({
-        order: {
-          id: o1.id,
-          customerName: "Sam",
-          ownerUserId: sam.userId,
-          items: [latte],
-          status: "pending",
-          totalPrice: moneyFromCents(518),
-          createdAt: DateTime.makeUnsafe(placedAt),
-        },
-      }),
+      replied({ order: samsTicket(o1.id) }),
       view(OrderSummary, o1, (summary) => expect(summary.order?.status).toBe("pending")),
       view(CustomerOrders, Customer.ref(sam.userId), (orders) =>
         expect(orders.orders.map((order) => order.id)).toEqual([o1.id]),
       ),
-      view(OrderQueue, Shop.ref(mainShop), (queue) =>
+      view(OrderQueue, mainShop, (queue) =>
         expect(queue.orders.map((order) => order.customerName)).toEqual(["Sam"]),
       ),
     );
@@ -146,6 +159,15 @@ describe("placing orders", () => {
         orderRef(1),
         new PlaceOrder({ customerName: "Walk-in", items: [{ drinkId: "tea", size: "small" }] }),
       ),
+      then(
+        orderRef(1),
+        new OrderPlaced({
+          customerId: systemActor.userId,
+          customerName: CustomerName.make("Walk-in"),
+          items: [smallTea],
+          totalPrice: smallTea.lineTotal,
+        }),
+      ),
       state(orderRef(1), (order) =>
         expect(order).toMatchObject({ order: { customerName: "Walk-in" } }),
       ),
@@ -156,15 +178,17 @@ describe("placing orders", () => {
     story(
       as(sam),
       when(orderRef(1), new PlaceOrder({ items: [{ drinkId: "latte", size: "medium" }] })),
+      then(orderRef(1), placed(sam, plainLatte)),
       as(alex),
       when(orderRef(2), new PlaceOrder({ items: [{ drinkId: "tea", size: "small" }] })),
+      then(orderRef(2), placed(alex, smallTea)),
       view(CustomerOrders, Customer.ref(sam.userId), (orders) =>
         expect(orders.orders.map((order) => order.customerName)).toEqual(["Sam"]),
       ),
       view(CustomerOrders, Customer.ref(alex.userId), (orders) =>
         expect(orders.orders.map((order) => order.customerName)).toEqual(["Alex"]),
       ),
-      view(OrderQueue, Shop.ref(mainShop), (queue) => expect(queue.orders).toHaveLength(2)),
+      view(OrderQueue, mainShop, (queue) => expect(queue.orders).toHaveLength(2)),
     ),
   );
 });
@@ -204,6 +228,7 @@ describe("fulfilling orders", () => {
       when(o1, new MarkReady()),
       when(o1, new CancelOrder()),
       rejected(new InvalidStatusTransition({ orderId: o1.id, from: "ready", to: "cancelled" })),
+      then(o1, new BrewingStarted({ by: barista }), new OrderReady({ by: barista })),
     );
   });
 
@@ -349,6 +374,14 @@ describe("checkout", () => {
       clock(placedAt),
       as(sam),
       when(samsCart, new ConfirmCheckout({ checkoutId: checkoutId(1), orderId: o9.id })),
+      then(
+        samsCart,
+        new CheckoutConfirmed({
+          orderId: o9.id,
+          customerName: CustomerName.make("Sam"),
+          checkout: prepared,
+        }),
+      ),
       then(o9, samPlaced),
       Story.saga(FulfillCheckout, o9.id, { _tag: "Completed", result: undefined }),
       when(
@@ -361,6 +394,16 @@ describe("checkout", () => {
       when(samsCart, new PrepareCheckout({ checkoutId: checkoutId(2) })),
       when(samsCart, new ConfirmCheckout({ checkoutId: checkoutId(2), orderId: o9.id })),
       replied({ orderId: o9.id }),
+      then(
+        samsCart,
+        new CartItemAdded({ cartItemId: cartItem(1), item: latte }),
+        new CheckoutPrepared({ checkout: { ...prepared, checkoutId: checkoutId(2) } }),
+        new CheckoutConfirmed({
+          orderId: o9.id,
+          customerName: CustomerName.make("Sam"),
+          checkout: { ...prepared, checkoutId: checkoutId(2) },
+        }),
+      ),
       Story.saga(FulfillCheckout, o9.id, { _tag: "Completed", result: undefined }),
       then(o9),
     ),

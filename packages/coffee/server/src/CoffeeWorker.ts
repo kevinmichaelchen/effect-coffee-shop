@@ -9,7 +9,7 @@
  * - `/api/health`, `/api/menu`, `/api/me`: REST;
  * - `/mcp`: remote MCP tools over the same model.
  *
- * Swap `DomainCloudflare.DurableObjects` for `Domain.InMemory` and nothing
+ * Swap `DomainCloudflare.layerDurableObjects()` for `Domain.InMemory` and nothing
  * else changes, which is how the tests run it.
  *
  * @module
@@ -47,7 +47,7 @@ import { SessionLive } from "./Session.ts";
 /** The model on Durable Objects, the Apis' middleware, and the adapters' service over the model. */
 const CoffeeLive = Layer.mergeAll(SessionLive, CoffeeOrderApp.layer).pipe(
   Layer.provideMerge(SyncedCoffeeShop.layer(SyncedCoffeeShopHandlers)),
-  Layer.provide(DomainCloudflare.DurableObjects),
+  Layer.provide(DomainCloudflare.layerDurableObjects()),
   Layer.provideMerge(
     Layer.mergeAll(
       Cloudflare.D1.QueryDatabaseBinding,
