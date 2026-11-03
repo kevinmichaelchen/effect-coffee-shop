@@ -13,6 +13,7 @@ export class OrderReady extends Domain.Event("OrderReady", { by: Actor }) {}
 /** Mark a brewing order ready for pickup. Staff only. */
 export class MarkReady extends Domain.Command("MarkReady", {
   target: OrderId,
+  description: "Mark a brewing order ready for pickup. Staff only.",
   middleware: [Session],
   events: [OrderReady],
   rejects: [StaffOnly, OrderNotFound, InvalidStatusTransition],

@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./ActorHeader": "./src/ActorHeader.ts",
     "./CoffeeOrderApp": "./src/CoffeeOrderApp.ts",
     "./CurrentActor": "./src/CurrentActor.ts",
     "./contracts": "./src/contracts.ts",

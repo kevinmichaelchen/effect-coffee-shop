@@ -1,6 +1,7 @@
 /**
  * The Worker's HTTP surface around the domain Apis: the auth routes, the REST
- * endpoints (health, menu, me), remote MCP with its OAuth server, and the
+ * endpoints (health, menu, me), remote MCP (hand-written tools, and tools
+ * generated from the domain Apis) with its OAuth server, and the
  * domain Apis behind the auth session. Each request builds and releases its
  * own route graph, so nothing request-scoped is shared across requests.
  *
@@ -16,7 +17,11 @@ import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";
 import { McpActor } from "@effect-coffee-shop/coffee-mcp/actor";
 import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
 import type { d1AuthDatabase } from "@effect-coffee-shop/coffee-auth/database";
+import type * as DomainAi from "@alchemy.run/domain/Ai";
+import type { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
+import type { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
 import type { HttpEffect } from "alchemy/Http";
+import type * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Headers from "effect/http/Headers";
 import * as HttpRouter from "effect/http/HttpRouter";
@@ -27,13 +32,19 @@ import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import { SqlClient } from "effect/sql";
-import { actorHeader, actorHeaderValue, asActor, withActorValue } from "./Session.ts";
+import { actorHeader, actorHeaderValue } from "@effect-coffee-shop/coffee-application/ActorHeader";
+import { asActor, withActorValue } from "./Session.ts";
+
+/** What the MCP tools generated from the domain Apis need: the hosted model and the Apis' middleware. */
+export type DomainToolServices = DomainAi.Services<typeof CustomerApi | typeof StaffApi>;
 
 export interface CoffeeHttpInput {
   /** Auth configuration, when the deployment has its secrets. */
   readonly auth: Option.Option<AuthServerConfig>;
   readonly database: ReturnType<typeof d1AuthDatabase>;
   readonly app: CoffeeOrderApp["Service"];
+  /** The Worker's hosted model and Api middleware, for the generated MCP tools. */
+  readonly domain: Context.Context<DomainToolServices>;
 }
 
 /** The path is `prefix` itself or below it (Effect RPC clients post to `prefix/`). */
@@ -130,6 +141,7 @@ export const coffeeHttp = (input: CoffeeHttpInput) =>
   HttpRouter.toHttpEffect(
     routesFor(input).pipe(
       Layer.provide(Layer.succeed(CoffeeOrderApp, input.app)),
+      Layer.provide(Layer.succeedContext(input.domain)),
       Layer.provide(HttpServer.layerServices),
     ),
   ).pipe(Effect.orDie, Effect.flatten);

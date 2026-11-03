@@ -15,6 +15,8 @@ export class CheckoutPrepared extends Domain.Event("CheckoutPrepared", { checkou
  */
 export class PrepareCheckout extends Domain.Command("PrepareCheckout", {
   target: CustomerId,
+  description:
+    "Price your cart and hold those prices for 15 minutes while the customer confirms, as a new checkout id. A new checkout replaces one still waiting.",
   middleware: [Session],
   input: { checkoutId: CheckoutId },
   events: [CheckoutPrepared],

@@ -13,6 +13,7 @@ export class OrderCancelled extends Domain.Event("OrderCancelled", { by: Actor }
 /** Cancel an order that is pending or brewing. Staff only. */
 export class CancelOrder extends Domain.Command("CancelOrder", {
   target: OrderId,
+  description: "Cancel an order that is pending or brewing. Staff only.",
   middleware: [Session],
   events: [OrderCancelled],
   rejects: [StaffOnly, OrderNotFound, InvalidStatusTransition],

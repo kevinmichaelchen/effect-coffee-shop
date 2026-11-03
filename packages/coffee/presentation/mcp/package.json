@@ -10,7 +10,8 @@
     "./prompts": "./src/prompts.ts",
     "./resources": "./src/resources.ts",
     "./server": "./src/server.ts",
-    "./actor": "./src/actor.ts"
+    "./actor": "./src/actor.ts",
+    "./domain-tools": "./src/domain-tools.ts"
   },
   "scripts": {
     "typecheck": "tsrs --noEmit",
@@ -22,6 +23,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@alchemy.run/domain": "catalog:",
     "@effect-coffee-shop/coffee-actions": "workspace:*",
     "@effect-coffee-shop/coffee-application": "workspace:*",
     "@effect-coffee-shop/coffee-domain": "workspace:*",

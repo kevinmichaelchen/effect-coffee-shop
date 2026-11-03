@@ -36,7 +36,7 @@ const CartItemIdInput = CartItemId.annotate({
   description: "Cart line id, such as cart_item_00000000000000000000000001.",
 });
 const CheckoutSessionIdInput = CheckoutId.annotate({
-  description: "Checkout session id returned by prepare_cart_checkout.",
+  description: "Checkout session id, such as checkout_session_01j9z3k6a0x8s5v2c4b7n1m3p6.",
 });
 const CustomerNameInput = BoundaryString.annotate({
   description: "Optional customer display name for system or staff checkout.",

@@ -1,15 +1,16 @@
-import * as HashSet from "effect/HashSet";
 import * as Effect from "effect/Effect";
 import * as McpSchema from "effect/ai/McpSchema";
 import * as McpServer from "effect/ai/McpServer";
 import { isStaff } from "@effect-coffee-shop/coffee-domain/Actor";
 import { McpActor } from "./actor.ts";
+import { staffToolPrefix } from "./domain-tools.ts";
 
-const staffTools = HashSet.make("start_brewing", "mark_ready", "pick_up_order", "cancel_order");
+/** The generated `StaffApi_*` tools: the queue, any ticket, and the order lifecycle. */
+const isStaffTool = (name: string) => name.startsWith(staffToolPrefix);
 
-// Presentation only; CoffeeOrderApp still authorizes every invocation.
+// Presentation only; the Api's middleware and each command's decide still authorize every call.
 export const CoffeeMcpVisibility = McpServer.visibility(({ target }) =>
-  HashSet.has(staffTools, target)
+  isStaffTool(target)
     ? Effect.gen(function* () {
         const resolver = yield* McpActor;
         const actor = yield* resolver.current;

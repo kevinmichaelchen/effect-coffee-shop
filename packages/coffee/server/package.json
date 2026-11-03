@@ -34,9 +34,12 @@
     "effect-wide-event": "catalog:"
   },
   "devDependencies": {
+    "@effect/platform-node": "catalog:",
     "@effect/tsgo": "catalog:",
     "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
+    "@yielded/auth": "catalog:",
+    "miniflare": "4.20260730.0",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

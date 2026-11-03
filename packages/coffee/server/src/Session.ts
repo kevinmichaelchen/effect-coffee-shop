@@ -9,10 +9,8 @@
 import { Actor } from "@effect-coffee-shop/coffee-domain/Actor";
 import { CurrentActor } from "@effect-coffee-shop/coffee-domain/CurrentActor.context";
 import { Session, Unauthorized } from "@effect-coffee-shop/coffee-domain/Session.middleware";
-import {
-  type AppActor,
-  isAuthenticatedActor,
-} from "@effect-coffee-shop/coffee-application/CurrentActor";
+import { actorHeader, actorHeaderValue } from "@effect-coffee-shop/coffee-application/ActorHeader";
+import type { AppActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import * as Effect from "effect/Effect";
 import * as Headers from "effect/http/Headers";
 import { HttpServerRequest } from "effect/http/HttpServerRequest";
@@ -20,16 +18,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-/** Set by the Worker after authenticating; never trusted from a client. */
-export const actorHeader = "x-coffee-actor";
-
-const ActorJson = Schema.fromJsonString(Actor);
-const encodeActor = Schema.encodeSync(ActorJson);
-const decodeActor = Schema.decodeUnknownOption(ActorJson);
-
-/** The header value carrying a signed-in actor; none for an anonymous caller. */
-export const actorHeaderValue = (actor: AppActor): Option.Option<string> =>
-  Option.map(Option.liftPredicate(actor, isAuthenticatedActor), encodeActor);
+const decodeActor = Schema.decodeUnknownOption(Schema.fromJsonString(Actor));
 
 /** Headers carrying exactly this actor value: any copy a client sent is removed first. */
 export const withActorValue = (headers: Headers.Headers, value: Option.Option<string>) =>

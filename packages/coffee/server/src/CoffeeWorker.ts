@@ -4,10 +4,12 @@
  * the model's Layer is built) and serves:
  *
  * - `/api/customer` and `/api/staff`: the domain's `CustomerApi` and
- *   `StaffApi`, behind the auth session;
+ *   `StaffApi` over Domain RPC, behind the auth session;
+ * - `/api/rest/customer` and `/api/rest/staff`: the same Apis as REST, with
+ *   an OpenAPI document at `/api/rest/openapi.json`, behind the auth session;
  * - `/api/auth/*`, `/oauth/*`, `/.well-known/*`: Yielded Auth and MCP OAuth;
  * - `/api/health`, `/api/menu`, `/api/me`: REST;
- * - `/mcp`: remote MCP tools over the same model.
+ * - `/mcp`: remote MCP tools over the same model, generated from the same Apis.
  *
  * Swap `DomainCloudflare.layerDurableObjects()` for `Domain.InMemory` and nothing
  * else changes, which is how the tests run it.
@@ -21,6 +23,7 @@ import { SyncedCoffeeShop, SyncedCoffeeShopHandlers } from "./SyncOrders.ts";
 import { orderFeedHttp } from "./OrderFeedHttp.ts";
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
+import { domainRestHttp, domainRestPrefix } from "@effect-coffee-shop/coffee-http/domain-rest";
 import { annotateHttpStatus, withHttpWideEvent } from "@effect-coffee-shop/http-routing/logging";
 import * as Cloudflare from "@alchemy.run/cloudflare";
 import type { HttpEffect } from "alchemy/Http";
@@ -38,6 +41,7 @@ import {
   type CoffeeHttpInput,
   coffeeHttp,
   domainApi,
+  type DomainToolServices,
   isOrStartsWith,
   needsAuth,
   rejectBearer,
@@ -59,6 +63,7 @@ const CoffeeLive = Layer.mergeAll(SessionLive, CoffeeOrderApp.layer).pipe(
 
 const routeKindOf = (path: string) => {
   if (isOrStartsWith(path, "/sync")) return "sync";
+  if (isOrStartsWith(path, domainRestPrefix)) return "rest";
   if (isOrStartsWith(path, "/api/customer") || isOrStartsWith(path, "/api/staff")) return "domain";
   if (["/api/auth", "/oauth", "/.well-known"].some((prefix) => isOrStartsWith(path, prefix)))
     return "auth";
@@ -73,7 +78,9 @@ interface CoffeeServices {
   readonly orderFeed: HttpEffect;
   readonly customerApi: HttpEffect;
   readonly staffApi: HttpEffect;
+  readonly domainRest: HttpEffect;
   readonly app: CoffeeOrderApp["Service"];
+  readonly domain: CoffeeHttpInput["domain"];
 }
 
 const routeBackend = (
@@ -90,6 +97,8 @@ const routeBackend = (
     return request.headers.origin !== new URL(services.deployment.origin).origin
       ? Effect.succeed(HttpServerResponse.empty({ status: 403 }))
       : rejectBearer(domainApi(input, services.orderFeed));
+  if (isOrStartsWith(path, domainRestPrefix))
+    return rejectBearer(domainApi(input, services.domainRest));
   if (isOrStartsWith(path, "/api/customer"))
     return rejectBearer(domainApi(input, services.customerApi));
   if (isOrStartsWith(path, "/api/staff")) return rejectBearer(domainApi(input, services.staffApi));
@@ -106,6 +115,7 @@ const handleRequest = Effect.fn("CoffeeWorker.fetch")(function* (services: Coffe
     auth: Option.map(secret, (secret) => ({ ...services.deployment, secret })),
     database: d1AuthDatabase(yield* services.db.raw),
     app: services.app,
+    domain: services.domain,
   };
   const response = yield* routeBackend(services, input, request, path);
   yield* annotateHttpStatus({ routeKind: routeKindOf(path), status: response.status });
@@ -142,7 +152,9 @@ export default class CoffeeWorker extends Cloudflare.Worker<CoffeeWorker>()(
       orderFeed: yield* orderFeedHttp,
       customerApi: (yield* CustomerApi).fetch,
       staffApi: (yield* StaffApi).fetch,
+      domainRest: yield* domainRestHttp,
       app: yield* CoffeeOrderApp,
+      domain: yield* Effect.context<DomainToolServices>(),
     };
     return { fetch: serve(services) };
     // oxlint-disable-next-line effecttsgo/strict-effect-provide -- The Worker definition is the application entry point that composes CoffeeLive.

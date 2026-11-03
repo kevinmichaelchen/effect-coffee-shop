@@ -191,6 +191,7 @@
       "name": "@effect-coffee-shop/coffee-http",
       "version": "0.1.0",
       "dependencies": {
+        "@alchemy.run/domain": "catalog:",
         "@effect-coffee-shop/coffee-application": "workspace:*",
         "@effect-coffee-shop/coffee-domain": "workspace:*",
         "effect": "catalog:",
@@ -211,6 +212,7 @@
       "name": "@effect-coffee-shop/coffee-mcp",
       "version": "0.1.0",
       "dependencies": {
+        "@alchemy.run/domain": "catalog:",
         "@effect-coffee-shop/coffee-actions": "workspace:*",
         "@effect-coffee-shop/coffee-application": "workspace:*",
         "@effect-coffee-shop/coffee-domain": "workspace:*",
@@ -249,9 +251,12 @@
         "effect-wide-event": "catalog:",
       },
       "devDependencies": {
+        "@effect/platform-node": "catalog:",
         "@effect/tsgo": "catalog:",
         "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
+        "@yielded/auth": "catalog:",
+        "miniflare": "4.20260730.0",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "oxlint-tsgolint": "catalog:",

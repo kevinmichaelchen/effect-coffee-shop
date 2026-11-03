@@ -1,5 +1,8 @@
 /**
- * Builds Effect AI toolkit definitions for Coffee actions.
+ * Builds the Effect AI toolkit of the hand-written Coffee tools: the menu,
+ * checks of a proposed order, and the ordering context. Orders, carts,
+ * checkout and the staff lifecycle are generated from the domain Apis
+ * (see `domain-tools.ts`).
  *
  * @module
  */
@@ -7,50 +10,19 @@ import * as Tool from "effect/ai/Tool";
 import * as Toolkit from "effect/ai/Toolkit";
 import { coffeeActionSpecs } from "@effect-coffee-shop/coffee-actions/specs";
 
-export const ListMenuTool = Tool.make("list_menu", coffeeActionSpecs.list_menu);
-export const GetItemOptionsTool = Tool.make("get_item_options", coffeeActionSpecs.get_item_options);
-export const ValidateOrderTool = Tool.make("validate_order", coffeeActionSpecs.validate_order);
-export const QuoteOrderTool = Tool.make("quote_order", coffeeActionSpecs.quote_order);
-export const PlaceOrderTool = Tool.make("place_order", coffeeActionSpecs.place_order);
-export const GetOrderTool = Tool.make("get_order", coffeeActionSpecs.get_order);
-export const ListOrdersTool = Tool.make("list_orders", coffeeActionSpecs.list_orders);
-export const StartBrewingTool = Tool.make("start_brewing", coffeeActionSpecs.start_brewing);
-export const MarkReadyTool = Tool.make("mark_ready", coffeeActionSpecs.mark_ready);
-export const PickUpOrderTool = Tool.make("pick_up_order", coffeeActionSpecs.pick_up_order);
-export const CancelOrderTool = Tool.make("cancel_order", coffeeActionSpecs.cancel_order);
-export const GetCartTool = Tool.make("get_cart", coffeeActionSpecs.get_cart);
-export const AddCartItemTool = Tool.make("add_cart_item", coffeeActionSpecs.add_cart_item);
-export const UpdateCartItemTool = Tool.make("update_cart_item", coffeeActionSpecs.update_cart_item);
-export const RemoveCartItemTool = Tool.make("remove_cart_item", coffeeActionSpecs.remove_cart_item);
-export const ClearCartTool = Tool.make("clear_cart", coffeeActionSpecs.clear_cart);
-export const PrepareCartCheckoutTool = Tool.make(
-  "prepare_cart_checkout",
-  coffeeActionSpecs.prepare_cart_checkout,
+const GetOrderingContextTool = Tool.make(
+  "get_ordering_context",
+  coffeeActionSpecs.get_ordering_context,
 );
-export const GetCheckoutSessionTool = Tool.make(
-  "get_checkout_session",
-  coffeeActionSpecs.get_checkout_session,
-);
-export const CheckoutCartTool = Tool.make("checkout_cart", coffeeActionSpecs.checkout_cart);
+const ListMenuTool = Tool.make("list_menu", coffeeActionSpecs.list_menu);
+const GetItemOptionsTool = Tool.make("get_item_options", coffeeActionSpecs.get_item_options);
+const ValidateOrderTool = Tool.make("validate_order", coffeeActionSpecs.validate_order);
+const QuoteOrderTool = Tool.make("quote_order", coffeeActionSpecs.quote_order);
 
 export const CoffeeActionToolkit = Toolkit.make(
+  GetOrderingContextTool,
   ListMenuTool,
   GetItemOptionsTool,
   ValidateOrderTool,
   QuoteOrderTool,
-  PlaceOrderTool,
-  GetOrderTool,
-  ListOrdersTool,
-  StartBrewingTool,
-  MarkReadyTool,
-  PickUpOrderTool,
-  CancelOrderTool,
-  GetCartTool,
-  AddCartItemTool,
-  UpdateCartItemTool,
-  RemoveCartItemTool,
-  ClearCartTool,
-  PrepareCartCheckoutTool,
-  GetCheckoutSessionTool,
-  CheckoutCartTool,
 );

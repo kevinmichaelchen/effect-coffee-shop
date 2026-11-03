@@ -6,7 +6,7 @@ import type { CurrentActor } from "./CurrentActor.context.ts";
 export class Unauthorized extends Schema.TaggedError<
   Unauthorized,
   { readonly brand: unique symbol }
->()("Unauthorized", {}) {}
+>()("Unauthorized", {}, { httpApiStatus: 401 }) {}
 
 /**
  * Authenticates a request and provides who is making it as the

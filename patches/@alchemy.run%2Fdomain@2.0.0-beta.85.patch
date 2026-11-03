@@ -11,6 +11,35 @@ index 7700bb258c5fabdb160ca7e06b5addc7877502a8..3c6574714ec88520383d5983d9aa407a
  }
  /** An aggregate instance to address: its id, or a ref carrying it. */
  export type Target<Def extends AnyDefinition> = Def["id"]["Type"] | {
+diff --git a/lib/Command.d.ts b/lib/Command.d.ts
+index 3e5995c62b6a1b19ddf53e58c206b9e860b1198a..adabe19964b8b5eea630cec48ba896cf8f62fee2 100644
+--- a/lib/Command.d.ts
++++ b/lib/Command.d.ts
+@@ -158,5 +158,10 @@ export declare const make: <const Tag extends string, Target extends TargetSchem
+      * here, and a `Redacted` value is recorded as `<redacted>`.
+      */
+     readonly attributes?: Telemetry.Attributes<Instance<Tag, F>>;
++    /**
++     * What the command does, as its schema's `description` annotation:
++     * generated adapters (MCP tools) describe the command with it.
++     */
++    readonly description?: string;
+ }) => CommandClass<Tag, Target, F, Events, Rejects, ReplySchema<Reply>, Ms, Middleware.Apply<CommandRpc<Tag, Target, F, Rejects, ReplySchema<Reply>>, Ms>>;
+ //# sourceMappingURL=Command.d.ts.map
+\ No newline at end of file
+diff --git a/lib/Command.js b/lib/Command.js
+index 85644326b2e4f7833606ba65f4b66c61cd01d7c4..a7f7c32dd1e97290e1e24498e17d28dee0e89f1a 100644
+--- a/lib/Command.js
++++ b/lib/Command.js
+@@ -3,7 +3,7 @@ import * as Schema from "effect/Schema";
+ import * as Middleware from "./Middleware.js";
+ const build = (tag, options, rpc) => {
+     // The base type is conditional on `Self`, so it is not a constructor until `make` returns.
+-    const Base = Schema.TaggedClass(tag)(tag, options.input ?? {});
++    const Base = Schema.TaggedClass(tag)(tag, options.input ?? {}, options.description === undefined ? undefined : { description: options.description });
+     return class extends Base {
+         static kind = "Command";
+         static tag = tag;
 diff --git a/package.json b/package.json
 index 664dafeb11877d3c26cd0fb4c39d8eac4089fc4f..786adf3eda244c19b4906def9e40a9b472d0445a 100644
 --- a/package.json
@@ -41,3 +70,35 @@ index 7de9848ebc4cc661ccfb52f53a3ff3b087fb2cd7..a8aa3ff72b7edb89b5868e64bba65624
  }
  
  /** An aggregate instance to address: its id, or a ref carrying it. */
+diff --git a/src/Command.ts b/src/Command.ts
+index 933ef29fbea6305b7f67c09eb271de2b3ae53f1e..f8ab94bd769daea3bfa82066dbbe16d816a30d2f 100644
+--- a/src/Command.ts
++++ b/src/Command.ts
+@@ -105,6 +105,7 @@ interface Options {
+   readonly rejects?: ReadonlyArray<Rejection.Any>;
+   readonly reply?: Fields;
+   readonly attributes?: Telemetry.Attributes<any>;
++  readonly description?: string;
+ }
+ 
+ const build = (tag: string, options: Options, rpc: Rpc.Any): unknown => {
+@@ -112,6 +113,7 @@ const build = (tag: string, options: Options, rpc: Rpc.Any): unknown => {
+   const Base = Schema.TaggedClass<{ readonly _tag: string }>(tag)(
+     tag,
+     options.input ?? {},
++    options.description === undefined ? undefined : { description: options.description },
+   ) as unknown as new (input: object) => object;
+   return class extends Base {
+     static readonly kind = "Command" as const;
+@@ -222,6 +224,11 @@ export const make = <
+      * here, and a `Redacted` value is recorded as `<redacted>`.
+      */
+     readonly attributes?: Telemetry.Attributes<Instance<Tag, F>>;
++    /**
++     * What the command does, as its schema's `description` annotation:
++     * generated adapters (MCP tools) describe the command with it.
++     */
++    readonly description?: string;
+   },
+ ): CommandClass<
+   Tag,
