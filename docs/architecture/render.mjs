@@ -1,4 +1,5 @@
-// Run from the repository root; see README.md for isolated tool installation.
+// Renders every architecture diagram with Pele. Run from the repository root;
+// see README.md for isolated tool installation.
 import { readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
@@ -68,3 +69,32 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${hei
 `;
 await writeFile("docs/architecture/overview.svg", svg);
 console.log(`Rendered docs/architecture/overview.svg (${width}×${height})`);
+
+// The other diagrams: Pele on the same paper and ink, without the ornament frame.
+const plainDiagrams = [
+  {
+    name: "backend-runtime-surfaces",
+    label:
+      "Backend runtime surfaces: clients reach the Website Worker, which forwards to the Coffee Worker; MCP, REST, Domain Apis, Yielded Auth and Yielded Sync surfaces run over the CoffeeShop model, order feeds and D1.",
+  },
+  {
+    name: "package-layers",
+    label:
+      "Package layers: infra deploys coffee-server and apps/ui; dependencies point inward to coffee-domain through presentation, coffee-actions and coffee-application.",
+  },
+];
+for (const { name, label } of plainDiagrams) {
+  const plain = render(await readFile(`docs/architecture/${name}.mmd`, "utf8"), {
+    fontFamily: "Helvetica, Arial, sans-serif",
+    fontSize: 16,
+    padding: 24,
+    responsive: false,
+  });
+  const plainSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${plain.width} ${plain.height}" width="${plain.width}" height="${plain.height}" role="img" aria-label="${label}">
+<rect width="${plain.width}" height="${plain.height}" fill="${paper}"/>
+<g style="${theme}">${place(plain.svg, name, 0, 0, plain.width, plain.height)}</g>
+</svg>
+`;
+  await writeFile(`docs/architecture/${name}.svg`, plainSvg);
+  console.log(`Rendered docs/architecture/${name}.svg (${plain.width}×${plain.height})`);
+}

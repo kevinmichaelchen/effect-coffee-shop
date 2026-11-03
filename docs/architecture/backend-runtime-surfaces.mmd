@@ -1,0 +1,28 @@
+flowchart TB
+  Clients["Clients<br/>browser, MCP agents, tests"]
+  Website["Website Worker (apps/ui)<br/>Foldkit assets; forwards /api, /sync,<br/>/mcp, /oauth/, /.well-known/"]
+  Coffee["Coffee Worker (coffee-server)<br/>one wide event per request"]
+  subgraph Surfaces["Surfaces"]
+    direction LR
+    Mcp["MCP HTTP<br/>/mcp (OAuth)<br/>CustomerApi_* / StaffApi_* tools<br/>generated from the Apis;<br/>menu tools, resources, prompts"]
+    Rest["REST<br/>/api/health, /api/menu, /api/me<br/>/api/rest/customer, /api/rest/staff<br/>+ OpenAPI, generated from the Apis"]
+    Apis["Domain Apis (Effect RPC)<br/>/api/customer, /api/staff<br/>actor from session header"]
+    Auth["Yielded Auth + OAuth<br/>/api/auth/*, /oauth/*, /.well-known/*"]
+    Sync["Yielded Sync<br/>/sync/orders/:id<br/>session-authenticated WebSockets"]
+  end
+  subgraph Platform["Platform"]
+    direction LR
+    Model["CoffeeShop model<br/>Durable Objects (DomainCloudflare)"]
+    Feeds["Private order feeds<br/>Yielded Sync Durable Objects"]
+    D1["D1 coffee-db<br/>passkeys, sessions, OAuth grants"]
+  end
+  Clients -->|requests| Website
+  Website -->|service binding COFFEE| Coffee
+  Coffee -->|route by path| Surfaces
+  Mcp -->|same handlers + Session| Apis
+  Rest -->|same handlers + Session| Apis
+  Mcp -->|CoffeeOrderApp: menu, order reads| Model
+  Apis -->|commands + views| Model
+  Auth --> D1
+  Sync -->|snapshots + live events| Feeds
+  Model -->|SyncOrders policy| Feeds

@@ -8,8 +8,8 @@ flowchart TB
   Coffee["Coffee Worker<br/>coffee-server<br/>composition root"]
   subgraph Surfaces["Presentation"]
     direction LR
-    Rest["REST<br/>menu, me, health"]
-    Mcp["MCP<br/>tools, resources"]
+    Rest["REST + OpenAPI<br/>menu, me, health, Apis"]
+    Mcp["MCP<br/>generated tools, resources"]
     Apis["Domain Apis<br/>Effect RPC"]
     SyncApi["Yielded Sync<br/>WebSockets"]
     Auth["Yielded Auth<br/>passkeys, OAuth"]
@@ -25,7 +25,8 @@ flowchart TB
   Agent --> Website
   Website -->|service binding| Coffee
   Coffee --> Surfaces
-  Rest --> App
+  Rest -->|generated| Apis
+  Mcp -->|generated| Apis
   Mcp --> App
   App --> Model
   Apis -->|commands, views| Model

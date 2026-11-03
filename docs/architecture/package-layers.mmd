@@ -1,0 +1,20 @@
+flowchart TB
+  Infra["infra/alchemy<br/>Cloudflare stack"]
+  Ui["apps/ui<br/>Foldkit app + Website Worker"]
+  Server["coffee-server<br/>Coffee Worker, composition root<br/>Durable Objects, D1, Secrets Store"]
+  Presentation["presentation<br/>REST (health, menu, me, generated Apis), MCP"]
+  Actions["presentation/actions<br/>hand-written tool catalog"]
+  Auth["coffee-auth<br/>Yielded passkeys, MCP OAuth"]
+  Core["coffee-application<br/>CoffeeOrderApp: menu, pricing, order reads"]
+  Domain["coffee-domain<br/>alchemy/Domain model<br/>aggregates, views, policy, Apis"]
+  Infra -->|deploys| Server
+  Infra -->|deploys| Ui
+  Ui -->|Api clients| Domain
+  Server -->|mounts| Presentation
+  Server -->|sessions| Auth
+  Server -->|hosts model + Apis| Domain
+  Presentation -->|project tools| Actions
+  Presentation -->|call| Core
+  Presentation -->|generate REST + MCP tools| Domain
+  Actions -->|run| Core
+  Core -->|commands + views| Domain
