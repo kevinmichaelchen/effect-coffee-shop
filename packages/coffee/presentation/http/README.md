@@ -10,6 +10,15 @@
   `/api/rest/openapi.json`. A command is `POST /<Command>` with `{ target, input, commandId? }`; a
   read is `GET /<View>/:key` (and `/snapshot`, `/list`, and Server-Sent Events at `/watch` and
   `/events`). A rejection answers with its `_tag` at the status its `httpApiStatus` gives it.
+  Each endpoint's OpenAPI description is its command's `description`, or what the read returns.
+
+### Who can call the REST endpoints?
+
+The Worker serves them behind the same auth session as the app's Domain RPC: the caller is whoever
+their session cookie says, never an actor header they send. Writes (`POST`) must also carry an
+`Origin` of the app itself, and bearer tokens are refused. So today REST serves the app's own pages
+and scripts running with a signed-in browser session; agents and other programs use MCP, which
+authenticates with OAuth.
 
 The Foldkit UI keeps using the same Apis over Effect RPC at `/api/customer` and `/api/staff`. Every
 transport runs the Apis' own `Session` middleware and checks, so they authorize alike. See
