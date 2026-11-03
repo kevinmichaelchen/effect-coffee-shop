@@ -10,7 +10,11 @@ import { Session } from "../Session.middleware.ts";
 import { CoffeeOrder } from "./CoffeeOrder.ts";
 import { OrderId } from "./Order.id.ts";
 
-export class AlreadyPlaced extends Domain.Rejection("AlreadyPlaced", { orderId: OrderId }) {}
+export class AlreadyPlaced extends Domain.Rejection(
+  "AlreadyPlaced",
+  { orderId: OrderId },
+  { httpApiStatus: 409 },
+) {}
 
 /** A customer's order joined the queue, priced. */
 export class OrderPlaced extends Domain.Event(
@@ -30,6 +34,8 @@ export class OrderPlaced extends Domain.Event(
  */
 export class PlaceOrder extends Domain.Command("PlaceOrder", {
   target: OrderId,
+  description:
+    "Place a new order for the signed-in customer, as the order id you made (a retry with the same id is refused as AlreadyPlaced). Prefer checking out a confirmed cart.",
   middleware: [Session],
   input: {
     items: Schema.Array(DrinkSelection),

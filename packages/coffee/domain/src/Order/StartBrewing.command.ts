@@ -13,6 +13,7 @@ export class BrewingStarted extends Domain.Event("BrewingStarted", { by: Actor }
 /** Start brewing a pending order. Staff only. */
 export class StartBrewing extends Domain.Command("StartBrewing", {
   target: OrderId,
+  description: "Start brewing a pending order. Staff only.",
   middleware: [Session],
   events: [BrewingStarted],
   rejects: [StaffOnly, OrderNotFound, InvalidStatusTransition],

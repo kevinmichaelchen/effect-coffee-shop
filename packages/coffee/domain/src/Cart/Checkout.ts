@@ -9,7 +9,7 @@ export const CheckoutId = Schema.String.check(typedIdPattern("checkout_session")
   .pipe(Schema.brand("CheckoutId"))
   .annotate({
     identifier: "CheckoutId",
-    description: "Checkout session id returned by prepare_cart_checkout.",
+    description: "Checkout session id, such as checkout_session_01j9z3k6a0x8s5v2c4b7n1m3p6.",
   });
 export type CheckoutId = typeof CheckoutId.Type;
 export const makeCheckoutId = generateTypedId("checkout_session").pipe(

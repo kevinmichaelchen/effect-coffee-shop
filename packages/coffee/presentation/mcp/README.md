@@ -14,21 +14,35 @@ resources and prompts stay in this package.
 MCP-specific protocol definitions: resources, prompts, tools, server metadata, and the HTTP MCP
 server layer.
 
-### How Do Actions Become MCP Tools?
+### Where Do The Tools Come From?
 
-[`src/action-toolkit.ts`](./src/action-toolkit.ts) builds Effect AI `Tool`/`Toolkit` definitions
-from the neutral action catalog in [`coffee-actions`](../actions).
-[`src/action-tools.ts`](./src/action-tools.ts) wires that toolkit to `CoffeeOrderApp`. The action
-names, schemas, and neutral action metadata stay in `coffee-actions`; this package performs the MCP
-projection.
+Two places:
+
+- **Generated from the domain Apis.** [`src/domain-tools.ts`](./src/domain-tools.ts) serves
+  `CustomerApi` and `StaffApi` with `DomainAi.toMcp`: one tool per command
+  (`CustomerApi_PlaceOrder_send`) and per read (`CustomerApi_Cart_get`). Each call runs through the
+  Api's own `Session` middleware and the command's `decide` or the read's `validate`, with the
+  OAuth-resolved `McpActor` sent as the actor header. A rejection (`Unauthorized`, `NotYourCart`,
+  `StaffOnly`, ...) comes back as the tool's result. A command's description is its
+  `description` option in the domain.
+- **Hand-written.** [`src/action-toolkit.ts`](./src/action-toolkit.ts) and
+  [`src/action-tools.ts`](./src/action-tools.ts) serve what the Apis do not: the menu
+  (`list_menu`, `get_item_options`), checks of a proposed order (`validate_order`, `quote_order`),
+  and `get_ordering_context`, which tells an agent the signed-in customer's id and hands it fresh
+  ids for new orders, cart lines and checkouts. Their names and schemas live in
+  [`coffee-actions`](../actions).
+
+### Who Sees The Staff Tools?
+
+[`src/visibility.ts`](./src/visibility.ts) lists the generated `StaffApi_*` tools only to staff.
+That is presentation: the Api still authorizes every call, so a hidden tool called anyway is
+refused.
 
 ### What Is The Difference Between Resources, Prompts, And Tools?
 
 Resources expose readable Coffee state such as menu or order data. Prompts provide reusable MCP
-prompt templates. Tools perform actions through
-[`CoffeeOrderApp`](../../application/src/CoffeeOrderApp.ts), such as listing orders or updating
-order status. `CoffeeOrderApp` sends those as commands to the domain model's aggregates and
-reads its views.
+prompt templates. Tools perform actions: the generated ones through the domain Apis, the
+hand-written ones through [`CoffeeOrderApp`](../../application/src/CoffeeOrderApp.ts).
 
 ### What Does Not Belong Here?
 
@@ -37,9 +51,12 @@ Worker routing belong in their owning packages.
 
 ## Directory Map
 
-- [`src/action-toolkit.ts`](./src/action-toolkit.ts) projects neutral Coffee actions into Effect AI
-  toolkit definitions.
-- [`src/action-tools.ts`](./src/action-tools.ts) adapts the toolkit into MCP tools.
+- [`src/domain-tools.ts`](./src/domain-tools.ts) generates the order, cart, checkout and staff
+  tools from `CustomerApi` and `StaffApi`.
+- [`src/action-toolkit.ts`](./src/action-toolkit.ts) projects the hand-written Coffee actions into
+  Effect AI toolkit definitions.
+- [`src/action-tools.ts`](./src/action-tools.ts) adapts that toolkit into MCP tools.
+- [`src/visibility.ts`](./src/visibility.ts) hides the staff tools from everyone else.
 - [`src/resources.ts`](./src/resources.ts) defines menu and order MCP resources.
 - [`src/prompts.ts`](./src/prompts.ts) defines recommendation and open-order summary prompts.
 - [`src/skills.ts`](./src/skills.ts) publishes the ordering workflow through the MCP Skills

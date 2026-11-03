@@ -18,6 +18,7 @@ export class CartItemUpdated extends Domain.Event("CartItemUpdated", {
 /** Change some of a cart line's choices; the rest stay as they were. */
 export class UpdateCartItem extends Domain.Command("UpdateCartItem", {
   target: CustomerId,
+  description: "Change some of a cart line's choices; the rest stay as they were.",
   middleware: [Session],
   input: {
     cartItemId: CartItemId,

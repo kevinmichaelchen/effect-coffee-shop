@@ -8,14 +8,22 @@ import { Session } from "../Session.middleware.ts";
 import { Checkout, CheckoutId } from "./Checkout.ts";
 import { NotYourCart } from "./NotYourCart.rejection.ts";
 
-export class CheckoutNotFound extends Domain.Rejection("CheckoutNotFound", {
-  checkoutId: CheckoutId,
-}) {}
+export class CheckoutNotFound extends Domain.Rejection(
+  "CheckoutNotFound",
+  {
+    checkoutId: CheckoutId,
+  },
+  { httpApiStatus: 404 },
+) {}
 
-export class CheckoutExpired extends Domain.Rejection("CheckoutExpired", {
-  checkoutId: CheckoutId,
-  expiredAt: Schema.DateTimeUtc,
-}) {}
+export class CheckoutExpired extends Domain.Rejection(
+  "CheckoutExpired",
+  {
+    checkoutId: CheckoutId,
+    expiredAt: Schema.DateTimeUtc,
+  },
+  { httpApiStatus: 409 },
+) {}
 
 /**
  * The customer confirmed their checkout: the cart is emptied, and the order
@@ -30,6 +38,8 @@ export class CheckoutConfirmed extends Domain.Event("CheckoutConfirmed", {
 /** Confirm the checkout you prepared, before it expires, as order `orderId`. */
 export class ConfirmCheckout extends Domain.Command("ConfirmCheckout", {
   target: CustomerId,
+  description:
+    "Confirm the checkout you prepared, before it expires, once the customer agreed to its items and total. The cart is emptied and its order is placed as the order id you made.",
   middleware: [Session],
   input: {
     checkoutId: CheckoutId,

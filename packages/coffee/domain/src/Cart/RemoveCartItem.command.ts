@@ -12,6 +12,7 @@ export class CartItemRemoved extends Domain.Event("CartItemRemoved", { cartItemI
 /** Take one line out of your cart. */
 export class RemoveCartItem extends Domain.Command("RemoveCartItem", {
   target: CustomerId,
+  description: "Take one line out of your cart.",
   middleware: [Session],
   input: { cartItemId: CartItemId },
   events: [CartItemRemoved],

@@ -17,7 +17,8 @@ import * as Option from "effect/Option";
 import * as References from "effect/References";
 import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
-import { actorHeader, SessionLive, withActorHeader } from "../src/Session.ts";
+import { actorHeader } from "@effect-coffee-shop/coffee-application/ActorHeader";
+import { SessionLive, withActorHeader } from "../src/Session.ts";
 import { Actor as ActorSchema } from "@effect-coffee-shop/coffee-domain/Actor";
 
 /**

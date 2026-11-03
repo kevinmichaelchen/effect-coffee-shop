@@ -1,7 +1,9 @@
 # Coffee Actions
 
-`@effect-coffee-shop/coffee-actions` contains the Coffee tool names, descriptions,
-input/output schemas, and error schemas used by Effect MCP. It is presentation
+`@effect-coffee-shop/coffee-actions` contains the names, descriptions,
+input/output schemas, and error schemas of the hand-written Coffee MCP tools: the
+menu, order checks, and the ordering context. Order, cart, checkout and staff tools
+are generated from the domain Apis instead (see [`coffee-mcp`](../mcp)). It is presentation
 support over [`coffee-application`](../../application), not a separate business layer.
 
 - [`src/specs.ts`](./src/specs.ts) defines the tool catalog.

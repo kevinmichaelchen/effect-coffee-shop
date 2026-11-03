@@ -18,6 +18,8 @@
         "name": "@effect/language-service",
         "allowedUnstableApis": [
           "@effect/vitest",
+          "@effect/platform-node",
+          "effect/crypto",
           "effect/http",
           "effect/http-api",
           "effect/rpc",

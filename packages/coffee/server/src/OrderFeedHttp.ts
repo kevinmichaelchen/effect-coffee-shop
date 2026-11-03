@@ -8,7 +8,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { OrderFeedObject } from "./OrderFeed.ts";
-import { actorHeader } from "./Session.ts";
+import { actorHeader } from "@effect-coffee-shop/coffee-application/ActorHeader";
 
 /** Called only inside domainApi, after it replaces the untrusted actor header. */
 export const orderFeedHttp = Effect.map(OrderFeedObject, (feeds) =>

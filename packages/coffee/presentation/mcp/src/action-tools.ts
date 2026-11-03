@@ -1,35 +1,57 @@
 /**
- * Exposes Coffee actions as MCP tools.
+ * Exposes the hand-written Coffee tools over MCP.
  *
  * @module
  */
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as McpServer from "effect/ai/McpServer";
 import type * as Tool from "effect/ai/Tool";
 import type * as Toolkit from "effect/ai/Toolkit";
+import type { OrderingContextView } from "@effect-coffee-shop/coffee-actions/schemas";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
-import { McpActor, withMcpActor } from "./actor.ts";
 import {
-  type NoCheckoutSessionView,
-  toCartView,
-  toCheckoutSessionView,
-  toCoffeeOrderView,
-  toCoffeeOrdersView,
+  type AppActor,
+  CurrentActor,
+  isAuthenticatedActor,
+} from "@effect-coffee-shop/coffee-application/CurrentActor";
+import {
   toItemOptionsView,
   toMenuView,
   toOrderQuoteView,
   toOrderValidationView,
 } from "@effect-coffee-shop/coffee-application/contracts";
+import { isStaff } from "@effect-coffee-shop/coffee-domain/Actor";
+import { makeCartItemId } from "@effect-coffee-shop/coffee-domain/Cart/CartItem.id";
+import { makeCheckoutId } from "@effect-coffee-shop/coffee-domain/Cart/Checkout";
+import { makeOrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
+import { mainShop } from "@effect-coffee-shop/coffee-domain/Shop/Shop.id";
+import { McpActor, withMcpActor } from "./actor.ts";
 import { CoffeeActionToolkit } from "./action-toolkit.ts";
-
-const noCheckoutSessionView: NoCheckoutSessionView = {
-  status: "no_checkout_session",
-};
 
 const annotateToolCall = (context: Toolkit.HandlerContext<Tool.Any>) =>
   Effect.annotateSpans("mcp.tool_call_id", context.toolCallId);
+
+const actorContext = (actor: AppActor) =>
+  isAuthenticatedActor(actor)
+    ? {
+        isSignedIn: true,
+        isStaff: isStaff(actor),
+        customerId: actor.userId,
+        displayName: actor.displayName,
+      }
+    : { isSignedIn: false, isStaff: false };
+
+/** Who the caller is, and fresh ids for the domain tools' new orders, cart lines and checkouts. */
+const orderingContext = Effect.fn("CoffeeMcp.orderingContext")(function* () {
+  const actor = yield* CurrentActor;
+  const newIds = yield* Effect.all(
+    { orderId: makeOrderId, cartItemId: makeCartItemId, checkoutId: makeCheckoutId },
+    { concurrency: 1 },
+  );
+  const context: OrderingContextView = { ...actorContext(actor), shopId: mainShop, newIds };
+  return context;
+});
 
 export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe(
   Layer.provideMerge(
@@ -40,6 +62,8 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
         const runWithActor = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
           effect.pipe(withMcpActor, Effect.provideService(McpActor, actor));
         return {
+          get_ordering_context: (_input, context) =>
+            orderingContext().pipe(annotateToolCall(context), runWithActor),
           list_menu: (_input, context) =>
             app.listMenu.pipe(
               Effect.map((menu) => ({ menu: toMenuView(menu) })),
@@ -58,73 +82,6 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
             app
               .quoteOrder(input)
               .pipe(Effect.map(toOrderQuoteView), annotateToolCall(context), runWithActor),
-          place_order: (input, context) =>
-            app
-              .placeOrder(input)
-              .pipe(Effect.map(toCoffeeOrderView), annotateToolCall(context), runWithActor),
-          get_order: ({ orderId }, context) =>
-            app
-              .getOrder(orderId)
-              .pipe(Effect.map(toCoffeeOrderView), annotateToolCall(context), runWithActor),
-          list_orders: (input, context) =>
-            app.listOrders(input).pipe(
-              Effect.map((orders) => ({ orders: toCoffeeOrdersView(orders) })),
-              annotateToolCall(context),
-              runWithActor,
-            ),
-          start_brewing: ({ orderId }, context) =>
-            app
-              .startBrewing(orderId)
-              .pipe(Effect.map(toCoffeeOrderView), annotateToolCall(context), runWithActor),
-          mark_ready: ({ orderId }, context) =>
-            app
-              .markReady(orderId)
-              .pipe(Effect.map(toCoffeeOrderView), annotateToolCall(context), runWithActor),
-          pick_up_order: ({ orderId }, context) =>
-            app
-              .pickUpOrder(orderId)
-              .pipe(Effect.map(toCoffeeOrderView), annotateToolCall(context), runWithActor),
-          cancel_order: ({ orderId }, context) =>
-            app
-              .cancelOrder(orderId)
-              .pipe(Effect.map(toCoffeeOrderView), annotateToolCall(context), runWithActor),
-          get_cart: (_input, context) =>
-            app.getCart.pipe(Effect.map(toCartView), annotateToolCall(context), runWithActor),
-          add_cart_item: (input, context) =>
-            app
-              .addCartItem(input)
-              .pipe(Effect.map(toCartView), annotateToolCall(context), runWithActor),
-          update_cart_item: (input, context) =>
-            app
-              .updateCartItem(input)
-              .pipe(Effect.map(toCartView), annotateToolCall(context), runWithActor),
-          remove_cart_item: (input, context) =>
-            app
-              .removeCartItem(input)
-              .pipe(Effect.map(toCartView), annotateToolCall(context), runWithActor),
-          clear_cart: (_input, context) =>
-            app.clearCart.pipe(Effect.map(toCartView), annotateToolCall(context), runWithActor),
-          prepare_cart_checkout: (_input, context) =>
-            app.prepareCartCheckout.pipe(
-              Effect.map(toCheckoutSessionView),
-              annotateToolCall(context),
-              runWithActor,
-            ),
-          get_checkout_session: (_input, context) =>
-            app.getCurrentCheckoutSession.pipe(
-              Effect.map((session) =>
-                Option.match(session, {
-                  onNone: () => noCheckoutSessionView,
-                  onSome: toCheckoutSessionView,
-                }),
-              ),
-              annotateToolCall(context),
-              runWithActor,
-            ),
-          checkout_cart: (input, context) =>
-            app
-              .checkoutCart(input)
-              .pipe(Effect.map(toCoffeeOrderView), annotateToolCall(context), runWithActor),
         };
       }),
     ),
