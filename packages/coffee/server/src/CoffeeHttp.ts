@@ -47,18 +47,6 @@ export interface CoffeeHttpInput {
   readonly domain: Context.Context<DomainToolServices>;
 }
 
-/** The path is `prefix` itself or below it (Effect RPC clients post to `prefix/`). */
-export const isOrStartsWith = (path: string, prefix: string) =>
-  path === prefix || path.startsWith(`${prefix}/`);
-
-/** Paths that need auth configured: without it they answer 503. */
-export const needsAuth = (path: string) =>
-  isOrStartsWith(path, "/api/auth") ||
-  isOrStartsWith(path, "/sync") ||
-  isOrStartsWith(path, "/mcp") ||
-  path.startsWith("/oauth/") ||
-  path.startsWith("/.well-known/");
-
 const hasBearerAuthorization = (request: HttpServerRequest) =>
   Option.fromNullishOr(request.headers.authorization).pipe(
     Option.exists((value) => value.trimStart().toLowerCase().startsWith("bearer ")),

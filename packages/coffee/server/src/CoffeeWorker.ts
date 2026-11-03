@@ -23,7 +23,7 @@ import { SyncedCoffeeShop, SyncedCoffeeShopHandlers } from "./SyncOrders.ts";
 import { orderFeedHttp } from "./OrderFeedHttp.ts";
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
-import { domainRestHttp, domainRestPrefix } from "@effect-coffee-shop/coffee-http/domain-rest";
+import { domainRestHttp } from "@effect-coffee-shop/coffee-http/domain-rest";
 import { annotateHttpStatus, withHttpWideEvent } from "@effect-coffee-shop/http-routing/logging";
 import * as Cloudflare from "@alchemy.run/cloudflare";
 import type { HttpEffect } from "alchemy/Http";
@@ -33,6 +33,7 @@ import * as HttpServerError from "effect/http/HttpServerError";
 import { HttpServerRequest } from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import * as Layer from "effect/Layer";
+import * as Match from "effect/Match";
 import * as Option from "effect/Option";
 import { WideEventLogger } from "effect-wide-event";
 import { AuthDatabase } from "./AuthDatabase.ts";
@@ -42,10 +43,9 @@ import {
   coffeeHttp,
   domainApi,
   type DomainToolServices,
-  isOrStartsWith,
-  needsAuth,
   rejectBearer,
 } from "./CoffeeHttp.ts";
+import { needsAuth, rejectsBearer, routeKindOf, routeOf } from "./Routes.ts";
 import { SessionLive } from "./Session.ts";
 
 /** The model on Durable Objects, the Apis' middleware, and the adapters' service over the model. */
@@ -60,16 +60,6 @@ const CoffeeLive = Layer.mergeAll(SessionLive, CoffeeOrderApp.layer).pipe(
     ),
   ),
 );
-
-const routeKindOf = (path: string) => {
-  if (isOrStartsWith(path, "/sync")) return "sync";
-  if (isOrStartsWith(path, domainRestPrefix)) return "rest";
-  if (isOrStartsWith(path, "/api/customer") || isOrStartsWith(path, "/api/staff")) return "domain";
-  if (["/api/auth", "/oauth", "/.well-known"].some((prefix) => isOrStartsWith(path, prefix)))
-    return "auth";
-  if (isOrStartsWith(path, "/mcp")) return "mcp";
-  return isOrStartsWith(path, "/api") ? "api" : "unmatched";
-};
 
 interface CoffeeServices {
   readonly deployment: AuthDeployment;
@@ -89,20 +79,24 @@ const routeBackend = (
   request: HttpServerRequest,
   path: string,
 ) => {
-  if (Option.isNone(input.auth) && needsAuth(path))
-    return Effect.succeed(
-      HttpServerResponse.text("Authentication is unavailable.", { status: 503 }),
+  const viaSession = (api: HttpEffect) => domainApi(input, api);
+  const served = () =>
+    Match.value(routeOf(path)).pipe(
+      Match.when("sync", () =>
+        request.headers.origin === new URL(services.deployment.origin).origin
+          ? viaSession(services.orderFeed)
+          : Effect.succeed(HttpServerResponse.empty({ status: 403 })),
+      ),
+      Match.when("rest", () => viaSession(services.domainRest)),
+      Match.when("customer", () => viaSession(services.customerApi)),
+      Match.when("staff", () => viaSession(services.staffApi)),
+      Match.orElse(() => coffeeHttp(input)),
     );
-  if (path.startsWith("/sync/"))
-    return request.headers.origin !== new URL(services.deployment.origin).origin
-      ? Effect.succeed(HttpServerResponse.empty({ status: 403 }))
-      : rejectBearer(domainApi(input, services.orderFeed));
-  if (isOrStartsWith(path, domainRestPrefix))
-    return rejectBearer(domainApi(input, services.domainRest));
-  if (isOrStartsWith(path, "/api/customer"))
-    return rejectBearer(domainApi(input, services.customerApi));
-  if (isOrStartsWith(path, "/api/staff")) return rejectBearer(domainApi(input, services.staffApi));
-  return path.startsWith("/api") ? rejectBearer(coffeeHttp(input)) : coffeeHttp(input);
+  return Option.isNone(input.auth) && needsAuth(path)
+    ? Effect.succeed(HttpServerResponse.text("Authentication is unavailable.", { status: 503 }))
+    : rejectsBearer(path)
+      ? rejectBearer(served())
+      : served();
 };
 
 /** Route one request: the domain Apis, auth, REST and MCP. */
@@ -118,7 +112,7 @@ const handleRequest = Effect.fn("CoffeeWorker.fetch")(function* (services: Coffe
     domain: services.domain,
   };
   const response = yield* routeBackend(services, input, request, path);
-  yield* annotateHttpStatus({ routeKind: routeKindOf(path), status: response.status });
+  yield* annotateHttpStatus({ routeKind: routeKindOf(routeOf(path)), status: response.status });
   return response;
 });
 
