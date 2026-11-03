@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/fallow/schema.json",
   "entry": [
+    "docs/architecture/render.mjs",
     "docs/diagrams/render.mjs",
     "infra/alchemy/alchemy.run.ts",
     "infra/turbo-cache/aws.ts",
@@ -100,6 +101,7 @@
       {
         "name": "tooling",
         "patterns": [
+          "docs/architecture/render.mjs",
           "docs/diagrams/render.mjs",
           "patches/**",
           "apps/ui/scripts/**",
