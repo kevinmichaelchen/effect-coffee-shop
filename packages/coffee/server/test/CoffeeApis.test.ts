@@ -123,50 +123,43 @@ describe("the domain Apis over the in-memory platform", () => {
 });
 
 describe("the application service over the model", () => {
-  it.live("checks a cart out into one order, placed by the domain's policy", () =>
+  it.live("reads orders for their owner and staff, and lists by status", () =>
     Effect.gen(function* () {
       const app = yield* CoffeeOrderApp;
-      yield* app.addCartItem({ drinkId: "latte", size: "large" });
-      const cart = yield* app.addCartItem({ drinkId: "espresso", size: "small", quantity: 2 });
-      expect(cart.items).toHaveLength(2);
+      const customers = yield* CustomerApi.clientInProcess;
+      const orderId = yield* makeOrderId;
+      yield* customers.PlaceOrder(orderId, { items: [{ drinkId: "tea", size: "small" }] }, as(sam));
 
-      const session = yield* app.prepareCartCheckout;
-      expect(session.totalPrice).toEqual(cart.totalPrice);
+      const mine = yield* eventually(app.listOrders({}), (orders) => orders.length === 1);
+      expect(mine.map((order) => order.id)).toEqual([orderId]);
+      expect((yield* app.getOrder(orderId)).ownerUserId).toBe(sam.userId);
 
-      const order = yield* app.checkoutCart({ checkoutSessionId: session.id });
-      expect(order.items.map((item) => item.drinkId)).toEqual(["latte", "espresso"]);
-      expect(order.ownerUserId).toBe(sam.userId);
+      const notAlexs = yield* app
+        .getOrder(orderId)
+        .pipe(Effect.provideService(AppActor, alex), Effect.flip);
+      expect(notAlexs._tag).toBe("OrderNotFoundError");
 
-      const emptied = yield* app.getCart;
-      expect(emptied.items).toEqual([]);
-      expect(Option.isNone(yield* app.getCurrentCheckoutSession)).toBe(true);
+      const queue = yield* eventually(
+        app.listOrders({ status: "pending" }).pipe(Effect.provideService(AppActor, barista)),
+        (orders) => orders.length === 1,
+      );
+      expect(queue.map((order) => order.id)).toEqual([orderId]);
 
-      const again = yield* app.checkoutCart({ checkoutSessionId: session.id }).pipe(Effect.flip);
-      expect(again._tag).toBe("InvalidOrderInputError");
-    }).pipe(Effect.provideService(AppActor, sam), Effect.provide(World)),
+      const unknown = yield* app.listOrders({ status: "lost" }).pipe(Effect.flip);
+      expect(unknown._tag).toBe("InvalidOrderInputError");
+    }).pipe(Effect.scoped, Effect.provideService(AppActor, sam), Effect.provide(World)),
   );
 
-  it.live("translates rejections into the adapters' errors", () =>
+  it.effect("translates pricing rejections into the adapters' errors", () =>
     Effect.gen(function* () {
       const app = yield* CoffeeOrderApp;
       const missing = yield* app
-        .placeOrder({ items: [{ drinkId: "mocha", size: "small" }] })
+        .quoteOrder({ items: [{ drinkId: "mocha", size: "small" }] })
         .pipe(Effect.flip);
       expect(missing).toMatchObject({ _tag: "DrinkNotFoundError", drinkId: "mocha" });
-
-      const order = yield* app.placeOrder({ items: [{ drinkId: "tea", size: "small" }] });
-      const notStaff = yield* app.startBrewing(order.id).pipe(Effect.flip);
-      expect(notStaff._tag).toBe("StaffRoleRequiredError");
-
-      const skipped = yield* app
-        .markReady(order.id)
-        .pipe(Effect.provideService(AppActor, barista), Effect.flip);
-      expect(skipped).toMatchObject({
-        _tag: "InvalidOrderStatusTransitionError",
-        from: "pending",
-        to: "ready",
-      });
-    }).pipe(Effect.provideService(AppActor, sam), Effect.provide(World)),
+      const quote = yield* app.quoteOrder({ items: [{ drinkId: "latte", size: "medium" }] });
+      expect(quote.totalPrice.minorUnits).toBe(518);
+    }).pipe(Effect.provide(World)),
   );
 });
 

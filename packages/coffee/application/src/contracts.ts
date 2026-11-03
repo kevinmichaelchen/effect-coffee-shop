@@ -6,8 +6,6 @@
 import * as Arr from "effect/Array";
 import * as Schema from "effect/Schema";
 import * as SchemaTransformation from "effect/SchemaTransformation";
-import { CartItemId } from "@effect-coffee-shop/coffee-domain/Cart/CartItem.id";
-import { CheckoutId } from "@effect-coffee-shop/coffee-domain/Cart/Checkout";
 import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.id";
 import {
   DrinkId,
@@ -17,12 +15,12 @@ import {
   Milk,
   Temperature,
 } from "@effect-coffee-shop/coffee-domain/Menu/Menu";
-import { CoffeeOrderItem, OrderQuote } from "@effect-coffee-shop/coffee-domain/Menu/OrderItem";
+import { type CoffeeOrderItem, OrderQuote } from "@effect-coffee-shop/coffee-domain/Menu/OrderItem";
 import {
   QuantityInput,
   ShotCountInput,
 } from "@effect-coffee-shop/coffee-domain/Menu/OrderPrimitives";
-import { MoneyFromCents, Money } from "@effect-coffee-shop/coffee-domain/Money";
+import { MoneyFromCents } from "@effect-coffee-shop/coffee-domain/Money";
 import type { CoffeeOrder } from "@effect-coffee-shop/coffee-domain/Order/CoffeeOrder";
 import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import { OrderStatus } from "@effect-coffee-shop/coffee-domain/Order/OrderStatus";
@@ -32,15 +30,6 @@ export { OrderQuote };
 // Keep menu-choice request fields as trimmed strings so use cases can surface
 // domain-specific errors instead of boundary SchemaError failures.
 const BoundaryString = Schema.Trim;
-const CartItemIdInput = CartItemId.annotate({
-  description: "Cart line id, such as cart_item_00000000000000000000000001.",
-});
-const CheckoutSessionIdInput = CheckoutId.annotate({
-  description: "Checkout session id, such as checkout_session_01j9z3k6a0x8s5v2c4b7n1m3p6.",
-});
-const CustomerNameInput = BoundaryString.annotate({
-  description: "Optional customer display name for system or staff checkout.",
-});
 const DrinkIdInput = BoundaryString.annotate({
   description: "Menu drink id such as latte.",
 });
@@ -82,12 +71,6 @@ export const OrderItemsInput = Schema.NonEmptyArray(OrderItemInput).annotate({
 });
 export type OrderItemsInput = typeof OrderItemsInput.Type;
 
-export const PlaceOrderRequest = Schema.Struct({
-  customerName: Schema.optionalKey(CustomerNameInput),
-  items: OrderItemsInput,
-}).annotate({ identifier: "PlaceOrderRequest" });
-export type PlaceOrderRequest = typeof PlaceOrderRequest.Type;
-
 export const QuoteOrderRequest = Schema.Struct({
   items: OrderItemsInput,
 }).annotate({ identifier: "QuoteOrderRequest" });
@@ -98,68 +81,10 @@ export const ItemOptionsRequest = Schema.Struct({
 }).annotate({ identifier: "ItemOptionsRequest" });
 export type ItemOptionsRequest = typeof ItemOptionsRequest.Type;
 
-export const UpdateCartItemRequest = Schema.Struct({
-  cartItemId: CartItemIdInput,
-  drinkId: Schema.optionalKey(DrinkIdInput),
-  size: Schema.optionalKey(SizeInput),
-  milk: Schema.optionalKey(MilkInput),
-  temperature: Schema.optionalKey(TemperatureInput),
-  shots: Schema.optionalKey(ShotCountInputField),
-  notes: Schema.optionalKey(NotesInput),
-  quantity: Schema.optionalKey(QuantityInputField),
-}).annotate({ identifier: "UpdateCartItemRequest" });
-export type UpdateCartItemRequest = typeof UpdateCartItemRequest.Type;
-
-export const CartItemIdRequest = Schema.Struct({
-  cartItemId: CartItemIdInput,
-}).annotate({ identifier: "CartItemIdRequest" });
-export type CartItemIdRequest = typeof CartItemIdRequest.Type;
-
-export const CheckoutCartRequest = Schema.Struct({
-  checkoutSessionId: CheckoutSessionIdInput,
-  customerName: Schema.optionalKey(CustomerNameInput),
-}).annotate({ identifier: "CheckoutCartRequest" });
-export type CheckoutCartRequest = typeof CheckoutCartRequest.Type;
-
-export const CheckoutSessionIdRequest = Schema.Struct({
-  checkoutSessionId: CheckoutSessionIdInput,
-}).annotate({ identifier: "CheckoutSessionIdRequest" });
-export type CheckoutSessionIdRequest = typeof CheckoutSessionIdRequest.Type;
-
 export const ListOrdersRequest = Schema.Struct({
   status: Schema.optionalKey(OrderStatusInput),
 }).annotate({ identifier: "ListOrdersRequest" });
 export type ListOrdersRequest = typeof ListOrdersRequest.Type;
-
-export const CartItemQuote = Schema.Struct({
-  cartItemId: CartItemId,
-  item: CoffeeOrderItem,
-}).annotate({ identifier: "CartItemQuote" });
-export type CartItemQuote = typeof CartItemQuote.Type;
-
-export const CartSnapshot = Schema.Struct({
-  ownerUserId: CustomerId,
-  items: Schema.Array(CartItemQuote),
-  totalPrice: Money,
-}).annotate({ identifier: "CartSnapshot" });
-export type CartSnapshot = typeof CartSnapshot.Type;
-
-export const checkoutSessionStatuses = ["awaiting_confirmation"] as const;
-export const CheckoutSessionStatus = Schema.Literals(checkoutSessionStatuses);
-export type CheckoutSessionStatus = typeof CheckoutSessionStatus.Type;
-
-/** A prepared checkout, as adapters present it to the person confirming it. */
-export const CheckoutSession = Schema.Struct({
-  id: CheckoutId,
-  ownerUserId: CustomerId,
-  status: CheckoutSessionStatus,
-  items: Schema.NonEmptyArray(CoffeeOrderItem),
-  totalPrice: Money,
-  createdAt: Schema.DateTimeUtc,
-  updatedAt: Schema.DateTimeUtc,
-  expiresAt: Schema.DateTimeUtc,
-}).annotate({ identifier: "CheckoutSession" });
-export type CheckoutSession = typeof CheckoutSession.Type;
 
 export const ItemOptions = Schema.Struct({
   item: MenuItem,
@@ -230,42 +155,6 @@ export const OrderValidationView = Schema.Struct({
   totalPriceCents: Schema.Int,
 }).annotate({ identifier: "OrderValidationView" });
 export type OrderValidationView = typeof OrderValidationView.Type;
-
-export const CartItemView = Schema.Struct({
-  cartItemId: Schema.toEncoded(CartItemId),
-  item: CoffeeOrderItemView,
-}).annotate({ identifier: "CartItemView" });
-export type CartItemView = typeof CartItemView.Type;
-
-export const CartView = Schema.Struct({
-  ownerUserId: Schema.String,
-  items: Schema.Array(CartItemView),
-  totalPriceCents: Schema.Int,
-}).annotate({ identifier: "CartView" });
-export type CartView = typeof CartView.Type;
-
-export const CheckoutSessionView = Schema.Struct({
-  id: Schema.toEncoded(CheckoutId),
-  ownerUserId: Schema.String,
-  status: CheckoutSessionStatus,
-  items: Schema.NonEmptyArray(CoffeeOrderItemView),
-  totalPriceCents: Schema.Int,
-  createdAt: Schema.toEncoded(Schema.DateTimeUtcFromString),
-  updatedAt: Schema.toEncoded(Schema.DateTimeUtcFromString),
-  expiresAt: Schema.toEncoded(Schema.DateTimeUtcFromString),
-}).annotate({ identifier: "CheckoutSessionView" });
-export type CheckoutSessionView = typeof CheckoutSessionView.Type;
-
-export const NoCheckoutSessionView = Schema.Struct({
-  status: Schema.Literal("no_checkout_session"),
-}).annotate({ identifier: "NoCheckoutSessionView" });
-export type NoCheckoutSessionView = typeof NoCheckoutSessionView.Type;
-
-export const CheckoutSessionLookupView = Schema.Union([
-  CheckoutSessionView,
-  NoCheckoutSessionView,
-]).annotate({ identifier: "CheckoutSessionLookupView" });
-export type CheckoutSessionLookupView = typeof CheckoutSessionLookupView.Type;
 
 export const ItemOptionsView = Schema.Struct({
   item: MenuItemView,
@@ -347,36 +236,6 @@ const OrderValidationViewModel = Schema.Struct({
   }),
 );
 
-const CartItemViewModel = Schema.Struct({
-  cartItemId: CartItemId,
-  item: CoffeeOrderItemViewModel,
-});
-
-const CartViewModel = Schema.Struct({
-  ownerUserId: CustomerId,
-  items: Schema.Array(CartItemViewModel),
-  totalPrice: MoneyFromCents,
-}).pipe(
-  Schema.encodeKeys({
-    totalPrice: "totalPriceCents",
-  }),
-);
-
-const CheckoutSessionViewModel = Schema.Struct({
-  id: CheckoutId,
-  ownerUserId: CustomerId,
-  status: CheckoutSessionStatus,
-  items: Schema.NonEmptyArray(CoffeeOrderItemViewModel),
-  totalPrice: MoneyFromCents,
-  createdAt: Schema.DateTimeUtcFromString,
-  updatedAt: Schema.DateTimeUtcFromString,
-  expiresAt: Schema.DateTimeUtcFromString,
-}).pipe(
-  Schema.encodeKeys({
-    totalPrice: "totalPriceCents",
-  }),
-);
-
 const ItemOptionsViewModel = Schema.Struct({
   item: MenuItemViewModel,
   availableSizes: Schema.Array(DrinkSize),
@@ -392,8 +251,6 @@ const encodeCoffeeOrderItemView = Schema.encodeSync(CoffeeOrderItemViewModel);
 const encodeCoffeeOrderView = Schema.encodeSync(CoffeeOrderViewModel);
 const encodeOrderQuoteView = Schema.encodeSync(OrderQuoteViewModel);
 const encodeOrderValidationView = Schema.encodeSync(OrderValidationViewModel);
-const encodeCartView = Schema.encodeSync(CartViewModel);
-const encodeCheckoutSessionView = Schema.encodeSync(CheckoutSessionViewModel);
 const encodeItemOptionsView = Schema.encodeSync(ItemOptionsViewModel);
 
 export const toMenuItemView = (item: MenuItem): MenuItemView => encodeMenuItemView(item);
@@ -417,19 +274,6 @@ export const toOrderValidationView = (quote: OrderQuote): OrderValidationView =>
     items: quote.items,
     totalPrice: quote.totalPrice,
   });
-
-export const toCartView = (cart: CartSnapshot): CartView =>
-  encodeCartView({
-    ownerUserId: cart.ownerUserId,
-    items: Arr.map(cart.items, (cartItem) => ({
-      cartItemId: cartItem.cartItemId,
-      item: cartItem.item,
-    })),
-    totalPrice: cart.totalPrice,
-  });
-
-export const toCheckoutSessionView = (session: CheckoutSession): CheckoutSessionView =>
-  encodeCheckoutSessionView(session);
 
 export const toItemOptionsView = (options: ItemOptions): ItemOptionsView =>
   encodeItemOptionsView({

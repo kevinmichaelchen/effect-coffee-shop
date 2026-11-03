@@ -2,19 +2,14 @@ import { assert, describe, expect, it } from "@effect/vitest";
 import * as Exit from "effect/Exit";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
-import {
-  PlaceOrderRequest,
-  QuoteOrderRequest,
-} from "@effect-coffee-shop/coffee-application/contracts";
+import { QuoteOrderRequest } from "@effect-coffee-shop/coffee-application/contracts";
 
-const decodePlaceOrderInput = Schema.decodeUnknownEffect(PlaceOrderRequest);
 const decodeQuoteOrderInput = Schema.decodeUnknownEffect(QuoteOrderRequest);
 
 describe("coffee action schemas", () => {
   it.effect("trims order boundary strings before application use cases run", () =>
     Effect.gen(function* () {
-      const input = yield* decodePlaceOrderInput({
-        customerName: "  Avery  ",
+      const input = yield* decodeQuoteOrderInput({
         items: [
           {
             drinkId: " latte ",
@@ -27,7 +22,6 @@ describe("coffee action schemas", () => {
         ],
       });
 
-      assert.strictEqual(input.customerName, "Avery");
       assert.strictEqual(input.items[0].drinkId, "latte");
       assert.strictEqual(input.items[0].milk, "oat");
       assert.strictEqual(input.items[0].notes, "extra hot");
@@ -38,8 +32,7 @@ describe("coffee action schemas", () => {
 
   it.effect("rejects old single-drink order payloads", () =>
     Effect.gen(function* () {
-      const result = yield* decodePlaceOrderInput({
-        customerName: "Avery",
+      const result = yield* decodeQuoteOrderInput({
         drinkId: "latte",
         size: "medium",
       }).pipe(Effect.exit);

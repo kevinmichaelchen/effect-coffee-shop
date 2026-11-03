@@ -1,0 +1,219 @@
+{
+  "$schema": "./node_modules/fallow/schema.json",
+  "entry": [
+    "docs/diagrams/render.mjs",
+    "infra/alchemy/alchemy.run.ts",
+    "infra/turbo-cache/aws.ts",
+    "apps/ui/scripts/*.ts",
+    "apps/ui/src/entry.ts",
+    "apps/ui/src/worker.ts",
+    "apps/ui/vite.config.ts",
+    "apps/ui/vite.shared.ts",
+    "apps/ui/vitest.config.ts",
+    "packages/coffee/domain/test/**/*.ts",
+    "packages/coffee/server/test/**/*.ts",
+    "packages/coffee/presentation/actions/src/**/*.test.ts",
+  ],
+  "ignorePatterns": ["**/*.d.ts"],
+  "ignoreDependencies": ["@effect-coffee-shop/web"],
+  "rules": {
+    "unresolved-imports": "error",
+    "unlisted-dependencies": "error",
+    "unused-files": "error",
+    "unused-exports": "error",
+    "unused-types": "error",
+    "unused-dependencies": "error",
+    "unused-dev-dependencies": "error",
+    "unused-optional-dependencies": "error",
+    "unused-enum-members": "error",
+    "unused-class-members": "error",
+    "duplicate-exports": "error",
+    "circular-dependencies": "error",
+    "boundary-violation": "error",
+    "type-only-dependencies": "error",
+    "test-only-dependencies": "error",
+    "coverage-gaps": "off",
+    "feature-flags": "warn",
+    "stale-suppressions": "error",
+    "unused-catalog-entries": "error",
+    "empty-catalog-groups": "error",
+    "unresolved-catalog-references": "error",
+    "unused-dependency-overrides": "error",
+    "misconfigured-dependency-overrides": "error",
+    "policy-violation": "error",
+  },
+  "overrides": [
+    {
+      // Test adapters under src/testing are reached only from tests, so the
+      // production pass (which drops tests) would report them as dead.
+      "files": ["packages/**/src/testing/**"],
+      "rules": { "unused-files": "off" },
+    },
+  ],
+  "duplicates": {
+    "mode": "mild",
+    "minTokens": 50,
+    "minLines": 5,
+    "minOccurrences": 3,
+    "threshold": 14.5,
+    "ignoreImports": true,
+    "ignore": [],
+  },
+  "health": {
+    "maxCyclomatic": 20,
+    "maxCognitive": 15,
+    "maxCrap": 500,
+    "maxUnitSize": 60,
+  },
+  "typeAware": {
+    "enabled": true,
+    "projects": [
+      "packages/tooling/tsconfig.json",
+      "apps/ui/tsconfig.app.json",
+      "apps/ui/tsconfig.node.json",
+      "packages/turbo-cache/tsconfig.json",
+      "packages/http-routing/tsconfig.json",
+      "packages/coffee/domain/tsconfig.json",
+      "packages/coffee/application/tsconfig.json",
+      "packages/coffee/auth/tsconfig.json",
+      "packages/coffee/server/tsconfig.json",
+      "packages/coffee/presentation/mcp/tsconfig.json",
+      "packages/coffee/presentation/http/tsconfig.json",
+      "packages/coffee/presentation/actions/tsconfig.json",
+      "infra/alchemy/tsconfig.json",
+      "infra/turbo-cache/tsconfig.json",
+    ],
+    "require": "complete",
+  },
+  "audit": {
+    "gate": "new-only",
+    "healthBaseline": ".fallow/health-baseline.json",
+    "typeAware": false,
+  },
+  "boundaries": {
+    "zones": [
+      {
+        "name": "tests",
+        "patterns": ["**/*.test.ts", "**/test-support.ts", "packages/coffee/*/test/**"],
+      },
+      {
+        "name": "tooling",
+        "patterns": [
+          "docs/diagrams/render.mjs",
+          "patches/**",
+          "apps/ui/scripts/**",
+          "packages/tooling/**",
+          "**/oxlint.config.ts",
+          "**/vitest.config.ts",
+          "**/vitest.setup.ts",
+          "apps/ui/vite*.ts",
+        ],
+      },
+      {
+        "name": "infra",
+        "patterns": ["infra/**"],
+      },
+      {
+        "name": "ui",
+        "patterns": ["apps/ui/**"],
+      },
+      {
+        "name": "ui-kit",
+        "patterns": ["packages/ui-kit/**"],
+      },
+      {
+        "name": "http-routing",
+        "patterns": ["packages/http-routing/**"],
+      },
+      {
+        "name": "domain",
+        "patterns": ["packages/coffee/domain/**"],
+      },
+      {
+        "name": "application",
+        "patterns": ["packages/coffee/application/**"],
+      },
+      {
+        "name": "actions",
+        "patterns": ["packages/coffee/presentation/actions/**"],
+      },
+      {
+        "name": "auth-contract",
+        "patterns": ["packages/coffee/auth/src/contract.ts"],
+      },
+      {
+        "name": "auth",
+        "patterns": ["packages/coffee/auth/**"],
+      },
+      {
+        "name": "presentation",
+        "patterns": ["packages/coffee/presentation/**"],
+      },
+      {
+        "name": "server",
+        "patterns": ["packages/coffee/server/**"],
+      },
+      {
+        "name": "turbo-cache",
+        "patterns": ["packages/turbo-cache/**"],
+      },
+    ],
+    "rules": [
+      {
+        "from": "infra",
+        "allow": ["server", "ui", "turbo-cache"],
+      },
+      {
+        "from": "ui",
+        "allow": ["auth-contract", "domain", "ui-kit"],
+      },
+      {
+        "from": "ui-kit",
+        "allow": [],
+      },
+      {
+        "from": "http-routing",
+        "allow": [],
+      },
+      {
+        "from": "domain",
+        "allow": [],
+      },
+      {
+        "from": "application",
+        "allow": ["domain"],
+      },
+      {
+        "from": "actions",
+        "allow": ["domain", "application"],
+      },
+      {
+        "from": "auth-contract",
+        "allow": [],
+      },
+      {
+        "from": "auth",
+        "allow": ["auth-contract", "http-routing", "domain", "application"],
+      },
+      {
+        "from": "presentation",
+        "allow": ["http-routing", "domain", "application", "actions"],
+      },
+      {
+        "from": "server",
+        "allow": ["http-routing", "domain", "application", "actions", "auth", "presentation"],
+      },
+      {
+        "from": "tooling",
+        "allow": ["ui"],
+      },
+      {
+        "from": "turbo-cache",
+        "allow": [],
+      },
+    ],
+    "coverage": {
+      "requireAllFiles": true,
+    },
+  },
+}
