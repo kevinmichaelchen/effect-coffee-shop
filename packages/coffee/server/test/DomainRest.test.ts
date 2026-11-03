@@ -218,10 +218,25 @@ describe("the domain Apis over REST, behind the auth session", () => {
 
         const openApi = yield* call("/api/rest/openapi.json");
         expect(openApi.status).toBe(200);
-        const paths = R.keys(
-          (yield* bodyOf(Schema.Struct({ paths: Schema.Record(Schema.String, Schema.Unknown) }))(
-            openApi,
-          )).paths,
+        const Operation = Schema.Struct({ description: Schema.optional(Schema.String) });
+        const document = yield* bodyOf(
+          Schema.Struct({
+            paths: Schema.Record(
+              Schema.String,
+              Schema.Struct({ get: Schema.optional(Operation), post: Schema.optional(Operation) }),
+            ),
+          }),
+        )(openApi);
+        const paths = R.keys(document.paths);
+        // Commands carry their own description; reads say what they return.
+        expect(document.paths["/api/rest/customer/PlaceOrder"]?.post?.description).toContain(
+          "Place a new order",
+        );
+        expect(document.paths["/api/rest/staff/StartBrewing"]?.post?.description).toBe(
+          "Start brewing a pending order. Staff only.",
+        );
+        expect(document.paths["/api/rest/customer/Cart/{key}/watch"]?.get?.description).toContain(
+          "Server-Sent Events",
         );
         expect(paths).toEqual(
           expect.arrayContaining([
