@@ -5,6 +5,7 @@
  */
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as McpServer from "effect/ai/McpServer";
 import type * as Tool from "effect/ai/Tool";
 import type * as Toolkit from "effect/ai/Toolkit";
@@ -33,14 +34,15 @@ const annotateToolCall = (context: Toolkit.HandlerContext<Tool.Any>) =>
   Effect.annotateSpans("mcp.tool_call_id", context.toolCallId);
 
 const actorContext = (actor: AppActor) =>
-  isAuthenticatedActor(actor)
-    ? {
-        isSignedIn: true,
-        isStaff: isStaff(actor),
-        customerId: actor.userId,
-        displayName: actor.displayName,
-      }
-    : { isSignedIn: false, isStaff: false };
+  Option.match(Option.liftPredicate(actor, isAuthenticatedActor), {
+    onNone: () => ({ isSignedIn: false, isStaff: false }),
+    onSome: (signedIn) => ({
+      isSignedIn: true,
+      isStaff: isStaff(signedIn),
+      customerId: signedIn.userId,
+      displayName: signedIn.displayName,
+    }),
+  });
 
 /** Who the caller is, and fresh ids for the domain tools' new orders, cart lines and checkouts. */
 const orderingContext = Effect.fn("CoffeeMcp.orderingContext")(function* () {

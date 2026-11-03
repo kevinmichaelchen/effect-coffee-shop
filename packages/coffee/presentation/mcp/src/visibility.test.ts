@@ -9,6 +9,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 import * as References from "effect/References";
+import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
 import * as McpProtocol from "effect/ai/McpProtocol";
 import * as McpTest from "effect/ai/McpTest";
@@ -119,9 +120,11 @@ describe("MCP tool visibility", () => {
       const client = yield* makeClient(Effect.succeed(staff));
       const served = yield* listToolNames(client);
       const result = yield* client.readResource({ uri: "skill://coffee/order-coffee/SKILL.md" });
-      const text = Arr.flatMap(result.contents, (content) =>
-        "text" in content ? [content.text] : [],
-      ).join("\n");
+      const text = (yield* Schema.decodeUnknownEffect(
+        Schema.Array(Schema.Struct({ text: Schema.String })),
+      )(result.contents))
+        .map((content) => content.text)
+        .join("\n");
       const named = Arr.dedupe(
         Arr.flatMap([...text.matchAll(/`([A-Za-z_]+)`/g)], ([, name]) => Arr.fromNullishOr(name)),
       );
@@ -214,6 +217,65 @@ describe("MCP tools generated from the domain Apis", () => {
       });
       expect(othersCart.isError).toBe(true);
       expect(failureOf(othersCart)).toEqual({ _tag: "NotYourCart" });
+    }),
+  );
+
+  it.live("let an agent check a cart out into an order, as the ordering skill describes", () =>
+    Effect.gen(function* () {
+      const client = yield* makeClient(Effect.succeed(customer));
+      const call = (name: string, args: { readonly [key: string]: Schema.Json }) =>
+        client.callTool({ name, arguments: args });
+      const context = yield* call("get_ordering_context", {});
+      const { newIds } = yield* Schema.decodeUnknownEffect(
+        Schema.Struct({
+          newIds: Schema.Struct({
+            cartItemId: Schema.String,
+            checkoutId: Schema.String,
+            orderId: Schema.String,
+          }),
+        }),
+      )(context.structuredContent);
+
+      yield* call("CustomerApi_AddCartItem_send", {
+        target: "customer",
+        input: { cartItemId: newIds.cartItemId, item: { drinkId: "latte", size: "large" } },
+      });
+      const prepared = yield* call("CustomerApi_PrepareCheckout_send", {
+        target: "customer",
+        input: { checkoutId: newIds.checkoutId },
+      });
+      expect(prepared.isError).not.toBe(true);
+
+      const confirm = {
+        target: "customer",
+        commandId: "confirm-1",
+        input: { checkoutId: newIds.checkoutId, orderId: newIds.orderId },
+      };
+      const confirmed = yield* call("CustomerApi_ConfirmCheckout_send", confirm);
+      expect(confirmed.isError).not.toBe(true);
+      // An uncertain confirmation is resent with the same commandId: same receipt, no second order.
+      const resent = yield* call("CustomerApi_ConfirmCheckout_send", confirm);
+      expect(resent.structuredContent).toEqual(confirmed.structuredContent);
+
+      // The order is placed by the domain's policy just after the confirmation.
+      const summary = yield* call("CustomerApi_OrderSummary_get", { key: newIds.orderId }).pipe(
+        Effect.repeat({
+          until: (result) =>
+            Schema.is(
+              Schema.Struct({
+                value: Schema.Struct({ order: Schema.Struct({ id: Schema.String }) }),
+              }),
+            )(result.structuredContent),
+          schedule: Schedule.spaced("20 millis"),
+        }),
+        Effect.timeout("3 seconds"),
+      );
+      expect(summary.structuredContent).toMatchObject({
+        value: { order: { id: newIds.orderId, ownerUserId: "customer", status: "pending" } },
+      });
+
+      const cart = yield* call("CustomerApi_Cart_get", { key: "customer" });
+      expect(cart.structuredContent).toMatchObject({ lines: [], checkout: null });
     }),
   );
 
