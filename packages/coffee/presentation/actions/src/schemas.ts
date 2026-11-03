@@ -9,26 +9,19 @@ import { CheckoutId } from "@effect-coffee-shop/coffee-domain/Cart/Checkout";
 import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.id";
 import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import { ShopId } from "@effect-coffee-shop/coffee-domain/Shop/Shop.id";
-import {
-  AuthenticationRequiredError,
-  StaffRoleRequiredError,
-} from "@effect-coffee-shop/coffee-application/CurrentActor";
+import { AuthenticationRequiredError } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import {
   DrinkNotFoundError,
   InternalAppError,
   InvalidOrderInputError,
-  InvalidOrderStatusTransitionError,
-  OrderNotFoundError,
 } from "@effect-coffee-shop/coffee-application/errors";
 
+/** What the hand-written tools can fail with: resolving the caller, and checking a proposed order. */
 export const AppError = Schema.Union([
   AuthenticationRequiredError,
   DrinkNotFoundError,
   InvalidOrderInputError,
-  OrderNotFoundError,
-  InvalidOrderStatusTransitionError,
   InternalAppError,
-  StaffRoleRequiredError,
 ]).annotate({ identifier: "AppError" });
 
 export const EmptyActionInput = Schema.Record(Schema.String, Schema.Never);

@@ -6,7 +6,6 @@
  */
 import * as Schema from "effect/Schema";
 import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
-import { OrderStatus } from "@effect-coffee-shop/coffee-domain/Order/OrderStatus";
 
 export class InternalAppError extends Schema.TaggedError<
   InternalAppError,
@@ -51,17 +50,4 @@ export class OrderNotFoundError extends Schema.TaggedError<
     orderId: OrderId,
   },
   { httpApiStatus: 404 },
-) {}
-
-export class InvalidOrderStatusTransitionError extends Schema.TaggedError<
-  InvalidOrderStatusTransitionError,
-  { readonly brand: unique symbol }
->()(
-  "InvalidOrderStatusTransitionError",
-  {
-    orderId: OrderId,
-    from: OrderStatus,
-    to: OrderStatus,
-  },
-  { httpApiStatus: 409 },
 ) {}

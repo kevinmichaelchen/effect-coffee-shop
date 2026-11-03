@@ -7,7 +7,7 @@
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import * as Context from "effect/Context";
-import { Actor, isStaff } from "@effect-coffee-shop/coffee-domain/Actor";
+import { Actor } from "@effect-coffee-shop/coffee-domain/Actor";
 
 const AnonymousActor = Schema.Struct({
   kind: Schema.Literal("anonymous"),
@@ -42,17 +42,6 @@ export class AuthenticationRequiredError extends Schema.TaggedError<
   { httpApiStatus: 401 },
 ) {}
 
-export class StaffRoleRequiredError extends Schema.TaggedError<
-  StaffRoleRequiredError,
-  { readonly brand: unique symbol }
->()(
-  "StaffRoleRequiredError",
-  {
-    message: Schema.String,
-  },
-  { httpApiStatus: 403 },
-) {}
-
 export function isAuthenticatedActor(actor: AppActor): actor is AuthenticatedActor {
   return actor.kind !== "anonymous";
 }
@@ -62,33 +51,12 @@ export const authenticationRequiredError = () =>
     message: "Sign in to place and view orders.",
   });
 
-export const staffRoleRequiredError = () =>
-  new StaffRoleRequiredError({
-    message: "Only coffee-shop staff can manage the live queue.",
-  });
-
 export const requireSignedInActor = Effect.fn("CurrentActor.requireSignedInActor")(
   function* (): Effect.fn.Return<AuthenticatedActor, AuthenticationRequiredError, CurrentActor> {
     const actor = yield* CurrentActor;
 
     if (!isAuthenticatedActor(actor)) {
       return yield* authenticationRequiredError();
-    }
-
-    return actor;
-  },
-);
-
-export const requireStaffActor = Effect.fn("CurrentActor.requireStaffActor")(
-  function* (): Effect.fn.Return<
-    AuthenticatedActor,
-    AuthenticationRequiredError | StaffRoleRequiredError,
-    CurrentActor
-  > {
-    const actor = yield* requireSignedInActor();
-
-    if (!isStaff(actor)) {
-      return yield* staffRoleRequiredError();
     }
 
     return actor;
