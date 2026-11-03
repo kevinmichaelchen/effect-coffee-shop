@@ -19,21 +19,17 @@ import { McpActor } from "./actor.ts";
 /** The prefix of every staff tool; visibility hides them from everyone else. */
 export const staffToolPrefix = `${StaffApi.apiName}_`;
 
-/**
- * The headers each tool call carries to the Api's `Session` middleware: the
- * OAuth-resolved actor, not the MCP client's own bearer token, which the
- * middleware cannot read. An actor that cannot be resolved sends no actor,
- * and the middleware answers `Unauthorized`.
- */
-const headersFor = (resolver: McpActor["Service"]) =>
-  resolver.current.pipe(
-    Effect.map(actorHeaders),
-    Effect.orElseSucceed(() => ({})),
-  );
-
 export const CoffeeDomainToolsLive = Layer.unwrap(
   Effect.map(McpActor, (resolver) => {
-    const options = { headers: headersFor(resolver) };
+    const options = {
+      // Each call carries the OAuth-resolved actor to the Api's `Session` middleware, not the
+      // MCP client's own bearer token, which it cannot read. An actor that cannot be resolved
+      // sends no actor header, and the middleware answers `Unauthorized`.
+      headers: resolver.current.pipe(
+        Effect.map(actorHeaders),
+        Effect.orElseSucceed(() => ({})),
+      ),
+    };
     return Layer.mergeAll(DomainAi.toMcp(CustomerApi, options), DomainAi.toMcp(StaffApi, options));
   }),
 );
