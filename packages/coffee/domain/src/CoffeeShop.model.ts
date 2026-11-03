@@ -8,11 +8,10 @@ import { CustomerOrders } from "./Order/CustomerOrders.view.ts";
 import { Order } from "./Order/Order.aggregate.ts";
 import { OrderQueue } from "./Order/OrderQueue.view.ts";
 import { OrderSummary } from "./Order/OrderSummary.view.ts";
-import { Shop } from "./Shop/Shop.aggregate.ts";
 
 /** The coffee shop: every aggregate, view and policy, hosted together. */
 export const coffeeShopMembers = {
-  aggregates: [Order, Cart, Customer, Shop],
+  aggregates: [Order, Cart, Customer],
   views: [OrderSummary, CustomerOrders, OrderQueue],
   policies: [CheckoutFulfillment],
   sagas: [FulfillCheckout],

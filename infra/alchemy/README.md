@@ -4,4 +4,4 @@
 
 `cloudflare.test.ts` deploys it on Alchemy's local emulation and checks health, MCP discovery, and a passkey checkout end to end.
 
-`patches/` carries two workarounds for `alchemy@2.0.0-beta.84` and `@alchemy.run/domain@2.0.0-beta.84`; drop them when upstream ships the fixes.
+`patches/` carries two workarounds for `alchemy@2.0.0-beta.85` and `@alchemy.run/domain@2.0.0-beta.85`; drop them when upstream ships the fixes.

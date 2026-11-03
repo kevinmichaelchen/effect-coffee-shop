@@ -10,8 +10,8 @@
   },
   "scripts": {
     "typecheck": "tsrs --noEmit",
-    "lint": "effect-tsrs oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config .",
-    "lint:fix": "effect-tsrs oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --fix .",
+    "lint": "effect-tsgo oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config .",
+    "lint:fix": "effect-tsgo oxlint -c ../../../tooling/oxlint.config.ts --disable-nested-config --fix .",
     "lint:custom": "bun run --cwd ../../../tooling lint:custom:run --tsconfig ../coffee/presentation/actions/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
@@ -23,9 +23,9 @@
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@effect/tsgo": "catalog:",
     "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
-    "@yielded/effect-tsrs": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

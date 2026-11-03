@@ -5,7 +5,7 @@ import * as Schema from "effect/Schema";
 import { isStaff } from "../Actor.ts";
 import { CurrentActor } from "../CurrentActor.context.ts";
 import { Session } from "../Session.middleware.ts";
-import { mainShop, Shop } from "../Shop/Shop.aggregate.ts";
+import { mainShop, ShopId } from "../Shop/Shop.id.ts";
 import { StaffOnly } from "../StaffOnly.rejection.ts";
 import { CoffeeOrder } from "./CoffeeOrder.ts";
 import { upsertOrder } from "./orderList.ts";
@@ -29,10 +29,10 @@ const trimHistory = (orders: ReadonlyArray<CoffeeOrder>): ReadonlyArray<CoffeeOr
  */
 export class OrderQueue extends Domain.View("OrderQueue", {
   from: [OrderSummary],
-  key: Shop,
+  key: ShopId,
   middleware: [Session],
   rejects: [StaffOnly],
-  keyOf: { OrderSummary: () => Shop.ref(mainShop) },
+  keyOf: { OrderSummary: () => mainShop },
   state: Schema.Struct({ orders: Schema.Array(CoffeeOrder) }),
   initial: { orders: [] },
   evolve: {

@@ -19,7 +19,7 @@
       }
     ],
     "resolveJsonModule": true,
-    // effect-tsrs's preset typings import `oxlint` without declaring it.
+    // @effect/tsgo's preset typings import `oxlint` without declaring it.
     "paths": { "oxlint": ["./node_modules/oxlint"] }
   },
   "include": ["*.ts"]

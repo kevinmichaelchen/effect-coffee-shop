@@ -34,6 +34,7 @@ const describeOrderFailure = Match.type<OrderFailure>().pipe(
     NotYourOrder: () => "That order belongs to another customer.",
     OrderNotFound: ({ orderId }) => `Order ${orderId} was not found.`,
     StaffOnly: () => "Only coffee-shop staff can do that.",
+    ConsistencyTimeout: () => "Your order is still updating. Refresh in a moment.",
     Unauthorized: () => "Sign in to place and view orders.",
     RpcClientError: () => "Unable to reach the coffee shop. Check your connection and try again.",
   }),

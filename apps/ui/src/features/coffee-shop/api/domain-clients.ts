@@ -46,4 +46,4 @@ export const staffRuntime = ManagedRuntime.make(
 export const onRuntime =
   <R>(runtime: ManagedRuntime.ManagedRuntime<R, never>) =>
   <A, E>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, E> =>
-    Effect.promise(async () => runtime.runPromiseExit(effect)).pipe(Effect.flatMap((exit) => exit));
+    Effect.promise(async () => runtime.runPromiseExit(effect)).pipe(Effect.flatten);

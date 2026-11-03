@@ -4,7 +4,7 @@ import * as RpcClient from "effect/rpc/RpcClient";
 import * as RpcSerialization from "effect/rpc/RpcSerialization";
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "@alchemy.run/cloudflare";
-import * as Test from "alchemy/Test/Vitest";
+import * as Test from "@alchemy.run/test/Vitest";
 import { makeAuthClient } from "@effect-coffee-shop/coffee-auth/testing/auth-client";
 import { makeTestPasskey } from "@effect-coffee-shop/coffee-auth/testing/passkey";
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
@@ -175,14 +175,12 @@ const orderThroughCustomerApi = (
       );
       const orderId = yield* makeOrderId;
       const checkoutId = yield* makeCheckoutId;
-      yield* coffee.AddCartItem({
-        target: userId,
+      yield* coffee.AddCartItem(userId, {
         cartItemId: yield* makeCartItemId,
         item: { drinkId: "latte", size: "medium", milk: "oat" },
       });
-      yield* coffee.PrepareCheckout({ target: userId, checkoutId });
-      const confirmed = yield* coffee.ConfirmCheckout({
-        target: userId,
+      yield* coffee.PrepareCheckout(userId, { checkoutId });
+      const confirmed = yield* coffee.ConfirmCheckout(userId, {
         checkoutId,
         orderId,
       });

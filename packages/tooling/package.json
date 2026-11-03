@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsrs --noEmit",
-    "lint": "effect-tsrs oxlint -c oxlint.config.ts --disable-nested-config .",
-    "lint:fix": "effect-tsrs oxlint -c oxlint.config.ts --disable-nested-config --fix .",
+    "lint": "effect-tsgo oxlint -c oxlint.config.ts --disable-nested-config .",
+    "lint:fix": "effect-tsgo oxlint -c oxlint.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run --passWithNoTests",
@@ -15,9 +15,9 @@
     "lint:custom:list": "lintcn list"
   },
   "devDependencies": {
+    "@effect/tsgo": "catalog:",
     "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@types/node": "catalog:",
-    "@yielded/effect-tsrs": "catalog:",
     "lintcn": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",

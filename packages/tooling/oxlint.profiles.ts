@@ -1,9 +1,9 @@
 import effectStyle from "@mpsuesser/oxlint-plugin-effect";
-import { strict as effectTsrs } from "@yielded/effect-tsrs/oxlint-presets";
+import { strict as effectTsgo } from "@effect/tsgo/oxlint-presets";
 import { defineConfig, type OxlintConfig } from "oxlint";
 
-// Shared Oxlint policy. Run it through `effect-tsrs oxlint`, which hosts the
-// 130 Effect language-service rules (`effecttsgo/*`) on tsrs types.
+// Shared Oxlint policy. Run it through `effect-tsgo oxlint`, which hosts the
+// Effect language-service rules (`effecttsgo/*`) on tsgolint types.
 //
 // File and function size are deliberately not linted: deep modules are
 // preferred over many small files. Fallow health watches complexity instead,
@@ -18,7 +18,7 @@ const testFiles = [
 ];
 
 const shared = defineConfig({
-  extends: [effectTsrs],
+  extends: [effectTsgo],
   plugins: ["oxc", "typescript", "unicorn", "import", "promise", "node", "vitest"],
   categories: {
     correctness: "error",
@@ -82,6 +82,10 @@ const shared = defineConfig({
     "effecttsgo/service-not-as-class": "error",
     "effecttsgo/unnecessary-arrow-block": "error",
     "effecttsgo/unsafe-effect-type-assertion": "error",
+    "effecttsgo/effect-try-without-catch": "error",
+    "effecttsgo/type-union-to-schema-union": "error",
+    "effecttsgo/map-map-error-to-map-both": "error",
+    "effecttsgo/provide-merge-all-to-array": "error",
 
     // AGENTS.md: no imperative bit-twiddling or counters.
     "no-bitwise": "error",

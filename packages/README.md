@@ -34,6 +34,6 @@ only adapts that model for non-Api surfaces; it holds no rules of its own.
 
 Presentation packages export route and MCP server Layers over `CoffeeOrderApp`.
 They do not choose the platform. [`coffee/server`](./coffee/server) is the only
-composition root: it picks `DomainCloudflare.DurableObjects`, binds D1 and
+composition root: it picks `DomainCloudflare.layerDurableObjects()`, binds D1 and
 Secrets Store, and mounts every surface. [`infra/alchemy`](../infra/alchemy)
 deploys it.

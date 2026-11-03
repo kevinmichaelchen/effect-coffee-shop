@@ -12,8 +12,8 @@
   },
   "scripts": {
     "typecheck": "tsrs --noEmit",
-    "lint": "effect-tsrs oxlint -c ../tooling/oxlint.ui.config.ts --disable-nested-config .",
-    "lint:fix": "effect-tsrs oxlint -c ../tooling/oxlint.ui.config.ts --disable-nested-config --fix .",
+    "lint": "effect-tsgo oxlint -c ../tooling/oxlint.ui.config.ts --disable-nested-config .",
+    "lint:fix": "effect-tsgo oxlint -c ../tooling/oxlint.ui.config.ts --disable-nested-config --fix .",
     "lint:custom": "bun run --cwd ../../apps/ui lint:custom:run --tsconfig ../../packages/ui-kit/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
@@ -28,7 +28,7 @@
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {
-    "@yielded/effect-tsrs": "catalog:",
+    "@effect/tsgo": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",

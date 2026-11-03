@@ -132,10 +132,7 @@ export const coffeeHttp = (input: CoffeeHttpInput) =>
       Layer.provide(Layer.succeed(CoffeeOrderApp, input.app)),
       Layer.provide(HttpServer.layerServices),
     ),
-  ).pipe(
-    Effect.orDie,
-    Effect.flatMap((http) => http),
-  );
+  ).pipe(Effect.orDie, Effect.flatten);
 
 /**
  * The caller's session, resolved from a body-less copy of the request:

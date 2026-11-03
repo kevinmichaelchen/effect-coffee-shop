@@ -58,7 +58,7 @@ import {
   PlaceOrder,
 } from "@effect-coffee-shop/coffee-domain/Order/PlaceOrder.command";
 import { StartBrewing } from "@effect-coffee-shop/coffee-domain/Order/StartBrewing.command";
-import { mainShop, Shop } from "@effect-coffee-shop/coffee-domain/Shop/Shop.aggregate";
+import { mainShop } from "@effect-coffee-shop/coffee-domain/Shop/Shop.id";
 import type {
   CartItemIdRequest,
   CartSnapshot,
@@ -308,16 +308,18 @@ export class CoffeeOrderApp extends Context.Service<
         listMenu: Effect.succeed(menuItems),
         getItemOptions: (input) =>
           Effect.fromOption(findMenuItem(input.drinkId)).pipe(
-            Effect.mapError(() => new DrinkNotFoundError({ drinkId: input.drinkId })),
-            Effect.map((item) => ({
-              item,
-              availableSizes: drinkSizes,
-              defaultSize: "medium" as const,
-              defaultMilk: defaultMilkFor(item),
-              defaultTemperature: defaultTemperatureFor(item),
-              defaultShots: defaultShotsFor(item),
-              defaultQuantity,
-            })),
+            Effect.mapBoth({
+              onFailure: () => new DrinkNotFoundError({ drinkId: input.drinkId }),
+              onSuccess: (item) => ({
+                item,
+                availableSizes: drinkSizes,
+                defaultSize: "medium" as const,
+                defaultMilk: defaultMilkFor(item),
+                defaultTemperature: defaultTemperatureFor(item),
+                defaultShots: defaultShotsFor(item),
+                defaultQuantity,
+              }),
+            }),
           ),
         validateOrder: (input) => quote(input.items),
         quoteOrder: (input) => quote(input.items),
@@ -388,7 +390,7 @@ export class CoffeeOrderApp extends Context.Service<
           const listed = yield* (
             actor.kind === "customer"
               ? customerOrders.query(Customer.ref(actor.userId))
-              : queue.query(Shop.ref(mainShop))
+              : queue.query(mainShop)
           ).pipe(Effect.mapError(internal("Unable to list orders right now")));
           const all = Option.match(listed, { onNone: () => [], onSome: ({ orders }) => orders });
           yield* recordOrderAction({ action: "list", actor, result: "success" });
@@ -421,8 +423,10 @@ export class CoffeeOrderApp extends Context.Service<
           Effect.flatMap(([actor, checkoutId]) =>
             carts.send(actor.userId, new PrepareCheckout({ checkoutId })).pipe(
               asDomainActor(actor),
-              Effect.mapError(fromCartRejection("Unable to save checkout session right now")),
-              Effect.map(({ reply }) => toCheckoutSession(actor, reply.checkout)),
+              Effect.mapBoth({
+                onFailure: fromCartRejection("Unable to save checkout session right now"),
+                onSuccess: ({ reply }) => toCheckoutSession(actor, reply.checkout),
+              }),
             ),
           ),
           Effect.withSpan("CoffeeOrders.prepareCartCheckout"),

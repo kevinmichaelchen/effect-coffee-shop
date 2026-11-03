@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsrs --noEmit",
-    "lint": "effect-tsrs oxlint -c ../../packages/tooling/oxlint.config.ts --disable-nested-config .",
-    "lint:fix": "effect-tsrs oxlint -c ../../packages/tooling/oxlint.config.ts --disable-nested-config --fix .",
+    "lint": "effect-tsgo oxlint -c ../../packages/tooling/oxlint.config.ts --disable-nested-config .",
+    "lint:fix": "effect-tsgo oxlint -c ../../packages/tooling/oxlint.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run"
@@ -19,8 +19,9 @@
     "effect": "catalog:"
   },
   "devDependencies": {
+    "@alchemy.run/test": "catalog:",
+    "@effect/tsgo": "catalog:",
     "@types/node": "catalog:",
-    "@yielded/effect-tsrs": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
