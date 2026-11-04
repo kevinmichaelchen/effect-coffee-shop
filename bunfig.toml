@@ -97,7 +97,7 @@ minimumReleaseAgeExcludes = [
   "@effect/tsgo-win32-x64",
   # prek, oxlint and oxfmt are adopted as soon as they publish (decision 2026-09-15).
   # Each ships platform binaries as separate exact-version packages, so every
-  # binding must be listed; oxlint-tsgolint is oxlint's type-aware companion.
+  # binding must be listed.
   # Exception: oxlint tracks the newest release `effect-tsgo oxlint` supports
   # (the "Supported Package Versions" table in node_modules/@effect/tsgo/README.md),
   # since every lint script runs through that adapter.
@@ -152,11 +152,4 @@ minimumReleaseAgeExcludes = [
   "@oxfmt/binding-win32-arm64-msvc",
   "@oxfmt/binding-win32-ia32-msvc",
   "@oxfmt/binding-win32-x64-msvc",
-  "oxlint-tsgolint",
-  "@oxlint-tsgolint/darwin-arm64",
-  "@oxlint-tsgolint/darwin-x64",
-  "@oxlint-tsgolint/linux-arm64",
-  "@oxlint-tsgolint/linux-x64",
-  "@oxlint-tsgolint/win32-arm64",
-  "@oxlint-tsgolint/win32-x64",
 ]

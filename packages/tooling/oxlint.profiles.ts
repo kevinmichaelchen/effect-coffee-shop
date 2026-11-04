@@ -2,8 +2,8 @@ import effectStyle from "@mpsuesser/oxlint-plugin-effect";
 import { strict as effectTsgo } from "@effect/tsgo/oxlint-presets";
 import { defineConfig, type OxlintConfig } from "oxlint";
 
-// Shared Oxlint policy. Run it through `effect-tsgo oxlint`, which hosts the
-// Effect language-service rules (`effecttsgo/*`) on tsgolint types.
+// Shared Oxlint policy. Run it through `effect-tsgo --tsrs-lint oxlint`, which
+// hosts the Effect language-service rules (`effecttsgo/*`) on tsrs types.
 //
 // File and function size are deliberately not linted: deep modules are
 // preferred over many small files. Fallow health watches complexity instead,
