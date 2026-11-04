@@ -15,8 +15,8 @@
     "typecheck": "tsrs --noEmit -p tsconfig.app.json && tsrs --noEmit -p tsconfig.node.json",
     "build": "vite build",
     "check": "bun run typecheck && bun run lint && bun run lint:custom && bun run fmt:check && bun run test && bun run build",
-    "lint": "effect-tsgo oxlint -c ../../packages/tooling/oxlint.ui.config.ts --disable-nested-config .",
-    "lint:fix": "effect-tsgo oxlint -c ../../packages/tooling/oxlint.ui.config.ts --disable-nested-config --fix .",
+    "lint": "effect-tsgo --tsrs-lint oxlint -c ../../packages/tooling/oxlint.ui.config.ts --disable-nested-config .",
+    "lint:fix": "effect-tsgo --tsrs-lint oxlint -c ../../packages/tooling/oxlint.ui.config.ts --disable-nested-config --fix .",
     "lint:custom": "lintcn lint --tsconfig tsconfig.app.json",
     "lint:custom:build": "lintcn build",
     "lint:custom:list": "lintcn list",
@@ -53,7 +53,6 @@
     "onnxruntime-node": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
-    "oxlint-tsgolint": "catalog:",
     "tsrs": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"

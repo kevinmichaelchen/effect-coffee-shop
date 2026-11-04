@@ -8,8 +8,8 @@
   },
   "scripts": {
     "typecheck": "tsrs --noEmit",
-    "lint": "effect-tsgo oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config .",
-    "lint:fix": "effect-tsgo oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config --fix .",
+    "lint": "effect-tsgo --tsrs-lint oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config .",
+    "lint:fix": "effect-tsgo --tsrs-lint oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config --fix .",
     "lint:custom": "bun run --cwd ../../tooling lint:custom:run --tsconfig ../coffee/server/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
@@ -42,7 +42,6 @@
     "miniflare": "4.20260730.0",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
-    "oxlint-tsgolint": "catalog:",
     "tsrs": "catalog:",
     "vitest": "catalog:"
   }
