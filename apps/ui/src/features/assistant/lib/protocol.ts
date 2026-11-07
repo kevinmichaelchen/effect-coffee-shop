@@ -5,9 +5,7 @@ export const LocalModel = Schema.Literals(["text", "voice"]);
 export type LocalModel = typeof LocalModel.Type;
 
 // Audio crosses postMessage as a transferable buffer; this is the one runtime check it needs.
-const Samples = Schema.declare(
-  (input: unknown): input is Float32Array => input instanceof Float32Array,
-);
+const Samples = Schema.instanceOf(Float32Array);
 
 const ChatMessage = Schema.Struct({
   role: Schema.Literals(["system", "user"]),

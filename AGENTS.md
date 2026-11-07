@@ -19,6 +19,7 @@ Code style for agents:
 - Big, deep modules are welcome. Do not split files or functions just to satisfy a tool; no linter enforces file or function length, and Fallow's "split" refactoring targets are advisory.
 - Fallow owns architecture: zones and allowed imports live in `.fallowrc.jsonc`, runtime import and side-effect bans live in `.fallow/rules/`. Put every new file in a zone, and use these instead of `no-restricted-imports`.
 - Every lint suppression names its rule and gives a reason after `--`.
+- When a preference here is deterministic, encode it as a type, lint rule (Oxlint profile or `.lintcn`), Fallow rule or test instead of more prose.
 
 Dependency patches live in `patches/`. After upgrading any patched package, run `bun run patches:check` and delete patches it reports as unused or no longer needed.
 

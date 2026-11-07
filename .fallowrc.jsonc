@@ -17,7 +17,12 @@
   ],
   "rulePacks": [".fallow/rules/runtime-boundaries.jsonc"],
   "ignorePatterns": ["**/*.d.ts"],
-  "ignoreDependencies": ["@effect-coffee-shop/web"],
+  // `@effect/language-service` is the tsconfig plugin key that @effect/tsgo
+  // reads its Effect diagnostics settings from, not a package to install.
+  "ignoreDependencies": ["@effect-coffee-shop/web", "@effect/language-service"],
+  // Fallow 3.41 reads the shell keywords of the `prepare` script's
+  // `if ...; then ...; fi` as binaries.
+  "ignoreBinaries": ["if", "then", "fi", "1"],
   "rules": {
     "unresolved-imports": "error",
     "unlisted-dependencies": "error",

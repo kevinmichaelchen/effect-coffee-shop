@@ -6,6 +6,7 @@ import {
 } from "@huggingface/transformers";
 import { Effect, Schema } from "effect";
 import type { WorkerRequest } from "#features/assistant/lib/protocol.ts";
+import { causeMessage } from "#features/assistant/worker/cause-message.ts";
 import { fetchWithoutReferrer } from "#features/assistant/worker/fetch.ts";
 
 env.fetch = fetchWithoutReferrer;
@@ -24,8 +25,7 @@ export class TextModelError extends Schema.TaggedError<
   { readonly brand: unique symbol }
 >()("TextModelError", { message: Schema.String }) {}
 
-const failure = (cause: unknown) =>
-  new TextModelError({ message: cause instanceof Error ? cause.message : String(cause) });
+const failure = (cause: unknown) => new TextModelError({ message: causeMessage(cause) });
 
 /** Downloads (or reads from the Cache API) and compiles LFM3-1.7B q4f16 on WebGPU. */
 export const loadTextModel = (onProgress: (info: ProgressInfo) => void) =>

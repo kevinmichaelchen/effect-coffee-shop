@@ -157,11 +157,35 @@ export const backend: OxlintConfig = {
 };
 
 // UI packages focus on boundary safety and unsafe TypeScript escape hatches.
+// They take only the type-assertion rules of the Effect style plugin (the ones
+// it adopted from dmmulroy/anti-slop), not its backend service preferences.
+// Its `unknown`-contract rules (no-unknown-parameters/returns,
+// no-unsafe-dictionary-type, no-runtime-typeof) stay backend-only: in the UI
+// they fire only on the worker and model-output decoders, where `unknown`
+// input is the boundary. no-module-mocking stays off until the Foldkit tests
+// stop using `vi.mock`.
 export const ui: OxlintConfig = {
   ...shared,
+  jsPlugins: effectStyle.configs.recommended.jsPlugins,
   rules: {
     ...shared.rules,
+    "effect/no-chained-type-assertions": "error",
+    "effect/no-known-value-widening": "error",
+    "effect/no-reflect-apply": "error",
+    "effect/no-reflect-get": "error",
+    "effect/no-widen-then-assert": "error",
+    "effect/require-safety-comment-for-type-assertion": "error",
+    // Shipped UI code logs through Effect or not at all; scripts may print.
+    "no-console": "error",
     // Stylesheets and polyfills are imported for their side effects.
     "import/no-unassigned-import": ["error", { allow: ["**/*.css"] }],
   },
+  overrides: [
+    ...shared.overrides,
+    {
+      // Local verification scripts report to the terminal.
+      files: ["**/scripts/**"],
+      rules: { "no-console": "off" },
+    },
+  ],
 };

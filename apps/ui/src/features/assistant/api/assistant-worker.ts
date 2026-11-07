@@ -120,7 +120,7 @@ const answerFor =
 export const generateReply = (messages: readonly ChatMessage[], tools: readonly ToolDefinition[]) =>
   ask((id) => WorkerRequest.cases.Generate.make({ id, messages, tools }), answerFor("Generated"));
 
-export const transcribeSamples = (samples: Float32Array) =>
+export const transcribeSamples = (samples: Float32Array<ArrayBuffer>) =>
   ask((id) => WorkerRequest.cases.Transcribe.make({ id, samples }), answerFor("Transcribed"), [
     samples.buffer,
   ]);
