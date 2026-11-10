@@ -20,3 +20,4 @@ coverage
 
 !infra/turbo-cache/.env.schema
 !config/turbo-cache/.env.schema
+.context

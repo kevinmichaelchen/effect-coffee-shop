@@ -3,6 +3,8 @@
   "entry": [
     "docs/architecture/render.mjs",
     "docs/diagrams/render.mjs",
+    // Oxlint loads this plugin by path from oxlint.profiles.ts.
+    "packages/tooling/oxlint-plugin-house.ts",
     "infra/alchemy/alchemy.run.ts",
     "infra/turbo-cache/aws.ts",
     "apps/ui/scripts/*.ts",
@@ -15,7 +17,7 @@
     "packages/coffee/server/test/**/*.ts",
     "packages/coffee/presentation/actions/src/**/*.test.ts",
   ],
-  "rulePacks": [".fallow/rules/runtime-boundaries.jsonc"],
+  "rulePacks": ["packages/tooling/fallow/runtime-boundaries.jsonc"],
   "ignorePatterns": ["**/*.d.ts"],
   // `@effect/language-service` is the tsconfig plugin key that @effect/tsgo
   // reads its Effect diagnostics settings from, not a package to install.

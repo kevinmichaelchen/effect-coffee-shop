@@ -17,7 +17,7 @@ Code style for agents:
 - Prefer tagged unions, schema decoders, `Option`/`Either`, and Effect error channels over sentinel strings and defensive object spelunking.
 - Lint policy has two profiles in `packages/tooling/oxlint.profiles.ts`: `backend` adds the Effect house-style plugin, while `ui` focuses on boundary safety and unsafe TypeScript escape hatches. Both run every Effect language-service rule through `effect-tsgo --tsrs-lint oxlint` (the official `@effect/tsgo`, on tsrs's linter). Change the profile instead of adding per-workspace Oxlint configs.
 - Big, deep modules are welcome. Do not split files or functions just to satisfy a tool; no linter enforces file or function length, and Fallow's "split" refactoring targets are advisory.
-- Fallow owns architecture: zones and allowed imports live in `.fallowrc.jsonc`, runtime import and side-effect bans live in `.fallow/rules/`. Put every new file in a zone, and use these instead of `no-restricted-imports`.
+- Fallow owns architecture: zones and allowed imports live in `.fallowrc.jsonc`, runtime import and side-effect bans live in `packages/tooling/fallow/` (not `.fallow/`, which Fallow gitignores). Put every new file in a zone, and use these instead of `no-restricted-imports`.
 - Every lint suppression names its rule and gives a reason after `--`.
 - When a preference here is deterministic, encode it as a type, lint rule (Oxlint profile or the `house` plugin), Fallow rule or test instead of more prose.
 
