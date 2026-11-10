@@ -69,7 +69,6 @@ add another wide-event boundary to an inner HTTP handler.
 ```bash
 bun run --cwd packages/http-routing typecheck
 bun run --cwd packages/http-routing lint
-bun run --cwd packages/http-routing lint:custom
 bun run --cwd packages/http-routing fmt:check
 bun run --cwd packages/http-routing test
 ```

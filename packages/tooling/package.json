@@ -9,16 +9,13 @@
     "lint:fix": "effect-tsgo --tsrs-lint oxlint -c oxlint.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
-    "test": "vitest run --passWithNoTests",
-    "lint:custom:run": "lintcn lint",
-    "lint:custom:build": "lintcn build",
-    "lint:custom:list": "lintcn list"
+    "test": "vitest run --passWithNoTests"
   },
   "devDependencies": {
     "@effect/tsgo": "catalog:",
     "@mpsuesser/oxlint-plugin-effect": "catalog:",
+    "@oxlint/plugins": "catalog:",
     "@types/node": "catalog:",
-    "lintcn": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "tsrs": "catalog:",

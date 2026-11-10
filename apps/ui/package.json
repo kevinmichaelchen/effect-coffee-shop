@@ -14,16 +14,12 @@
     "test:watch": "vitest",
     "typecheck": "tsrs --noEmit -p tsconfig.app.json && tsrs --noEmit -p tsconfig.node.json",
     "build": "vite build",
-    "check": "bun run typecheck && bun run lint && bun run lint:custom && bun run fmt:check && bun run test && bun run build",
+    "check": "bun run typecheck && bun run lint && bun run fmt:check && bun run test && bun run build",
     "lint": "effect-tsgo --tsrs-lint oxlint -c ../../packages/tooling/oxlint.ui.config.ts --disable-nested-config .",
     "lint:fix": "effect-tsgo --tsrs-lint oxlint -c ../../packages/tooling/oxlint.ui.config.ts --disable-nested-config --fix .",
-    "lint:custom": "lintcn lint --tsconfig tsconfig.app.json",
-    "lint:custom:build": "lintcn build",
-    "lint:custom:list": "lintcn list",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
-    "preview": "vite preview",
-    "lint:custom:run": "lintcn lint"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@alchemy.run/domain": "catalog:",
@@ -49,7 +45,6 @@
     "@tailwindcss/vite": "catalog:",
     "@types/node": "catalog:",
     "happy-dom": "catalog:",
-    "lintcn": "catalog:",
     "onnxruntime-node": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",

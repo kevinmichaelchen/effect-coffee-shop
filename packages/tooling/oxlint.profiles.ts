@@ -17,6 +17,9 @@ const testFiles = [
   "**/test-support.ts",
 ];
 
+// Local rules for AGENTS.md bans that no published plugin covers.
+const house = { name: "house", specifier: "./oxlint-plugin-house.ts" };
+
 const shared = defineConfig({
   extends: [effectTsgo],
   plugins: ["oxc", "typescript", "unicorn", "import", "promise", "node", "vitest"],
@@ -87,6 +90,11 @@ const shared = defineConfig({
     "effecttsgo/map-map-error-to-map-both": "error",
     "effecttsgo/provide-merge-all-to-array": "error",
 
+    // AGENTS.md: no `in`, `instanceof` or classic `for (...)` loops.
+    "house/no-in-operator": "error",
+    "house/no-instanceof": "error",
+    "house/no-classic-for-loop": "error",
+
     // AGENTS.md: no imperative bit-twiddling or counters.
     "no-bitwise": "error",
     "no-plusplus": "error",
@@ -140,8 +148,17 @@ const shared = defineConfig({
 export const backend: OxlintConfig = {
   ...shared,
   extends: [...shared.extends, effectStyle.configs.recommended],
+  jsPlugins: [...effectStyle.configs.recommended.jsPlugins, house],
   rules: {
     ...shared.rules,
+    "house/mcp-tool-name-snake-case": "error",
+    "house/no-boundary-contracts-in-domain": "error",
+    "house/no-new-date-in-core": "error",
+    "house/no-effect-call-in-effect-arg": "error",
+    "house/no-inline-runtime-provide": "error",
+    "house/no-model-overlay-cast": "error",
+    "house/no-nested-effect-gen": "error",
+    "house/no-string-sentinel-const": "error",
     // AGENTS.md prefers Effect.promise unless a rejection is a typed domain error.
     "effect/effect-promise-vs-trypromise": "off",
   },
@@ -151,6 +168,25 @@ export const backend: OxlintConfig = {
       files: testFiles,
       rules: {
         "effect/avoid-process-env": "off",
+      },
+    },
+    {
+      // The plugin adapts Oxlint's ESTree, whose fields are nullable and
+      // whose literals are discriminated by `typeof`.
+      files: ["**/oxlint-plugin-house.ts"],
+      rules: {
+        "effect/prefer-option-over-null": "off",
+        "effect/prefer-effect-is": "off",
+        "effect/no-runtime-typeof": "off",
+      },
+    },
+    {
+      // The Effect pipeline-shape rules cover the coffee packages and
+      // http-routing; the cache service and infra programs are exempt.
+      files: ["**/turbo-cache/**", "**/infra/**"],
+      rules: {
+        "house/no-inline-runtime-provide": "off",
+        "house/no-nested-effect-gen": "off",
       },
     },
   ],
@@ -166,7 +202,7 @@ export const backend: OxlintConfig = {
 // stop using `vi.mock`.
 export const ui: OxlintConfig = {
   ...shared,
-  jsPlugins: effectStyle.configs.recommended.jsPlugins,
+  jsPlugins: [...effectStyle.configs.recommended.jsPlugins, house],
   rules: {
     ...shared.rules,
     "effect/no-chained-type-assertions": "error",

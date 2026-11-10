@@ -20,5 +20,5 @@ Import modules by path, e.g. `@effect-coffee-shop/coffee-application/CoffeeOrder
 `CoffeeOrderApp` is tested over `Domain.InMemory` in
 [`coffee-server`](../server/test/CoffeeApis.test.ts).
 
-Run `typecheck`, `lint`, `lint:custom`, and `fmt:check` with
+Run `typecheck`, `lint`, and `fmt:check` with
 `bun run --cwd packages/coffee/application <task>`.

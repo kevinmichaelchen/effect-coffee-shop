@@ -23,7 +23,7 @@ under `packages/coffee`, while shared utilities stay directly under `packages`.
 - [`http-routing`](./http-routing): wide-event request logging and generic Web
   HTTP routing helpers.
 - [`turbo-cache`](./turbo-cache): the self-hosted Turborepo remote cache service.
-- [`tooling`](./tooling): shared Oxlint policy and Go custom lint rules.
+- [`tooling`](./tooling): shared Oxlint policy and the local `house` Oxlint plugin.
 
 ## Layer Placement
 
