@@ -110,6 +110,7 @@
     "fallow:health:baseline": "fallow health --no-type-aware --save-baseline .fallow/health-baseline.json --baseline-mode identity",
     "ci:static": "turbo run typecheck lint fmt:check",
     "ci:backend": "turbo run test --concurrency=2 --filter=!@effect-coffee-shop/web",
+    "ci:fallow": "bun run fallow",
     "ci:ui": "turbo run test build --filter=@effect-coffee-shop/web",
     "cache:dev": "alchemy dev ./infra/turbo-cache/cloudflare.ts",
     "cache:deploy:cloudflare": "varlock run --path infra/turbo-cache/ -- alchemy deploy ./infra/turbo-cache/cloudflare.ts --stage prod",

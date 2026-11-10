@@ -1,0 +1,15 @@
+{
+  "$schema": "../../../node_modules/fallow/rule-pack-schema.json",
+  "version": 1,
+  "name": "runtime-boundaries",
+  "description": "Keep direct side effects out of the portable core. Zones and allowed imports between workspaces live in .fallowrc.jsonc; banned outside modules live in packages/tooling/oxlint.profiles.ts.",
+  "rules": [
+    {
+      "id": "core-no-direct-effects",
+      "kind": "banned-effect",
+      "zones": ["domain", "application", "actions"],
+      "effects": ["network", "storage", "process", "shell"],
+      "message": "Core code performs I/O through Effect services so it stays testable and portable. Use HttpClient or FileSystem instead of fetch and node APIs.",
+    },
+  ],
+}
