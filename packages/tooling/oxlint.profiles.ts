@@ -6,8 +6,9 @@ import { defineConfig, type OxlintConfig } from "oxlint";
 // hosts the Effect language-service rules (`effecttsgo/*`) on tsrs types.
 //
 // File and function size are deliberately not linted: deep modules are
-// preferred over many small files. Fallow health watches complexity instead,
-// and Fallow boundaries own every import rule between and out of zones.
+// preferred over many small files. Fallow health watches complexity instead.
+// Fallow boundaries own imports between workspaces; `no-restricted-imports`
+// below owns which outside modules the portable core may import.
 
 const testFiles = [
   "**/*.test.ts",
@@ -143,6 +144,34 @@ const shared = defineConfig({
   ],
 });
 
+// The portable core (domain, application, actions) is runtime-agnostic.
+const runtimeModules = {
+  group: ["node:*", "bun", "bun:*"],
+  message:
+    "Core code is runtime-agnostic. Use Effect services (FileSystem, Path, Crypto, HttpClient) and provide the platform at the server or infra boundary.",
+};
+const platformAdapters = {
+  group: ["@effect/platform-*", "@effect/platform-*/**", "@effect/sql-*", "@effect/sql-*/**"],
+  message:
+    "The domain declares services; platform and SQL adapters are provided by the server or infra.",
+};
+const hostAndAi = {
+  group: [
+    "@cloudflare/workers-types",
+    "effect/ai",
+    "effect/ai/**",
+    "effect/unstable/ai",
+    "effect/unstable/ai/**",
+  ],
+  message:
+    "Actions are transport-neutral. Cloudflare bindings and AI toolkits belong to the presentation adapters.",
+};
+type Override = NonNullable<OxlintConfig["overrides"]>[number];
+const banImports = (files: string, ...patterns: Array<typeof runtimeModules>): Override => ({
+  files: [files],
+  rules: { "no-restricted-imports": ["error", { patterns }] },
+});
+
 // Backend packages additionally enforce the house Effect style from AGENTS.md
 // (no try/catch, no imperative loops, Effect services over globals, ...).
 export const backend: OxlintConfig = {
@@ -164,10 +193,14 @@ export const backend: OxlintConfig = {
   },
   overrides: [
     ...shared.overrides,
+    banImports("**/coffee/domain/**", runtimeModules, platformAdapters),
+    banImports("**/coffee/application/**", runtimeModules),
+    banImports("**/coffee/presentation/actions/**", runtimeModules, hostAndAi),
     {
       files: testFiles,
       rules: {
         "effect/avoid-process-env": "off",
+        "no-restricted-imports": "off",
       },
     },
     {
