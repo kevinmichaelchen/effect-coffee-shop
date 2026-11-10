@@ -17,6 +17,9 @@ const testFiles = [
   "**/test-support.ts",
 ];
 
+// Local rules for AGENTS.md bans that no published plugin covers.
+const house = { name: "house", specifier: "./oxlint-plugin-house.ts" };
+
 const shared = defineConfig({
   extends: [effectTsgo],
   plugins: ["oxc", "typescript", "unicorn", "import", "promise", "node", "vitest"],
@@ -87,6 +90,11 @@ const shared = defineConfig({
     "effecttsgo/map-map-error-to-map-both": "error",
     "effecttsgo/provide-merge-all-to-array": "error",
 
+    // AGENTS.md: no `in`, `instanceof` or classic `for (...)` loops.
+    "house/no-in-operator": "error",
+    "house/no-instanceof": "error",
+    "house/no-classic-for-loop": "error",
+
     // AGENTS.md: no imperative bit-twiddling or counters.
     "no-bitwise": "error",
     "no-plusplus": "error",
@@ -140,8 +148,17 @@ const shared = defineConfig({
 export const backend: OxlintConfig = {
   ...shared,
   extends: [...shared.extends, effectStyle.configs.recommended],
+  jsPlugins: [...effectStyle.configs.recommended.jsPlugins, house],
   rules: {
     ...shared.rules,
+    "house/mcp-tool-name-snake-case": "error",
+    "house/no-boundary-contracts-in-domain": "error",
+    "house/no-new-date-in-core": "error",
+    "house/no-effect-call-in-effect-arg": "error",
+    "house/no-inline-runtime-provide": "error",
+    "house/no-model-overlay-cast": "error",
+    "house/no-nested-effect-gen": "error",
+    "house/no-string-sentinel-const": "error",
     // AGENTS.md prefers Effect.promise unless a rejection is a typed domain error.
     "effect/effect-promise-vs-trypromise": "off",
   },
@@ -153,15 +170,58 @@ export const backend: OxlintConfig = {
         "effect/avoid-process-env": "off",
       },
     },
+    {
+      // The plugin adapts Oxlint's ESTree, whose fields are nullable and
+      // whose literals are discriminated by `typeof`.
+      files: ["**/oxlint-plugin-house.ts"],
+      rules: {
+        "effect/prefer-option-over-null": "off",
+        "effect/prefer-effect-is": "off",
+        "effect/no-runtime-typeof": "off",
+      },
+    },
+    {
+      // The Effect pipeline-shape rules cover the coffee packages and
+      // http-routing; the cache service and infra programs are exempt.
+      files: ["**/turbo-cache/**", "**/infra/**"],
+      rules: {
+        "house/no-inline-runtime-provide": "off",
+        "house/no-nested-effect-gen": "off",
+      },
+    },
   ],
 };
 
 // UI packages focus on boundary safety and unsafe TypeScript escape hatches.
+// They take only the type-assertion rules of the Effect style plugin (the ones
+// it adopted from dmmulroy/anti-slop), not its backend service preferences.
+// Its `unknown`-contract rules (no-unknown-parameters/returns,
+// no-unsafe-dictionary-type, no-runtime-typeof) stay backend-only: in the UI
+// they fire only on the worker and model-output decoders, where `unknown`
+// input is the boundary. no-module-mocking stays off until the Foldkit tests
+// stop using `vi.mock`.
 export const ui: OxlintConfig = {
   ...shared,
+  jsPlugins: [...effectStyle.configs.recommended.jsPlugins, house],
   rules: {
     ...shared.rules,
+    "effect/no-chained-type-assertions": "error",
+    "effect/no-known-value-widening": "error",
+    "effect/no-reflect-apply": "error",
+    "effect/no-reflect-get": "error",
+    "effect/no-widen-then-assert": "error",
+    "effect/require-safety-comment-for-type-assertion": "error",
+    // Shipped UI code logs through Effect or not at all; scripts may print.
+    "no-console": "error",
     // Stylesheets and polyfills are imported for their side effects.
     "import/no-unassigned-import": ["error", { allow: ["**/*.css"] }],
   },
+  overrides: [
+    ...shared.overrides,
+    {
+      // Local verification scripts report to the terminal.
+      files: ["**/scripts/**"],
+      rules: { "no-console": "off" },
+    },
+  ],
 };

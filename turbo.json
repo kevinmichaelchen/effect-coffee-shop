@@ -31,13 +31,6 @@
       "cache": false,
       "dependsOn": ["^typecheck"]
     },
-    "lint:custom": {
-      "description": "Run workspace-specific custom lint rules.",
-      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
-      "outputs": [],
-      "outputLogs": "new-only",
-      "dependsOn": ["@effect-coffee-shop/tooling#lint:custom:build"]
-    },
     "fmt": {
       "description": "Format workspace files in place.",
       "cache": false,
@@ -65,21 +58,6 @@
     },
     "//#fmt:check:root": {
       "inputs": ["package.json", ".fallowrc.jsonc", "turbo.json"],
-      "outputs": []
-    },
-    "@effect-coffee-shop/tooling#lint:custom:build": {
-      "description": "Build shared Go lint rules; rule changes invalidate all custom lint tasks.",
-      "outputs": [],
-      "outputLogs": "new-only"
-    },
-    "@effect-coffee-shop/web#lint:custom": {
-      "description": "UI custom lint uses its own apps/ui/.lintcn rules, not the shared tooling build.",
-      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
-      "outputs": [],
-      "outputLogs": "new-only",
-      "dependsOn": ["@effect-coffee-shop/web#lint:custom:build"]
-    },
-    "@effect-coffee-shop/web#lint:custom:build": {
       "outputs": []
     }
   },

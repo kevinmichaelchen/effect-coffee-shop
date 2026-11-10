@@ -11,7 +11,6 @@
     "typecheck": "tsrs --noEmit",
     "lint": "effect-tsgo --tsrs-lint oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config .",
     "lint:fix": "effect-tsgo --tsrs-lint oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config --fix .",
-    "lint:custom": "bun run --cwd ../../tooling lint:custom:run --tsconfig ../coffee/domain/tsconfig.json",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run --passWithNoTests"

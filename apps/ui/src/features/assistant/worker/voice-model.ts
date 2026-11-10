@@ -1,5 +1,6 @@
 import * as ort from "onnxruntime-web/webgpu";
 import { Effect, Schema } from "effect";
+import { causeMessage } from "#features/assistant/worker/cause-message.ts";
 import { fetchWithoutReferrer } from "#features/assistant/worker/fetch.ts";
 import { aggregateProgress } from "#features/assistant/worker/progress.ts";
 import {
@@ -17,8 +18,7 @@ export type VoiceModel = AudioTranscriber;
 const modelBaseUrl = "https://huggingface.co/LiquidAI/LFM3-Audio-2B-ONNX/resolve/main";
 const cacheName = "lfm3-audio-2b-onnx";
 
-const failure = (cause: unknown) =>
-  new VoiceModelError({ message: cause instanceof Error ? cause.message : String(cause) });
+const failure = (cause: unknown) => new VoiceModelError({ message: causeMessage(cause) });
 
 /**
  * Reads a body into one buffer. When the size is known it writes in place, so a
