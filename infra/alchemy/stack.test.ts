@@ -2,6 +2,8 @@ import * as NodeSocket from "@effect/platform-node/NodeSocket";
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "@alchemy.run/cloudflare";
 import * as DomainCloudflare from "@alchemy.run/domain/Cloudflare";
+import * as Docker from "@alchemy.run/docker";
+import * as Rivet from "@alchemy.run/rivet";
 import * as Test from "@alchemy.run/test/Vitest";
 import { makeAuthClient } from "@effect-coffee-shop/coffee-auth/testing/auth-client";
 import { makeTestPasskey } from "@effect-coffee-shop/coffee-auth/testing/passkey";
@@ -28,11 +30,28 @@ import * as HttpClientResponse from "effect/http/HttpClientResponse";
 import * as Socket from "effect/socket/Socket";
 import * as Stream from "effect/Stream";
 import { expect } from "vitest";
-import Stack from "./cloudflare.ts";
+import CloudflareStack from "./cloudflare.ts";
+import RivetStack from "./rivet.ts";
+
+/**
+ * The same suite runs over either host of the model: Cloudflare Durable
+ * Objects by default, or Rivet on a local Docker swarm with
+ * `COFFEE_TEST_HOST=rivet` (`bun run test:rivet`).
+ */
+const host = Schema.decodeUnknownSync(Schema.Literals(["cloudflare", "rivet"]))(
+  process.env.COFFEE_TEST_HOST ?? "cloudflare",
+);
+const Stack = host === "rivet" ? RivetStack : CloudflareStack;
 
 const { afterAll, beforeAll, deploy, destroy, test } = Test.make({
   dev: true,
-  providers: Layer.mergeAll(Cloudflare.providers(), DomainCloudflare.providers()),
+  // Both hosts' providers: a provider only acts on the resources a stack declares.
+  providers: Layer.mergeAll(
+    Cloudflare.providers(),
+    DomainCloudflare.providers(),
+    Docker.providers(),
+    Rivet.providers(),
+  ),
   // Run the local providers in-process. Behind Alchemy's RPC sidecar the
   // Vite-hosted Worker deploys and serves fine, but `destroy(Stack)` never
   // returns, so the suite dies on the afterAll timeout.

@@ -17,6 +17,8 @@ const installed = (spec: string) =>
   );
 
 const neededBy: Record<string, () => string> = {
+  "@alchemy.run/rivet": () =>
+    "check by deleting the patch and running `bun run --cwd packages/coffee/server typecheck`: CoffeeShopRivet passes a Docker.Swarm as the control plane's context",
   "@yielded/auth-persistence": () =>
     "check by deleting the patch and running `bun run --cwd packages/coffee/auth test`: passkey registration answers 503 while the bug remains",
 };

@@ -19,7 +19,9 @@
     "catalog": {
       "@alchemy.run/aws": "2.0.0-beta.87",
       "@alchemy.run/cloudflare": "2.0.0-beta.87",
+      "@alchemy.run/docker": "2.0.0-beta.87",
       "@alchemy.run/domain": "2.0.0-beta.87",
+      "@alchemy.run/rivet": "2.0.0-beta.87",
       "@alchemy.run/test": "2.0.0-beta.87",
       "@cloudflare/workers-types": "5.20261031.1",
       "@effect/platform-browser": "4.1.4",
@@ -72,6 +74,8 @@
     "cf:deploy": "alchemy deploy ./infra/alchemy/cloudflare.ts",
     "cf:destroy": "alchemy destroy ./infra/alchemy/cloudflare.ts",
     "cf:test": "turbo run test --filter=@effect-coffee-shop/infra-alchemy",
+    "rivet:dev": "alchemy dev ./infra/alchemy/rivet.ts",
+    "rivet:test": "bun run --cwd infra/alchemy test:rivet",
     "cf:state:tree": "alchemy state list --recursive --config ./infra/alchemy/cloudflare.ts",
     "cf:state:list": "alchemy state list --config ./infra/alchemy/cloudflare.ts",
     "infra:plan": "alchemy plan ./infra/alchemy/alchemy.run.ts",
@@ -143,6 +147,7 @@
   },
   "packageManager": "bun@1.4.4",
   "patchedDependencies": {
+    "@alchemy.run/rivet@2.0.0-beta.87": "patches/@alchemy.run%2Frivet@2.0.0-beta.87.patch",
     "alchemy@2.0.0-beta.87": "patches/alchemy@2.0.0-beta.87.patch",
     "@yielded/auth-persistence@0.1.0-beta.47": "patches/@yielded%2Fauth-persistence@0.1.0-beta.47.patch"
   }

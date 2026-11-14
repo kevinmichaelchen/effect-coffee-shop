@@ -11,7 +11,7 @@ flowchart TB
   end
   subgraph Platform["Platform"]
     direction LR
-    Model["CoffeeShop model<br/>CoffeeShopLive host:<br/>Durable Objects (DomainCloudflare)"]
+    Model["CoffeeShop model, one host Layer:<br/>Durable Objects (CoffeeShopLive)<br/>or Rivet (CoffeeShopRivet)"]
     D1["D1 coffee-db<br/>passkeys, sessions, OAuth grants"]
   end
   Clients -->|requests| Website

@@ -6,6 +6,7 @@
     // Oxlint loads this plugin by path from oxlint.profiles.ts.
     "packages/tooling/oxlint-plugin-house.ts",
     "infra/alchemy/alchemy.run.ts",
+    "infra/alchemy/rivet.ts",
     "infra/turbo-cache/aws.ts",
     "apps/ui/scripts/*.ts",
     "apps/ui/src/entry.ts",
