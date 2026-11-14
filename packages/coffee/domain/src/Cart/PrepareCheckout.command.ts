@@ -13,13 +13,18 @@ export class CheckoutPrepared extends Domain.Event("CheckoutPrepared", { checkou
  * Price your cart and hold those prices while you confirm. A new checkout
  * replaces one still waiting.
  */
-export class PrepareCheckout extends Domain.Command("PrepareCheckout", {
-  target: CustomerId,
-  description:
-    "Price your cart and hold those prices for 15 minutes while the customer confirms, as a new checkout id. A new checkout replaces one still waiting.",
-  middleware: [Session],
-  input: { checkoutId: CheckoutId },
-  events: [CheckoutPrepared],
-  rejects: [NotYourCart, DrinkNotFound, InvalidOrder],
-  reply: { checkout: Checkout },
-}) {}
+export class PrepareCheckout extends Domain.Command(
+  "PrepareCheckout",
+  {
+    target: CustomerId,
+    middleware: [Session],
+    input: { checkoutId: CheckoutId },
+    events: [CheckoutPrepared],
+    rejects: [NotYourCart, DrinkNotFound, InvalidOrder],
+    reply: { checkout: Checkout },
+  },
+  {
+    description:
+      "Price your cart and hold those prices for 15 minutes while the customer confirms, as a new checkout id. A new checkout replaces one still waiting.",
+  },
+) {}

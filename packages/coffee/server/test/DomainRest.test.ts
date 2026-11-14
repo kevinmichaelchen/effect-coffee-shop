@@ -235,13 +235,13 @@ describe("the domain Apis over REST, behind the auth session", () => {
         expect(document.paths["/api/rest/staff/StartBrewing"]?.post?.description).toBe(
           "Start brewing a pending order. Staff only.",
         );
-        expect(document.paths["/api/rest/customer/Cart/{key}/watch"]?.get?.description).toContain(
-          "Server-Sent Events",
-        );
+        expect(
+          document.paths["/api/rest/customer/CustomerCart/{key}/watch"]?.get?.description,
+        ).toContain("Server-Sent Events");
         expect(paths).toEqual(
           expect.arrayContaining([
             "/api/rest/customer/PlaceOrder",
-            "/api/rest/customer/Cart/{key}",
+            "/api/rest/customer/CustomerCart/{key}",
             "/api/rest/staff/StartBrewing",
             "/api/rest/staff/OrderQueue/{key}",
           ]),

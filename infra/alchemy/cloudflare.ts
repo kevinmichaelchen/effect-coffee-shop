@@ -5,6 +5,7 @@
  */
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "@alchemy.run/cloudflare";
+import * as DomainCloudflare from "@alchemy.run/domain/Cloudflare";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as HttpClient from "effect/http/HttpClient";
@@ -116,7 +117,7 @@ const CloudflareDeploymentSmokeCheck = Alchemy.Action(
 export default Alchemy.Stack(
   coffeeStackName,
   {
-    providers: Cloudflare.providers(),
+    providers: Layer.mergeAll(Cloudflare.providers(), DomainCloudflare.providers()),
     state,
   },
   Effect.gen(function* () {

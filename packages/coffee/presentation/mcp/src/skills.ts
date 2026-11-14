@@ -13,7 +13,7 @@ description: Choose drinks, manage the signed-in customer's cart, and check out 
 ---
 
 Start with \`get_ordering_context\`. Its customerId is the target of every cart
-command and the key of \`CustomerApi_Cart_get\` and
+command and the key of \`CustomerApi_CustomerCart_get\` and
 \`CustomerApi_CustomerOrders_get\`. Its newIds are fresh ids for a new cart line
 (cartItemId), checkout (checkoutId) and order (orderId); call it again whenever
 you need more. Never invent ids.
@@ -23,7 +23,7 @@ choices, and defaults. Use returned prices and options rather than inventing
 them. \`validate_order\` and \`quote_order\` check a proposed order without
 placing it.
 
-Read \`CustomerApi_Cart_get\` before editing an existing cart. Use
+Read \`CustomerApi_CustomerCart_get\` before editing an existing cart. Use
 \`CustomerApi_AddCartItem_send\`, \`CustomerApi_UpdateCartItem_send\`, and
 \`CustomerApi_RemoveCartItem_send\` to apply the customer's choices; preserve
 unrelated cart items. Each command takes a target, an input, and an optional
@@ -35,7 +35,7 @@ ready. Present the returned items and total to the customer and obtain their
 confirmation before \`CustomerApi_ConfirmCheckout_send\`, which takes that
 checkoutId and a new orderId. If the cart changes or the checkout expires,
 prepare it again and confirm the new summary. After an uncertain confirmation,
-resend it with the same commandId, or read \`CustomerApi_Cart_get\` and
+resend it with the same commandId, or read \`CustomerApi_CustomerCart_get\` and
 \`CustomerApi_OrderSummary_get\` for the orderId, before trying again; do not
 create a duplicate order with \`CustomerApi_PlaceOrder_send\`.
 

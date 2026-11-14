@@ -77,6 +77,7 @@ export class Order extends Domain.Aggregate("Order", {
   commands: [PlaceOrder, PlaceCheckedOutOrder, StartBrewing, MarkReady, PickUpOrder, CancelOrder],
   decide: {
     PlaceOrder: Effect.fn(function* (state, command, { id }) {
+      yield* Effect.annotateCurrentSpan("coffee.items", command.items.length);
       if (Schema.is(Placed)(state)) return yield* new AlreadyPlaced({ orderId: id });
       const actor = yield* CurrentActor;
       const customerName = yield* customerNameFor(

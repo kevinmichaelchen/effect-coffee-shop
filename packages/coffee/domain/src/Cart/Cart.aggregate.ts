@@ -17,7 +17,6 @@ import {
   toDrinkSelection,
   totalOf,
 } from "../Menu/OrderItem.ts";
-import { Session } from "../Session.middleware.ts";
 import { AddCartItem, CartItemAdded } from "./AddCartItem.command.ts";
 import { CartItemNotFound } from "./CartItemNotFound.rejection.ts";
 import type { CartItemId } from "./CartItem.id.ts";
@@ -35,14 +34,14 @@ import { CheckoutPrepared, PrepareCheckout } from "./PrepareCheckout.command.ts"
 import { CartItemRemoved, RemoveCartItem } from "./RemoveCartItem.command.ts";
 import { CartItemUpdated, UpdateCartItem } from "./UpdateCartItem.command.ts";
 
-const CartState = Schema.Struct({
+export const CartState = Schema.Struct({
   lines: Schema.Array(CartLine),
   checkout: Schema.NullOr(Checkout),
 });
 export type CartState = typeof CartState.Type;
 
 /** Each person changes only their own cart: a cart is keyed by its owner. */
-const mustOwn = (owner: CustomerId) =>
+export const mustOwn = (owner: CustomerId) =>
   CurrentActor.pipe(
     Effect.filterOrFail(
       (actor) => actor.userId === owner,
@@ -75,6 +74,26 @@ const replace = (state: CartState, line: CartLine): CartState => ({
     existing.cartItemId === line.cartItemId ? line : existing,
   ),
 });
+
+/** How each cart event changes a cart: the aggregate's state and its owner's view of it. */
+export const cartEvolve = {
+  CartItemAdded: (state: CartState, event: CartItemAdded): CartState => ({
+    ...state,
+    lines: [...state.lines, { cartItemId: event.cartItemId, item: event.item }],
+  }),
+  CartItemUpdated: (state: CartState, event: CartItemUpdated): CartState =>
+    replace(state, { cartItemId: event.cartItemId, item: event.item }),
+  CartItemRemoved: (state: CartState, event: CartItemRemoved): CartState => ({
+    ...state,
+    lines: Arr.filter(state.lines, (line) => line.cartItemId !== event.cartItemId),
+  }),
+  CartCleared: (): CartState => ({ lines: [], checkout: null }),
+  CheckoutPrepared: (state: CartState, event: CheckoutPrepared): CartState => ({
+    ...state,
+    checkout: event.checkout,
+  }),
+  CheckoutConfirmed: (): CartState => ({ lines: [], checkout: null }),
+};
 
 export const snapshotOf = (state: CartState): CartSnapshot => ({
   items: state.lines,
@@ -178,21 +197,7 @@ export class Cart extends Domain.Aggregate("Cart", {
       return [new CheckoutConfirmed({ orderId: command.orderId, customerName, checkout })];
     }),
   },
-  evolve: {
-    CartItemAdded: (state, event) => ({
-      ...state,
-      lines: [...state.lines, { cartItemId: event.cartItemId, item: event.item }],
-    }),
-    CartItemUpdated: (state, event) =>
-      replace(state, { cartItemId: event.cartItemId, item: event.item }),
-    CartItemRemoved: (state, event) => ({
-      ...state,
-      lines: Arr.filter(state.lines, (line) => line.cartItemId !== event.cartItemId),
-    }),
-    CartCleared: () => ({ lines: [], checkout: null }),
-    CheckoutPrepared: (state, event) => ({ ...state, checkout: event.checkout }),
-    CheckoutConfirmed: () => ({ lines: [], checkout: null }),
-  },
+  evolve: cartEvolve,
   reply: {
     AddCartItem: cartReply,
     UpdateCartItem: cartReply,
@@ -200,13 +205,5 @@ export class Cart extends Domain.Aggregate("Cart", {
     ClearCart: cartReply,
     PrepareCheckout: preparedCheckout,
     ConfirmCheckout: confirmedOrder,
-  },
-  // Owners may read and watch their own cart through an Api.
-  read: {
-    middleware: [Session],
-    rejects: [NotYourCart],
-    validate: Effect.fn(function* (request) {
-      yield* mustOwn(request.key.id);
-    }),
   },
 }) {}

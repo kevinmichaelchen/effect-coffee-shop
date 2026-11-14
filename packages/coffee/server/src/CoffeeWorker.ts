@@ -27,7 +27,7 @@ import { domainRestHttp } from "@effect-coffee-shop/coffee-http/domain-rest";
 import { annotateHttpStatus, withHttpWideEvent } from "@effect-coffee-shop/http-routing/logging";
 import * as Cloudflare from "@alchemy.run/cloudflare";
 import type { HttpEffect } from "alchemy/Http";
-import * as DomainCloudflare from "@alchemy.run/cloudflare/Domain";
+import * as DomainCloudflare from "@alchemy.run/domain/Cloudflare";
 import * as Effect from "effect/Effect";
 import * as HttpServerError from "effect/http/HttpServerError";
 import { HttpServerRequest } from "effect/http/HttpServerRequest";

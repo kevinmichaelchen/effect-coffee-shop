@@ -4,6 +4,7 @@ import * as RpcClient from "effect/rpc/RpcClient";
 import * as RpcSerialization from "effect/rpc/RpcSerialization";
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "@alchemy.run/cloudflare";
+import * as DomainCloudflare from "@alchemy.run/domain/Cloudflare";
 import * as Test from "@alchemy.run/test/Vitest";
 import { makeAuthClient } from "@effect-coffee-shop/coffee-auth/testing/auth-client";
 import { makeTestPasskey } from "@effect-coffee-shop/coffee-auth/testing/passkey";
@@ -30,7 +31,7 @@ import Stack from "./cloudflare.ts";
 
 const { afterAll, beforeAll, deploy, destroy, test } = Test.make({
   dev: true,
-  providers: Cloudflare.providers(),
+  providers: Layer.mergeAll(Cloudflare.providers(), DomainCloudflare.providers()),
   // Run the local providers in-process. Behind Alchemy's RPC sidecar the
   // Vite-hosted Worker deploys and serves fine, but `destroy(Stack)` never
   // returns, so the suite dies on the afterAll timeout.

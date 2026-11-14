@@ -7,5 +7,4 @@ export class StaffApi extends Domain.Api("StaffApi", {
   commands: ["StartBrewing", "MarkReady", "PickUpOrder", "CancelOrder"],
   views: ["OrderQueue", "OrderSummary"],
   streams: [],
-  aggregates: [],
 }) {}

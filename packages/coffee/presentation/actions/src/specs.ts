@@ -34,7 +34,7 @@ const inlineStruct = <Fields extends Schema.Struct.Fields>(schema: { readonly fi
 export const coffeeActionSpecs = {
   get_ordering_context: actionSpec({
     description:
-      "Who you act for and fresh ids for the domain tools: customerId keys their cart (CustomerApi_Cart_get, the cart commands' target) and order list (CustomerApi_CustomerOrders_get); newIds are an orderId, a cartItemId and a checkoutId to send with a new order, cart line or checkout. Call again for more ids.",
+      "Who you act for and fresh ids for the domain tools: customerId keys their cart (CustomerApi_CustomerCart_get, the cart commands' target) and order list (CustomerApi_CustomerOrders_get); newIds are an orderId, a cartItemId and a checkoutId to send with a new order, cart line or checkout. Call again for more ids.",
     parameters: EmptyActionInput,
     success: OrderingContextView,
   }),

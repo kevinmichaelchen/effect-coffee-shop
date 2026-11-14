@@ -10,12 +10,15 @@ import { NotYourCart } from "./NotYourCart.rejection.ts";
 export class CartItemRemoved extends Domain.Event("CartItemRemoved", { cartItemId: CartItemId }) {}
 
 /** Take one line out of your cart. */
-export class RemoveCartItem extends Domain.Command("RemoveCartItem", {
-  target: CustomerId,
-  description: "Take one line out of your cart.",
-  middleware: [Session],
-  input: { cartItemId: CartItemId },
-  events: [CartItemRemoved],
-  rejects: [NotYourCart, CartItemNotFound],
-  reply: { cart: CartSnapshot },
-}) {}
+export class RemoveCartItem extends Domain.Command(
+  "RemoveCartItem",
+  {
+    target: CustomerId,
+    middleware: [Session],
+    input: { cartItemId: CartItemId },
+    events: [CartItemRemoved],
+    rejects: [NotYourCart, CartItemNotFound],
+    reply: { cart: CartSnapshot },
+  },
+  { description: "Take one line out of your cart." },
+) {}

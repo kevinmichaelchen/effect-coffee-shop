@@ -16,15 +16,18 @@ export class CartItemUpdated extends Domain.Event("CartItemUpdated", {
 }) {}
 
 /** Change some of a cart line's choices; the rest stay as they were. */
-export class UpdateCartItem extends Domain.Command("UpdateCartItem", {
-  target: CustomerId,
-  description: "Change some of a cart line's choices; the rest stay as they were.",
-  middleware: [Session],
-  input: {
-    cartItemId: CartItemId,
-    changes: DrinkSelectionChanges,
+export class UpdateCartItem extends Domain.Command(
+  "UpdateCartItem",
+  {
+    target: CustomerId,
+    middleware: [Session],
+    input: {
+      cartItemId: CartItemId,
+      changes: DrinkSelectionChanges,
+    },
+    events: [CartItemUpdated],
+    rejects: [NotYourCart, CartItemNotFound, DrinkNotFound, InvalidOrder],
+    reply: { cart: CartSnapshot },
   },
-  events: [CartItemUpdated],
-  rejects: [NotYourCart, CartItemNotFound, DrinkNotFound, InvalidOrder],
-  reply: { cart: CartSnapshot },
-}) {}
+  { description: "Change some of a cart line's choices; the rest stay as they were." },
+) {}
