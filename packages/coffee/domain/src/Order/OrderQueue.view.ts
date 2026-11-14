@@ -39,9 +39,13 @@ export class OrderQueue extends Domain.View("OrderQueue", {
     OrderSummary: (queue, _, { state }) =>
       state?.order ? { orders: trimHistory(upsertOrder(queue.orders, state.order)) } : queue,
   },
-  validate: () =>
-    CurrentActor.pipe(
-      Effect.filterOrFail(isStaff, () => new StaffOnly()),
-      Effect.asVoid,
-    ),
 }) {}
+
+/** Only staff may read the queue. */
+export const OrderQueueLive = OrderQueue.toLayer(
+  Effect.sync(() =>
+    Effect.fn(function* () {
+      if (!isStaff(yield* CurrentActor)) return yield* new StaffOnly();
+    }),
+  ),
+);

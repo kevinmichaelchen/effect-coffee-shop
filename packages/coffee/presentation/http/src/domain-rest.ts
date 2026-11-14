@@ -19,7 +19,6 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as R from "effect/Record";
 import * as Schema from "effect/Schema";
-import * as SchemaAST from "effect/SchemaAST";
 import * as HttpApi from "effect/http-api/HttpApi";
 import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as OpenApi from "effect/http-api/OpenApi";
@@ -49,16 +48,61 @@ const descriptionOf = (endpoint: string) => {
   return Option.match(Option.fromUndefinedOr(operation), {
     onNone: () =>
       Arr.findFirst(CoffeeShop.commands, (command) => command.tag === name).pipe(
-        Option.flatMapNullishOr((command) => SchemaAST.resolveDescription(command.ast)),
+        Option.flatMapNullishOr((command) => command.annotations.description),
       ),
     onSome: (read) =>
       Option.map(decodeReadOperation(read), (operation) => readDescriptions[operation](name)),
   });
 };
 
+/** Every call of each Api, published on purpose: its commands and each view read. */
+const customerCalls = [
+  "PlaceOrder",
+  "AddCartItem",
+  "UpdateCartItem",
+  "RemoveCartItem",
+  "ClearCart",
+  "PrepareCheckout",
+  "ConfirmCheckout",
+  "OrderSummary.get",
+  "OrderSummary.snapshot",
+  "OrderSummary.list",
+  "OrderSummary.watch",
+  "OrderSummary.events",
+  "CustomerOrders.get",
+  "CustomerOrders.snapshot",
+  "CustomerOrders.list",
+  "CustomerOrders.watch",
+  "CustomerOrders.events",
+  "CustomerCart.get",
+  "CustomerCart.snapshot",
+  "CustomerCart.list",
+  "CustomerCart.watch",
+  "CustomerCart.events",
+] as const;
+const staffCalls = [
+  "StartBrewing",
+  "MarkReady",
+  "PickUpOrder",
+  "CancelOrder",
+  "OrderQueue.get",
+  "OrderQueue.snapshot",
+  "OrderQueue.list",
+  "OrderQueue.watch",
+  "OrderQueue.events",
+  "OrderSummary.get",
+  "OrderSummary.snapshot",
+  "OrderSummary.list",
+  "OrderSummary.watch",
+  "OrderSummary.events",
+] as const;
+
 /** The Api's REST surface, with each endpoint described in the OpenAPI document. */
-const describedHttpApi = <A extends DomainHttp.Publishable>(api: A) => {
-  const surface = DomainHttp.toHttpApi(api);
+const describedHttpApi = <A extends DomainHttp.Publishable>(
+  api: A,
+  expose: ReadonlyArray<DomainHttp.Exposable<A>>,
+) => {
+  const surface = DomainHttp.toHttpApi(api, { expose });
   const endpoints = R.values(surface.group.endpoints).map((endpoint) =>
     Option.match(descriptionOf(endpoint.identifier), {
       onNone: () => endpoint,
@@ -74,8 +118,8 @@ const describedHttpApi = <A extends DomainHttp.Publishable>(api: A) => {
   };
 };
 
-const customer = describedHttpApi(CustomerApi);
-const staff = describedHttpApi(StaffApi);
+const customer = describedHttpApi(CustomerApi, customerCalls);
+const staff = describedHttpApi(StaffApi, staffCalls);
 
 /**
  * `POST /api/rest/customer/<Command>`, `GET /api/rest/customer/<View>/:key`

@@ -15,13 +15,18 @@ export class CartItemAdded extends Domain.Event("CartItemAdded", {
 }) {}
 
 /** Add a drink to your cart. Adding the same line id again changes nothing. */
-export class AddCartItem extends Domain.Command("AddCartItem", {
-  target: CustomerId,
-  description:
-    "Add a drink to your cart, as a new cart line id. Adding the same line id again changes nothing.",
-  middleware: [Session],
-  input: { cartItemId: CartItemId, item: DrinkSelection },
-  events: [CartItemAdded],
-  rejects: [NotYourCart, DrinkNotFound, InvalidOrder],
-  reply: { cart: CartSnapshot },
-}) {}
+export class AddCartItem extends Domain.Command(
+  "AddCartItem",
+  {
+    target: CustomerId,
+    middleware: [Session],
+    input: { cartItemId: CartItemId, item: DrinkSelection },
+    events: [CartItemAdded],
+    rejects: [NotYourCart, DrinkNotFound, InvalidOrder],
+    reply: { cart: CartSnapshot },
+  },
+  {
+    description:
+      "Add a drink to your cart, as a new cart line id. Adding the same line id again changes nothing.",
+  },
+) {}

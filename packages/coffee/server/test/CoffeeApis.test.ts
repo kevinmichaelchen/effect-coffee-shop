@@ -116,7 +116,7 @@ describe("the domain Apis over the in-memory platform", () => {
       }).pipe(Effect.flip);
       expect(someoneElses._tag).toBe("NotYourOrder");
 
-      const othersCart = yield* customers.Cart.get(sam.userId, as(alex)).pipe(Effect.flip);
+      const othersCart = yield* customers.CustomerCart.get(sam.userId, as(alex)).pipe(Effect.flip);
       expect(othersCart._tag).toBe("NotYourCart");
     }).pipe(Effect.scoped, Effect.provide(World)),
   );

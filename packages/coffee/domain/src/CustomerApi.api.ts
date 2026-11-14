@@ -4,7 +4,7 @@ import { CoffeeShop } from "./CoffeeShop.model.ts";
 /**
  * What the customer app reaches: placing orders, the cart and its checkout,
  * and reads of their own orders. Each entry authorizes itself, through its
- * `decide` or `validate`.
+ * `decide` or its view's Layer.
  */
 export class CustomerApi extends Domain.Api("CustomerApi", {
   model: CoffeeShop,
@@ -17,7 +17,6 @@ export class CustomerApi extends Domain.Api("CustomerApi", {
     "PrepareCheckout",
     "ConfirmCheckout",
   ],
-  views: ["OrderSummary", "CustomerOrders"],
+  views: ["OrderSummary", "CustomerOrders", "CustomerCart"],
   streams: [],
-  aggregates: ["Cart"],
 }) {}

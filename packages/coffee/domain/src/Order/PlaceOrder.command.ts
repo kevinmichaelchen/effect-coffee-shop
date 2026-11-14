@@ -17,34 +17,34 @@ export class AlreadyPlaced extends Domain.Rejection(
 ) {}
 
 /** A customer's order joined the queue, priced. */
-export class OrderPlaced extends Domain.Event(
-  "OrderPlaced",
-  {
-    customerId: CustomerId,
-    customerName: CustomerName,
-    items: Schema.NonEmptyArray(CoffeeOrderItem),
-    totalPrice: Money,
-  },
-  { attributes: (e) => ({ "coffee.items": e.items.length }) },
-) {}
+export class OrderPlaced extends Domain.Event("OrderPlaced", {
+  customerId: CustomerId,
+  customerName: CustomerName,
+  items: Schema.NonEmptyArray(CoffeeOrderItem),
+  totalPrice: Money,
+}) {}
 
 /**
  * Place an order for the signed-in actor. Staff and customers order under
  * their own name; the system may name the customer.
  */
-export class PlaceOrder extends Domain.Command("PlaceOrder", {
-  target: OrderId,
-  description:
-    "Place a new order for the signed-in customer, as the order id you made (a retry with the same id is refused as AlreadyPlaced). Prefer checking out a confirmed cart.",
-  middleware: [Session],
-  input: {
-    items: Schema.Array(DrinkSelection),
-    customerName: Schema.optionalKey(
-      Schema.Trim.annotate({ description: "Customer display name, for system orders." }),
-    ),
+export class PlaceOrder extends Domain.Command(
+  "PlaceOrder",
+  {
+    target: OrderId,
+    middleware: [Session],
+    input: {
+      items: Schema.Array(DrinkSelection),
+      customerName: Schema.optionalKey(
+        Schema.Trim.annotate({ description: "Customer display name, for system orders." }),
+      ),
+    },
+    events: [OrderPlaced],
+    rejects: [AlreadyPlaced, DrinkNotFound, InvalidOrder],
+    reply: { order: CoffeeOrder },
   },
-  events: [OrderPlaced],
-  rejects: [AlreadyPlaced, DrinkNotFound, InvalidOrder],
-  reply: { order: CoffeeOrder },
-  attributes: (cmd) => ({ "coffee.items": cmd.items.length }),
-}) {}
+  {
+    description:
+      "Place a new order for the signed-in customer, as the order id you made (a retry with the same id is refused as AlreadyPlaced). Prefer checking out a confirmed cart.",
+  },
+) {}

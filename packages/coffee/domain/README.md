@@ -12,7 +12,7 @@ with folders as subdomains. Import them by path, e.g.
 `@effect-coffee-shop/coffee-domain/Order/Order.aggregate`.
 
 > Alchemy core and the Cloudflare, AWS, and Domain packages are pinned together at
-> `2.0.0-beta.85` in the workspace catalog. Providers use their own `@alchemy.run/*` packages.
+> `2.0.0-beta.87` in the workspace catalog. Providers use their own `@alchemy.run/*` packages.
 
 ## The model
 
@@ -25,10 +25,11 @@ with folders as subdomains. Import them by path, e.g.
 | View           | [`Order/OrderSummary.view.ts`](src/Order/OrderSummary.view.ts)                           | One ticket as people read it. Staff read any; a customer only their own.                                                                  |
 | View           | [`Order/CustomerOrders.view.ts`](src/Order/CustomerOrders.view.ts)                       | Every order one customer placed, folded from `OrderSummary`.                                                                              |
 | View           | [`Order/OrderQueue.view.ts`](src/Order/OrderQueue.view.ts)                               | The baristas' queue: open orders plus the 200 most recent finished ones. Staff only.                                                      |
+| View           | [`Cart/CustomerCart.view.ts`](src/Cart/CustomerCart.view.ts)                             | One person's cart as they read it, folded from the same events as `Cart`. Owner only.                                                     |
 | Policy         | [`Cart/CheckoutFulfillment.policy.ts`](src/Cart/CheckoutFulfillment.policy.ts)           | Whenever a checkout is confirmed, start its fulfillment saga.                                                                             |
 | Saga           | [`Cart/FulfillCheckout.saga.ts`](src/Cart/FulfillCheckout.saga.ts)                       | Place the confirmed order in a durable workflow, keyed by order id.                                                                       |
 | Api            | [`CustomerApi.api.ts`](src/CustomerApi.api.ts), [`StaffApi.api.ts`](src/StaffApi.api.ts) | What each audience may send and read.                                                                                                     |
-| Model          | [`CoffeeShop.model.ts`](src/CoffeeShop.model.ts)                                         | Everything hosted together, plus policy and saga implementations as one Layer.                                                            |
+| Model          | [`CoffeeShop.model.ts`](src/CoffeeShop.model.ts)                                         | Everything hosted together, plus read guards, policy and saga implementations as one Layer.                                               |
 
 Commands live in `<Command>.command.ts` with the events they record and the rejections only they
 return. Shared rejections have their own `*.rejection.ts` files.
@@ -86,7 +87,7 @@ in stories; Cloudflare hosts it on the built-in workflow engine of `DomainCloudf
 
 `Session` ([`Session.middleware.ts`](src/Session.middleware.ts)) authenticates a request and
 provides `CurrentActor` ([`CurrentActor.context.ts`](src/CurrentActor.context.ts)): a `customer`,
-`staff`, or `system` [`Actor`](src/Actor.ts). Each command's `decide` and each view's `validate`
+`staff`, or `system` [`Actor`](src/Actor.ts). Each command's `decide` and each view's Layer (`View.toLayer`)
 authorizes against it:
 
 - Anyone signed in may place orders and use their own cart (a cart is keyed by its owner).

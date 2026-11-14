@@ -47,6 +47,9 @@ describe("the Worker's route table", () => {
       true,
       true,
     ]);
-    expect(["/api/menu", "/api/rest/customer/Cart/x"].map(needsAuth)).toEqual([false, false]);
+    expect(["/api/menu", "/api/rest/customer/CustomerCart/x"].map(needsAuth)).toEqual([
+      false,
+      false,
+    ]);
   });
 });

@@ -11,11 +11,14 @@ import { OrderNotFound } from "./OrderNotFound.rejection.ts";
 export class BrewingStarted extends Domain.Event("BrewingStarted", { by: Actor }) {}
 
 /** Start brewing a pending order. Staff only. */
-export class StartBrewing extends Domain.Command("StartBrewing", {
-  target: OrderId,
-  description: "Start brewing a pending order. Staff only.",
-  middleware: [Session],
-  events: [BrewingStarted],
-  rejects: [StaffOnly, OrderNotFound, InvalidStatusTransition],
-  reply: { order: CoffeeOrder },
-}) {}
+export class StartBrewing extends Domain.Command(
+  "StartBrewing",
+  {
+    target: OrderId,
+    middleware: [Session],
+    events: [BrewingStarted],
+    rejects: [StaffOnly, OrderNotFound, InvalidStatusTransition],
+    reply: { order: CoffeeOrder },
+  },
+  { description: "Start brewing a pending order. Staff only." },
+) {}

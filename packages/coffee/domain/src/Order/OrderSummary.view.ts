@@ -43,15 +43,17 @@ export class OrderSummary extends Domain.View("OrderSummary", {
     OrderPickedUp: (summary) => withStatus(summary, "picked-up"),
     OrderCancelled: (summary) => withStatus(summary, "cancelled"),
   },
-  validate: (_request, summary) =>
-    CurrentActor.pipe(
-      Effect.filterOrFail(
-        (actor) => {
-          const owner = summary?.order?.ownerUserId;
-          return isStaff(actor) || owner === undefined || owner === actor.userId;
-        },
-        () => new NotYourOrder(),
-      ),
-      Effect.asVoid,
-    ),
 }) {}
+
+/** Staff may read any ticket; a customer only their own. */
+export const OrderSummaryLive = OrderSummary.toLayer(
+  Effect.sync(() =>
+    Effect.fn(function* (_request, summary) {
+      const actor = yield* CurrentActor;
+      const owner = summary?.order?.ownerUserId;
+      if (!isStaff(actor) && owner !== undefined && owner !== actor.userId) {
+        return yield* new NotYourOrder();
+      }
+    }),
+  ),
+);

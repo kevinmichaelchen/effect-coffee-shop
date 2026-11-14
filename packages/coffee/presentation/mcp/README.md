@@ -19,12 +19,12 @@ server layer.
 Two places:
 
 - **Generated from the domain Apis.** [`src/domain-tools.ts`](./src/domain-tools.ts) serves
-  `CustomerApi` and `StaffApi` with `DomainAi.toMcp`: one tool per command
-  (`CustomerApi_PlaceOrder_send`) and per read (`CustomerApi_Cart_get`). Each call runs through the
-  Api's own `Session` middleware and the command's `decide` or the read's `validate`, with the
+  `CustomerApi` and `StaffApi` with `DomainAi.toMcp`: one tool per listed command
+  (`CustomerApi_PlaceOrder_send`) and view read (`CustomerApi_CustomerCart_get`). Each call runs through the
+  Api's own `Session` middleware and the command's `decide` or the view's guard Layer, with the
   OAuth-resolved `McpActor` sent as the actor header. A rejection (`Unauthorized`, `NotYourCart`,
   `StaffOnly`, ...) comes back as the tool's result. A command's description is its
-  `description` option in the domain.
+  `description` annotation in the domain.
 - **Hand-written.** [`src/action-toolkit.ts`](./src/action-toolkit.ts) and
   [`src/action-tools.ts`](./src/action-tools.ts) serve what the Apis do not: the menu
   (`list_menu`, `get_item_options`), checks of a proposed order (`validate_order`, `quote_order`),

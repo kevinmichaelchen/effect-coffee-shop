@@ -133,7 +133,7 @@ export class CoffeeOrderApp extends Context.Service<
         getOrder: Effect.fn("CoffeeOrders.getOrder")(function* (orderId) {
           const actor = yield* requireSignedInActor();
           const summary = yield* summaries
-            .query(Order.ref(orderId))
+            .get(Order.ref(orderId))
             .pipe(Effect.mapError(internal("Unable to load order right now")));
           return yield* Option.flatMapNullishOr(summary, ({ order }) => order).pipe(
             Option.filter(
@@ -160,8 +160,8 @@ export class CoffeeOrderApp extends Context.Service<
           });
           const listed = yield* (
             actor.kind === "customer"
-              ? customerOrders.query(Customer.ref(actor.userId))
-              : queue.query(mainShop)
+              ? customerOrders.get(Customer.ref(actor.userId))
+              : queue.get(mainShop)
           ).pipe(Effect.mapError(internal("Unable to list orders right now")));
           const all = Option.match(listed, { onNone: () => [], onSome: ({ orders }) => orders });
           yield* recordOrderAction({ action: "list", actor, result: "success" });

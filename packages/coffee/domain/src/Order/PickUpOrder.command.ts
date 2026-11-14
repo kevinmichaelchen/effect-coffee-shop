@@ -11,11 +11,14 @@ import { OrderNotFound } from "./OrderNotFound.rejection.ts";
 export class OrderPickedUp extends Domain.Event("OrderPickedUp", { by: Actor }) {}
 
 /** Hand a ready order to its customer. Staff only. */
-export class PickUpOrder extends Domain.Command("PickUpOrder", {
-  target: OrderId,
-  description: "Hand a ready order to its customer. Staff only.",
-  middleware: [Session],
-  events: [OrderPickedUp],
-  rejects: [StaffOnly, OrderNotFound, InvalidStatusTransition],
-  reply: { order: CoffeeOrder },
-}) {}
+export class PickUpOrder extends Domain.Command(
+  "PickUpOrder",
+  {
+    target: OrderId,
+    middleware: [Session],
+    events: [OrderPickedUp],
+    rejects: [StaffOnly, OrderNotFound, InvalidStatusTransition],
+    reply: { order: CoffeeOrder },
+  },
+  { description: "Hand a ready order to its customer. Staff only." },
+) {}

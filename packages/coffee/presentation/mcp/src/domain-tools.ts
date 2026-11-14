@@ -1,7 +1,7 @@
 /**
  * Serves the domain's `CustomerApi` and `StaffApi` as MCP tools generated
  * from the Apis themselves (`DomainAi.toMcp`): one tool per command
- * (`CustomerApi_PlaceOrder_send`) and per read (`CustomerApi_Cart_get`).
+ * (`CustomerApi_PlaceOrder_send`) and per read (`CustomerApi_CustomerCart_get`).
  * Each call runs through the Api's own handlers and `Session` middleware in
  * process, so a tool authorizes exactly as the app's Domain RPC does, and a
  * rejection comes back to the model as the tool's typed failure.
@@ -19,6 +19,38 @@ import { McpActor } from "./actor.ts";
 /** The prefix of every staff tool; visibility hides them from everyone else. */
 export const staffToolPrefix = `${StaffApi.apiName}_`;
 
+/** The calls agents may make: every command, and each view read that returns once. */
+export const customerTools = [
+  "PlaceOrder",
+  "AddCartItem",
+  "UpdateCartItem",
+  "RemoveCartItem",
+  "ClearCart",
+  "PrepareCheckout",
+  "ConfirmCheckout",
+  "OrderSummary.get",
+  "OrderSummary.snapshot",
+  "OrderSummary.list",
+  "CustomerOrders.get",
+  "CustomerOrders.snapshot",
+  "CustomerOrders.list",
+  "CustomerCart.get",
+  "CustomerCart.snapshot",
+  "CustomerCart.list",
+] as const;
+export const staffTools = [
+  "StartBrewing",
+  "MarkReady",
+  "PickUpOrder",
+  "CancelOrder",
+  "OrderQueue.get",
+  "OrderQueue.snapshot",
+  "OrderQueue.list",
+  "OrderSummary.get",
+  "OrderSummary.snapshot",
+  "OrderSummary.list",
+] as const;
+
 export const CoffeeDomainToolsLive = Layer.unwrap(
   Effect.map(McpActor, (resolver) => {
     const options = {
@@ -30,6 +62,9 @@ export const CoffeeDomainToolsLive = Layer.unwrap(
         Effect.orElseSucceed(() => ({})),
       ),
     };
-    return Layer.mergeAll(DomainAi.toMcp(CustomerApi, options), DomainAi.toMcp(StaffApi, options));
+    return Layer.mergeAll(
+      DomainAi.toMcp(CustomerApi, { ...options, expose: customerTools }),
+      DomainAi.toMcp(StaffApi, { ...options, expose: staffTools }),
+    );
   }),
 );

@@ -30,13 +30,23 @@ import { Session, Unauthorized } from "@effect-coffee-shop/coffee-domain/Session
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
 import { CoffeeActionToolkit } from "./action-toolkit.ts";
 import { McpActor } from "./actor.ts";
+import {
+  customerTools as customerDomainTools,
+  staffTools as staffDomainTools,
+} from "./domain-tools.ts";
 import { CoffeeMcpFeaturesLive } from "./server.ts";
 
 const sorted = (names: ReadonlyArray<string>) => Arr.sort(names, Order.String);
-const toolNames = (api: DomainAi.Toolable) => R.keys(DomainAi.toToolkit(api).toolkit.tools);
+const toolNames = <A extends DomainAi.Toolable>(
+  api: A,
+  expose: ReadonlyArray<DomainAi.Exposable<A>>,
+) => R.keys(DomainAi.toToolkit(api, { expose }).toolkit.tools);
 
-const staffTools = sorted(toolNames(StaffApi));
-const customerTools = sorted([...R.keys(CoffeeActionToolkit.tools), ...toolNames(CustomerApi)]);
+const staffTools = sorted(toolNames(StaffApi, staffDomainTools));
+const customerTools = sorted([
+  ...R.keys(CoffeeActionToolkit.tools),
+  ...toolNames(CustomerApi, customerDomainTools),
+]);
 const allTools = sorted([...customerTools, ...staffTools]);
 
 const customer: AppActor = {
@@ -90,7 +100,7 @@ describe("MCP tool visibility", () => {
         "get_ordering_context",
         "list_menu",
         "CustomerApi_PlaceOrder_send",
-        "CustomerApi_Cart_get",
+        "CustomerApi_CustomerCart_get",
         "StaffApi_StartBrewing_send",
         "StaffApi_OrderQueue_get",
       ]),
@@ -203,16 +213,27 @@ describe("MCP tools generated from the domain Apis", () => {
       });
       expect(added.isError).not.toBe(true);
 
-      const cart = yield* client.callTool({
-        name: "CustomerApi_Cart_get",
-        arguments: { key: "customer" },
-      });
+      // The cart is a view of the Cart aggregate, so it catches up just after the command.
+      const cart = yield* client
+        .callTool({ name: "CustomerApi_CustomerCart_get", arguments: { key: "customer" } })
+        .pipe(
+          Effect.repeat({
+            until: (result) =>
+              Schema.is(
+                Schema.Struct({
+                  value: Schema.Struct({ lines: Schema.NonEmptyArray(Schema.Unknown) }),
+                }),
+              )(result.structuredContent),
+            schedule: Schedule.spaced("20 millis"),
+          }),
+          Effect.timeout("3 seconds"),
+        );
       expect(cart.structuredContent).toMatchObject({
-        lines: [{ cartItemId: newIds.cartItemId, item: { drinkId: "latte" } }],
+        value: { lines: [{ cartItemId: newIds.cartItemId, item: { drinkId: "latte" } }] },
       });
 
       const othersCart = yield* client.callTool({
-        name: "CustomerApi_Cart_get",
+        name: "CustomerApi_CustomerCart_get",
         arguments: { key: "someone-else" },
       });
       expect(othersCart.isError).toBe(true);
@@ -274,8 +295,17 @@ describe("MCP tools generated from the domain Apis", () => {
         value: { order: { id: newIds.orderId, ownerUserId: "customer", status: "pending" } },
       });
 
-      const cart = yield* call("CustomerApi_Cart_get", { key: "customer" });
-      expect(cart.structuredContent).toMatchObject({ lines: [], checkout: null });
+      const cart = yield* call("CustomerApi_CustomerCart_get", { key: "customer" }).pipe(
+        Effect.repeat({
+          until: (result) =>
+            Schema.is(Schema.Struct({ value: Schema.Struct({ lines: Schema.Tuple([]) }) }))(
+              result.structuredContent,
+            ),
+          schedule: Schedule.spaced("20 millis"),
+        }),
+        Effect.timeout("3 seconds"),
+      );
+      expect(cart.structuredContent).toMatchObject({ value: { lines: [], checkout: null } });
     }),
   );
 
@@ -289,7 +319,7 @@ describe("MCP tools generated from the domain Apis", () => {
     Effect.gen(function* () {
       const client = yield* makeClient(current);
       const result = yield* client.callTool({
-        name: "CustomerApi_Cart_get",
+        name: "CustomerApi_CustomerCart_get",
         arguments: { key: "customer" },
       });
       assert.isTrue(result.isError);

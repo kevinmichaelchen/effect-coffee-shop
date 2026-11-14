@@ -28,12 +28,16 @@ export class CustomerOrders extends Domain.View("CustomerOrders", {
     OrderSummary: (view, _, { state }) =>
       state?.order ? { orders: upsertOrder(view.orders, state.order) } : view,
   },
-  validate: (request) =>
-    CurrentActor.pipe(
-      Effect.filterOrFail(
-        (actor) => isStaff(actor) || request.key.id === actor.userId,
-        () => new NotYourOrder(),
-      ),
-      Effect.asVoid,
-    ),
 }) {}
+
+/** Staff may read any customer's orders; a customer only their own. */
+export const CustomerOrdersLive = CustomerOrders.toLayer(
+  Effect.sync(() =>
+    Effect.fn(function* (request) {
+      const actor = yield* CurrentActor;
+      if (!isStaff(actor) && request.key.id !== actor.userId) {
+        return yield* new NotYourOrder();
+      }
+    }),
+  ),
+);

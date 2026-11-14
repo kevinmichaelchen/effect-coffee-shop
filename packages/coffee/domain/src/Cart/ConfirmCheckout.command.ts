@@ -36,19 +36,24 @@ export class CheckoutConfirmed extends Domain.Event("CheckoutConfirmed", {
 }) {}
 
 /** Confirm the checkout you prepared, before it expires, as order `orderId`. */
-export class ConfirmCheckout extends Domain.Command("ConfirmCheckout", {
-  target: CustomerId,
-  description:
-    "Confirm the checkout you prepared, before it expires, once the customer agreed to its items and total. The cart is emptied and its order is placed as the order id you made.",
-  middleware: [Session],
-  input: {
-    checkoutId: CheckoutId,
-    orderId: OrderId,
-    customerName: Schema.optionalKey(
-      Schema.Trim.annotate({ description: "Customer display name, for system orders." }),
-    ),
+export class ConfirmCheckout extends Domain.Command(
+  "ConfirmCheckout",
+  {
+    target: CustomerId,
+    middleware: [Session],
+    input: {
+      checkoutId: CheckoutId,
+      orderId: OrderId,
+      customerName: Schema.optionalKey(
+        Schema.Trim.annotate({ description: "Customer display name, for system orders." }),
+      ),
+    },
+    events: [CheckoutConfirmed],
+    rejects: [NotYourCart, CheckoutNotFound, CheckoutExpired, InvalidOrder],
+    reply: { orderId: OrderId },
   },
-  events: [CheckoutConfirmed],
-  rejects: [NotYourCart, CheckoutNotFound, CheckoutExpired, InvalidOrder],
-  reply: { orderId: OrderId },
-}) {}
+  {
+    description:
+      "Confirm the checkout you prepared, before it expires, once the customer agreed to its items and total. The cart is emptied and its order is placed as the order id you made.",
+  },
+) {}

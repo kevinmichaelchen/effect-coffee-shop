@@ -2,22 +2,30 @@ import * as Domain from "@alchemy.run/domain";
 import * as Layer from "effect/Layer";
 import { Cart } from "./Cart/Cart.aggregate.ts";
 import { CheckoutFulfillment, CheckoutFulfillmentLive } from "./Cart/CheckoutFulfillment.policy.ts";
+import { CustomerCart, CustomerCartLive } from "./Cart/CustomerCart.view.ts";
 import { Customer } from "./Customer/Customer.aggregate.ts";
 import { FulfillCheckout, FulfillCheckoutLive } from "./Cart/FulfillCheckout.saga.ts";
-import { CustomerOrders } from "./Order/CustomerOrders.view.ts";
+import { CustomerOrders, CustomerOrdersLive } from "./Order/CustomerOrders.view.ts";
 import { Order } from "./Order/Order.aggregate.ts";
-import { OrderQueue } from "./Order/OrderQueue.view.ts";
-import { OrderSummary } from "./Order/OrderSummary.view.ts";
+import { OrderQueue, OrderQueueLive } from "./Order/OrderQueue.view.ts";
+import { OrderSummary, OrderSummaryLive } from "./Order/OrderSummary.view.ts";
 
 /** The coffee shop: every aggregate, view and policy, hosted together. */
 export const coffeeShopMembers = {
   aggregates: [Order, Cart, Customer],
-  views: [OrderSummary, CustomerOrders, OrderQueue],
+  views: [OrderSummary, CustomerOrders, OrderQueue, CustomerCart],
   policies: [CheckoutFulfillment],
   sagas: [FulfillCheckout],
 };
 
 export class CoffeeShop extends Domain.Model("CoffeeShop", coffeeShopMembers) {}
 
-/** Every policy and saga implementation, as one Layer. */
-export const CoffeeShopHandlers = Layer.mergeAll(CheckoutFulfillmentLive, FulfillCheckoutLive);
+/** Every read guard, policy and saga implementation, as one Layer. */
+export const CoffeeShopHandlers = Layer.mergeAll(
+  OrderSummaryLive,
+  CustomerOrdersLive,
+  OrderQueueLive,
+  CustomerCartLive,
+  CheckoutFulfillmentLive,
+  FulfillCheckoutLive,
+);

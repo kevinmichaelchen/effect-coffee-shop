@@ -8,11 +8,14 @@ import { NotYourCart } from "./NotYourCart.rejection.ts";
 export class CartCleared extends Domain.Event("CartCleared") {}
 
 /** Empty your cart. An empty cart stays as it is. */
-export class ClearCart extends Domain.Command("ClearCart", {
-  target: CustomerId,
-  description: "Empty your cart and drop any checkout awaiting confirmation.",
-  middleware: [Session],
-  events: [CartCleared],
-  rejects: [NotYourCart],
-  reply: { cart: CartSnapshot },
-}) {}
+export class ClearCart extends Domain.Command(
+  "ClearCart",
+  {
+    target: CustomerId,
+    middleware: [Session],
+    events: [CartCleared],
+    rejects: [NotYourCart],
+    reply: { cart: CartSnapshot },
+  },
+  { description: "Empty your cart and drop any checkout awaiting confirmation." },
+) {}
