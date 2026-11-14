@@ -1,5 +1,5 @@
 import { Dialog } from "@foldkit/ui";
-import { FeedId } from "@effect-coffee-shop/coffee-domain/Order/OrderFeed";
+import type { Feed } from "#app/feed.ts";
 import { Option } from "effect";
 import { Command, given, message, model, story } from "foldkit/story";
 import { describe, expect, test, vi } from "vitest";
@@ -52,8 +52,8 @@ const bootModel = (pathname: string) => init({ theme: "light" }, url(pathname)).
 const customer = { kind: "customer", displayName: "Ada", userId: "user-1" } as const;
 const staff = { kind: "staff", displayName: "Sam", userId: "user-2" } as const;
 
-const customerFeed = FeedId.make("customer:user-1");
-const staffFeed = FeedId.make("staff");
+const customerFeed: Feed = { _tag: "CustomerOrders", customerId: "user-1" };
+const staffFeed: Feed = { _tag: "OrderQueue" };
 
 const latte = {
   id: "latte",
@@ -142,7 +142,7 @@ describe("passkey auth", () => {
       Command.expectExact(FetchViewer),
       model((next) => expect(next.viewer).toEqual({ kind: "anonymous" })),
       Command.resolve(FetchViewer, Message.SucceededFetchViewer({ viewer: { kind: "anonymous" } })),
-      message(Message.LoadedOrders({ feedId: staffFeed, userId: "user-2", orders: [ticket] })),
+      message(Message.LoadedOrders({ feed: staffFeed, userId: "user-2", orders: [ticket] })),
       model((next) => expect(next.orders).toEqual([])),
     );
   });
@@ -184,7 +184,7 @@ describe("customer orders", () => {
     story(
       update,
       given(signedIn),
-      message(Message.LoadedOrders({ feedId: customerFeed, userId: "user-1", orders: [ticket] })),
+      message(Message.LoadedOrders({ feed: customerFeed, userId: "user-1", orders: [ticket] })),
       model((next) => {
         expect(next.orders).toEqual([ticket]);
         expect(Option.isNone(next.ordersError)).toBe(true);
@@ -220,7 +220,7 @@ describe("staff queue", () => {
     story(
       update,
       given({ ...staffModel, orders: [ticket] }),
-      message(Message.LoadedOrders({ feedId: staffFeed, userId: "user-9", orders: [] })),
+      message(Message.LoadedOrders({ feed: staffFeed, userId: "user-9", orders: [] })),
       model((next) => expect(next.orders).toEqual([ticket])),
     );
   });
@@ -294,7 +294,7 @@ describe("navigation", () => {
       model((next) => expect(next.orders).toEqual([])),
       message(Message.ChangedUrl({ url: url("/shop") })),
       Command.expectNone(),
-      message(Message.LoadedOrders({ feedId: customerFeed, userId: "user-1", orders: [ticket] })),
+      message(Message.LoadedOrders({ feed: customerFeed, userId: "user-1", orders: [ticket] })),
       model((next) => expect(next.orders).toEqual([ticket])),
     );
   });
@@ -305,14 +305,14 @@ describe("navigation", () => {
       given({ ...bootModel("/shop"), viewer: customer, menu: [latte], orders: [ticket] }),
       message(
         Message.LoadedOrders({
-          feedId: FeedId.make("customer:user-9"),
+          feed: { _tag: "CustomerOrders", customerId: "user-9" },
           userId: "user-9",
           orders: [],
         }),
       ),
       message(
         Message.FailedOrders({
-          feedId: staffFeed,
+          feed: staffFeed,
           userId: "user-2",
           message: "Live updates disconnected.",
         }),
@@ -338,6 +338,14 @@ describe("feeds", () => {
       feedOf("/login/mcp", customer),
       feedOf("/nope", customer),
       feedOf("/shop", { kind: "anonymous" }),
-    ]).toEqual(["customer:user-1", "customer:user-1", "staff", "none", "none", "none", "none"]);
+    ]).toEqual([
+      { _tag: "CustomerOrders", customerId: "user-1" },
+      { _tag: "CustomerOrders", customerId: "user-1" },
+      { _tag: "OrderQueue" },
+      "none",
+      "none",
+      "none",
+      "none",
+    ]);
   });
 });

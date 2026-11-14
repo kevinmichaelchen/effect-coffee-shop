@@ -3,7 +3,6 @@ import { needsAuth, rejectsBearer, routeKindOf, routeOf } from "../src/Routes.ts
 
 describe("the Worker's route table", () => {
   it.each([
-    ["/sync/orders/order_1", "sync"],
     ["/api/rest/customer/PlaceOrder", "rest"],
     ["/api/rest/openapi.json", "rest"],
     ["/api/customer", "customer"],
@@ -31,7 +30,7 @@ describe("the Worker's route table", () => {
 
   it("rejects bearer tokens on app routes, not on MCP or OAuth", () => {
     expect(
-      ["/api/rest/customer/ClearCart", "/api/customer", "/sync/orders/x"].map(rejectsBearer),
+      ["/api/rest/customer/ClearCart", "/api/customer", "/api/staff"].map(rejectsBearer),
     ).toEqual([true, true, true]);
     expect(["/mcp", "/oauth/token", "/.well-known/x"].map(rejectsBearer)).toEqual([
       false,
@@ -40,13 +39,8 @@ describe("the Worker's route table", () => {
     ]);
   });
 
-  it("needs auth configured for auth, sync and MCP, not for REST reads of the menu", () => {
-    expect(["/api/auth/x", "/sync/orders/x", "/mcp", "/oauth/token"].map(needsAuth)).toEqual([
-      true,
-      true,
-      true,
-      true,
-    ]);
+  it("needs auth configured for auth and MCP, not for REST reads of the menu", () => {
+    expect(["/api/auth/x", "/mcp", "/oauth/token"].map(needsAuth)).toEqual([true, true, true]);
     expect(["/api/menu", "/api/rest/customer/CustomerCart/x"].map(needsAuth)).toEqual([
       false,
       false,

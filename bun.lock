@@ -33,7 +33,6 @@
         "@simplewebauthn/browser": "catalog:",
         "@yielded/auth": "catalog:",
         "@yielded/auth-simplewebauthn": "catalog:",
-        "@yielded/sync": "catalog:",
         "effect": "catalog:",
         "foldkit": "catalog:",
         "onnxruntime-web": "catalog:",
@@ -147,7 +146,6 @@
       "version": "0.1.0",
       "dependencies": {
         "@alchemy.run/domain": "catalog:",
-        "@yielded/sync": "catalog:",
         "alchemy": "catalog:",
         "effect": "catalog:",
       },
@@ -233,9 +231,6 @@
         "@effect-coffee-shop/coffee-mcp": "workspace:*",
         "@effect-coffee-shop/http-routing": "workspace:*",
         "@yielded/auth-persistence": "catalog:",
-        "@yielded/sync": "catalog:",
-        "@yielded/sync-platform-alchemy-cf": "catalog:",
-        "@yielded/sync-platform-cloudflare": "catalog:",
         "alchemy": "catalog:",
         "effect": "catalog:",
         "effect-wide-event": "catalog:",
@@ -327,14 +322,12 @@
   },
   "patchedDependencies": {
     "@yielded/auth-persistence@0.1.0-beta.47": "patches/@yielded%2Fauth-persistence@0.1.0-beta.47.patch",
-    "effect@4.1.4": "patches/effect@4.1.4.patch",
     "alchemy@2.0.0-beta.87": "patches/alchemy@2.0.0-beta.87.patch",
   },
   "overrides": {
     "@effect/platform-browser": "4.1.4",
     "@effect/platform-node-shared": "4.1.4",
     "@effect/sql-d1": "4.1.4",
-    "@effect/sql-sqlite-do": "4.1.4",
     "@effect/vitest": "4.1.4",
     "effect": "4.1.4",
   },
@@ -364,9 +357,6 @@
     "@yielded/auth": "0.1.0-beta.47",
     "@yielded/auth-persistence": "0.1.0-beta.47",
     "@yielded/auth-simplewebauthn": "0.1.0-beta.47",
-    "@yielded/sync": "0.1.0-beta.4",
-    "@yielded/sync-platform-alchemy-cf": "0.1.0-beta.4",
-    "@yielded/sync-platform-cloudflare": "0.1.0-beta.4",
     "alchemy": "2.0.0-beta.87",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -475,8 +465,6 @@
     "@effect/platform-node-shared": ["@effect/platform-node-shared@4.1.4", "", { "dependencies": { "@types/ws": "^8.18.2", "ws": "^8.22.1" }, "peerDependencies": { "effect": "^4.1.4" } }, "sha512-DWdfphHGOFJNj/mYadgpT3jIm8aRXDcPrQiGXFBH4p2H4XmA7iYMrPsI8NxVgZ7kNX0q1+FGJZJama0tINHRAg=="],
 
     "@effect/sql-d1": ["@effect/sql-d1@4.1.4", "", { "dependencies": { "@cloudflare/workers-types": "^5.20261107.1" }, "peerDependencies": { "effect": "^4.1.4" } }, "sha512-x7UtDPNCgcAz6lvGbrf0INHxztV0qV8i4qleqPb31ADeilz7MnGYJ5Qhprqod+ySBUNPdsvXNRE9vm36TznIdg=="],
-
-    "@effect/sql-sqlite-do": ["@effect/sql-sqlite-do@4.1.4", "", { "peerDependencies": { "effect": "^4.1.4" } }, "sha512-qeL9J7hgjvKmZu86d6jnzjts+lqxz/Lm/KOPka71++fl30sx9QoQLdHgmzC92S0TydC5EGO7i7rJRhLv4FV+qw=="],
 
     "@effect/tsgo": ["@effect/tsgo@0.67.5", "", { "optionalDependencies": { "@effect/tsgo-darwin-arm64": "0.67.5", "@effect/tsgo-darwin-x64": "0.67.5", "@effect/tsgo-linux-arm": "0.67.5", "@effect/tsgo-linux-arm64": "0.67.5", "@effect/tsgo-linux-x64": "0.67.5", "@effect/tsgo-win32-arm64": "0.67.5", "@effect/tsgo-win32-x64": "0.67.5" }, "bin": { "effect-tsgo": "dist/effect-tsgo.cjs" } }, "sha512-uL3mf3Q6F3aFOZK/qLb3eHUcztmgTIbabk0enTiA3t8nZm5EygE3eYT4+XQCp+aWCEzYcc2C3b6sljlsFGzTHg=="],
 
@@ -931,12 +919,6 @@
     "@yielded/jose": ["@yielded/jose@0.1.0-beta.47", "", { "peerDependencies": { "effect": "^4.1.0" } }, "sha512-xFrwhZ1ljgvF7fFrMCYDrO0ovIDnKDg0aXo3g/3w8ipUylrmyhPf0xCoAruGIuZTEoZNOb9Ct+6VZewKJoQCdQ=="],
 
     "@yielded/oauth": ["@yielded/oauth@0.1.0-beta.47", "", { "dependencies": { "@yielded/jose": "0.1.0-beta.47" }, "peerDependencies": { "effect": "^4.1.0" } }, "sha512-5cIh18WLSuQSQSj17XUulSCiOwIyPf9jqPvGzfS99ldNrCaTljceh49OSnAgwFDwjmayRb9ptxSl9ezseFj49Q=="],
-
-    "@yielded/sync": ["@yielded/sync@0.1.0-beta.4", "", { "peerDependencies": { "effect": "4.0.6" } }, "sha512-XSi3qPq4ILqUwVhdxnHIYlBM38DIkGaRKoz1KptpPrZfyj4ycAxVytFGh+/Jb16+1GqG2l1ShX8yhcucMjMjTA=="],
-
-    "@yielded/sync-platform-alchemy-cf": ["@yielded/sync-platform-alchemy-cf@0.1.0-beta.4", "", { "dependencies": { "@yielded/sync": "0.1.0-beta.4", "@yielded/sync-platform-cloudflare": "0.1.0-beta.4" }, "peerDependencies": { "@alchemy.run/cloudflare": "^2.0.0-beta.84", "alchemy": "^2.0.0-beta.84", "effect": "4.0.6" } }, "sha512-APhtKNrhUsC1nzJIgc1HlqFxFzpEUg/S+f91C91GVl/A3bXZIXTxxPoQ77q9vWONP/s2X8E8RrO7Ixh94vghSQ=="],
-
-    "@yielded/sync-platform-cloudflare": ["@yielded/sync-platform-cloudflare@0.1.0-beta.4", "", { "dependencies": { "@effect/sql-sqlite-do": "4.0.6", "@yielded/sync": "0.1.0-beta.4" }, "peerDependencies": { "effect": "4.0.6" } }, "sha512-LzG0FtLglESTmTFkNXEUmODkg1NDb/brzVenXAwYYtUAailxZ8CL1Ls6Ry1Rlavp1IBwlh96ugv0XV4/GggcEg=="],
 
     "adm-zip": ["adm-zip@0.6.1", "", {}, "sha512-Xwrja8nx9e5o2N1my4DsKCeKpdrnACyr1wtbPxBDgGzKzKyE9kRtBFA8mWldI+RVlD7CBZNWY/wQ2+ydwOR6kQ=="],
 

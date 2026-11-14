@@ -161,15 +161,7 @@ export default Alchemy.Stack(
         workspaces: "auto",
       },
       assets: {
-        runWorkerFirst: [
-          "/sync/*",
-          "/api",
-          "/api/*",
-          "/mcp",
-          "/mcp/*",
-          "/oauth/*",
-          "/.well-known/*",
-        ],
+        runWorkerFirst: ["/api", "/api/*", "/mcp", "/mcp/*", "/oauth/*", "/.well-known/*"],
       },
       env: {
         COFFEE: api,

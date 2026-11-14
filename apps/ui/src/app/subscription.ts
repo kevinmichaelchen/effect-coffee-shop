@@ -1,12 +1,14 @@
 import type { CoffeeOrder } from "@effect-coffee-shop/coffee-domain/Order/CoffeeOrder";
-import { FeedId, OrderFeed } from "@effect-coffee-shop/coffee-domain/Order/OrderFeed";
-import { Client } from "@yielded/sync/client";
+import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.id";
+import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
+import { mainShop } from "@effect-coffee-shop/coffee-domain/Shop/Shop.id";
+import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
 import {
   Array as Arr,
   DateTime,
   Duration,
   Effect,
-  Layer,
+  Match,
   Option,
   Order,
   Queue,
@@ -14,34 +16,32 @@ import {
   Schema,
   Stream,
 } from "effect";
-import * as Socket from "effect/socket/Socket";
 import { Subscription } from "foldkit";
 import { workerNotices } from "#features/assistant/api/assistant-worker.ts";
 import { toCoffeeOrder } from "#features/coffee-shop/api/order-mapping.ts";
-import { feedFor } from "#app/feed.ts";
+import {
+  customerRuntime,
+  onRuntime,
+  staffRuntime,
+} from "#features/coffee-shop/api/domain-clients.ts";
+import { Feed, feedFor } from "#app/feed.ts";
 import { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
 import type { AppServices } from "#app/resources.ts";
 
-const definition = Client.definition(OrderFeed, {
-  applyEvent: (snapshot, event) => ({
-    orders: [...snapshot.orders.filter((order) => order.id !== event.order.id), event.order],
-  }),
-});
-
-const Connection = Schema.Struct({ userId: Schema.String, feedId: FeedId });
+const Connection = Schema.Struct({ userId: Schema.String, feed: Feed });
 type Connection = typeof Connection.Type;
 
 const connectionFor = (model: Model): Option.Option<Connection> =>
-  Option.map(feedFor(model), (feedId) => ({
+  Option.map(feedFor(model), (feed) => ({
     userId: model.viewer.kind === "anonymous" ? "" : model.viewer.userId,
-    feedId,
+    feed,
   }));
 
 /** Oldest first, so the staff queue reads in the order the tickets were placed. */
 const loaded = (connection: Connection, orders: ReadonlyArray<CoffeeOrder>): Message =>
   Message.LoadedOrders({
-    feedId: connection.feedId,
+    feed: connection.feed,
     userId: connection.userId,
     orders: Arr.sortWith(
       orders,
@@ -52,49 +52,35 @@ const loaded = (connection: Connection, orders: ReadonlyArray<CoffeeOrder>): Mes
 
 const failed = (connection: Connection): Message =>
   Message.FailedOrders({
-    feedId: connection.feedId,
+    feed: connection.feed,
     userId: connection.userId,
     message: "Live updates disconnected. Reconnecting...",
   });
 
-/** A parked replica is a dead connection: failing the stream makes the retry open a fresh one. */
-class FeedParked extends Schema.TaggedError<FeedParked, { readonly brand: unique symbol }>()(
-  "FeedParked",
-  {},
-) {}
-
-/** One connection to the feed: its snapshot, later changes, and a message if it drops. */
-const connect = (connection: Connection) =>
-  Stream.unwrap(
-    Effect.gen(function* () {
-      const session = yield* Client.make(definition, { persistence: { mode: "volatile" } });
-      const lease = yield* session.open(OrderFeed.address(connection.feedId));
-      yield* lease.ready;
-      const orders = lease
-        .select((snapshot) => snapshot.orders)
-        .changes.pipe(
-          Stream.flatMap((orders) =>
-            Option.match(orders, {
-              onNone: () => Stream.empty,
-              onSome: (orders) => Stream.make(loaded(connection, orders)),
-            }),
+/** The view behind a feed, watched over a WebSocket: its state now, then on every commit. */
+const watch = (feed: Feed) =>
+  Match.value(feed).pipe(
+    Match.tagsExhaustive({
+      CustomerOrders: ({ customerId }) =>
+        Stream.unwrap(
+          onRuntime(customerRuntime)(
+            Effect.map(CustomerApi.Client, (client) =>
+              client.CustomerOrders.watch(CustomerId.make(customerId)),
+            ),
           ),
-        );
-      const parked = lease.changes.pipe(
-        Stream.filter((replica) => replica.connection === "parked"),
-        Stream.flatMap(() => Stream.fail(new FeedParked())),
-      );
-      return Stream.merge(orders, parked);
+        ),
+      OrderQueue: () =>
+        Stream.unwrap(
+          onRuntime(staffRuntime)(
+            Effect.map(StaffApi.Client, (client) => client.OrderQueue.watch(mainShop)),
+          ),
+        ),
     }),
-  ).pipe(
-    Stream.provide(
-      Client.layerWebSocketTransport(OrderFeed, {
-        origin: location.origin,
-        id: connection.feedId,
-      }).pipe(Layer.provide(Socket.layerWebSocketConstructorGlobal)),
-    ),
-    Stream.provideService(Client.CurrentActor, { actorId: connection.userId }),
   );
+
+/** One live read of the feed: a message for each state it reaches. */
+const connect = (connection: Connection) =>
+  watch(connection.feed).pipe(Stream.map(({ state }) => loaded(connection, state?.orders ?? [])));
 
 const backoff = Schedule.exponential("250 millis").pipe(
   Schedule.modifyDelay(({ duration }) =>

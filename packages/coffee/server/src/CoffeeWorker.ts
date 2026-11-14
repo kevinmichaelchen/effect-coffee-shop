@@ -1,7 +1,6 @@
 /**
- * The Coffee Shop backend Worker. It hosts the domain model on Durable
- * Objects (every order, cart and view key is its own object, declared while
- * the model's Layer is built) and serves:
+ * The Coffee Shop backend Worker. It provides the domain model through
+ * `CoffeeShopLive`, which picks the platform that hosts it, and serves:
  *
  * - `/api/customer` and `/api/staff`: the domain's `CustomerApi` and
  *   `StaffApi` over Domain RPC, behind the auth session;
@@ -11,23 +10,19 @@
  * - `/api/health`, `/api/menu`, `/api/me`: REST;
  * - `/mcp`: remote MCP tools over the same model, generated from the same Apis.
  *
- * Swap `DomainCloudflare.layerDurableObjects()` for `Domain.InMemory` and nothing
- * else changes, which is how the tests run it.
+ * The tests run the same model on `Domain.InMemory` instead.
  *
  * @module
  */
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { type AuthDeployment, readAuthDeployment } from "@effect-coffee-shop/coffee-auth/config";
 import { d1AuthDatabase } from "@effect-coffee-shop/coffee-auth/database";
-import { SyncedCoffeeShop, SyncedCoffeeShopHandlers } from "./SyncOrders.ts";
-import { orderFeedHttp } from "./OrderFeedHttp.ts";
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
 import { domainRestHttp } from "@effect-coffee-shop/coffee-http/domain-rest";
 import { annotateHttpStatus, withHttpWideEvent } from "@effect-coffee-shop/http-routing/logging";
 import * as Cloudflare from "@alchemy.run/cloudflare";
 import type { HttpEffect } from "alchemy/Http";
-import * as DomainCloudflare from "@alchemy.run/domain/Cloudflare";
 import * as Effect from "effect/Effect";
 import * as HttpServerError from "effect/http/HttpServerError";
 import { HttpServerRequest } from "effect/http/HttpServerRequest";
@@ -38,6 +33,7 @@ import * as Option from "effect/Option";
 import { WideEventLogger } from "effect-wide-event";
 import { AuthDatabase } from "./AuthDatabase.ts";
 import { authSecret } from "./AuthSecret.ts";
+import CoffeeShopLive from "./CoffeeShopLive.ts";
 import {
   type CoffeeHttpInput,
   coffeeHttp,
@@ -48,10 +44,9 @@ import {
 import { needsAuth, rejectsBearer, routeKindOf, routeOf } from "./Routes.ts";
 import { SessionLive } from "./Session.ts";
 
-/** The model on Durable Objects, the Apis' middleware, and the adapters' service over the model. */
+/** The hosted model, the Apis' middleware, and the adapters' service over the model. */
 const CoffeeLive = Layer.mergeAll(SessionLive, CoffeeOrderApp.layer).pipe(
-  Layer.provideMerge(SyncedCoffeeShop.layer(SyncedCoffeeShopHandlers)),
-  Layer.provide(DomainCloudflare.layerDurableObjects()),
+  Layer.provideMerge(CoffeeShopLive),
   Layer.provideMerge(
     Layer.mergeAll(
       Cloudflare.D1.QueryDatabaseBinding,
@@ -65,7 +60,6 @@ interface CoffeeServices {
   readonly deployment: AuthDeployment;
   readonly db: Cloudflare.D1.QueryDatabaseClient;
   readonly readAuthSecret: Effect.Success<ReturnType<typeof Cloudflare.SecretsStore.ReadSecret>>;
-  readonly orderFeed: HttpEffect;
   readonly customerApi: HttpEffect;
   readonly staffApi: HttpEffect;
   readonly domainRest: HttpEffect;
@@ -82,11 +76,6 @@ const routeBackend = (
   const viaSession = (api: HttpEffect) => domainApi(input, api);
   const served = () =>
     Match.value(routeOf(path)).pipe(
-      Match.when("sync", () =>
-        request.headers.origin === new URL(services.deployment.origin).origin
-          ? viaSession(services.orderFeed)
-          : Effect.succeed(HttpServerResponse.empty({ status: 403 })),
-      ),
       Match.when("rest", () => viaSession(services.domainRest)),
       Match.when("customer", () => viaSession(services.customerApi)),
       Match.when("staff", () => viaSession(services.staffApi)),
@@ -143,7 +132,6 @@ export default class CoffeeWorker extends Cloudflare.Worker<CoffeeWorker>()(
       deployment: yield* readAuthDeployment(),
       db: yield* Cloudflare.D1.QueryDatabase(yield* AuthDatabase),
       readAuthSecret: yield* Cloudflare.SecretsStore.ReadSecret(yield* authSecret()),
-      orderFeed: yield* orderFeedHttp,
       customerApi: (yield* CustomerApi).fetch,
       staffApi: (yield* StaffApi).fetch,
       domainRest: yield* domainRestHttp,

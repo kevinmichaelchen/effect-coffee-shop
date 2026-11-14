@@ -29,9 +29,6 @@ minimumReleaseAgeExcludes = [
   "@foldkit/ui",
   "@foldkit/vite-plugin",
   "@effect/platform-browser",
-  "@yielded/sync",
-  "@yielded/sync-platform-cloudflare",
-  "@yielded/sync-platform-alchemy-cf",
   # Adopt the Alchemy release and its provider packages together.
   "alchemy",
   "@alchemy.run/cloudflare",
@@ -77,7 +74,6 @@ minimumReleaseAgeExcludes = [
   "@effect/platform-node",
   "@effect/platform-node-shared",
   "@effect/sql-d1",
-  "@effect/sql-sqlite-do",
   "@effect/vitest",
   # tsrs (the Rust TypeScript 7 compiler) and its Effect diagnostics ship each platform
   # binary as a separate exact-version package, so every binding must be listed.

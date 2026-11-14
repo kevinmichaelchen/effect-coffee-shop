@@ -2,7 +2,6 @@ import { Equal, Option, Schema } from "effect";
 import { Update } from "foldkit";
 import { UrlRequest } from "foldkit/navigation";
 import { toString as urlToString } from "foldkit/url";
-import type { FeedId } from "@effect-coffee-shop/coffee-domain/Order/OrderFeed";
 import { toggledTheme } from "@effect-coffee-shop/ui-kit/components/theme";
 import { anonymousViewer } from "#features/auth/lib/viewer.ts";
 import { DrinkSize, Milk, Temperature } from "#features/coffee-shop/lib/coffee-schemas.ts";
@@ -59,7 +58,7 @@ import {
   useUsual,
 } from "#app/assistant.ts";
 import { composerFor, selectDrink, toInt } from "#app/draft.ts";
-import { feedFor } from "#app/feed.ts";
+import { type Feed, feedFor } from "#app/feed.ts";
 import { Message } from "#app/message.ts";
 import type { AuthAction, Model } from "#app/model.ts";
 import type { UpdateReturn } from "#app/resources.ts";
@@ -83,8 +82,8 @@ const keepsOrders = (before: Model, after: Model): boolean =>
   Equal.equals(userIdOf(before), userIdOf(after)) && Equal.equals(feedFor(before), feedFor(after));
 
 /** A feed message counts only for the account and feed the page shows now. */
-const isCurrentFeed = (model: Model, feedId: FeedId, userId: string): boolean =>
-  Option.contains(feedFor(model), feedId) && Option.contains(userIdOf(model), userId);
+const isCurrentFeed = (model: Model, feed: Feed, userId: string): boolean =>
+  Option.contains(feedFor(model), feed) && Option.contains(userIdOf(model), userId);
 
 /** Stores the feed's snapshot; an open drawer whose ticket disappeared closes. */
 const applyOrders = (model: Model, orders: readonly OrderTicket[]): UpdateReturn => {
@@ -247,10 +246,10 @@ export const update = (model: Model, message: Message): UpdateReturn =>
     FailedFetchMenu: ({ message }) => ({ model: { ...model, menuError: Option.some(message) } }),
 
     // A feed message counts only while the page still shows that feed.
-    LoadedOrders: ({ feedId, userId, orders }) =>
-      isCurrentFeed(model, feedId, userId) ? applyOrders(model, orders) : { model },
-    FailedOrders: ({ feedId, userId, message }) =>
-      isCurrentFeed(model, feedId, userId)
+    LoadedOrders: ({ feed, userId, orders }) =>
+      isCurrentFeed(model, feed, userId) ? applyOrders(model, orders) : { model },
+    FailedOrders: ({ feed, userId, message }) =>
+      isCurrentFeed(model, feed, userId)
         ? { model: { ...model, ordersError: Option.some(message) } }
         : { model },
 

@@ -1,7 +1,4 @@
-import { OrderFeed, FeedId } from "@effect-coffee-shop/coffee-domain/Order/OrderFeed";
 import * as NodeSocket from "@effect/platform-node/NodeSocket";
-import * as RpcClient from "effect/rpc/RpcClient";
-import * as RpcSerialization from "effect/rpc/RpcSerialization";
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "@alchemy.run/cloudflare";
 import * as DomainCloudflare from "@alchemy.run/domain/Cloudflare";
@@ -9,6 +6,8 @@ import * as Test from "@alchemy.run/test/Vitest";
 import { makeAuthClient } from "@effect-coffee-shop/coffee-auth/testing/auth-client";
 import { makeTestPasskey } from "@effect-coffee-shop/coffee-auth/testing/passkey";
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
+import { mainShop } from "@effect-coffee-shop/coffee-domain/Shop/Shop.id";
+import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
 import { makeOrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.id";
 import { makeCartItemId } from "@effect-coffee-shop/coffee-domain/Cart/CartItem.id";
@@ -26,6 +25,8 @@ import * as HttpBody from "effect/http/HttpBody";
 import * as HttpClient from "effect/http/HttpClient";
 import * as HttpClientRequest from "effect/http/HttpClientRequest";
 import * as HttpClientResponse from "effect/http/HttpClientResponse";
+import * as Socket from "effect/socket/Socket";
+import * as Stream from "effect/Stream";
 import { expect } from "vitest";
 import Stack from "./cloudflare.ts";
 
@@ -148,31 +149,40 @@ const signedInCustomer = Effect.fnUntraced(function* (api: string) {
   };
 }, Effect.orDie);
 
+type Session = { readonly cookie: string; readonly appOrigin: string };
+
+/**
+ * The browser's view of an Api: its session cookie and its origin on every
+ * call and on every live read's WebSocket upgrade, as a browser on the app's
+ * origin sends them.
+ */
+const browserProtocol = (url: string, session: Session) => {
+  const headers = { cookie: session.cookie, origin: session.appOrigin };
+  const http = Layer.effect(
+    HttpClient.HttpClient,
+    Effect.map(HttpClient.HttpClient, (client) =>
+      client.pipe(HttpClient.mapRequest(HttpClientRequest.setHeaders(headers))),
+    ),
+  ).pipe(Layer.provide(FetchHttpClient.layer));
+  // Node's WebSocket sends no cookies of its own, so the upgrade gets the browser's headers here.
+  const sockets = Layer.effect(
+    // @effect-diagnostics-next-line unstableApiUsage:off -- protocolWebSocket takes its sockets from this service; only a test outside a browser needs to wrap it.
+    Socket.WebSocketConstructor,
+    Effect.map(
+      // @effect-diagnostics-next-line unstableApiUsage:off -- the same service, read to wrap Node's constructor.
+      Socket.WebSocketConstructor,
+      (make) => (socketUrl: string) => make(socketUrl, { headers }),
+    ),
+  ).pipe(Layer.provide(NodeSocket.layerWebSocketConstructor));
+  return Domain.protocolWebSocket(url).pipe(Layer.provide(Layer.mergeAll(http, sockets)));
+};
+
 /** Confirm checkout through CustomerApi, then wait for its durable workflow to place the order. */
-const orderThroughCustomerApi = (
-  api: string,
-  session: { readonly cookie: string; readonly appOrigin: string },
-  userId: CustomerId,
-) =>
+const orderThroughCustomerApi = (api: string, session: Session, userId: CustomerId) =>
   Effect.scoped(
     Effect.gen(function* () {
-      // The browser's view of the Api: its session cookie and its origin on every call.
-      const browser = Layer.effect(
-        HttpClient.HttpClient,
-        Effect.map(HttpClient.HttpClient, (client) =>
-          client.pipe(
-            HttpClient.mapRequest(
-              HttpClientRequest.setHeaders({ cookie: session.cookie, origin: session.appOrigin }),
-            ),
-          ),
-        ),
-      ).pipe(Layer.provide(FetchHttpClient.layer));
       const coffee = yield* CustomerApi.client.pipe(
-        Effect.provide(
-          Domain.protocolHttp(new URL("/api/customer", api).toString()).pipe(
-            Layer.provide(browser),
-          ),
-        ),
+        Effect.provide(browserProtocol(new URL("/api/customer", api).toString(), session)),
       );
       const orderId = yield* makeOrderId;
       const checkoutId = yield* makeCheckoutId;
@@ -211,56 +221,34 @@ test(
     expect(confirmed.reply.orderId).toEqual(orderId);
     expect(mine?.orders).toMatchObject([{ customerName: "Sam", status: "pending" }]);
     expect(mine?.orders.map((order) => order.id)).toEqual([orderId]);
-    const feed = yield* feedSnapshot(api, session, FeedId.make(`customer:${me.userId}`)).pipe(
-      Effect.repeat({
-        until: (value) => Arr.isReadonlyArrayNonEmpty(value.snapshot.source.orders),
-        schedule: Schedule.spaced("100 millis"),
-      }),
-      Effect.timeout("20 seconds"),
-    );
-    expect(feed.snapshot.source.orders.map((order) => order.id)).toEqual([orderId]);
-    const live = yield* feedSnapshot(api, session, FeedId.make(`customer:${me.userId}`), true).pipe(
-      Effect.timeout("15 seconds"),
-    );
-    expect(live.snapshot.source.orders.map((order) => order.id)).toEqual([orderId]);
-    const denied = yield* Effect.result(feedSnapshot(api, session, FeedId.make("staff")));
-    expect(denied._tag).toBe("Failure");
+    const pushed = yield* liveOrders(api, session, me.userId).pipe(Effect.timeout("20 seconds"));
+    expect(pushed.map((order) => order.id)).toEqual([orderId]);
+    const denied = yield* liveQueue(api, session).pipe(Effect.timeout("15 seconds"), Effect.flip);
+    expect(denied).toMatchObject({ _tag: "StaffOnly" });
   }),
 );
 
-const feedSnapshot = (
-  api: string,
-  session: { cookie: string; appOrigin: string },
-  id: FeedId,
-  socket = false,
-) =>
+/** The customer's orders as the app watches them: pushed over a WebSocket until one arrives. */
+const liveOrders = (api: string, session: Session, userId: CustomerId) =>
   Effect.gen(function* () {
-    const browser = Layer.effect(
-      HttpClient.HttpClient,
-      Effect.map(HttpClient.HttpClient, (client) =>
-        client.pipe(
-          HttpClient.mapRequest(
-            HttpClientRequest.setHeaders({ cookie: session.cookie, origin: session.appOrigin }),
-          ),
-        ),
-      ),
-    ).pipe(Layer.provide(FetchHttpClient.layer));
-    const url = new URL(`/sync/orders/${encodeURIComponent(id)}`, api);
-    const protocol = socket
-      ? RpcClient.layerProtocolSocket().pipe(
-          Layer.provide(
-            NodeSocket.layerWebSocket(url.href.replace(/^http/, "ws"), {
-              headers: { cookie: session.cookie, origin: session.appOrigin },
-            }),
-          ),
-        )
-      : RpcClient.layerProtocolHttp({ url: url.href }).pipe(Layer.provide(browser));
-    return yield* Effect.gen(function* () {
-      const client = yield* RpcClient.make(OrderFeed.rpc);
-      return yield* client.snapshot({
-        protocolVersion: 1,
-        schemaVersion: 1,
-        address: OrderFeed.address(id),
-      });
-    }).pipe(Effect.provide(protocol.pipe(Layer.provide(RpcSerialization.layerJson))));
-  }).pipe(Effect.scoped);
+    const coffee = yield* CustomerApi.client;
+    const first = yield* coffee.CustomerOrders.watch(userId).pipe(
+      Stream.map(({ state }) => state?.orders ?? []),
+      Stream.filter(Arr.isReadonlyArrayNonEmpty),
+      Stream.runHead,
+    );
+    return yield* Effect.fromOption(first);
+  }).pipe(
+    Effect.provide(browserProtocol(new URL("/api/customer", api).toString(), session)),
+    Effect.scoped,
+  );
+
+/** The staff queue watched with a customer's session: the view's guard refuses it. */
+const liveQueue = (api: string, session: Session) =>
+  Effect.gen(function* () {
+    const staff = yield* StaffApi.client;
+    return yield* staff.OrderQueue.watch(mainShop).pipe(Stream.runHead);
+  }).pipe(
+    Effect.provide(browserProtocol(new URL("/api/staff", api).toString(), session)),
+    Effect.scoped,
+  );
