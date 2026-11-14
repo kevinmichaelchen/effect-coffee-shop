@@ -42,9 +42,6 @@
       "@yielded/auth": "0.1.0-beta.47",
       "@yielded/auth-persistence": "0.1.0-beta.47",
       "@yielded/auth-simplewebauthn": "0.1.0-beta.47",
-      "@yielded/sync": "0.1.0-beta.4",
-      "@yielded/sync-platform-alchemy-cf": "0.1.0-beta.4",
-      "@yielded/sync-platform-cloudflare": "0.1.0-beta.4",
       "alchemy": "2.0.0-beta.87",
       "class-variance-authority": "^0.7.1",
       "clsx": "^2.1.1",
@@ -141,14 +138,12 @@
     "@effect/platform-browser": "4.1.4",
     "@effect/platform-node-shared": "4.1.4",
     "@effect/sql-d1": "4.1.4",
-    "@effect/sql-sqlite-do": "4.1.4",
     "@effect/vitest": "4.1.4",
     "effect": "4.1.4"
   },
   "packageManager": "bun@1.4.4",
   "patchedDependencies": {
     "alchemy@2.0.0-beta.87": "patches/alchemy@2.0.0-beta.87.patch",
-    "@yielded/auth-persistence@0.1.0-beta.47": "patches/@yielded%2Fauth-persistence@0.1.0-beta.47.patch",
-    "effect@4.1.4": "patches/effect@4.1.4.patch"
+    "@yielded/auth-persistence@0.1.0-beta.47": "patches/@yielded%2Fauth-persistence@0.1.0-beta.47.patch"
   }
 }

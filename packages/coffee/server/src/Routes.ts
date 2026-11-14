@@ -16,19 +16,17 @@ export const isOrStartsWith = (path: string, prefix: string) =>
 /** Paths that need auth configured: without it they answer 503. */
 export const needsAuth = (path: string) =>
   isOrStartsWith(path, "/api/auth") ||
-  isOrStartsWith(path, "/sync") ||
   isOrStartsWith(path, "/mcp") ||
   path.startsWith("/oauth/") ||
   path.startsWith("/.well-known/");
 
 /** A surface of the Worker. */
-export type Route = "sync" | "rest" | "customer" | "staff" | "auth" | "mcp" | "api" | "unmatched";
+export type Route = "rest" | "customer" | "staff" | "auth" | "mcp" | "api" | "unmatched";
 
 const routeTable: ReadonlyArray<{
   readonly route: Route;
   readonly prefixes: ReadonlyArray<string>;
 }> = [
-  { route: "sync", prefixes: ["/sync"] },
   { route: "rest", prefixes: [domainRestPrefix] },
   { route: "customer", prefixes: ["/api/customer"] },
   { route: "staff", prefixes: ["/api/staff"] },
@@ -51,7 +49,7 @@ export const routeKindOf = (route: Route) =>
   route === "customer" || route === "staff" ? "domain" : route;
 
 /**
- * App routes (`/api`, `/sync`) authenticate with session cookies, never with
- * an agent's bearer token; agents use MCP instead.
+ * App routes (`/api`) authenticate with session cookies, never with an
+ * agent's bearer token; agents use MCP instead.
  */
-export const rejectsBearer = (path: string) => path.startsWith("/api") || path.startsWith("/sync");
+export const rejectsBearer = (path: string) => path.startsWith("/api");

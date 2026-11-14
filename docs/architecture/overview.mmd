@@ -10,15 +10,13 @@ flowchart TB
     direction LR
     Rest["REST + OpenAPI<br/>menu, me, health, Apis"]
     Mcp["MCP<br/>generated tools, resources"]
-    Apis["Domain Apis<br/>Effect RPC"]
-    SyncApi["Yielded Sync<br/>WebSockets"]
+    Apis["Domain Apis<br/>Effect RPC,<br/>live watches"]
     Auth["Yielded Auth<br/>passkeys, OAuth"]
   end
   App["coffee-application<br/>CoffeeOrderApp"]
   subgraph Platform["Cloudflare, deployed by Alchemy"]
     direction LR
     Model["Coffee domain<br/>event-sourced<br/>Durable Objects"]
-    Feeds["Order feeds<br/>Sync Durable Objects"]
     D1["D1<br/>sessions, grants"]
   end
   Browser --> Website
@@ -30,6 +28,4 @@ flowchart TB
   Mcp --> App
   App --> Model
   Apis -->|commands, views| Model
-  SyncApi --> Feeds
   Auth --> D1
-  Model -->|order events| Feeds

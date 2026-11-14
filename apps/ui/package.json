@@ -33,7 +33,6 @@
     "@simplewebauthn/browser": "catalog:",
     "@yielded/auth": "catalog:",
     "@yielded/auth-simplewebauthn": "catalog:",
-    "@yielded/sync": "catalog:",
     "effect": "catalog:",
     "foldkit": "catalog:",
     "onnxruntime-web": "catalog:",

@@ -1,14 +1,14 @@
 # Coffee Server
 
-The Coffee Worker: hosts the `coffee-domain` model on Durable Objects and serves every backend path.
+The Coffee Worker: provides the `coffee-domain` model through `src/CoffeeShopLive.ts`, the one
+Layer that picks its host (Cloudflare Durable Objects today), and serves every backend path.
 
-| Path                                        | Served by                      |
-| ------------------------------------------- | ------------------------------ |
-| `/api/customer`, `/api/staff`               | Domain Apis behind the session |
-| `/api/rest/customer`, `/api/rest/staff`     | The same Apis as REST, OpenAPI |
-| `/api/auth/*`, `/oauth/*`, `/.well-known/*` | Yielded Auth                   |
-| `/api/health`, `/api/menu`, `/api/me`       | REST                           |
-| `/mcp`                                      | MCP tools, generated from Apis |
-| `/sync/*`                                   | Order feeds (`OrderFeed*.ts`)  |
+| Path                                        | Served by                                                    |
+| ------------------------------------------- | ------------------------------------------------------------ |
+| `/api/customer`, `/api/staff`               | Domain Apis behind the session; live watches over WebSockets |
+| `/api/rest/customer`, `/api/rest/staff`     | The same Apis as REST, OpenAPI                               |
+| `/api/auth/*`, `/oauth/*`, `/.well-known/*` | Yielded Auth                                                 |
+| `/api/health`, `/api/menu`, `/api/me`       | REST                                                         |
+| `/mcp`                                      | MCP tools, generated from Apis                               |
 
 `src/CoffeeWorker.ts` is the entry point. Tests run the same layer on `Domain.InMemory`.

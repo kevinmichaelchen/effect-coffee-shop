@@ -58,7 +58,7 @@ const top = frame.inset + gap;
 const garlandWidth = 200;
 const sprigWidth = 44;
 
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="effect-coffee-shop architecture: browser and MCP clients reach the Website Worker, which forwards to the Coffee Worker; its Effect RPC, REST, MCP, Yielded Auth and Yielded Sync surfaces run over event-sourced Durable Objects, Sync order feeds and D1 on Cloudflare, deployed by Alchemy.">
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="effect-coffee-shop architecture: browser and MCP clients reach the Website Worker, which forwards to the Coffee Worker; its Effect RPC, REST, MCP and Yielded Auth surfaces run over event-sourced Durable Objects and D1 on Cloudflare, deployed by Alchemy.">
 <rect width="${width}" height="${height}" fill="${paper}"/>
 <g color="${ink}">${place(frame.svg, "frame", 0, 0, width, height)}</g>
 <g color="${ink}">${place(garland.svg, "garland", (width - garlandWidth) / 2, top - 12, garlandWidth, garlandWidth / 4)}</g>
@@ -75,7 +75,7 @@ const plainDiagrams = [
   {
     name: "backend-runtime-surfaces",
     label:
-      "Backend runtime surfaces: clients reach the Website Worker, which forwards to the Coffee Worker; MCP, REST, Domain Apis, Yielded Auth and Yielded Sync surfaces run over the CoffeeShop model, order feeds and D1.",
+      "Backend runtime surfaces: clients reach the Website Worker, which forwards to the Coffee Worker; MCP, REST, Domain Apis and Yielded Auth surfaces run over the CoffeeShop model and D1.",
   },
   {
     name: "package-layers",

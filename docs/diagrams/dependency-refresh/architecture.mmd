@@ -6,5 +6,4 @@ flowchart TB
   Worker --> Auth["Yielded Auth beta.47<br/>Passkeys + sessions + OAuth"]
   Auth --> D1["D1<br/>Auth persistence"]
   Domain --> State["Orders + carts<br/>Checkout sessions + views"]
-  Domain -->|Order events| Sync["Yielded Sync feeds<br/>Customer + staff"]
-  Sync -->|Live order updates| UI
+  Domain -->|Live order views| UI
