@@ -9,11 +9,14 @@
     "lint:fix": "effect-tsgo --tsrs-lint oxlint -c ../../packages/tooling/oxlint.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:rivet": "COFFEE_TEST_HOST=rivet vitest run"
   },
   "dependencies": {
     "@alchemy.run/cloudflare": "catalog:",
+    "@alchemy.run/docker": "catalog:",
     "@alchemy.run/domain": "catalog:",
+    "@alchemy.run/rivet": "catalog:",
     "@effect-coffee-shop/coffee-server": "workspace:*",
     "alchemy": "catalog:",
     "effect": "catalog:"

@@ -1,7 +1,9 @@
 # Coffee Server
 
-The Coffee Worker: provides the `coffee-domain` model through `src/CoffeeShopLive.ts`, the one
-Layer that picks its host (Cloudflare Durable Objects today), and serves every backend path.
+The Coffee Worker: serves every backend path over the `coffee-domain` model, wherever it is hosted.
+The host is one Layer: `src/CoffeeShopLive.ts` (Cloudflare Durable Objects) or
+`src/CoffeeShopRivet.ts` (Rivet), and `src/CoffeeWorker.ts` and `src/CoffeeWorkerRivet.ts` are the
+same Worker (`src/CoffeeServer.ts`) over each.
 
 | Path                                        | Served by                                                    |
 | ------------------------------------------- | ------------------------------------------------------------ |
@@ -11,4 +13,4 @@ Layer that picks its host (Cloudflare Durable Objects today), and serves every b
 | `/api/health`, `/api/menu`, `/api/me`       | REST                                                         |
 | `/mcp`                                      | MCP tools, generated from Apis                               |
 
-`src/CoffeeWorker.ts` is the entry point. Tests run the same layer on `Domain.InMemory`.
+Tests run the same model on `Domain.InMemory`.

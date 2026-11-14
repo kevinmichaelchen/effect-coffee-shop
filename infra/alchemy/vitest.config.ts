@@ -26,7 +26,12 @@ export default defineConfig({
   test: {
     env: localOnlyCloudflareEnv,
     environment: "node",
-    include: ["cloudflare.test.ts"],
+    include: ["stack.test.ts"],
+    // Alchemy publishes `alchemy/Runtime/Bootstrap` only as TypeScript, for
+    // bundling into Rivet and Docker node images. `@alchemy.run/rivet` imports
+    // it on load, and Node will not strip types under node_modules, so Vite
+    // transforms every Alchemy package instead of leaving them to Node.
+    server: { deps: { inline: [/@alchemy\.run[\\/]/, /[\\/]alchemy[\\/]/] } },
     testTimeout: 300_000,
   },
 });

@@ -1,0 +1,26 @@
+diff --git a/lib/Docker/SwarmControlPlane.d.ts b/lib/Docker/SwarmControlPlane.d.ts
+index e8626cb..8b3d4cd 100644
+--- a/lib/Docker/SwarmControlPlane.d.ts
++++ b/lib/Docker/SwarmControlPlane.d.ts
+@@ -20,7 +20,7 @@ export interface SwarmControlPlaneProps {
+      * `Docker.Swarm` (which orders the control plane after the swarm).
+      * @default the current Docker context
+      */
+-    context?: Docker.Docker.EngineRef;
++    context?: Docker.Docker.EngineRef | Docker.Swarm;
+ }
+ /**
+  * A single-instance Rivet control plane on a Docker swarm, as a
+diff --git a/src/Docker/SwarmControlPlane.ts b/src/Docker/SwarmControlPlane.ts
+index edd6e5a..3a93572 100644
+--- a/src/Docker/SwarmControlPlane.ts
++++ b/src/Docker/SwarmControlPlane.ts
+@@ -27,7 +27,7 @@ export interface SwarmControlPlaneProps {
+    * `Docker.Swarm` (which orders the control plane after the swarm).
+    * @default the current Docker context
+    */
+-  context?: Docker.Docker.EngineRef;
++  context?: Docker.Docker.EngineRef | Docker.Swarm;
+ }
+ 
+ /**
