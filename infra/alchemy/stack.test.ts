@@ -133,7 +133,7 @@ const forwardToWorker = (api: string, request: Request) =>
   }).pipe(Effect.provide(FetchHttpClient.layer), Effect.orDie);
 
 /** Register and sign in a passkey user against the deployed Worker, as the browser would. */
-const signedInCustomer = Effect.fnUntraced(function* (api: string) {
+const signedInCustomer = Effect.fnUntraced(function* (api: string, displayName: string) {
   // The Worker trusts APP_ORIGIN (see vitest.config.ts); requests go to its own URL.
   const appOrigin = "http://localhost:5173";
   const services = yield* Effect.context();
@@ -147,7 +147,7 @@ const signedInCustomer = Effect.fnUntraced(function* (api: string) {
     Effect.promise(async () => client.send(path, body));
   const { value: registration } = yield* send("/register", {
     ...flow(),
-    registration: { displayName: "Sam" },
+    registration: { displayName },
   }).pipe(Effect.flatMap(decodeJsonResponse(Started(Passkey.PasskeyRegistrationStarted))));
   const authenticator = yield* makeTestPasskey(appOrigin, registration.options.user.id);
   const registered = yield* send("/completeRegistration", {
@@ -161,10 +161,15 @@ const signedInCustomer = Effect.fnUntraced(function* (api: string) {
     flowId: login.flowId,
     response: encodeJson(yield* authenticator.authenticate(login.options.challenge, 1)),
   });
+  const cookie = client.request().headers.get("cookie") ?? "";
+  const viewer = yield* HttpClient.get(new URL("/api/me", api), { headers: { cookie } }).pipe(
+    Effect.flatMap(HttpClientResponse.schemaBodyJson(Viewer)),
+  );
   return {
     statuses: [registered.status, signedIn.status],
     appOrigin,
-    cookie: client.request().headers.get("cookie") ?? "",
+    cookie,
+    viewer,
   };
 }, Effect.orDie);
 
@@ -229,11 +234,9 @@ test(
   "fulfills a signed-in customer's checkout through a Durable Object workflow",
   Effect.gen(function* () {
     const api = yield* Effect.fromNullishOr((yield* deployed).api);
-    const session = yield* signedInCustomer(api);
+    const session = yield* signedInCustomer(api, "Sam");
     expect(session.statuses).toEqual([200, 200]);
-    const me = yield* HttpClient.get(new URL("/api/me", api), {
-      headers: { cookie: session.cookie },
-    }).pipe(Effect.flatMap(HttpClientResponse.schemaBodyJson(Viewer)));
+    const me = session.viewer;
     expect(me).toMatchObject({ kind: "customer", displayName: "Sam" });
 
     const { orderId, confirmed, mine } = yield* orderThroughCustomerApi(api, session, me.userId);
@@ -245,6 +248,153 @@ test(
     const denied = yield* liveQueue(api, session).pipe(Effect.timeout("15 seconds"), Effect.flip);
     expect(denied).toMatchObject({ _tag: "StaffOnly" });
   }),
+);
+
+/**
+ * A freshly registered customer signed in through the Worker, and their own
+ * CustomerApi client on the browser protocol. The client lives as long as the
+ * caller's scope.
+ */
+const newCustomer = Effect.fnUntraced(function* () {
+  const api = yield* Effect.fromNullishOr((yield* deployed).api);
+  const session = yield* signedInCustomer(api, "Sam");
+  const coffee = yield* CustomerApi.client.pipe(
+    Effect.provide(browserProtocol(new URL("/api/customer", api).toString(), session)),
+  );
+  return { coffee, session, userId: session.viewer.userId };
+});
+
+test(
+  "leaves no events behind when a command is rejected",
+  Effect.scoped(
+    Effect.gen(function* () {
+      const { coffee, userId } = yield* newCustomer();
+      const emptyCart = yield* coffee
+        .PrepareCheckout(userId, { checkoutId: yield* makeCheckoutId })
+        .pipe(Effect.flip);
+      expect(emptyCart).toMatchObject({
+        _tag: "InvalidOrder",
+        message: "cart must include at least one item",
+      });
+      const unknownCheckout = yield* coffee
+        .ConfirmCheckout(userId, {
+          checkoutId: yield* makeCheckoutId,
+          orderId: yield* makeOrderId,
+        })
+        .pipe(Effect.flip);
+      expect(unknownCheckout).toMatchObject({ _tag: "CheckoutNotFound" });
+      const missingLine = yield* coffee
+        .RemoveCartItem(userId, { cartItemId: yield* makeCartItemId })
+        .pipe(Effect.flip);
+      expect(missingLine).toMatchObject({ _tag: "CartItemNotFound" });
+
+      const added = yield* coffee.AddCartItem(userId, {
+        cartItemId: yield* makeCartItemId,
+        item: { drinkId: "latte", size: "medium", milk: "oat" },
+      });
+      // The cart's first committed event is also version 1: none of the three
+      // rejections left an event, a receipt or a half-open transaction behind.
+      expect(added).toMatchObject({ stream: `Cart/${userId}`, version: 1 });
+
+      const history = yield* coffee.CustomerCart.list(userId, {
+        atLeast: { stream: added.stream, version: added.version },
+      });
+      expect(history.entries.map((entry) => [entry.envelope.seq, entry.event._tag])).toEqual([
+        [1, "CartItemAdded"],
+      ]);
+    }),
+  ),
+);
+
+test(
+  "places the order once when a confirmation is retried",
+  Effect.scoped(
+    Effect.gen(function* () {
+      const { coffee, userId } = yield* newCustomer();
+      const orderId = yield* makeOrderId;
+      const checkoutId = yield* makeCheckoutId;
+      yield* coffee.AddCartItem(userId, {
+        cartItemId: yield* makeCartItemId,
+        item: { drinkId: "latte", size: "medium", milk: "oat" },
+      });
+      yield* coffee.PrepareCheckout(userId, { checkoutId });
+
+      // A client that timed out retries: both deliveries carry the same command id.
+      const commandId = `confirm-${checkoutId}`;
+      const [first, retried] = yield* Effect.all(
+        [
+          coffee.ConfirmCheckout(userId, { checkoutId, orderId }, { commandId }),
+          coffee.ConfirmCheckout(userId, { checkoutId, orderId }, { commandId }),
+        ],
+        { concurrency: 2 },
+      );
+      expect(retried).toEqual(first);
+
+      const placed = yield* coffee.CustomerOrders.get(userId).pipe(
+        Effect.repeat({
+          until: (view) => view?.orders.length === 1,
+          schedule: Schedule.spaced("100 millis"),
+        }),
+        Effect.timeout("20 seconds"),
+      );
+      expect(placed?.orders.map((order) => order.id)).toEqual([orderId]);
+
+      // A second checkout confirmed for the same order starts the saga again
+      // with the same key, which reuses the run that already placed it.
+      yield* coffee.AddCartItem(userId, {
+        cartItemId: yield* makeCartItemId,
+        item: { drinkId: "tea", size: "small" },
+      });
+      const secondCheckout = yield* makeCheckoutId;
+      yield* coffee.PrepareCheckout(userId, { checkoutId: secondCheckout });
+      const reconfirmed = yield* coffee.ConfirmCheckout(userId, {
+        checkoutId: secondCheckout,
+        orderId,
+      });
+      expect(reconfirmed.reply.orderId).toEqual(orderId);
+
+      const summary = yield* coffee.OrderSummary.list(orderId).pipe(
+        Effect.repeat({ schedule: Schedule.spaced("250 millis"), times: 4 }),
+      );
+      expect(summary.entries.map((entry) => entry.event._tag)).toEqual(["OrderPlaced"]);
+    }),
+  ),
+);
+
+test(
+  "catches a view up in the order its events were committed",
+  Effect.scoped(
+    Effect.gen(function* () {
+      const { coffee, userId } = yield* newCustomer();
+      const cartItemId = yield* makeCartItemId;
+      const [entries] = yield* Effect.all(
+        [
+          coffee.CustomerCart.events(userId).pipe(
+            Stream.filter(Domain.Read.isEvent),
+            Stream.take(3),
+            Stream.runCollect,
+            Effect.map(Arr.fromIterable),
+          ),
+          Effect.gen(function* () {
+            yield* coffee.AddCartItem(userId, {
+              cartItemId,
+              item: { drinkId: "latte", size: "medium", milk: "oat" },
+            });
+            yield* coffee.UpdateCartItem(userId, { cartItemId, changes: { quantity: 2 } });
+            yield* coffee.RemoveCartItem(userId, { cartItemId });
+          }),
+        ],
+        { concurrency: 2 },
+      );
+      expect(
+        entries.map((entry) => [entry.envelope.seq, entry.event._tag, entry.state?.lines.length]),
+      ).toEqual([
+        [1, "CartItemAdded", 1],
+        [2, "CartItemUpdated", 1],
+        [3, "CartItemRemoved", 0],
+      ]);
+    }),
+  ),
 );
 
 /** The customer's orders as the app watches them: pushed over a WebSocket until one arrives. */
