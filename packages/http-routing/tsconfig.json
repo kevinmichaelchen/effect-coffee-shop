@@ -16,12 +16,7 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "allowedUnstableApis": [
-          "@effect/vitest",
-          "effect/crypto",
-          "effect/http",
-          "effect/observability"
-        ]
+        "allowedUnstableApis": ["effect/crypto"]
       }
     ]
   },

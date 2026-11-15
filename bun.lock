@@ -277,13 +277,11 @@
       },
       "devDependencies": {
         "@effect/tsgo": "catalog:",
-        "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
         "@types/node": "catalog:",
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "tsrs": "catalog:",
-        "vitest": "catalog:",
       },
     },
     "packages/tooling": {

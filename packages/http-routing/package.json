@@ -5,18 +5,14 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./router": "./src/router.ts",
-    "./logging": "./src/logging.ts",
-    "./route": "./src/route.ts",
-    "./observability": "./src/observability.ts"
+    "./logging": "./src/logging.ts"
   },
   "scripts": {
     "typecheck": "tsrs --noEmit",
     "lint": "effect-tsgo --tsrs-lint oxlint -c ../tooling/oxlint.config.ts --disable-nested-config .",
     "lint:fix": "effect-tsgo --tsrs-lint oxlint -c ../tooling/oxlint.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",
-    "fmt:check": "oxfmt --check .",
-    "test": "vitest run --fsModuleCache=false"
+    "fmt:check": "oxfmt --check ."
   },
   "dependencies": {
     "effect": "catalog:",
@@ -24,12 +20,10 @@
   },
   "devDependencies": {
     "@effect/tsgo": "catalog:",
-    "@effect/vitest": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
-    "tsrs": "catalog:",
-    "vitest": "catalog:"
+    "tsrs": "catalog:"
   }
 }
