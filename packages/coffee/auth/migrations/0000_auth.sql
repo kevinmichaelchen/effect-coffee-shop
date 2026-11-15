@@ -105,6 +105,5 @@ CREATE TABLE yielded_oauth_client_assertion (
 
 CREATE TABLE coffee_auth_rate_limits (
   id TEXT PRIMARY KEY,
-  value TEXT NOT NULL,
-  expires_at INTEGER NOT NULL
+  value TEXT NOT NULL
 );

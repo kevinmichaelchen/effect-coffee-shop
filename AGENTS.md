@@ -9,8 +9,10 @@ Never use raw WebSearch and WebFetch without first trying another tool, such as:
 
 How we work:
 
-- This is a toy prototype with no users. Delete code freely, rewrite
-  migrations, and choose the clean design over compatibility shims.
+- This is a toy prototype with no users. Delete code freely and choose the
+  clean design over compatibility shims. Migrations are the exception: the live
+  stage's D1 has applied them, and Alchemy refuses an edited history, so add a
+  forward migration instead of editing an applied one.
 - Ship straight to `main` in small, well-described commits; open a pull request
   only when asked.
 - Write as little documentation as possible. Code explains itself; a README is
