@@ -10,11 +10,10 @@
   },
   "scripts": {
     "dev": "vite",
-    "test": "vitest run",
+    "test": "vitest run --fsModuleCache=false",
     "test:watch": "vitest",
     "typecheck": "tsrs --noEmit -p tsconfig.app.json && tsrs --noEmit -p tsconfig.node.json",
     "build": "vite build",
-    "check": "bun run typecheck && bun run lint && bun run fmt:check && bun run test && bun run build",
     "lint": "effect-tsgo --tsrs-lint oxlint -c ../../packages/tooling/oxlint.ui.config.ts --disable-nested-config .",
     "lint:fix": "effect-tsgo --tsrs-lint oxlint -c ../../packages/tooling/oxlint.ui.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",

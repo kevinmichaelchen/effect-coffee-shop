@@ -12,7 +12,7 @@
     "lint:fix": "effect-tsgo --tsrs-lint oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --fsModuleCache=false"
   },
   "dependencies": {
     "@alchemy.run/cloudflare": "catalog:",

@@ -1,43 +1,47 @@
 #:schema https://www.schemastore.org/prek.json
 
+# Every check runs here; there is no GitHub CI.
 default_install_hook_types = ["pre-commit", "pre-push"]
+
+[[repos]]
+repo = "builtin"
+hooks = [
+  { id = "detect-private-key" },
+  { id = "check-merge-conflict" },
+  { id = "check-added-large-files" },
+]
 
 [[repos]]
 repo = "local"
 
 [[repos.hooks]]
-id = "fmt-check"
-name = "oxfmt check"
-entry = "bun run fmt:check"
+# One Turbo graph, so the tasks run in parallel and share its cache.
+id = "static"
+name = "format, lint and typecheck"
+entry = "bunx turbo run typecheck lint fmt:check //#fmt:check:root"
 language = "system"
 always_run = true
 pass_filenames = false
 stages = ["pre-commit"]
 
 [[repos.hooks]]
-id = "oxlint"
-name = "oxlint"
-entry = "bun run lint"
-language = "system"
-always_run = true
-pass_filenames = false
-stages = ["pre-commit"]
-
-[[repos.hooks]]
-id = "typecheck"
-name = "typecheck"
-entry = "bun run typecheck"
-language = "system"
-always_run = true
-pass_filenames = false
-stages = ["pre-commit"]
-
-[[repos.hooks]]
-# Workspace tests/builds are affected-scoped; Fallow (default and production passes) scans the full graph.
+# check:affected compares the pushed range (PRE_COMMIT_FROM_REF..TO_REF), not
+# the local main, so pushing straight to main still runs the affected tests.
 id = "check-affected"
 name = "affected checks and full codebase audits"
 entry = "bun run check:affected"
 language = "system"
 always_run = true
+pass_filenames = false
+stages = ["pre-push"]
+
+[[repos.hooks]]
+# The Rivet stack test takes about 100s, so it runs only when Rivet code
+# changes, and only when Docker is up.
+id = "rivet-host"
+name = "stack test on the Rivet host"
+entry = "sh -c 'docker info >/dev/null 2>&1 || { echo \"Docker is not running; skipped.\"; exit 0; }; bun run rivet:test'"
+language = "system"
+files = '^(packages/coffee/server/src/hosts/(model/RivetDocker|CoffeeWorkerRivet)\.ts|infra/alchemy/(rivet|stack(\.test)?)\.ts|patches/@alchemy\.run%2Frivet@)'
 pass_filenames = false
 stages = ["pre-push"]

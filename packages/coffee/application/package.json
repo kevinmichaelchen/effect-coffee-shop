@@ -16,8 +16,7 @@
     "lint": "effect-tsgo --tsrs-lint oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config .",
     "lint:fix": "effect-tsgo --tsrs-lint oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",
-    "fmt:check": "oxfmt --check .",
-    "test": "vitest run --passWithNoTests"
+    "fmt:check": "oxfmt --check ."
   },
   "dependencies": {
     "@effect-coffee-shop/coffee-domain": "workspace:*",

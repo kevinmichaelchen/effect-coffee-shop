@@ -44,11 +44,23 @@
       "outputLogs": "new-only"
     },
     "test": {
-      "description": "Run workspace test suites.",
+      "description": "Run workspace test suites. Each runs Vitest with --fsModuleCache=false: the runs Turbo starts in parallel would share one module cache and race.",
       "dependsOn": ["typecheck"],
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
       "outputs": [],
       "outputLogs": "new-only"
+    },
+    "test:rivet": {
+      "description": "Run the stack test with the model hosted on Rivet in local Docker.",
+      "dependsOn": ["typecheck"],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
+    "test:watch": {
+      "description": "Re-run Vitest on change.",
+      "cache": false,
+      "persistent": true
     },
     "dev": {
       "description": "Run long-lived local development servers.",
@@ -59,9 +71,23 @@
     "//#fmt:check:root": {
       "inputs": ["package.json", ".fallowrc.jsonc", "turbo.json"],
       "outputs": []
+    },
+    "//#fmt:root": {
+      "cache": false
+    },
+    "//#fallow": {
+      "description": "Audit architecture, dead code and health across the whole graph.",
+      "inputs": ["$TURBO_DEFAULT$", "!**/README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
     }
   },
-  "globalDependencies": ["bunfig.toml", ".node-version", "packages/tooling/oxlint*.ts"],
+  "globalDependencies": [
+    "bunfig.toml",
+    ".node-version",
+    "packages/tooling/oxlint*.ts",
+    "patches/*.patch"
+  ],
   "remoteCache": {
     "signature": true
   }

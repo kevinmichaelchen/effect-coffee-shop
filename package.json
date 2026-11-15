@@ -1,6 +1,5 @@
 {
   "name": "effect-coffee-shop",
-  "version": "0.1.0",
   "private": true,
   "workspaces": {
     "packages": [
@@ -76,7 +75,7 @@
     "cf:destroy": "alchemy destroy ./infra/alchemy/cloudflare.ts",
     "cf:test": "turbo run test --filter=@effect-coffee-shop/infra-alchemy",
     "rivet:dev": "alchemy dev ./infra/alchemy/rivet.ts",
-    "rivet:test": "bun run --cwd infra/alchemy test:rivet",
+    "rivet:test": "turbo run test:rivet --filter=@effect-coffee-shop/infra-alchemy",
     "cf:state:tree": "alchemy state list --recursive --config ./infra/alchemy/cloudflare.ts",
     "cf:state:list": "alchemy state list --config ./infra/alchemy/cloudflare.ts",
     "infra:plan": "alchemy plan ./infra/alchemy/alchemy.run.ts",
@@ -88,12 +87,12 @@
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
-    "fmt": "turbo run fmt && bun run fmt:root",
+    "fmt": "turbo run fmt //#fmt:root",
     "fmt:check": "turbo run fmt:check //#fmt:check:root",
     "build": "turbo run build",
     "build:affected": "turbo run build --affected",
-    "check": "bun run typecheck && bun run lint && bun run fmt:check && bun run test && bun run build && bun run fallow",
-    "check:affected": "turbo run typecheck lint fmt:check test build --affected && turbo run //#fmt:check:root && bun run fallow",
+    "check": "turbo run typecheck lint fmt:check test build //#fmt:check:root //#fallow",
+    "check:affected": "TURBO_SCM_BASE=${PRE_COMMIT_FROM_REF:-origin/main} TURBO_SCM_HEAD=${PRE_COMMIT_TO_REF:-HEAD} turbo run typecheck lint fmt:check test build //#fmt:check:root //#fallow --affected",
     "test": "turbo run test",
     "test:affected": "turbo run test --affected",
     "typecheck:affected": "turbo run typecheck --affected",

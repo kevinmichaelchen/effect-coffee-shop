@@ -77,9 +77,15 @@ Design principles:
   host's Layer.
 
 Checks run locally in prek git hooks (`prek.toml`): format, lint and typecheck
-on commit, and `check:affected` on push. There is no GitHub CI; do not add a
+on commit; on push, `check:affected` for the pushed commits, plus the Rivet
+stack test when Rivet code changed. There is no GitHub CI; do not add a
 workflow that runs checks. Keep every test fast and local, on in-memory or local
-adapters such as `Domain.InMemory` and Alchemy's local runtime.
+adapters such as `Domain.InMemory` and Alchemy's local runtime. Before building
+a helper, script or config around Turbo, Vitest or prek, check their docs
+(mirrored with the `crawl-docs` skill) for a built-in feature.
+
+After a significant architecture or feature change lands on `main`, cut a
+release with `.agents/skills/release/SKILL.md`.
 
 Dependency patches live in `patches/`. After upgrading any patched package, run
 `bun run patches:check` and delete patches it reports as unused or no longer

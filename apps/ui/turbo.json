@@ -1,8 +1,0 @@
-{
-  "extends": ["//"],
-  "tasks": {
-    "dev": {
-      "with": ["@effect-coffee-shop/backend#dev"]
-    }
-  }
-}

@@ -9,8 +9,8 @@
     "lint:fix": "effect-tsgo --tsrs-lint oxlint -c ../../packages/tooling/oxlint.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
-    "test": "vitest run",
-    "test:rivet": "COFFEE_TEST_HOST=rivet vitest run"
+    "test": "vitest run --fsModuleCache=false",
+    "test:rivet": "COFFEE_TEST_HOST=rivet vitest run --fsModuleCache=false"
   },
   "dependencies": {
     "@alchemy.run/cloudflare": "catalog:",
