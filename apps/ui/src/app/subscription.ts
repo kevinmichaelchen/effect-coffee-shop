@@ -1,3 +1,4 @@
+import type * as Domain from "@alchemy.run/domain";
 import type { CoffeeOrder } from "@effect-coffee-shop/coffee-domain/Order/CoffeeOrder";
 import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.id";
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
@@ -11,8 +12,7 @@ import {
   Match,
   Option,
   Order,
-  Queue,
-  Schedule,
+  Ref,
   Schema,
   Stream,
 } from "effect";
@@ -73,25 +73,56 @@ const watch = (feed: Feed) =>
 const connect = (connection: Connection) =>
   watch(connection.feed).pipe(Stream.map(({ state }) => loaded(connection, state?.orders ?? [])));
 
-const backoff = Schedule.exponential("250 millis").pipe(
-  Schedule.modifyDelay(({ duration }) =>
-    Effect.succeed(Duration.min(duration, Duration.seconds(5))),
-  ),
-);
+/** A live list's pause before its next attempt: 250 ms, doubling, at most 5 s. */
+const pauseAfter = (failures: number) =>
+  Duration.min(Duration.millis(250 * 2 ** failures), Duration.seconds(5));
 
-/** Live orders, reconnected after every drop with a growing pause. */
-const observe = (connection: Connection) =>
-  Stream.unwrap(
-    Effect.gen(function* () {
-      const drops = yield* Queue.unbounded<Message>();
-      // Emitting the message outside the retried stream keeps the backoff from resetting.
-      const orders = connect(connection).pipe(
-        Stream.tapError(() => Queue.offer(drops, failed(connection))),
-        Stream.retry(backoff),
-      );
-      return Stream.merge(Stream.fromQueue(drops), orders);
-    }),
-  ).pipe(Stream.orDie);
+/**
+ * Live orders, reconnected after every drop with a growing pause. The
+ * disconnect Message is emitted inside the attempt, so it can never arrive
+ * after the snapshot that replaced it, and a read that delivered its state
+ * starts the pause over.
+ */
+const liveOrders = (
+  connection: Connection,
+): Stream.Stream<
+  Message,
+  never,
+  Domain.Api.ClientKey<"CustomerApi"> | Domain.Api.ClientKey<"StaffApi">
+> => {
+  const attempt = (
+    failures: number,
+  ): Stream.Stream<
+    Message,
+    never,
+    Domain.Api.ClientKey<"CustomerApi"> | Domain.Api.ClientKey<"StaffApi">
+  > =>
+    Stream.unwrap(
+      Effect.map(Ref.make(false), (delivered) =>
+        connect(connection).pipe(
+          Stream.tap(() => Ref.set(delivered, true)),
+          Stream.catchIf(
+            () => true,
+            () =>
+              Stream.unwrap(
+                Effect.map(Ref.get(delivered), (did) =>
+                  Stream.make(failed(connection)).pipe(
+                    Stream.concat(
+                      Stream.fromEffectDrain(Effect.sleep(pauseAfter(did ? 0 : failures))),
+                    ),
+                    Stream.concat(attempt(did ? 0 : failures + 1)),
+                  ),
+                ),
+              ),
+            // Unreachable: the predicate keeps every failure. It tells the type
+            // checker this stream never fails, so callers need no error arm.
+            () => Stream.empty,
+          ),
+        ),
+      ),
+    );
+  return attempt(0);
+};
 
 export const subscriptions = Subscription.make<Model, Message, AppServices>()((entry) => ({
   orders: entry(
@@ -99,7 +130,7 @@ export const subscriptions = Subscription.make<Model, Message, AppServices>()((e
     {
       modelToDependencies: (model) => ({ connection: connectionFor(model) }),
       dependenciesToStream: ({ connection }) =>
-        Option.match(connection, { onNone: () => Stream.empty, onSome: observe }),
+        Option.match(connection, { onNone: () => Stream.empty, onSome: liveOrders }),
     },
   ),
   // Listens from the moment the worker exists, so no download progress or crash is missed.
