@@ -48,7 +48,9 @@ const CoffeeMcpServices = McpServer.middleware<{ provides: CoffeeOrderApp | McpA
     const actor = yield* McpActor;
     return (effect) =>
       effect.pipe(
+        // oxlint-disable-next-line anti-slop/no-reprovide-ambient-service -- this middleware exists to hand handlers its `provides` services.
         Effect.provideService(CoffeeOrderApp, app),
+        // oxlint-disable-next-line anti-slop/no-reprovide-ambient-service -- this middleware exists to hand handlers its `provides` services.
         Effect.provideService(McpActor, actor),
       );
   }),

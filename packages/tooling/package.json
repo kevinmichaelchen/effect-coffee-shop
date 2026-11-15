@@ -9,7 +9,8 @@
     "lint:fix": "effect-tsgo --tsrs-lint oxlint -c oxlint.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
-    "test": "vitest run --fsModuleCache=false"
+    "test": "vitest run --fsModuleCache=false",
+    "vendor:check": "bash vendor/check-upstream.sh"
   },
   "devDependencies": {
     "@effect/tsgo": "catalog:",

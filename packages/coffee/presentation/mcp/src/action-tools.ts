@@ -62,6 +62,7 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
         const app = yield* CoffeeOrderApp;
         const actor = yield* McpActor;
         const runWithActor = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+          // oxlint-disable-next-line anti-slop/no-reprovide-ambient-service -- Toolkit handlers must have no requirements, so the layer hands its McpActor to each one.
           effect.pipe(withMcpActor, Effect.provideService(McpActor, actor));
         return {
           get_ordering_context: (_input, context) =>
