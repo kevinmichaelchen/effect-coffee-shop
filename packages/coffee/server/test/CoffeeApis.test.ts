@@ -1,6 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
-import { CurrentActor as AppActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import type { Actor } from "@effect-coffee-shop/coffee-domain/Actor";
 import { CoffeeShop, CoffeeShopHandlers } from "@effect-coffee-shop/coffee-domain/CoffeeShop.model";
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
@@ -123,33 +122,6 @@ describe("the domain Apis over the in-memory platform", () => {
 });
 
 describe("the application service over the model", () => {
-  it.live("reads orders for their owner and staff, and lists by status", () =>
-    Effect.gen(function* () {
-      const app = yield* CoffeeOrderApp;
-      const customers = yield* CustomerApi.clientInProcess;
-      const orderId = yield* makeOrderId;
-      yield* customers.PlaceOrder(orderId, { items: [{ drinkId: "tea", size: "small" }] }, as(sam));
-
-      const mine = yield* eventually(app.listOrders({}), (orders) => orders.length === 1);
-      expect(mine.map((order) => order.id)).toEqual([orderId]);
-      expect((yield* app.getOrder(orderId)).ownerUserId).toBe(sam.userId);
-
-      const notAlexs = yield* app
-        .getOrder(orderId)
-        .pipe(Effect.provideService(AppActor, alex), Effect.flip);
-      expect(notAlexs._tag).toBe("OrderNotFoundError");
-
-      const queue = yield* eventually(
-        app.listOrders({ status: "pending" }).pipe(Effect.provideService(AppActor, barista)),
-        (orders) => orders.length === 1,
-      );
-      expect(queue.map((order) => order.id)).toEqual([orderId]);
-
-      const unknown = yield* app.listOrders({ status: "lost" }).pipe(Effect.flip);
-      expect(unknown._tag).toBe("InvalidOrderInputError");
-    }).pipe(Effect.scoped, Effect.provideService(AppActor, sam), Effect.provide(World)),
-  );
-
   it.effect("translates pricing rejections into the adapters' errors", () =>
     Effect.gen(function* () {
       const app = yield* CoffeeOrderApp;

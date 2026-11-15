@@ -15,6 +15,7 @@ import {
   toMenuView,
 } from "@effect-coffee-shop/coffee-application/contracts";
 import { prettyJson } from "./json.ts";
+import { withOrderReads } from "./order-reads.ts";
 
 export const MenuResource = McpServer.resource({
   uri: "coffee://menu",
@@ -28,37 +29,35 @@ export const MenuResource = McpServer.resource({
   ),
 });
 
-export const OpenOrdersResource = McpServer.resource({
-  uri: "coffee://orders/open",
-  name: "Open Orders",
-  description: "Orders that have not been picked up or cancelled",
-  mimeType: "application/json",
-  content: CoffeeOrderApp.use((app) => app.listOrders({})).pipe(
-    withMcpActor,
-    Effect.map((orders) =>
-      orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
+export const OpenOrdersResource = withOrderReads(({ listOrders }) =>
+  McpServer.resource({
+    uri: "coffee://orders/open",
+    name: "Open Orders",
+    description: "Orders that have not been picked up or cancelled",
+    mimeType: "application/json",
+    content: listOrders.pipe(
+      Effect.map((orders) =>
+        orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
+      ),
+      Effect.map(toCoffeeOrdersView),
+      Effect.map(prettyJson),
     ),
-    Effect.map(toCoffeeOrdersView),
-    Effect.map(prettyJson),
-  ),
-});
+  }),
+);
 
 const orderIdParam = McpSchema.param("orderId", OrderId);
 
-export const OrderResource = McpServer.resource`coffee://orders/${orderIdParam}`({
-  name: "Coffee Order",
-  description: "One coffee order by id",
-  mimeType: "application/json",
-  completion: {
-    orderId: () =>
-      CoffeeOrderApp.use((app) => app.listOrders({})).pipe(
-        withMcpActor,
-        Effect.map((orders) => orders.map((order) => order.id)),
-      ),
-  },
-  content: Effect.fn("CoffeeMcp.orderResource")(function* (_uri, orderId) {
-    const app = yield* CoffeeOrderApp;
-    const order = yield* app.getOrder(orderId).pipe(withMcpActor);
-    return prettyJson(toCoffeeOrderView(order));
+export const OrderResource = withOrderReads(({ getOrder, listOrders }) =>
+  McpServer.resource`coffee://orders/${orderIdParam}`({
+    name: "Coffee Order",
+    description: "One coffee order by id",
+    mimeType: "application/json",
+    completion: {
+      orderId: () => listOrders.pipe(Effect.map((orders) => orders.map((order) => order.id))),
+    },
+    content: Effect.fn("CoffeeMcp.orderResource")(function* (_uri, orderId) {
+      const order = yield* getOrder(orderId);
+      return prettyJson(toCoffeeOrderView(order));
+    }),
   }),
-});
+);

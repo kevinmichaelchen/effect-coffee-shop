@@ -39,9 +39,6 @@ const MilkInput = BoundaryString.annotate({
 const NotesInput = BoundaryString.annotate({
   description: "Optional item note.",
 });
-const OrderStatusInput = BoundaryString.annotate({
-  description: "Optional order status filter such as pending, brewing, ready, or picked-up.",
-});
 const QuantityInputField = QuantityInput.annotate({
   description: "Positive line quantity.",
 });
@@ -80,11 +77,6 @@ export const ItemOptionsRequest = Schema.Struct({
   drinkId: DrinkIdInput,
 }).annotate({ identifier: "ItemOptionsRequest" });
 export type ItemOptionsRequest = typeof ItemOptionsRequest.Type;
-
-export const ListOrdersRequest = Schema.Struct({
-  status: Schema.optionalKey(OrderStatusInput),
-}).annotate({ identifier: "ListOrdersRequest" });
-export type ListOrdersRequest = typeof ListOrdersRequest.Type;
 
 export const ItemOptions = Schema.Struct({
   item: MenuItem,

@@ -10,6 +10,7 @@ import * as McpServer from "effect/ai/McpServer";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { toCoffeeOrdersView, toMenuView } from "@effect-coffee-shop/coffee-application/contracts";
 import { prettyJson } from "./json.ts";
+import { withOrderReads } from "./order-reads.ts";
 
 export const RecommendDrinkPrompt = McpServer.prompt({
   name: "recommend-drink",
@@ -27,24 +28,24 @@ export const RecommendDrinkPrompt = McpServer.prompt({
   }),
 });
 
-export const SummarizeOpenOrdersPrompt = McpServer.prompt({
-  name: "summarize-open-orders",
-  description: "Summarize the current open order queue",
-  parameters: {
-    focus: Schema.String,
-  },
-  completion: {
-    focus: () => Effect.succeed(["kitchen", "pickup", "operations"]),
-  },
-  content: Effect.fn("CoffeeMcp.summarizeOpenOrdersPrompt")(function* ({ focus }) {
-    const app = yield* CoffeeOrderApp;
-    const openOrders = yield* app.listOrders({}).pipe(
-      withMcpActor,
-      Effect.map((orders) =>
-        orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
-      ),
-      Effect.map(toCoffeeOrdersView),
-    );
-    return `Summarize the open order queue for ${focus}:\n${prettyJson(openOrders)}`;
+export const SummarizeOpenOrdersPrompt = withOrderReads(({ listOrders }) =>
+  McpServer.prompt({
+    name: "summarize-open-orders",
+    description: "Summarize the current open order queue",
+    parameters: {
+      focus: Schema.String,
+    },
+    completion: {
+      focus: () => Effect.succeed(["kitchen", "pickup", "operations"]),
+    },
+    content: Effect.fn("CoffeeMcp.summarizeOpenOrdersPrompt")(function* ({ focus }) {
+      const openOrders = yield* listOrders.pipe(
+        Effect.map((orders) =>
+          orders.filter((order) => order.status !== "picked-up" && order.status !== "cancelled"),
+        ),
+        Effect.map(toCoffeeOrdersView),
+      );
+      return `Summarize the open order queue for ${focus}:\n${prettyJson(openOrders)}`;
+    }),
   }),
-});
+);

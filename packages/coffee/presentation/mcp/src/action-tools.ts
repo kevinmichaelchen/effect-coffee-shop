@@ -78,7 +78,7 @@ export const CoffeeActionToolsLive = McpServer.toolkit(CoffeeActionToolkit).pipe
               .pipe(Effect.map(toItemOptionsView), annotateToolCall(context), runWithActor),
           validate_order: (input, context) =>
             app
-              .validateOrder(input)
+              .quoteOrder(input)
               .pipe(Effect.map(toOrderValidationView), annotateToolCall(context), runWithActor),
           quote_order: (input, context) =>
             app
