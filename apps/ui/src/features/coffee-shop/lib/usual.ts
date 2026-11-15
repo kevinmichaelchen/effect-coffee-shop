@@ -1,4 +1,4 @@
-import { Array as Arr, Option } from "effect";
+import { Array, Option } from "effect";
 import { normalizeDraftForItem } from "./coffee.ts";
 import type { MenuItem, OrderDraft, OrderTicket } from "./coffee-schemas.ts";
 
@@ -61,14 +61,14 @@ export function usualDraft(
   orders: readonly OrderTicket[],
   menu: readonly MenuItem[],
 ): Option.Option<OrderDraft> {
-  const tallies = Arr.reduce(
-    Arr.filter(orders, (order) => order.status !== "cancelled"),
+  const tallies = Array.reduce(
+    Array.filter(orders, (order) => order.status !== "cancelled"),
     new Map<string, Tally>(),
     addOrder,
   );
 
-  const favourite = Arr.reduce(
-    Arr.filter(Arr.fromIterable(tallies.values()), (tally) => tally.count >= minimumCount),
+  const favourite = Array.reduce(
+    Array.filter(Array.fromIterable(tallies.values()), (tally) => tally.count >= minimumCount),
     Option.none<Tally>(),
     (best, tally) =>
       Option.some(
@@ -81,7 +81,7 @@ export function usualDraft(
 
   return Option.flatMap(favourite, (tally) =>
     Option.map(
-      Arr.findFirst(menu, (item) => item.id === tally.drink.drinkId),
+      Array.findFirst(menu, (item) => item.id === tally.drink.drinkId),
       (item) => draftFor(tally, item),
     ),
   );

@@ -6,24 +6,33 @@ import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
+import { SecureRandom } from "effect/crypto";
 
 const AuthClient = Client.make(CoffeeAuthApi, { baseUrl: window.location.origin });
-const runtime = ManagedRuntime.make(Layer.merge(AuthClient.layerFetch, passkeyBrowserLayer));
+const runtime = ManagedRuntime.make(
+  Layer.mergeAll(AuthClient.layerFetch, passkeyBrowserLayer, SecureRandom.layerWebCrypto),
+);
 
 class AuthenticationIncomplete extends Schema.TaggedError<
   AuthenticationIncomplete,
   { readonly brand: unique symbol }
 >()("AuthenticationIncomplete", {}) {}
 
-const flow = () => ({
-  flowId: crypto.randomUUID(),
-  commandId: crypto.randomUUID(),
-  profileId: "default",
-});
+const flow = SecureRandom.SecureRandom.use((random) =>
+  Effect.map(
+    Effect.all([random.uuidV4(), random.uuidV4()], { concurrency: 1 }),
+    ([flowId, commandId]) => ({
+      flowId,
+      commandId,
+      profileId: "default",
+    }),
+  ),
+);
 const signIn = Effect.fn("CoffeeAuth.signIn")(function* () {
   const { auth } = yield* AuthClient;
   const browser = yield* PasskeyBrowser;
-  const started = yield* auth.signIn(flow());
+  const ids = yield* flow;
+  const started = yield* auth.signIn(ids);
   const response = yield* browser.authenticate({ started, mediation: "required" });
   yield* auth
     .completeSignIn({ flowId: response.flowId, response: Redacted.value(response.response) })
@@ -39,7 +48,8 @@ const register = Effect.fn("CoffeeAuth.register")(function* (displayName: string
   const registration = yield* Schema.decodeEffect(Registration)({ displayName });
   const { auth } = yield* AuthClient;
   const browser = yield* PasskeyBrowser;
-  const started = yield* auth.register({ ...flow(), registration });
+  const ids = yield* flow;
+  const started = yield* auth.register({ ...ids, registration });
   const response = yield* browser.register(started);
   yield* auth.completeRegistration({
     flowId: response.flowId,

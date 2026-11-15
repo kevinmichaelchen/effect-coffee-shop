@@ -186,12 +186,12 @@ export const LoadLocalModel = Command.define("LoadLocalModel", {
 
 export const AskAssistant = Command.define("AskAssistant", {
   args: { requestId: Schema.Int, request: AssistantRequest },
-  messages: [Message.GotAssistantTurn, Message.FailedAssistantTurn],
+  messages: [Message.ReceivedAssistantTurn, Message.FailedAssistantTurn],
   execute: ({ requestId, request }) => {
     const tools = toolsFor(request);
     return generateReply(messagesFor(request), toolDefinitions(tools)).pipe(
       Effect.map((output) =>
-        Message.GotAssistantTurn({ requestId, turn: decodeTurn(request.page, tools, output) }),
+        Message.ReceivedAssistantTurn({ requestId, turn: decodeTurn(request.page, tools, output) }),
       ),
       recoverWith(({ message }) => Message.FailedAssistantTurn({ requestId, message })),
     );
@@ -200,11 +200,11 @@ export const AskAssistant = Command.define("AskAssistant", {
 
 export const TranscribeRecording = Command.define("TranscribeRecording", {
   args: { recordingId: Schema.Int },
-  messages: [Message.GotTranscript, Message.FailedTranscript],
+  messages: [Message.ReceivedTranscript, Message.FailedTranscript],
   execute: ({ recordingId }) =>
     finishRecording.pipe(
       Effect.flatMap(transcribeSamples),
-      Effect.map((text) => Message.GotTranscript({ recordingId, text })),
+      Effect.map((text) => Message.ReceivedTranscript({ recordingId, text })),
       recoverWith(({ message }) => Message.FailedTranscript({ recordingId, message })),
     ),
 });

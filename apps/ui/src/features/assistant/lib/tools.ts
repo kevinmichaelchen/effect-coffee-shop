@@ -1,4 +1,4 @@
-import { Array as Arr, Option, Schema } from "effect";
+import { Array, Option, Schema } from "effect";
 import {
   DrinkSize,
   MenuItem,
@@ -95,8 +95,8 @@ const tool = <A, I>(
 const count = (description: string) => Schema.Int.annotate({ description });
 
 const shopTools = (menu: readonly MenuItem[]): readonly Tool[] =>
-  Arr.match(
-    Arr.map(menu, (item) => item.id),
+  Array.match(
+    Array.map(menu, (item) => item.id),
     {
       onEmpty: () => [],
       onNonEmpty: (drinkIds) => [
@@ -159,7 +159,7 @@ const staffActions: ReadonlyArray<{
 /** Each action offers only the tickets it is legal for right now. */
 const staffTools = (orders: readonly OrderTicket[]): readonly Tool[] =>
   staffActions.flatMap(({ action, name, description }) =>
-    Arr.match(
+    Array.match(
       orders
         .filter((order) => getOrderActions(order.status).some((option) => option.action === action))
         .map((order) => order.id),
@@ -192,9 +192,9 @@ const fallbacks: Record<AssistantPage, string> = {
 };
 
 const turnFromCall = (tools: readonly Tool[], reply: ParsedReply) =>
-  Arr.head(reply.calls).pipe(
+  Array.head(reply.calls).pipe(
     Option.flatMap((call) =>
-      Arr.findFirst(tools, (entry) => entry.definition.function.name === call.name).pipe(
+      Array.findFirst(tools, (entry) => entry.definition.function.name === call.name).pipe(
         Option.flatMap((entry) => entry.toTurn(call.arguments, reply.text)),
       ),
     ),

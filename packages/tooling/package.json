@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@effect/tsgo": "catalog:",
+    "@foldkit/oxlint-plugin": "catalog:",
     "@mpsuesser/oxlint-plugin-effect": "catalog:",
     "@oxlint/plugins": "catalog:",
     "@types/node": "catalog:",

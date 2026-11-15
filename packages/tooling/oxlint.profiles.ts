@@ -1,5 +1,6 @@
 import effectStyle from "@mpsuesser/oxlint-plugin-effect";
 import { strict as effectTsgo } from "@effect/tsgo/oxlint-presets";
+import foldkit from "@foldkit/oxlint-plugin";
 import { defineConfig, type OxlintConfig } from "oxlint";
 
 // Shared Oxlint policy. Run it through `effect-tsgo --tsrs-lint oxlint`, which
@@ -71,17 +72,21 @@ const shared = defineConfig({
     "effecttsgo/global-console-in-effect": "error",
     "effecttsgo/global-date-in-effect": "error",
     "effecttsgo/global-fetch-in-effect": "error",
+    "effecttsgo/global-json": "error",
+    "effecttsgo/global-json-in-effect": "error",
     "effecttsgo/global-random-in-effect": "error",
     "effecttsgo/global-timers-in-effect": "error",
     "effecttsgo/crypto-random-uuid-in-effect": "error",
     "effecttsgo/process-env-in-effect": "error",
     "effecttsgo/instance-of-schema": "error",
+    "effecttsgo/any-unknown-in-error-context": "error",
+    "effecttsgo/missing-concurrency-option": "error",
     "effecttsgo/missing-effect-service-dependency": "error",
     "effecttsgo/nested-effect-gen-yield": "error",
     "effecttsgo/new-promise": "error",
-    "effecttsgo/prefer-schema-over-json": "error",
     "effecttsgo/prefer-schema-tagged-error": "error",
     "effecttsgo/prefer-schema-type-property": "error",
+    "effecttsgo/schema-sync": "error",
     "effecttsgo/schema-union-of-literals": "error",
     "effecttsgo/service-not-as-class": "error",
     "effecttsgo/unnecessary-arrow-block": "error",
@@ -132,6 +137,9 @@ const shared = defineConfig({
       rules: {
         // Tests and test adapters are their own composition roots.
         "effecttsgo/strict-effect-provide": "off",
+        // Fixtures decode literals and stored JSON synchronously; a failure is
+        // a broken fixture, and an Effect channel would only add noise.
+        "effecttsgo/schema-sync": "off",
         "no-restricted-properties": [
           "error",
           {
@@ -140,6 +148,24 @@ const shared = defineConfig({
           },
         ],
       },
+    },
+    {
+      // Codecs whose callers have no Effect context: request headers, transport
+      // view projections, the module-level menu, money arithmetic, the passkey
+      // SQL port's synchronous callbacks, and `postMessage` all run outside an
+      // Effect. An Effect-based codec would put an error channel on an API
+      // those callers cannot await, so the sync codecs stay here.
+      files: [
+        "**/coffee/domain/src/Money.ts",
+        "**/coffee/domain/src/Menu/Menu.ts",
+        "**/coffee/application/src/contracts.ts",
+        "**/coffee/application/src/ActorHeader.ts",
+        "**/coffee/auth/src/persistence/live.ts",
+        "**/features/assistant/api/assistant-worker.ts",
+        "**/features/assistant/worker/assistant.worker.ts",
+        "**/vitest.config.ts",
+      ],
+      rules: { "effecttsgo/schema-sync": "off" },
     },
   ],
 });
@@ -265,6 +291,7 @@ export const backend: OxlintConfig = {
 // stop using `vi.mock`.
 export const ui: OxlintConfig = {
   ...shared,
+  extends: [...shared.extends, foldkit.configs.recommended],
   jsPlugins: [...effectStyle.configs.recommended.jsPlugins, house],
   rules: {
     ...shared.rules,
@@ -274,6 +301,10 @@ export const ui: OxlintConfig = {
     "effect/no-reflect-get": "error",
     "effect/no-widen-then-assert": "error",
     "effect/require-safety-comment-for-type-assertion": "error",
+    // The root update forwards child messages by constructing them, which this
+    // rule wants replaced by per-child update capabilities; the app's single
+    // update function is a Foldkit decision that predates the rule.
+    "foldkit/no-child-message-construction-in-root": "off",
     // Shipped UI code logs through Effect or not at all; scripts may print.
     "no-console": "error",
     // Stylesheets and polyfills are imported for their side effects.
@@ -282,9 +313,13 @@ export const ui: OxlintConfig = {
   overrides: [
     ...shared.overrides,
     {
-      // Local verification scripts report to the terminal.
+      // Local verification scripts report to the terminal and time their own
+      // awaits; they are not Foldkit decision code.
       files: ["**/scripts/**"],
-      rules: { "no-console": "off" },
+      rules: {
+        "no-console": "off",
+        "foldkit/no-impure-call-at-decision-time": "off",
+      },
     },
   ],
 };

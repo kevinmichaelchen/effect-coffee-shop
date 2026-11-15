@@ -4,7 +4,7 @@ import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
 import { mainShop } from "@effect-coffee-shop/coffee-domain/Shop/Shop.id";
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
 import {
-  Array as Arr,
+  Array,
   DateTime,
   Duration,
   Effect,
@@ -43,7 +43,7 @@ const loaded = (connection: Connection, orders: ReadonlyArray<CoffeeOrder>): Mes
   Message.LoadedOrders({
     feed: connection.feed,
     userId: connection.userId,
-    orders: Arr.sortWith(
+    orders: Array.sortWith(
       orders,
       (order) => DateTime.toEpochMillis(order.createdAt),
       Order.Number,
@@ -122,7 +122,7 @@ export const subscriptions = Subscription.make<Model, Message, AppServices>()((e
               Stream.map((notice) =>
                 notice._tag === "Crashed"
                   ? Message.CrashedAssistantWorker({ message: notice.message })
-                  : Message.GotModelProgress({
+                  : Message.ReportedModelProgress({
                       model: notice.model,
                       loaded: notice.loaded,
                       total: notice.total,

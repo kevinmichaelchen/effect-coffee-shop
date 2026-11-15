@@ -30,6 +30,7 @@
       "@effect/sql-d1": "4.1.4",
       "@effect/tsgo": "0.69.0",
       "@effect/vitest": "4.1.4",
+      "@foldkit/oxlint-plugin": "0.15.4",
       "@foldkit/ui": "0.170.0",
       "@foldkit/vite-plugin": "0.29.0",
       "@huggingface/tokenizers": "0.2.0",
@@ -117,8 +118,8 @@
     "cache:destroy:cloudflare": "varlock run --path infra/turbo-cache/ -- alchemy destroy ./infra/turbo-cache/cloudflare.ts --stage prod",
     "cache:destroy:aws": "varlock run --path infra/turbo-cache/ -- alchemy destroy ./infra/turbo-cache/aws.ts --stage prod",
     "cache:run": "varlock run --path config/turbo-cache/ --",
-    "fmt:root": "oxfmt --write package.json .fallowrc.jsonc turbo.json",
-    "fmt:check:root": "oxfmt --check package.json .fallowrc.jsonc turbo.json",
+    "fmt:root": "oxfmt --write package.json .fallowrc.jsonc turbo.json prek.toml '*.md' 'docs/**/*.md' '.agents/**/*.md'",
+    "fmt:check:root": "oxfmt --check package.json .fallowrc.jsonc turbo.json prek.toml '*.md' 'docs/**/*.md' '.agents/**/*.md'",
     "patches:check": "bun patches/check.ts"
   },
   "devDependencies": {

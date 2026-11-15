@@ -151,7 +151,7 @@ describe("asking", () => {
         expect(next.assistant.isThinking).toBe(true);
         expect(next.assistant.prompt).toBe("a large oat latte");
       }),
-      Command.resolve(AskAssistant, Message.GotAssistantTurn({ requestId: 1, turn: replied })),
+      Command.resolve(AskAssistant, Message.ReceivedAssistantTurn({ requestId: 1, turn: replied })),
       model((next) => {
         expect(next.assistant.isThinking).toBe(false);
         expect(next.assistant.prompt).toBe("");
@@ -176,7 +176,7 @@ describe("assistant turns", () => {
       update,
       given(awaiting),
       message(
-        Message.GotAssistantTurn({
+        Message.ReceivedAssistantTurn({
           requestId: 1,
           turn: AssistantTurn.cases.UpdatedDraft.make({
             patch: { drinkId: "latte", milk: "oat", extraShots: 1 },
@@ -206,7 +206,7 @@ describe("assistant turns", () => {
     story(
       update,
       given(awaiting),
-      message(Message.GotAssistantTurn({ requestId: 1, turn: proposed })),
+      message(Message.ReceivedAssistantTurn({ requestId: 1, turn: proposed })),
       Command.expectNone(),
       model((next) => {
         expect(next.assistant.turn).toEqual(Option.some(proposed));
@@ -223,7 +223,7 @@ describe("voice", () => {
     story(
       update,
       given(transcribing),
-      message(Message.GotTranscript({ recordingId: 1, text: "a latte" })),
+      message(Message.ReceivedTranscript({ recordingId: 1, text: "a latte" })),
       Command.expectExact(AskAssistant),
       model((next) => {
         expect(next.assistant.heard).toEqual(Option.some("a latte"));
@@ -231,7 +231,7 @@ describe("voice", () => {
         expect(next.assistant.recording).toBe("idle");
         expect(next.assistant.isThinking).toBe(true);
       }),
-      Command.resolve(AskAssistant, Message.GotAssistantTurn({ requestId: 1, turn: replied })),
+      Command.resolve(AskAssistant, Message.ReceivedAssistantTurn({ requestId: 1, turn: replied })),
     );
   });
 
@@ -239,7 +239,7 @@ describe("voice", () => {
     story(
       update,
       given(transcribing),
-      message(Message.GotTranscript({ recordingId: 1, text: "  " })),
+      message(Message.ReceivedTranscript({ recordingId: 1, text: "  " })),
       Command.expectNone(),
       model((next) => {
         expect(next.assistant.error).toEqual(Option.some("I didn't catch that. Try again."));
@@ -262,7 +262,7 @@ describe("stale work", () => {
         expect(Option.isNone(next.assistant.pendingRequest)).toBe(true);
       }),
       message(
-        Message.GotAssistantTurn({
+        Message.ReceivedAssistantTurn({
           requestId: 1,
           turn: AssistantTurn.cases.UpdatedDraft.make({ patch: { milk: "oat" }, text: "" }),
         }),
@@ -280,7 +280,7 @@ describe("stale work", () => {
       given(transcribing),
       message(Message.ChangedUrl({ url: url("/staff") })),
       model((next) => expect(next.assistant.recording).toBe("idle")),
-      message(Message.GotTranscript({ recordingId: 1, text: "a latte" })),
+      message(Message.ReceivedTranscript({ recordingId: 1, text: "a latte" })),
       Command.expectNone(),
       model((next) => expect(next.assistant.prompt).toBe("")),
     );
@@ -293,7 +293,7 @@ describe("stale work", () => {
         ...transcribing,
         assistant: { ...transcribing.assistant, pendingRecording: Option.some(2), requestCount: 2 },
       }),
-      message(Message.GotTranscript({ recordingId: 1, text: "cancel everything" })),
+      message(Message.ReceivedTranscript({ recordingId: 1, text: "cancel everything" })),
       Command.expectNone(),
       model((next) => {
         expect(next.assistant.recording).toBe("transcribing");

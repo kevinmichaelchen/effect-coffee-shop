@@ -1,5 +1,10 @@
 import { Tokenizer } from "@huggingface/tokenizers";
+import { Option, Schema } from "effect";
 import type { AudioTranscriberOptions } from "./transcriber";
+
+/** A tokenizer config file: a JSON object whose leaves Tokenizer validates itself. */
+const TokenizerObject = Schema.fromJsonString(Schema.Record(Schema.String, Schema.Json));
+const decodeTokenizerObject = Schema.decodeUnknownOption(TokenizerObject);
 
 const modelBytes = (options: AudioTranscriberOptions) => async (file: string) =>
   options.fetchBytes(`${options.modelBaseUrl.replace(/\/$/, "")}/${file}`, (loaded, total) =>
@@ -31,11 +36,10 @@ export const createSession = async (options: AudioTranscriberOptions, name: stri
 export const loadTokenizer = async (options: AudioTranscriberOptions) => {
   const bytes = modelBytes(options);
   // JSON parsing is confined to the tokenizer adapter; Tokenizer owns its config format.
-  const json = async (file: string): Promise<object> => {
-    const value: unknown = JSON.parse(new TextDecoder().decode(await bytes(file)));
-    if (value === null || typeof value !== "object" || Array.isArray(value))
-      throw new Error(`Invalid tokenizer object: ${file}`);
-    return value;
+  const json = async (file: string): Promise<Record<string, Schema.Json>> => {
+    const decoded = decodeTokenizerObject(new TextDecoder().decode(await bytes(file)));
+    if (Option.isNone(decoded)) throw new Error(`Invalid tokenizer object: ${file}`);
+    return decoded.value;
   };
   const tokenizer = new Tokenizer(
     await json("tokenizer.json"),

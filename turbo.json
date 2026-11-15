@@ -69,7 +69,15 @@
       "interruptible": true
     },
     "//#fmt:check:root": {
-      "inputs": ["package.json", ".fallowrc.jsonc", "turbo.json"],
+      "inputs": [
+        "package.json",
+        ".fallowrc.jsonc",
+        "turbo.json",
+        "prek.toml",
+        "*.md",
+        "docs/**/*.md",
+        ".agents/**/*.md"
+      ],
       "outputs": []
     },
     "//#fmt:root": {

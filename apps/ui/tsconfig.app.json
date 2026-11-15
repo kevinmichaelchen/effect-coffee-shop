@@ -28,7 +28,12 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "allowedUnstableApis": ["effect/http", "effect/socket"]
+        "allowedUnstableApis": [
+          "effect/http",
+          "effect/socket",
+          // Passkey flow ids come from the browser CSPRNG through SecureRandom.
+          "effect/crypto/SecureRandom"
+        ]
       }
     ]
   },

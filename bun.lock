@@ -291,6 +291,7 @@
       "version": "0.1.0",
       "devDependencies": {
         "@effect/tsgo": "catalog:",
+        "@foldkit/oxlint-plugin": "catalog:",
         "@mpsuesser/oxlint-plugin-effect": "catalog:",
         "@oxlint/plugins": "catalog:",
         "@types/node": "catalog:",
@@ -366,6 +367,7 @@
     "@effect/sql-d1": "4.1.4",
     "@effect/tsgo": "0.69.0",
     "@effect/vitest": "4.1.4",
+    "@foldkit/oxlint-plugin": "0.15.4",
     "@foldkit/ui": "0.170.0",
     "@foldkit/vite-plugin": "0.29.0",
     "@huggingface/tokenizers": "0.2.0",
@@ -554,6 +556,8 @@
     "@floating-ui/dom": ["@floating-ui/dom@1.8.0", "", { "dependencies": { "@floating-ui/core": "^1.8.0", "@floating-ui/utils": "^0.2.12" } }, "sha512-yXSrzeHZBTZadLOlfyhCkJHNeLJnHRnRInwdZ40L7ZiaAtrBwoYlsDrX3v5zB1Utk7CLfzcOVnVVWoXEky7Ceg=="],
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.12", "", {}, "sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww=="],
+
+    "@foldkit/oxlint-plugin": ["@foldkit/oxlint-plugin@0.15.4", "", { "dependencies": { "effect-oxlint": "^0.3.4 || ^0.4.0" } }, "sha512-qBFoApW7UAn5gu2GWyhL5lwyQpD9scCwESJOWQ3uC3h1oVnpToDmlCvFNC3HmfNZjQUxcGSwvWtL9LOB+ECyjg=="],
 
     "@foldkit/ui": ["@foldkit/ui@0.170.0", "", { "dependencies": { "@floating-ui/dom": "^1.8.0" }, "peerDependencies": { "effect": "~4.1.0", "foldkit": ">=0.167.0" } }, "sha512-OU6eDVwweFCUA8wsURIBoUptvohD1J7Xs+n+kRJT7h1vmqwajf8h6yu5PljntNrpi6QiRohjqR/sZt3fWSC65A=="],
 

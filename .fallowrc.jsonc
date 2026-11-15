@@ -40,6 +40,8 @@
     "boundary-violation": "error",
     "type-only-dependencies": "error",
     "test-only-dependencies": "error",
+    // Opt-in: flags parameters that are always passed the same constant.
+    "constant-parameters": "warn",
     "coverage-gaps": "off",
     "feature-flags": "warn",
     "stale-suppressions": "error",

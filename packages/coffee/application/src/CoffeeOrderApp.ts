@@ -28,7 +28,7 @@ import {
   type PricingFailure,
   quoteOrder as priceOrder,
 } from "@effect-coffee-shop/coffee-domain/Menu/OrderItem";
-import { Quantity } from "@effect-coffee-shop/coffee-domain/Menu/OrderPrimitives";
+import type { QuantityInput } from "@effect-coffee-shop/coffee-domain/Menu/OrderPrimitives";
 import type { CoffeeOrder } from "@effect-coffee-shop/coffee-domain/Order/CoffeeOrder";
 import { CustomerOrders } from "@effect-coffee-shop/coffee-domain/Order/CustomerOrders.view";
 import { Order } from "@effect-coffee-shop/coffee-domain/Order/Order.aggregate";
@@ -60,7 +60,7 @@ import { recordOrderAction } from "./observability.ts";
 
 type OrderInputError = DrinkNotFoundError | InvalidOrderInputError | InternalAppError;
 
-const defaultQuantity = Schema.decodeSync(Quantity)(1);
+const defaultQuantity: QuantityInput = 1;
 const decodeOrderStatus = Schema.decodeUnknownOption(OrderStatus);
 
 const internal = (message: string) => (cause: unknown) => new InternalAppError({ message, cause });

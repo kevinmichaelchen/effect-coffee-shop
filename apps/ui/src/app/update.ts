@@ -337,7 +337,7 @@ export const update = (model: Model, message: Message): UpdateReturn =>
     FailedAcquireAssistantWorker: ({ message }) => receiveLoadFailed(model, "text", message),
     ReleasedAssistantWorker: () => receiveWorkerReleased(model),
     CrashedAssistantWorker: ({ message }) => receiveCrash(model, message),
-    GotModelProgress: ({ model: which, loaded, total }) =>
+    ReportedModelProgress: ({ model: which, loaded, total }) =>
       receiveProgress(model, which, loaded, total),
     LoadedLocalModel: ({ model: which }) => receiveLoaded(model, which),
     FailedLoadLocalModel: ({ model: which, message }) => receiveLoadFailed(model, which, message),
@@ -346,7 +346,7 @@ export const update = (model: Model, message: Message): UpdateReturn =>
       model: { ...model, assistant: { ...model.assistant, prompt: value } },
     }),
     SubmittedAssistantPrompt: () => submitPrompt(model),
-    GotAssistantTurn: ({ requestId, turn }) => receiveTurn(model, requestId, turn),
+    ReceivedAssistantTurn: ({ requestId, turn }) => receiveTurn(model, requestId, turn),
     FailedAssistantTurn: ({ requestId, message }) => receiveTurnFailed(model, requestId, message),
     ClickedUndoAssistantEdit: () => undoEdit(model),
     ClickedDismissAssistantTurn: () => ({ model: settleTurn(model) }),
@@ -356,7 +356,7 @@ export const update = (model: Model, message: Message): UpdateReturn =>
     FailedAcquireMicrophone: ({ message }) => receiveRecordingFailed(model, message),
     ReleasedMicrophone: () => ({ model }),
     ClickedStopRecording: () => stopRecording(model),
-    GotTranscript: ({ recordingId, text }) => receiveTranscript(model, recordingId, text),
+    ReceivedTranscript: ({ recordingId, text }) => receiveTranscript(model, recordingId, text),
     FailedTranscript: ({ recordingId, message }) =>
       receiveTranscriptFailed(model, recordingId, message),
 

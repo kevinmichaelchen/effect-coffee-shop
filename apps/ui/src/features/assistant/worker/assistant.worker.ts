@@ -42,7 +42,7 @@ const messageOf = (error: { readonly message: string }) => error.message;
 
 /** Loads at most once at a time and keeps only a success, so "Try again" really retries. */
 const loadOnce = <A, E>(load: Effect.Effect<A, E>) =>
-  Effect.all([Ref.make(Option.none<A>()), Semaphore.make(1)]).pipe(
+  Effect.all([Ref.make(Option.none<A>()), Semaphore.make(1)], { concurrency: 1 }).pipe(
     Effect.map(([loaded, lock]) =>
       lock.withPermit(
         Ref.get(loaded).pipe(
