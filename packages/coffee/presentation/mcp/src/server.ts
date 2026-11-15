@@ -19,7 +19,6 @@ import { CoffeeOrderingSkill } from "./skills.ts";
 
 const mcpServerInfo = {
   name: "Coffee Orders MCP",
-  protocols: [McpProtocol.v2025_06_18],
   version: "0.1.0",
 } as const;
 
