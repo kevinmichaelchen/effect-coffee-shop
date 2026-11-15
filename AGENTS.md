@@ -7,6 +7,18 @@ Never use raw WebSearch and WebFetch without first trying another tool, such as:
 - `nia` (for exploring GitHub repos)
 - `markit` (for reading URLs as Markdown)
 
+How we work:
+
+- This is a toy prototype with no users. Delete code freely, rewrite
+  migrations, and choose the clean design over compatibility shims.
+- Ship straight to `main` in small, well-described commits; open a pull request
+  only when asked.
+- Write as little documentation as possible. Code explains itself; a README is
+  a few lines mapping what lives where. Trim docs rather than extend them.
+- Stay current: the latest Node LTS (pinned in `mise.toml`) and the latest
+  releases of our libraries. Prefer a library's built-in feature to our own
+  code, and read its docs before deciding none exists.
+
 Code style for agents:
 
 - Decode external input once at the boundary, preferably with `effect/Schema`,
