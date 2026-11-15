@@ -112,113 +112,110 @@ const d1Fixture = Effect.fnUntraced(function* () {
   };
 });
 
-describe.each([{ name: "D1", fixture: d1Fixture }])(
-  "Yielded $name authentication",
-  ({ fixture }) => {
-    it.live(
-      "verifies passkeys, binds ceremonies, enforces staff authority, revokes and expires sessions",
-      () =>
-        Effect.gen(function* () {
-          const data = yield* fixture();
-          const auth = yield* authServer(config, data.database);
-          const client = makeAuthClient(auth, origin);
-          const send = (path: string, body: Schema.Json) =>
-            Effect.promise(async () => client.send(path, body));
+describe("Yielded D1 authentication", () => {
+  it.live(
+    "verifies passkeys, binds ceremonies, enforces staff authority, revokes and expires sessions",
+    () =>
+      Effect.gen(function* () {
+        const data = yield* d1Fixture();
+        const auth = yield* authServer(config, data.database);
+        const client = makeAuthClient(auth, origin);
+        const send = (path: string, body: Schema.Json) =>
+          Effect.promise(async () => client.send(path, body));
 
-          const begun = yield* send("/register", {
-            ...(yield* flow),
-            registration: { displayName: " Alice ", role: "staff", userId: "chosen-staff-id" },
-          });
-          yield* expectOk(begun);
-          const registration = (yield* decodeBody(registrationResult)(begun)).value;
-          const authenticator = yield* makeTestPasskey(origin, registration.options.user.id);
-          const enrollment = {
-            flowId: registration.flowId,
-            response: encodeJson(authenticator.register(registration.options.challenge)),
-          };
-          const outsider = makeAuthClient(auth, origin);
-          expect(
-            (yield* Effect.promise(async () => outsider.send("/completeRegistration", enrollment)))
-              .status,
-          ).not.toBe(200);
-          yield* expectOk(yield* send("/completeRegistration", enrollment));
-          expect(yield* resolveActor(auth, client.request())).toEqual({ kind: "anonymous" });
-          expect((yield* send("/completeRegistration", enrollment)).status).not.toBe(200);
+        const begun = yield* send("/register", {
+          ...(yield* flow),
+          registration: { displayName: " Alice ", role: "staff", userId: "chosen-staff-id" },
+        });
+        yield* expectOk(begun);
+        const registration = (yield* decodeBody(registrationResult)(begun)).value;
+        const authenticator = yield* makeTestPasskey(origin, registration.options.user.id);
+        const enrollment = {
+          flowId: registration.flowId,
+          response: encodeJson(authenticator.register(registration.options.challenge)),
+        };
+        const outsider = makeAuthClient(auth, origin);
+        expect(
+          (yield* Effect.promise(async () => outsider.send("/completeRegistration", enrollment)))
+            .status,
+        ).not.toBe(200);
+        yield* expectOk(yield* send("/completeRegistration", enrollment));
+        expect(yield* resolveActor(auth, client.request())).toEqual({ kind: "anonymous" });
+        expect((yield* send("/completeRegistration", enrollment)).status).not.toBe(200);
 
-          const signIn = Effect.fnUntraced(function* (counter: number) {
-            const login = yield* send("/signIn", yield* flow);
-            yield* expectOk(login);
-            const assertion = (yield* decodeBody(authenticationResult)(login)).value;
-            yield* expectOk(
-              yield* send("/completeSignIn", {
-                flowId: assertion.flowId,
-                response: encodeJson(
-                  yield* authenticator.authenticate(assertion.options.challenge, counter),
-                ),
-              }),
-            );
-          });
-          yield* signIn(1);
-          const actor = yield* resolveActor(auth, client.request());
-          expect(actor).toMatchObject({ kind: "customer", displayName: "Alice" });
-          assert(actor.kind === "customer");
-          expect(actor.userId).not.toBe("chosen-staff-id");
-
-          // Staff authority is deployment configuration, never a session claim.
-          const staffAuth = yield* authServer(
-            { ...config, staffUserIds: HashSet.make(actor.userId) },
-            data.database,
-          );
-          expect(yield* resolveActor(staffAuth, client.request())).toMatchObject({
-            kind: "staff",
-            userId: actor.userId,
-          });
-
-          const oldRequest = client.request();
-          expect((yield* send("/signOut", {})).status).toBe(200);
-          expect(yield* resolveActor(auth, oldRequest)).toEqual({ kind: "anonymous" });
-          yield* signIn(2);
-          yield* data.expire;
-          expect(yield* resolveActor(auth, client.request())).toEqual({ kind: "anonymous" });
-
-          const forgedChallenge = (yield* decodeBody(authenticationResult)(
-            yield* send("/signIn", yield* flow),
-          )).value;
-          const assertion = yield* authenticator.authenticate(forgedChallenge.options.challenge, 3);
-          const impostor = yield* makeTestPasskey(origin, registration.options.user.id);
-          const invalidSignature = (yield* impostor.authenticate(
-            forgedChallenge.options.challenge,
-            3,
-          )).response.signature;
-          const forged = yield* send("/completeSignIn", {
-            flowId: forgedChallenge.flowId,
-            response: encodeJson({
-              ...assertion,
-              response: { ...assertion.response, signature: invalidSignature },
+        const signIn = Effect.fnUntraced(function* (counter: number) {
+          const login = yield* send("/signIn", yield* flow);
+          yield* expectOk(login);
+          const assertion = (yield* decodeBody(authenticationResult)(login)).value;
+          yield* expectOk(
+            yield* send("/completeSignIn", {
+              flowId: assertion.flowId,
+              response: encodeJson(
+                yield* authenticator.authenticate(assertion.options.challenge, counter),
+              ),
             }),
-          });
-          expect(forged.status).toBe(400);
-          expect(yield* resolveActor(auth, client.request())).toEqual({ kind: "anonymous" });
+          );
+        });
+        yield* signIn(1);
+        const actor = yield* resolveActor(auth, client.request());
+        expect(actor).toMatchObject({ kind: "customer", displayName: "Alice" });
+        assert(actor.kind === "customer");
+        expect(actor.userId).not.toBe("chosen-staff-id");
 
-          const register = Effect.fnUntraced(function* (headers: Record<string, string>) {
-            return yield* respond(
-              auth,
-              new Request(`${origin}/api/auth/register`, {
-                method: "POST",
-                headers: { "content-type": "application/json", ...headers },
-                body: encodeJson({
-                  payload: { ...(yield* flow), registration: { displayName: "Mallory" } },
-                }),
+        // Staff authority is deployment configuration, never a session claim.
+        const staffAuth = yield* authServer(
+          { ...config, staffUserIds: HashSet.make(actor.userId) },
+          data.database,
+        );
+        expect(yield* resolveActor(staffAuth, client.request())).toMatchObject({
+          kind: "staff",
+          userId: actor.userId,
+        });
+
+        const oldRequest = client.request();
+        expect((yield* send("/signOut", {})).status).toBe(200);
+        expect(yield* resolveActor(auth, oldRequest)).toEqual({ kind: "anonymous" });
+        yield* signIn(2);
+        yield* data.expire;
+        expect(yield* resolveActor(auth, client.request())).toEqual({ kind: "anonymous" });
+
+        const forgedChallenge = (yield* decodeBody(authenticationResult)(
+          yield* send("/signIn", yield* flow),
+        )).value;
+        const assertion = yield* authenticator.authenticate(forgedChallenge.options.challenge, 3);
+        const impostor = yield* makeTestPasskey(origin, registration.options.user.id);
+        const invalidSignature = (yield* impostor.authenticate(
+          forgedChallenge.options.challenge,
+          3,
+        )).response.signature;
+        const forged = yield* send("/completeSignIn", {
+          flowId: forgedChallenge.flowId,
+          response: encodeJson({
+            ...assertion,
+            response: { ...assertion.response, signature: invalidSignature },
+          }),
+        });
+        expect(forged.status).toBe(400);
+        expect(yield* resolveActor(auth, client.request())).toEqual({ kind: "anonymous" });
+
+        const register = Effect.fnUntraced(function* (headers: Record<string, string>) {
+          return yield* respond(
+            auth,
+            new Request(`${origin}/api/auth/register`, {
+              method: "POST",
+              headers: { "content-type": "application/json", ...headers },
+              body: encodeJson({
+                payload: { ...(yield* flow), registration: { displayName: "Mallory" } },
               }),
-            );
-          });
-          expect((yield* register({ origin })).status).toBe(403);
-          expect(
-            (yield* register({ origin: "https://attacker.example", "x-effect-auth-csrf": "1" }))
-              .status,
-          ).toBe(403);
-        }),
-      60_000,
-    );
-  },
-);
+            }),
+          );
+        });
+        expect((yield* register({ origin })).status).toBe(403);
+        expect(
+          (yield* register({ origin: "https://attacker.example", "x-effect-auth-csrf": "1" }))
+            .status,
+        ).toBe(403);
+      }),
+    60_000,
+  );
+});
