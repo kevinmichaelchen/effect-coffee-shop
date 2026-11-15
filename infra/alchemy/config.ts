@@ -7,8 +7,9 @@ import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-export const booleanWithDefault = (name: string, defaultValue: boolean) =>
-  Config.Boolean(name).pipe(Config.withDefault(defaultValue), Effect.orDie);
+/** A boolean env var, off unless it is set to `true`. */
+export const booleanWithDefault = (name: string) =>
+  Config.Boolean(name).pipe(Config.withDefault(false), Effect.orDie);
 
 export const numberBetweenWithDefault = (input: {
   readonly defaultValue: number;

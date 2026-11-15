@@ -145,14 +145,8 @@ export const coffeeStack = (options: {
       const repoRoot = yield* path
         .fromFileUrl(new URL("../../", import.meta.url))
         .pipe(Effect.orDie);
-      const deploySmokeChecksEnabled = yield* booleanWithDefault(
-        "COFFEE_DEPLOY_SMOKE_CHECKS",
-        false,
-      );
-      const deployMcpSmokeCheckEnabled = yield* booleanWithDefault(
-        "COFFEE_DEPLOY_SMOKE_MCP",
-        false,
-      );
+      const deploySmokeChecksEnabled = yield* booleanWithDefault("COFFEE_DEPLOY_SMOKE_CHECKS");
+      const deployMcpSmokeCheckEnabled = yield* booleanWithDefault("COFFEE_DEPLOY_SMOKE_MCP");
       const observabilitySamplingRate = yield* numberBetweenWithDefault({
         defaultValue: 1,
         maximum: 1,
