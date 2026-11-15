@@ -15,6 +15,12 @@ How we work:
   only when asked.
 - Write as little documentation as possible. Code explains itself; a README is
   a few lines mapping what lives where. Trim docs rather than extend them.
+- In every Markdown file meant for people (READMEs, `docs/`, issues, release
+  notes), keep the visible prose light and let Pele diagrams carry the
+  explanation. Put text meant for agents (rationale, procedures, reference
+  detail) inside a `<details>` element, and use GitHub admonitions
+  (`> [!NOTE]`, `> [!WARNING]`) for the few points a reader must not miss.
+  Agent-only files such as this one and `SKILL.md` are exempt.
 - Stay current: the latest Node LTS (pinned in `mise.toml`) and the latest
   releases of our libraries. Prefer a library's built-in feature to our own
   code, and read its docs before deciding none exists.
