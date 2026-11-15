@@ -116,7 +116,6 @@
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "tsrs": "catalog:",
-        "vitest": "catalog:",
       },
     },
     "packages/coffee/auth": {
@@ -336,7 +335,6 @@
         "oxfmt": "catalog:",
         "oxlint": "catalog:",
         "tsrs": "catalog:",
-        "vitest": "catalog:",
       },
     },
   },

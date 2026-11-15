@@ -1,7 +1,6 @@
 node_modules
 **/node_modules
 .env
-.env.local
 .env.*
 !.env.example
 !.env.alchemy.example
@@ -9,9 +8,6 @@ node_modules
 .idea
 .vscode
 .alchemy
-.env
-.env.*
-!.env.example
 dist
 coverage
 .turbo

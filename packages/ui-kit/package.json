@@ -29,7 +29,6 @@
     "@effect/tsgo": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
-    "tsrs": "catalog:",
-    "vitest": "catalog:"
+    "tsrs": "catalog:"
   }
 }

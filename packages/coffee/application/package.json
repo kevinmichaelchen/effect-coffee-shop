@@ -28,7 +28,6 @@
     "@types/bun": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
-    "tsrs": "catalog:",
-    "vitest": "catalog:"
+    "tsrs": "catalog:"
   }
 }
