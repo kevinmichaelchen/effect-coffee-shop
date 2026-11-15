@@ -50,8 +50,15 @@
       "outputs": [],
       "outputLogs": "new-only"
     },
+    "test:integration": {
+      "description": "Deploy a stack to Alchemy's local emulation and drive it end to end. Seconds, not milliseconds, so it runs only on release (check:release).",
+      "dependsOn": ["typecheck"],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
+    },
     "test:rivet": {
-      "description": "Run the stack test with the model hosted on Rivet in local Docker.",
+      "description": "Run the stack test with the model hosted on Rivet in local Docker (about 100s; release only).",
       "dependsOn": ["typecheck"],
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
       "outputs": [],
@@ -82,6 +89,12 @@
     },
     "//#fmt:root": {
       "cache": false
+    },
+    "//#fallow:typed": {
+      "description": "Fallow's health pass with the TypeScript checker (about 20s; release only).",
+      "inputs": ["$TURBO_DEFAULT$", "!**/README.md"],
+      "outputs": [],
+      "outputLogs": "new-only"
     },
     "//#fallow": {
       "description": "Audit architecture, dead code and health across the whole graph.",

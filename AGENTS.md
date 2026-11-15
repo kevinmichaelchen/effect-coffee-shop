@@ -76,13 +76,16 @@ Design principles:
   hosts, test transactions, ordering, retries and idempotency against each
   host's Layer.
 
-Checks run locally in prek git hooks (`prek.toml`): format, lint, typecheck and
-Fallow on commit; on push, `check:affected` for the pushed commits, plus the
-Rivet stack test when Rivet code changed. There is no GitHub CI; do not add a
-workflow that runs checks. Keep every test fast and local, on in-memory or local
-adapters such as `Domain.InMemory` and Alchemy's local runtime. Before building
-a helper, script or config around Turbo, Vitest or prek, check their docs
-(mirrored with the `crawl-docs` skill) for a built-in feature.
+Checks run locally in prek git hooks (`prek.toml`), and the slower a check, the
+rarer the operation that runs it: format, lint, typecheck and Fallow on commit;
+`check:affected` (unit tests and builds for the pushed commits) on push;
+`check:release` (Alchemy-emulator and Rivet stack tests, Fallow's typed health
+pass) only when a `v*` tag is pushed. There is no GitHub CI; do not add a
+workflow that runs checks. A `test` script must stay fast (milliseconds per
+test) on in-memory or local adapters such as `Domain.InMemory`; a test that
+deploys a stack, needs Docker or takes seconds is `test:integration` instead.
+Before building a helper, script or config around Turbo, Vitest or prek, check
+their docs (mirrored with the `crawl-docs` skill) for a built-in feature.
 
 After a significant architecture or feature change lands on `main`, cut a
 release with `.agents/skills/release/SKILL.md`.

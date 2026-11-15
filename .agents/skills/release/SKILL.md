@@ -63,7 +63,17 @@ SemVer on `0.x` until the user declares `1.0.0`:
    Keep it under about 15 lines. If an architecture diagram in
    `docs/architecture/` changed, link its SVG on `main`.
 
-4. Tag and push. Annotated tags only; the tag message is the release title:
+4. Run the release checks first, so a failure costs nothing (about two
+   minutes cold; needs Docker for the Rivet stack test):
+
+   ```sh
+   bun run check:release
+   ```
+
+   Then tag and push the tag on its own. Pushing a `v*` tag runs the same
+   checks again in the pre-push release gate, which Turbo serves from cache,
+   and refuses a lightweight tag, a name other than `vX.Y.Z`, a commit not on
+   `origin/main`, or a dirty checkout. The tag message is the release title:
 
    ```sh
    git tag -a vX.Y.Z -m "vX.Y.Z: <short title of the biggest change>"

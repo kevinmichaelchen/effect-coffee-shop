@@ -1,6 +1,8 @@
 #:schema https://www.schemastore.org/prek.json
 
-# Every check runs here; there is no GitHub CI.
+# Every check runs here; there is no GitHub CI. The slower a check, the rarer
+# the operation that runs it: commit (format, lint, typecheck, Fallow),
+# push (affected unit tests and builds), release tag (integration tests).
 default_install_hook_types = ["pre-commit", "pre-push"]
 
 [[repos]]
@@ -38,12 +40,13 @@ pass_filenames = false
 stages = ["pre-push"]
 
 [[repos.hooks]]
-# The Rivet stack test takes about 100s, so it runs only when Rivet code
-# changes, and only when Docker is up.
-id = "rivet-host"
-name = "stack test on the Rivet host"
-entry = "sh -c 'docker info >/dev/null 2>&1 || { echo \"Docker is not running; skipped.\"; exit 0; }; bun run rivet:test'"
-language = "system"
-files = '^(packages/coffee/server/src/hosts/(model/RivetDocker|CoffeeWorkerRivet)\.ts|infra/alchemy/(rivet|stack(\.test)?)\.ts|patches/@alchemy\.run%2Frivet@)'
+# Pushing a v* tag (a release) runs the slow checks commits and ordinary
+# pushes skip: the emulator and Rivet stack tests and Fallow's typed health
+# pass. The script exits at once for every other ref.
+id = "release-gate"
+name = "release checks (v* tags only)"
+entry = "packages/tooling/hooks/release-gate.sh"
+language = "script"
+always_run = true
 pass_filenames = false
 stages = ["pre-push"]
