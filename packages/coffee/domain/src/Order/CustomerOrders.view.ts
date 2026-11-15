@@ -14,21 +14,26 @@ import { OrderSummary } from "./OrderSummary.view.ts";
  * Every order one customer has placed, oldest first, built from each ticket's
  * summary. Keyed by customer, so the key alone decides who may read it.
  */
-export class CustomerOrders extends Domain.View("CustomerOrders", {
-  from: [OrderSummary],
-  key: Customer,
-  middleware: [Session],
-  rejects: [NotYourOrder],
-  keyOf: {
-    OrderSummary: ({ state }) => (state?.order ? Customer.ref(state.order.ownerUserId) : undefined),
+export class CustomerOrders extends Domain.View(
+  "CustomerOrders",
+  {
+    from: [OrderSummary],
+    key: Customer,
+    middleware: [Session],
+    rejects: [NotYourOrder],
+    keyOf: {
+      OrderSummary: ({ state }) =>
+        state?.order ? Customer.ref(state.order.ownerUserId) : undefined,
+    },
+    state: Schema.Struct({ orders: Schema.Array(CoffeeOrder) }),
+    initial: { orders: [] },
+    evolve: {
+      OrderSummary: (view, _, { state }) =>
+        state?.order ? { orders: upsertOrder(view.orders, state.order) } : view,
+    },
   },
-  state: Schema.Struct({ orders: Schema.Array(CoffeeOrder) }),
-  initial: { orders: [] },
-  evolve: {
-    OrderSummary: (view, _, { state }) =>
-      state?.order ? { orders: upsertOrder(view.orders, state.order) } : view,
-  },
-}) {}
+  { description: "Every order one customer has placed, oldest first." },
+) {}
 
 /** Staff may read any customer's orders; a customer only their own. */
 export const CustomerOrdersLive = CustomerOrders.toLayer(

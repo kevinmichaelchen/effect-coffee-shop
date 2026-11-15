@@ -27,19 +27,25 @@ const trimHistory = (orders: ReadonlyArray<CoffeeOrder>): ReadonlyArray<CoffeeOr
  * The shop's queue for the baristas: every open order, and the most recent
  * finished ones, in placement order. Staff only.
  */
-export class OrderQueue extends Domain.View("OrderQueue", {
-  from: [OrderSummary],
-  key: ShopId,
-  middleware: [Session],
-  rejects: [StaffOnly],
-  keyOf: { OrderSummary: () => mainShop },
-  state: Schema.Struct({ orders: Schema.Array(CoffeeOrder) }),
-  initial: { orders: [] },
-  evolve: {
-    OrderSummary: (queue, _, { state }) =>
-      state?.order ? { orders: trimHistory(upsertOrder(queue.orders, state.order)) } : queue,
+export class OrderQueue extends Domain.View(
+  "OrderQueue",
+  {
+    from: [OrderSummary],
+    key: ShopId,
+    middleware: [Session],
+    rejects: [StaffOnly],
+    keyOf: { OrderSummary: () => mainShop },
+    state: Schema.Struct({ orders: Schema.Array(CoffeeOrder) }),
+    initial: { orders: [] },
+    evolve: {
+      OrderSummary: (queue, _, { state }) =>
+        state?.order ? { orders: trimHistory(upsertOrder(queue.orders, state.order)) } : queue,
+    },
   },
-}) {}
+  {
+    description: "The shop's open orders and its most recent finished ones, in placement order.",
+  },
+) {}
 
 /** Only staff may read the queue. */
 export const OrderQueueLive = OrderQueue.toLayer(

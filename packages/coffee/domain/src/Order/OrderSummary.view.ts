@@ -19,31 +19,35 @@ const withStatus = (summary: Summary, status: OrderStatus): Summary =>
  * One order as a ticket: what was ordered, by whom, and where it is now.
  * Staff may read any ticket; a customer only their own.
  */
-export class OrderSummary extends Domain.View("OrderSummary", {
-  from: [Order],
-  key: Order,
-  middleware: [Session],
-  rejects: [NotYourOrder],
-  state: Summary,
-  initial: { order: null },
-  evolve: {
-    OrderPlaced: (_, event, { key, at }) => ({
-      order: {
-        id: key.id,
-        customerName: event.customerName,
-        ownerUserId: event.customerId,
-        items: event.items,
-        status: "pending" as const,
-        totalPrice: event.totalPrice,
-        createdAt: at,
-      },
-    }),
-    BrewingStarted: (summary) => withStatus(summary, "brewing"),
-    OrderReady: (summary) => withStatus(summary, "ready"),
-    OrderPickedUp: (summary) => withStatus(summary, "picked-up"),
-    OrderCancelled: (summary) => withStatus(summary, "cancelled"),
+export class OrderSummary extends Domain.View(
+  "OrderSummary",
+  {
+    from: [Order],
+    key: Order,
+    middleware: [Session],
+    rejects: [NotYourOrder],
+    state: Summary,
+    initial: { order: null },
+    evolve: {
+      OrderPlaced: (_, event, { key, at }) => ({
+        order: {
+          id: key.id,
+          customerName: event.customerName,
+          ownerUserId: event.customerId,
+          items: event.items,
+          status: "pending" as const,
+          totalPrice: event.totalPrice,
+          createdAt: at,
+        },
+      }),
+      BrewingStarted: (summary) => withStatus(summary, "brewing"),
+      OrderReady: (summary) => withStatus(summary, "ready"),
+      OrderPickedUp: (summary) => withStatus(summary, "picked-up"),
+      OrderCancelled: (summary) => withStatus(summary, "cancelled"),
+    },
   },
-}) {}
+  { description: "One order as a ticket: what was ordered, by whom, and where it is now." },
+) {}
 
 /** Staff may read any ticket; a customer only their own. */
 export const OrderSummaryLive = OrderSummary.toLayer(

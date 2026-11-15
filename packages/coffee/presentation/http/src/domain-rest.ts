@@ -11,49 +11,16 @@
  * @module
  */
 import * as DomainHttp from "@alchemy.run/domain/Http";
-import { CoffeeShop } from "@effect-coffee-shop/coffee-domain/CoffeeShop.model";
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
-import * as Arr from "effect/Array";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
-import * as R from "effect/Record";
-import * as Schema from "effect/Schema";
 import * as HttpApi from "effect/http-api/HttpApi";
-import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
-import * as OpenApi from "effect/http-api/OpenApi";
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as HttpRouter from "effect/http/HttpRouter";
 import * as HttpServer from "effect/http/HttpServer";
 
 /** Where the generated REST surface lives. */
 export const domainRestPrefix = "/api/rest";
-
-/** What each read endpoint (`<Name>.<operation>`) does, for the OpenAPI document. */
-const readDescriptions = {
-  get: (name: string) => `The current ${name} for the key; \`null\` if there is none yet.`,
-  snapshot: (name: string) => `The current ${name} for the key, with the cursor it is valid at.`,
-  list: (name: string) => `A page of ${name} entries for the key.`,
-  watch: (name: string) => `Server-Sent Events: the ${name} for the key, then each change to it.`,
-  events: (name: string) => `Server-Sent Events: the ${name} changes for the key, after a cursor.`,
-};
-
-const decodeReadOperation = Schema.decodeUnknownOption(
-  Schema.Literals(["get", "snapshot", "list", "watch", "events"]),
-);
-
-/** A command endpoint's description is the command's own; a read's says what it returns. */
-const descriptionOf = (endpoint: string) => {
-  const [name = endpoint, operation] = endpoint.split(".");
-  return Option.match(Option.fromUndefinedOr(operation), {
-    onNone: () =>
-      Arr.findFirst(CoffeeShop.commands, (command) => command.tag === name).pipe(
-        Option.flatMapNullishOr((command) => command.annotations.description),
-      ),
-    onSome: (read) =>
-      Option.map(decodeReadOperation(read), (operation) => readDescriptions[operation](name)),
-  });
-};
 
 /** Every call of each Api, published on purpose: its commands and each view read. */
 const customerCalls = [
@@ -97,29 +64,9 @@ const staffCalls = [
   "OrderSummary.events",
 ] as const;
 
-/** The Api's REST surface, with each endpoint described in the OpenAPI document. */
-const describedHttpApi = <A extends DomainHttp.Publishable>(
-  api: A,
-  expose: ReadonlyArray<DomainHttp.Exposable<A>>,
-) => {
-  const surface = DomainHttp.toHttpApi(api, { expose });
-  const endpoints = R.values(surface.group.endpoints).map((endpoint) =>
-    Option.match(descriptionOf(endpoint.identifier), {
-      onNone: () => endpoint,
-      onSome: (description) => endpoint.annotate(OpenApi.Description, description),
-    }),
-  );
-  return {
-    ...surface,
-    group: Option.match(Arr.match(endpoints, { onEmpty: Option.none, onNonEmpty: Option.some }), {
-      onNone: () => surface.group,
-      onSome: (nonEmpty) => HttpApiGroup.make(surface.group.identifier).add(...nonEmpty),
-    }),
-  };
-};
-
-const customer = describedHttpApi(CustomerApi, customerCalls);
-const staff = describedHttpApi(StaffApi, staffCalls);
+/** The Api's REST surface: every published call, described by the call itself. */
+const customer = DomainHttp.toHttpApi(CustomerApi, { expose: customerCalls });
+const staff = DomainHttp.toHttpApi(StaffApi, { expose: staffCalls });
 
 /**
  * `POST /api/rest/customer/<Command>`, `GET /api/rest/customer/<View>/:key`

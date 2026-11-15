@@ -9,15 +9,21 @@ import { NotYourCart } from "./NotYourCart.rejection.ts";
  * confirmation. Clients never read the Cart aggregate itself, so this view
  * folds the same events into the same state. Only the owner may read it.
  */
-export class CustomerCart extends Domain.View("CustomerCart", {
-  from: [Cart],
-  key: Cart,
-  middleware: [Session],
-  rejects: [NotYourCart],
-  state: CartState,
-  initial: { lines: [], checkout: null },
-  evolve: cartEvolve,
-}) {}
+export class CustomerCart extends Domain.View(
+  "CustomerCart",
+  {
+    from: [Cart],
+    key: Cart,
+    middleware: [Session],
+    rejects: [NotYourCart],
+    state: CartState,
+    initial: { lines: [], checkout: null },
+    evolve: cartEvolve,
+  },
+  {
+    description: "A customer's cart as they see it, with any checkout awaiting confirmation.",
+  },
+) {}
 
 export const CustomerCartLive = CustomerCart.toLayer(
   Effect.sync(() => (request) => mustOwn(request.key.id)),

@@ -10,7 +10,7 @@
   `/api/rest/openapi.json`. A command is `POST /<Command>` with `{ target, input, commandId? }`; a
   read is `GET /<View>/:key` (and `/snapshot`, `/list`, and Server-Sent Events at `/watch` and
   `/events`). A rejection answers with its `_tag` at the status its `httpApiStatus` gives it.
-  Each endpoint's OpenAPI description is its command's `description`, or what the read returns.
+  Each endpoint's OpenAPI description is its command's `description`, or its view's.
 
 ### Who can call the REST endpoints?
 

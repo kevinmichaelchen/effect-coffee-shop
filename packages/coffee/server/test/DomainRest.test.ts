@@ -228,7 +228,8 @@ describe("the domain Apis over REST, behind the auth session", () => {
           }),
         )(openApi);
         const paths = R.keys(document.paths);
-        // Commands carry their own description; reads say what they return.
+        // `DomainHttp.toHttpApi` describes commands from their own annotation and
+        // every read of a view from the view's.
         expect(document.paths["/api/rest/customer/PlaceOrder"]?.post?.description).toContain(
           "Place a new order",
         );
@@ -237,7 +238,13 @@ describe("the domain Apis over REST, behind the auth session", () => {
         );
         expect(
           document.paths["/api/rest/customer/CustomerCart/{key}/watch"]?.get?.description,
-        ).toContain("Server-Sent Events");
+        ).toBe("A customer's cart as they see it, with any checkout awaiting confirmation.");
+        const operations = R.values(document.paths).flatMap((path) =>
+          [path.get, path.post].flatMap((operation) =>
+            operation === undefined ? [] : [operation],
+          ),
+        );
+        expect(operations.filter((operation) => operation.description === undefined)).toEqual([]);
         expect(paths).toEqual(
           expect.arrayContaining([
             "/api/rest/customer/PlaceOrder",
