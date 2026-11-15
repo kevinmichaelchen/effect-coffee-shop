@@ -9,9 +9,9 @@
  * - `/api/health`, `/api/menu`, `/api/me`: REST;
  * - `/mcp`: remote MCP tools over the same model, generated from the same Apis.
  *
- * It names no provider. A host's Worker provides the model (`CoffeeShopLive`
- * or `CoffeeShopRivet`) and the two services declared here, `AuthStorage` and
- * `AuthSecret` (see `adapters/cloudflare.ts`). The tests run the same model on
+ * It names no provider. A Worker in `hosts/` provides the model's host (from
+ * `hosts/model/`) and the two services declared here, `AuthStorage` and
+ * `AuthSecret` (from `hosts/edge/`). The tests run the same model on
  * `Domain.InMemory` instead.
  *
  * @module
@@ -41,9 +41,8 @@ import {
   coffeeHttp,
   domainApi,
   type DomainToolServices,
-  rejectBearer,
 } from "./CoffeeHttp.ts";
-import { needsAuth, rejectsBearer, routeKindOf, routeOf } from "./Routes.ts";
+import { rejectBearer, routeFor, routeKindOf } from "./Routes.ts";
 import { SessionLive } from "./Session.ts";
 
 /** Where auth keeps its state, opened once per request. */
@@ -81,17 +80,18 @@ const routeBackend = (
   request: HttpServerRequest,
   path: string,
 ) => {
+  const row = routeFor(path);
   const viaSession = (api: HttpEffect) => domainApi(input, api);
   const served = () =>
-    Match.value(routeOf(path)).pipe(
+    Match.value(row.route).pipe(
       Match.when("rest", () => viaSession(services.domainRest)),
       Match.when("customer", () => viaSession(services.customerApi)),
       Match.when("staff", () => viaSession(services.staffApi)),
       Match.orElse(() => coffeeHttp(input)),
     );
-  return Option.isNone(input.auth) && needsAuth(path)
+  return Option.isNone(input.auth) && row.needsAuth
     ? Effect.succeed(HttpServerResponse.text("Authentication is unavailable.", { status: 503 }))
-    : rejectsBearer(path)
+    : row.rejectsBearer
       ? rejectBearer(served())
       : served();
 };
@@ -109,7 +109,10 @@ const handleRequest = Effect.fn("CoffeeWorker.fetch")(function* (services: Coffe
     domain: services.domain,
   };
   const response = yield* routeBackend(services, input, request, path);
-  yield* annotateHttpStatus({ routeKind: routeKindOf(routeOf(path)), status: response.status });
+  yield* annotateHttpStatus({
+    routeKind: routeKindOf(routeFor(path).route),
+    status: response.status,
+  });
   return response;
 });
 

@@ -4,7 +4,7 @@
  * this file's default export to run the model; the Worker provides the same
  * Layer and reaches the model through the control plane's gateway.
  *
- * It is the same model as `CoffeeShopLive`: only the host Layer differs.
+ * It is the same model as `DurableObjects.ts`: only the host Layer differs.
  *
  * @module
  */

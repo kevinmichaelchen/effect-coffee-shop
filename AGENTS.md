@@ -57,15 +57,16 @@ Design principles:
   readable, like one invariant shared by several commands. Facts such as env-var
   values, route prefixes and resource paths get exactly one definition.
 - Keep shared code provider-neutral. Only host adapters (`src/adapters/`) and
-  composition roots (the server's `*Worker*.ts` and `CoffeeShop*.ts`, and
-  `infra/`) may import a provider such as `@alchemy.run/cloudflare`,
-  `@alchemy.run/rivet`, `@cloudflare/*` or `@effect/sql-d1`; `cloudProviders` in
-  the backend Oxlint profile enforces the list. Shared code asks for
-  capabilities (`SqlClient`, `Config`, a small Effect service), and its caller
-  provides them as Layers.
+  composition roots (the server's `src/hosts/`, and `infra/`) may import a
+  provider such as `@alchemy.run/cloudflare`, `@alchemy.run/rivet`,
+  `@cloudflare/*` or `@effect/sql-d1`; `cloudProviders` in the backend Oxlint
+  profile enforces the list. In `src/hosts/`, `edge/` holds where requests are
+  served, `model/` where the domain model runs, and each Worker beside them
+  combines one of each. Shared code asks for capabilities (`SqlClient`,
+  `Config`, a small Effect service), and its caller provides them as Layers.
 - Declare a port where it is consumed, like `AuthStorage` in `CoffeeServer.ts`.
   Never derive it from one implementation's type, such as
-  `Layer.Success<typeof CoffeeShopLive>`. Add a port only when a second
+  `Layer.Success<typeof DurableObjects>`. Add a port only when a second
   implementation exists or the code must stay host-neutral; otherwise call the
   thing directly.
 - Declare concrete infrastructure (databases, secret stores, buckets) only in

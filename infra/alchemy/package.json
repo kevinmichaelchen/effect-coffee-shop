@@ -17,6 +17,7 @@
     "@alchemy.run/docker": "catalog:",
     "@alchemy.run/domain": "catalog:",
     "@alchemy.run/rivet": "catalog:",
+    "@effect-coffee-shop/coffee-routes": "workspace:*",
     "@effect-coffee-shop/coffee-server": "workspace:*",
     "alchemy": "catalog:",
     "effect": "catalog:"

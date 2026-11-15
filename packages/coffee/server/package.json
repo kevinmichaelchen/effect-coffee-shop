@@ -25,6 +25,7 @@
     "@effect-coffee-shop/coffee-domain": "workspace:*",
     "@effect-coffee-shop/coffee-http": "workspace:*",
     "@effect-coffee-shop/coffee-mcp": "workspace:*",
+    "@effect-coffee-shop/coffee-routes": "workspace:*",
     "@effect-coffee-shop/http-routing": "workspace:*",
     "@yielded/auth-persistence": "catalog:",
     "alchemy": "catalog:",

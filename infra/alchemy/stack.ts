@@ -19,16 +19,17 @@ import type * as HttpClientResponse from "effect/http/HttpClientResponse";
 import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
-import type CoffeeWorker from "@effect-coffee-shop/coffee-server/CoffeeWorker";
-import type CoffeeWorkerRivet from "@effect-coffee-shop/coffee-server/CoffeeWorkerRivet";
+import type CoffeeWorker from "@effect-coffee-shop/coffee-server/hosts/CoffeeWorker";
+import type CoffeeWorkerRivet from "@effect-coffee-shop/coffee-server/hosts/CoffeeWorkerRivet";
+import { backendPrefixes } from "@effect-coffee-shop/coffee-routes";
 import { booleanWithDefault, numberBetweenWithDefault } from "./config.ts";
 
 // The state layer reads its backend choice from Config when Alchemy builds it.
 const state = Layer.unwrap(
-  Config.String("ALCHEMY_LOCAL_STATE").pipe(
-    Config.withDefault(""),
+  Config.Boolean("ALCHEMY_LOCAL_STATE").pipe(
+    Config.withDefault(false),
     Effect.orDie,
-    Effect.map((local) => (local === "1" ? Alchemy.localState() : Cloudflare.state())),
+    Effect.map((local) => (local ? Alchemy.localState() : Cloudflare.state())),
   ),
 );
 
@@ -184,7 +185,7 @@ export const coffeeStack = (options: {
           workspaces: "auto",
         },
         assets: {
-          runWorkerFirst: ["/api", "/api/*", "/mcp", "/mcp/*", "/oauth/*", "/.well-known/*"],
+          runWorkerFirst: backendPrefixes.flatMap((prefix) => [prefix, `${prefix}/*`]),
         },
         env: {
           COFFEE: api,

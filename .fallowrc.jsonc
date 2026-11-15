@@ -161,6 +161,14 @@
         "patterns": ["packages/coffee/presentation/**"],
       },
       {
+        "name": "routes",
+        "patterns": ["packages/coffee/routes/**"],
+      },
+      {
+        "name": "server-hosts",
+        "patterns": ["packages/coffee/server/src/hosts/**"],
+      },
+      {
         "name": "server",
         "patterns": ["packages/coffee/server/**"],
       },
@@ -172,11 +180,11 @@
     "rules": [
       {
         "from": "infra",
-        "allow": ["server", "ui", "turbo-cache"],
+        "allow": ["server-hosts", "routes", "ui", "turbo-cache"],
       },
       {
         "from": "ui",
-        "allow": ["auth-contract", "domain", "ui-kit"],
+        "allow": ["auth-contract", "domain", "routes", "ui-kit"],
       },
       {
         "from": "ui-kit",
@@ -212,11 +220,27 @@
       },
       {
         "from": "server",
-        "allow": ["http-routing", "domain", "application", "actions", "auth", "presentation"],
+        "allow": [
+          "http-routing",
+          "domain",
+          "application",
+          "actions",
+          "auth",
+          "presentation",
+          "routes",
+        ],
+      },
+      {
+        "from": "server-hosts",
+        "allow": ["server", "domain", "auth"],
+      },
+      {
+        "from": "routes",
+        "allow": [],
       },
       {
         "from": "tooling",
-        "allow": ["ui"],
+        "allow": ["ui", "routes"],
       },
       {
         "from": "turbo-cache",

@@ -169,6 +169,8 @@ const hostAndAi = {
 // Shared backend code is provider-neutral (AGENTS.md design principles).
 const cloudProviders = {
   group: [
+    "@alchemy.run/aws",
+    "@alchemy.run/aws/**",
     "@alchemy.run/cloudflare",
     "@alchemy.run/cloudflare/**",
     "@alchemy.run/docker",
@@ -181,17 +183,15 @@ const cloudProviders = {
     "@cloudflare/*",
     "@effect/sql-d1",
     "@effect/sql-d1/**",
+    "@effect/sql-pg",
+    "@effect/sql-pg/**",
     "cloudflare:*",
   ],
   message:
-    "Shared code is provider-neutral. Ask for a capability (SqlClient, Config, a small Effect service) and provide it from a host adapter (`src/adapters/`) or composition root (`*Worker*.ts`, `CoffeeShop*.ts`, `infra/`).",
+    "Shared code is provider-neutral. Ask for a capability (SqlClient, Config, a small Effect service) and provide it from a host adapter (`src/adapters/`), the server's `src/hosts/`, or `infra/`.",
 };
 // The only backend files that may name a provider.
-const providerEdges = [
-  "**/src/adapters/**",
-  "**/coffee/server/src/*Worker*.ts",
-  "**/coffee/server/src/CoffeeShop*.ts",
-];
+const providerEdges = ["**/src/adapters/**", "**/coffee/server/src/hosts/**"];
 type Override = NonNullable<OxlintConfig["overrides"]>[number];
 const banImports = (files: string, ...patterns: Array<typeof runtimeModules>): Override => ({
   files: [files],

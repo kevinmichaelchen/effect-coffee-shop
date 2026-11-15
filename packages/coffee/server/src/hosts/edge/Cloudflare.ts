@@ -1,7 +1,7 @@
 /**
- * The Coffee Worker on Cloudflare: its Worker settings, and auth on Cloudflare
- * D1 and Secrets Store. Both host Workers run on Cloudflare, so both use it;
- * the model's host is chosen separately (`CoffeeShopLive`, `CoffeeShopRivet`).
+ * The Cloudflare edge: the Coffee Worker's settings, and auth on Cloudflare D1
+ * and Secrets Store. Both Workers run on Cloudflare, so both use it; the
+ * model's host is chosen separately, in `../model/`.
  *
  * @module
  */
@@ -14,7 +14,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
-import { AuthSecret, AuthSecretUnavailable, AuthStorage } from "../CoffeeServer.ts";
+import { AuthSecret, AuthSecretUnavailable, AuthStorage } from "../../CoffeeServer.ts";
 
 /** Passkeys, sessions and MCP OAuth grants. Orders and carts live in the model. */
 const AuthD1 = Cloudflare.D1.Database("coffee-db", {

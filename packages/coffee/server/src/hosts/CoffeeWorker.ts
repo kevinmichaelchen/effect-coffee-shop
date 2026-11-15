@@ -1,17 +1,17 @@
 /**
  * The Coffee Worker on Cloudflare, with the model on Cloudflare Durable
- * Objects (`CoffeeShopLive`). See `CoffeeServer.ts` for what it serves.
+ * Objects. See `CoffeeServer.ts` for what it serves.
  *
  * @module
  */
 import * as Cloudflare from "@alchemy.run/cloudflare";
 import * as Effect from "effect/Effect";
-import { CloudflareAuth, coffeeWorkerSettings } from "./adapters/cloudflare.ts";
-import { coffeeServer } from "./CoffeeServer.ts";
-import CoffeeShopLive from "./CoffeeShopLive.ts";
+import { coffeeServer } from "../CoffeeServer.ts";
+import { CloudflareAuth, coffeeWorkerSettings } from "./edge/Cloudflare.ts";
+import DurableObjects from "./model/DurableObjects.ts";
 
 export default class CoffeeWorker extends Cloudflare.Worker<CoffeeWorker>()(
   "CoffeeWorker",
   coffeeWorkerSettings(import.meta.url),
-  coffeeServer.pipe(Effect.provide([CoffeeShopLive, CloudflareAuth])),
+  coffeeServer.pipe(Effect.provide([DurableObjects, CloudflareAuth])),
 ) {}

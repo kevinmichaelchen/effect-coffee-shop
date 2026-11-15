@@ -1,0 +1,26 @@
+{
+  "name": "@effect-coffee-shop/coffee-routes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsrs --noEmit",
+    "lint": "effect-tsgo --tsrs-lint oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config .",
+    "lint:fix": "effect-tsgo --tsrs-lint oxlint -c ../../tooling/oxlint.config.ts --disable-nested-config --fix .",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@effect/tsgo": "catalog:",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "tsrs": "catalog:",
+    "vitest": "catalog:"
+  }
+}
