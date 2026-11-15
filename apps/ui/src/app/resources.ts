@@ -9,6 +9,7 @@ import {
 import { acquireMicrophone, Microphone } from "#features/assistant/api/microphone.ts";
 import { wantsWorker } from "#features/assistant/lib/state.ts";
 import { CustomerConnection, StaffConnection } from "#features/coffee-shop/api/domain-clients.ts";
+import { Tracing } from "#app/tracing.ts";
 import { Message } from "../message.ts";
 import type { Model } from "#app/model.ts";
 
@@ -22,10 +23,11 @@ const reason = (error: unknown): string =>
 
 /**
  * Services every Command and Subscription may use for the app's whole
- * lifetime: the app-wide HttpClient and both Domain Api clients, whose
- * connections outlive any page.
+ * lifetime: the app-wide HttpClient, both Domain Api clients, whose
+ * connections outlive any page, and the tracer that exports their spans.
+ * `Tracing` is last so its HTTP settings win when a trace URL is configured.
  */
-export const resources = Layer.mergeAll(Http.layer, CustomerConnection, StaffConnection);
+export const resources = Layer.mergeAll(Http.layer, CustomerConnection, StaffConnection, Tracing);
 
 /** The services Commands and Subscriptions may use: the resources above, plus each managed resource while it is held. */
 export type AppServices =

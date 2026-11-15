@@ -7,12 +7,14 @@
  *   an OpenAPI document at `/api/rest/openapi.json`, behind the auth session;
  * - `/api/auth/*`, `/oauth/*`, `/.well-known/*`: Yielded Auth and MCP OAuth;
  * - `/api/health`, `/api/menu`, `/api/me`: REST;
+ * - `/api/telemetry/*`: OTLP batches a browser exported, forwarded to wherever
+ *   the Worker sends its own telemetry;
  * - `/mcp`: remote MCP tools over the same model, generated from the same Apis.
  *
  * It names no provider. A Worker in `hosts/` provides the model's host (from
- * `hosts/model/`) and the two services declared here, `AuthStorage` and
- * `AuthSecret` (from `hosts/edge/`). The tests run the same model on
- * `Domain.InMemory` instead.
+ * `hosts/model/`) and the three services declared here, `AuthStorage`,
+ * `AuthSecret` and `TelemetryRelay` (from `hosts/edge/`). The tests run the
+ * same model on `Domain.InMemory` instead.
  *
  * @module
  */
@@ -41,6 +43,7 @@ import {
   coffeeHttp,
   domainApi,
   type DomainToolServices,
+  signedIn,
 } from "./CoffeeHttp.ts";
 import { rejectBearer, routeFor, routeKindOf } from "./Routes.ts";
 import { SessionLive } from "./Session.ts";
@@ -63,6 +66,19 @@ export class AuthSecret extends Context.Service<
   { readonly read: Effect.Effect<Redacted.Redacted, AuthSecretUnavailable, RuntimeContext> }
 >()("@effect-coffee-shop/coffee-server/CoffeeServer/AuthSecret") {}
 
+/**
+ * The Worker's own telemetry destinations, as a receiver for the OTLP batches
+ * a browser exports. The host provides it, so an ingest token never reaches
+ * the browser and the Worker forwards each batch with its own credentials.
+ */
+export class TelemetryRelay extends Context.Service<
+  TelemetryRelay,
+  {
+    /** The OTLP/HTTP receiver; `authorize` decides whether a batch is accepted. */
+    readonly receive: (authorize: Effect.Effect<boolean, never, HttpServerRequest>) => HttpEffect;
+  }
+>()("@effect-coffee-shop/coffee-server/CoffeeServer/TelemetryRelay") {}
+
 interface CoffeeServices {
   readonly deployment: AuthDeployment;
   readonly storage: AuthStorage["Service"];
@@ -72,6 +88,7 @@ interface CoffeeServices {
   readonly domainRest: HttpEffect;
   readonly app: CoffeeOrderApp["Service"];
   readonly domain: CoffeeHttpInput["domain"];
+  readonly telemetry: TelemetryRelay["Service"];
 }
 
 const routeBackend = (
@@ -87,6 +104,7 @@ const routeBackend = (
       Match.when("rest", () => viaSession(services.domainRest)),
       Match.when("customer", () => viaSession(services.customerApi)),
       Match.when("staff", () => viaSession(services.staffApi)),
+      Match.when("telemetry", () => services.telemetry.receive(signedIn(input, request))),
       Match.orElse(() => coffeeHttp(input)),
     );
   return Option.isNone(input.auth) && row.needsAuth
@@ -141,6 +159,7 @@ export const coffeeServer = Effect.gen(function* () {
     domainRest: yield* domainRestHttp,
     app: yield* CoffeeOrderApp,
     domain: yield* Effect.context<DomainToolServices>(),
+    telemetry: yield* TelemetryRelay,
   };
   return { fetch: serve(services) };
 }).pipe(

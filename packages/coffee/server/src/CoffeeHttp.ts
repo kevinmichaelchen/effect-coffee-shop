@@ -137,6 +137,35 @@ const sessionProbe = (request: HttpServerRequest) =>
   );
 
 /**
+ * Whether the request carries a signed-in session, for a surface that accepts
+ * nothing else. With auth unavailable (local runs, or a secret that could not
+ * be read) there is no session to check, and the surface answers as if the
+ * caller were signed in.
+ */
+export const signedIn = (input: CoffeeHttpInput, request: HttpServerRequest) =>
+  Option.match(input.auth, {
+    onNone: () => Effect.succeed(true),
+    onSome: (config) => {
+      const auth = makeCoffeeAuth(config, input.database, AuthAdaptersLive);
+      return auth.http
+        .withRequest(
+          Effect.map(auth.actor(), (actor) =>
+            HttpServerResponse.empty({
+              status: Option.isSome(actorHeaderValue(actor)) ? 204 : 401,
+            }),
+          ),
+        )
+        .pipe(
+          Effect.map((response) => response.status === 204),
+          Effect.provideService(HttpServerRequest, sessionProbe(request)),
+          // oxlint-disable-next-line effecttsgo/strict-effect-provide -- The auth secret is read from Secrets Store on every request, so this per-request auth Layer is built here, the request's composition root.
+          Effect.provide(auth.auth),
+          Effect.orElseSucceed(() => false),
+        );
+    },
+  });
+
+/**
  * A domain Api behind the auth session: the caller's actor is resolved from
  * their session cookie and attached for the Api's `Session` middleware, and
  * any session cookies auth refreshes are passed on. Mutations must come from

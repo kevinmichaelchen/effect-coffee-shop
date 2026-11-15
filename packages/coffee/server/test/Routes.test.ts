@@ -16,6 +16,8 @@ describe("the Worker's route table", () => {
     ["/oauth/token", "auth"],
     ["/.well-known/oauth-authorization-server", "auth"],
     ["/mcp", "mcp"],
+    ["/api/telemetry/v1/traces", "telemetry"],
+    ["/api/telemetry", "telemetry"],
     ["/api/menu", "api"],
     ["/api/me", "api"],
     ["/api/restaurant", "api"],
@@ -30,12 +32,18 @@ describe("the Worker's route table", () => {
     expect(routeKindOf("customer")).toBe("domain");
     expect(routeKindOf("staff")).toBe("domain");
     expect(routeKindOf("rest")).toBe("rest");
+    expect(routeKindOf("telemetry")).toBe("telemetry");
   });
 
   it("rejects bearer tokens on app routes, not on MCP or OAuth", () => {
     expect(
-      ["/api/rest/customer/ClearCart", "/api/customer", "/api/staff"].map(rejectsBearer),
-    ).toEqual([true, true, true]);
+      [
+        "/api/rest/customer/ClearCart",
+        "/api/customer",
+        "/api/staff",
+        "/api/telemetry/v1/traces",
+      ].map(rejectsBearer),
+    ).toEqual([true, true, true, true]);
     expect(["/mcp", "/oauth/token", "/.well-known/x"].map(rejectsBearer)).toEqual([
       false,
       false,
@@ -43,13 +51,10 @@ describe("the Worker's route table", () => {
     ]);
   });
 
-  it("needs auth configured for auth and MCP, not for REST reads of the menu", () => {
-    expect(["/api/auth/x", "/mcp", "/oauth", "/oauth/token"].map(needsAuth)).toEqual([
-      true,
-      true,
-      true,
-      true,
-    ]);
+  it("needs auth configured for auth, MCP and telemetry, not for REST reads of the menu", () => {
+    expect(
+      ["/api/auth/x", "/mcp", "/oauth", "/oauth/token", "/api/telemetry/v1/traces"].map(needsAuth),
+    ).toEqual([true, true, true, true, true]);
     expect(["/api/menu", "/api/rest/customer/CustomerCart/x"].map(needsAuth)).toEqual([
       false,
       false,

@@ -31,6 +31,10 @@
         "allowedUnstableApis": [
           "effect/http",
           "effect/http-api",
+          // The app's own tracer, exporting to the Worker's OTLP relay.
+          "effect/observability/OtlpExporter",
+          "effect/observability/OtlpSerialization",
+          "effect/observability/OtlpTracer",
           "effect/socket",
           // Passkey flow ids come from the browser CSPRNG through SecureRandom.
           "effect/crypto/SecureRandom"

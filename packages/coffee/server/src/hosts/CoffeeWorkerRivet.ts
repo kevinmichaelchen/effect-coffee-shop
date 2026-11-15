@@ -9,10 +9,13 @@ import * as Cloudflare from "@alchemy.run/cloudflare";
 import * as Effect from "effect/Effect";
 import { coffeeServer } from "../CoffeeServer.ts";
 import { CloudflareAuth, CloudflareTelemetry, coffeeWorkerSettings } from "./edge/Cloudflare.ts";
+import { TelemetryRelayLive } from "./edge/TelemetryRelay.ts";
 import RivetDocker from "./model/RivetDocker.ts";
 
 export default class CoffeeWorkerRivet extends Cloudflare.Worker<CoffeeWorkerRivet>()(
   "CoffeeWorker",
   coffeeWorkerSettings(import.meta.url),
-  coffeeServer.pipe(Effect.provide([RivetDocker, CloudflareAuth, CloudflareTelemetry])),
+  coffeeServer.pipe(
+    Effect.provide([RivetDocker, CloudflareAuth, CloudflareTelemetry, TelemetryRelayLive]),
+  ),
 ) {}

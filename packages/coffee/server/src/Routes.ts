@@ -15,8 +15,19 @@ import * as Option from "effect/Option";
 import { isOrStartsWith } from "@effect-coffee-shop/coffee-routes";
 import { domainRestPrefix } from "@effect-coffee-shop/coffee-http/domain-rest";
 
+/** Where the app's OTLP exporter posts; the one prefix the app and the Worker share. */
+export const telemetryPrefix = "/api/telemetry";
+
 /** A surface of the Worker. */
-export type Route = "rest" | "customer" | "staff" | "auth" | "mcp" | "api" | "unmatched";
+export type Route =
+  | "rest"
+  | "customer"
+  | "staff"
+  | "auth"
+  | "mcp"
+  | "telemetry"
+  | "api"
+  | "unmatched";
 
 /** One surface's row in the ordered route table. */
 export interface RouteRow {
@@ -38,6 +49,9 @@ export const routeTable: ReadonlyArray<RouteRow> = [
   { route: "auth", prefixes: ["/api/auth"], needsAuth: true, rejectsBearer: true },
   { route: "auth", prefixes: ["/oauth", "/.well-known"], needsAuth: true, rejectsBearer: false },
   { route: "mcp", prefixes: ["/mcp"], needsAuth: true, rejectsBearer: false },
+  // OTLP from the browser; only a signed-in user may send, and the Worker
+  // forwards each batch with its own credentials.
+  { route: "telemetry", prefixes: [telemetryPrefix], needsAuth: true, rejectsBearer: true },
   { route: "api", prefixes: ["/api"], needsAuth: false, rejectsBearer: true },
 ];
 
