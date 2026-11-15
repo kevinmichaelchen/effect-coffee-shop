@@ -60,6 +60,10 @@ Code style for agents:
   outside modules in the portable core (`node:*`, `bun`, platform adapters) are
   `no-restricted-imports` overrides in the backend Oxlint profile.
 - Every lint suppression names its rule and gives a reason after `--`.
+- Lint rules borrowed from other repositories (Dillon Mulroy's and Kyle Mistele's
+  anti-slop, Sandro Maglione's ai-automation) are tracked rule by rule in
+  `packages/tooling/rule-sources.json`. Before adopting, updating or declining one,
+  run `bun run --cwd packages/tooling rules:check` and record the decision there.
 - When a preference here is deterministic, encode it as a type, lint rule
   (Oxlint profile or the `house` plugin), Fallow rule or test instead of more
   prose.

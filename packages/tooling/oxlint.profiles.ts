@@ -21,6 +21,8 @@ const testFiles = [
 
 // Local rules for AGENTS.md bans that no published plugin covers.
 const house = { name: "house", specifier: "./oxlint-plugin-house.ts" };
+// Rules vendored from k-mistele/anti-slop; docs/lint-policy.md lists every rule source.
+const antiSlop = { name: "anti-slop", specifier: "./oxlint-plugin-anti-slop.ts" };
 
 const shared = defineConfig({
   extends: [effectTsgo],
@@ -36,7 +38,8 @@ const shared = defineConfig({
     maxWarnings: 0,
     reportUnusedDisableDirectives: "error",
   },
-  ignorePatterns: ["dist/**"],
+  // Vendored code stays byte-identical to upstream so drift is a plain diff.
+  ignorePatterns: ["dist/**", "**/vendor/**"],
   rules: {
     // Unsafe TypeScript escape hatches.
     "typescript/no-explicit-any": "error",
@@ -100,6 +103,11 @@ const shared = defineConfig({
     "house/no-in-operator": "error",
     "house/no-instanceof": "error",
     "house/no-classic-for-loop": "error",
+
+    // Kyle Mistele's anti-slop additions (vendored).
+    "anti-slop/max-ternary-depth": ["error", { maxDepth: 2 }],
+    "anti-slop/no-reprovide-ambient-service": "error",
+    "anti-slop/prefer-tagged-error-handling": "error",
 
     // AGENTS.md: no imperative bit-twiddling or counters.
     "no-bitwise": "error",
@@ -229,7 +237,7 @@ const banImports = (files: string, ...patterns: Array<typeof runtimeModules>): O
 export const backend: OxlintConfig = {
   ...shared,
   extends: [...shared.extends, effectStyle.configs.recommended],
-  jsPlugins: [...effectStyle.configs.recommended.jsPlugins, house],
+  jsPlugins: [...effectStyle.configs.recommended.jsPlugins, house, antiSlop],
   rules: {
     ...shared.rules,
     "house/mcp-tool-name-snake-case": "error",
@@ -292,7 +300,7 @@ export const backend: OxlintConfig = {
 export const ui: OxlintConfig = {
   ...shared,
   extends: [...shared.extends, foldkit.configs.recommended],
-  jsPlugins: [...effectStyle.configs.recommended.jsPlugins, house],
+  jsPlugins: [...effectStyle.configs.recommended.jsPlugins, house, antiSlop],
   rules: {
     ...shared.rules,
     "effect/no-chained-type-assertions": "error",

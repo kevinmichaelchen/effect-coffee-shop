@@ -5,6 +5,7 @@
     "docs/diagrams/render.mjs",
     // Oxlint loads this plugin by path from oxlint.profiles.ts.
     "packages/tooling/oxlint-plugin-house.ts",
+    "packages/tooling/oxlint-plugin-anti-slop.ts",
     "infra/alchemy/alchemy.run.ts",
     "infra/alchemy/rivet.ts",
     "infra/turbo-cache/aws.ts",
@@ -19,7 +20,8 @@
     "packages/coffee/presentation/actions/src/**/*.test.ts",
   ],
   "rulePacks": ["packages/tooling/fallow/runtime-boundaries.jsonc"],
-  "ignorePatterns": ["**/*.d.ts"],
+  // Vendored code is kept byte-identical to upstream, unused helpers included.
+  "ignorePatterns": ["**/*.d.ts", "packages/tooling/vendor/**"],
   // A file the parser cannot handle is a silent blind spot, so the gate fails
   // instead of skipping it.
   "failOnParseError": true,

@@ -107,6 +107,7 @@
     "bunfig.toml",
     "mise.toml",
     "packages/tooling/oxlint*.ts",
+    "packages/tooling/vendor/**/*.ts",
     "patches/*.patch"
   ],
   "remoteCache": {
