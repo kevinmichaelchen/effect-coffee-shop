@@ -145,7 +145,7 @@ To remove a deployment, use `cache:destroy:cloudflare` or `cache:destroy:aws`.
 These are destructive operations; bucket retention and cloud deletion rules may
 require clearing cache objects before removal.
 
-## Connect clients and CI
+## Connect clients
 
 Put the deployment's HTTPS URL and matching team into
 `config/turbo-cache/.env.local`, along with references for `TURBO_TOKEN` and
@@ -153,19 +153,10 @@ Put the deployment's HTTPS URL and matching team into
 
 ```sh
 bunx varlock load --path config/turbo-cache/
-bun run cache:run bun run ci:static
+bun run cache:run bun run typecheck
 ```
 
 Each laptop can retain its local Turbo cache. A local miss is fetched from the
-shared remote cache, so it can reuse work from the other laptop or CI immediately.
-GitHub's existing `.turbo` archive cache remains enabled until the remote service
-is deployed and measured.
-
-To enable remote caching in GitHub Actions after deployment, supply `TURBO_API`
-and `TURBO_TEAM` as repository variables, and inject the chosen token as
-`TURBO_TOKEN` plus the signing key from Actions secrets into the checks step.
-Use the write token on trusted main-branch runs and a read token for trusted PR
-runs. Fork PRs should continue using only the local cache without receiving
-secrets. The current workflow does not enable a remote endpoint automatically.
+shared remote cache, so it can reuse work from the other laptop immediately.
 
 Protocol reference: [Turborepo remote caching](https://turborepo.dev/docs/core-concepts/remote-caching).
