@@ -7,7 +7,7 @@ import { drinkSizes } from "#features/coffee-shop/lib/coffee.ts";
 import { usualDraft } from "#features/coffee-shop/lib/usual.ts";
 import { orderPreview } from "#app/view/preview.ts";
 import { composerFor, type Composer } from "#app/draft.ts";
-import { Message } from "#app/message.ts";
+import { Message } from "../../message.ts";
 import { menuOf, ordersOf, type Model } from "#app/model.ts";
 import type { Builder } from "#app/view/builder.ts";
 

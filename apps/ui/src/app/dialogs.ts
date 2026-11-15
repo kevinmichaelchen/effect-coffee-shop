@@ -1,7 +1,7 @@
 import { Dialog } from "@foldkit/ui";
 import { Option } from "effect";
 import { Update } from "foldkit";
-import { Message } from "#app/message.ts";
+import { Message } from "../message.ts";
 import type { Model } from "#app/model.ts";
 import type { UpdateStep } from "#app/resources.ts";
 

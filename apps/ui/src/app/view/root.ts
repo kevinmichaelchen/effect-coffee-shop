@@ -5,7 +5,7 @@ import { linkButton } from "@effect-coffee-shop/ui-kit/components/button";
 import { text } from "@effect-coffee-shop/ui-kit/components/text";
 import { toastEntry } from "@effect-coffee-shop/ui-kit/components/toast";
 import { getQueueLoad } from "#features/coffee-shop/lib/coffee.ts";
-import { Message } from "#app/message.ts";
+import { Message } from "../../message.ts";
 import { Toast, menuOf, ordersOf, readErrors, viewerOf, type Model } from "#app/model.ts";
 import { shopRouter, staffRouter } from "#app/route.ts";
 import { authGate } from "#app/view/auth.ts";

@@ -5,7 +5,7 @@ import { card, cardContent, cardTitleHeader } from "@effect-coffee-shop/ui-kit/c
 import { textField } from "@effect-coffee-shop/ui-kit/components/field";
 import { text } from "@effect-coffee-shop/ui-kit/components/text";
 import type { AuthenticatedViewer } from "#features/auth/lib/viewer.ts";
-import { Message } from "#app/message.ts";
+import { Message } from "../../message.ts";
 import { viewerOf, type AuthAction, type Model } from "#app/model.ts";
 import type { Builder } from "#app/view/builder.ts";
 

@@ -9,7 +9,7 @@ import type { AssistantState, LocalModelStatus } from "#features/assistant/lib/s
 import type { AssistantTurn } from "#features/assistant/lib/tools.ts";
 import { getOrderActions } from "#features/coffee-shop/lib/coffee.ts";
 import { getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
-import { Message } from "#app/message.ts";
+import { Message } from "../../message.ts";
 import { ordersOf, type Model } from "#app/model.ts";
 import type { Builder } from "#app/view/builder.ts";
 

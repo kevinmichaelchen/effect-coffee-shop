@@ -20,7 +20,7 @@ import { Subscription } from "foldkit";
 import { workerNotices } from "#features/assistant/api/assistant-worker.ts";
 import { toCoffeeOrder } from "#features/coffee-shop/api/order-mapping.ts";
 import { Feed, feedFor } from "#app/feed.ts";
-import { Message } from "#app/message.ts";
+import { Message } from "../message.ts";
 import { type Model, viewerOf } from "#app/model.ts";
 import type { AppServices } from "#app/resources.ts";
 

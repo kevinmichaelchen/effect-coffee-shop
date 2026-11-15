@@ -7,7 +7,7 @@ import {
 import { overlay } from "@effect-coffee-shop/ui-kit/components/overlay";
 import { text } from "@effect-coffee-shop/ui-kit/components/text";
 import { themeToggle } from "@effect-coffee-shop/ui-kit/components/theme";
-import { Message } from "#app/message.ts";
+import { Message } from "../../message.ts";
 import { ordersOf, type Model } from "#app/model.ts";
 import { staffRouter, shopRouter } from "#app/route.ts";
 import type { Builder } from "#app/view/builder.ts";

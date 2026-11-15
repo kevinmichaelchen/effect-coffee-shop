@@ -13,7 +13,7 @@ vi.mock("#features/auth/auth-client.ts", () => ({
 const { init } = await import("#app/main.ts");
 const { MenuData, ViewerData } = await import("#app/model.ts");
 const { RunPasskeyAuth } = await import("#app/command.ts");
-const { Message } = await import("#app/message.ts");
+const { Message } = await import("../message.ts");
 const { update } = await import("#app/update.ts");
 const { view } = await import("#app/view/root.ts");
 

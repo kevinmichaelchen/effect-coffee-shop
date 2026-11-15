@@ -27,7 +27,7 @@ const { ApplyTheme, FetchMenu, FetchViewer, LoadExternal, RunPasskeyAuth, StartO
   await import("#app/command.ts");
 const { init } = await import("#app/main.ts");
 const { MenuData, OrdersData, ViewerData } = await import("#app/model.ts");
-const { Message } = await import("#app/message.ts");
+const { Message } = await import("../message.ts");
 const { update } = await import("#app/update.ts");
 const { AppRoute, urlToAppRoute } = await import("#app/route.ts");
 const { feedFor } = await import("#app/feed.ts");

@@ -60,7 +60,7 @@ import {
 } from "#app/assistant.ts";
 import { composerFor, selectDrink, toInt } from "#app/draft.ts";
 import { feedFor, type Feed } from "#app/feed.ts";
-import { Message } from "#app/message.ts";
+import { Message } from "../message.ts";
 import {
   MenuData,
   OrdersData,

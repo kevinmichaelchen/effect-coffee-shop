@@ -7,7 +7,7 @@ import { SecureRandom } from "effect/crypto";
 import { ThemePreference, themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
 import { initialAssistant } from "#features/assistant/lib/state.ts";
 import { ApplyTheme } from "#app/command.ts";
-import type { Message } from "#app/message.ts";
+import type { Message } from "../message.ts";
 import { MenuData, OrdersData, Toast, ViewerData, type Model } from "#app/model.ts";
 import type { AppServices } from "#app/resources.ts";
 import { urlToAppRoute } from "#app/route.ts";

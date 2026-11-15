@@ -6,7 +6,7 @@ import { text } from "@effect-coffee-shop/ui-kit/components/text";
 import { formatOrderTime, formatPrice } from "#features/coffee-shop/lib/coffee.ts";
 import { formatOrderItems } from "#features/coffee-shop/lib/order-display.ts";
 import type { OrderTicket } from "#features/coffee-shop/lib/coffee.ts";
-import { Message } from "#app/message.ts";
+import { Message } from "../../message.ts";
 import type { Model } from "#app/model.ts";
 import type { Builder } from "#app/view/builder.ts";
 import { assistantCard } from "#app/view/assistant.ts";

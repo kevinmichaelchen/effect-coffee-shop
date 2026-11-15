@@ -9,7 +9,7 @@ import {
 import { acquireMicrophone, Microphone } from "#features/assistant/api/microphone.ts";
 import { wantsWorker } from "#features/assistant/lib/state.ts";
 import { CustomerConnection, StaffConnection } from "#features/coffee-shop/api/domain-clients.ts";
-import { Message } from "#app/message.ts";
+import { Message } from "../message.ts";
 import type { Model } from "#app/model.ts";
 
 const when = (condition: boolean): Option.Option<null> =>

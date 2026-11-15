@@ -301,10 +301,6 @@ export const ui: OxlintConfig = {
     "effect/no-reflect-get": "error",
     "effect/no-widen-then-assert": "error",
     "effect/require-safety-comment-for-type-assertion": "error",
-    // The root update forwards child messages by constructing them, which this
-    // rule wants replaced by per-child update capabilities; the app's single
-    // update function is a Foldkit decision that predates the rule.
-    "foldkit/no-child-message-construction-in-root": "off",
     // Shipped UI code logs through Effect or not at all; scripts may print.
     "no-console": "error",
     // Stylesheets and polyfills are imported for their side effects.

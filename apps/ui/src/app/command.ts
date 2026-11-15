@@ -32,7 +32,7 @@ import {
 } from "#features/coffee-shop/api/order-failures.ts";
 import type { PlaceOrderRequest } from "#features/coffee-shop/lib/coffee-schemas.ts";
 import { AuthAction, type OrderActionName } from "#app/model.ts";
-import { Message } from "#app/message.ts";
+import { Message } from "../message.ts";
 
 /** The customer Api as Foldkit Commands: each takes its target, input and command id. */
 const CustomerDomain = DomainFoldkit.make(CustomerApi);
