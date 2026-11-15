@@ -18,6 +18,7 @@ import * as HttpClientRequest from "effect/http/HttpClientRequest";
 import type * as HttpClientResponse from "effect/http/HttpClientResponse";
 import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
+import * as Schedule from "effect/Schedule";
 import * as Schema from "effect/Schema";
 import type CoffeeWorker from "@effect-coffee-shop/coffee-server/hosts/CoffeeWorker";
 import type CoffeeWorkerRivet from "@effect-coffee-shop/coffee-server/hosts/CoffeeWorkerRivet";
@@ -71,53 +72,58 @@ const requireOkSmokeResponse = (input: {
 
 const CloudflareDeploymentSmokeCheck = Alchemy.Action(
   "CloudflareDeploymentSmokeCheck",
-  Effect.fn("CloudflareDeploymentSmokeCheck")(function* (input: {
-    readonly enabled: boolean;
-    readonly mcpEnabled: boolean;
-    readonly url: string;
-  }) {
-    if (!input.enabled) {
-      return {
-        checked: false,
-        mcpChecked: false,
-      };
-    }
+  Effect.fn("CloudflareDeploymentSmokeCheck")(
+    function* (input: {
+      readonly enabled: boolean;
+      readonly mcpEnabled: boolean;
+      readonly url: string;
+    }) {
+      if (!input.enabled) {
+        return {
+          checked: false,
+          mcpChecked: false,
+        };
+      }
 
-    const healthUrl = new URL("/api/health", input.url).toString();
-    const health = yield* fetchSmokeResponse({
-      label: "HTTP health",
-      url: healthUrl,
-    });
-    yield* requireOkSmokeResponse({
-      label: "HTTP health",
-      response: health,
-      url: healthUrl,
-    });
+      const healthUrl = new URL("/api/health", input.url).toString();
+      const health = yield* fetchSmokeResponse({
+        label: "HTTP health",
+        url: healthUrl,
+      });
+      yield* requireOkSmokeResponse({
+        label: "HTTP health",
+        response: health,
+        url: healthUrl,
+      });
 
-    if (!input.mcpEnabled) {
+      if (!input.mcpEnabled) {
+        return {
+          checked: true,
+          mcpChecked: false,
+        };
+      }
+
+      const mcpUrl = new URL("/mcp", input.url).toString();
+      const mcp = yield* fetchSmokeResponse({
+        method: "POST",
+        label: "MCP OAuth discovery",
+        url: mcpUrl,
+      });
+      if (mcp.status !== 401 || (mcp.headers["www-authenticate"] ?? "") === "") {
+        return yield* new DeploySmokeCheckError({
+          message: "MCP must reject unauthenticated requests with OAuth discovery.",
+        });
+      }
+
       return {
         checked: true,
-        mcpChecked: false,
+        mcpChecked: true,
       };
-    }
-
-    const mcpUrl = new URL("/mcp", input.url).toString();
-    const mcp = yield* fetchSmokeResponse({
-      method: "POST",
-      label: "MCP OAuth discovery",
-      url: mcpUrl,
-    });
-    if (mcp.status !== 401 || (mcp.headers["www-authenticate"] ?? "") === "") {
-      return yield* new DeploySmokeCheckError({
-        message: "MCP must reject unauthenticated requests with OAuth discovery.",
-      });
-    }
-
-    return {
-      checked: true,
-      mcpChecked: true,
-    };
-  }),
+    },
+    // A Worker update takes a few seconds to reach every edge, so the first
+    // probe can still hit the previous version.
+    Effect.retry({ schedule: Schedule.spaced("2 seconds"), times: 15 }),
+  ),
 );
 
 /** The stack around one host's Coffee Worker. */
