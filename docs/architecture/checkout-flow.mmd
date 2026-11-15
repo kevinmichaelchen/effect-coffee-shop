@@ -1,0 +1,12 @@
+sequenceDiagram
+    participant C as Customer
+    participant Cart
+    participant P as CheckoutFulfillment
+    participant Order
+    C->>Cart: PrepareCheckout(checkoutId)
+    Cart-->>C: CheckoutPrepared, prices held 15 minutes
+    C->>Cart: ConfirmCheckout(checkoutId, orderId)
+    Cart-->>C: CheckoutConfirmed, cart emptied
+    Cart--)P: CheckoutConfirmed
+    P->>Order: PlaceCheckedOutOrder(orderId)
+    Order--)C: OrderPlaced, read from OrderSummary

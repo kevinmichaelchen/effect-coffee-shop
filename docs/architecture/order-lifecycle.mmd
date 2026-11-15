@@ -1,0 +1,8 @@
+stateDiagram-v2
+    state "picked-up" as pickedUp
+    [*] --> pending: PlaceOrder
+    pending --> brewing: StartBrewing
+    pending --> cancelled: CancelOrder
+    brewing --> ready: MarkReady
+    brewing --> cancelled: CancelOrder
+    ready --> pickedUp: PickUpOrder

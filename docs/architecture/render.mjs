@@ -82,6 +82,21 @@ const plainDiagrams = [
     label:
       "Package layers: infra deploys coffee-server and apps/ui; dependencies point inward to coffee-domain through presentation, coffee-actions and coffee-application.",
   },
+  {
+    name: "order-lifecycle",
+    label:
+      "Order lifecycle: pending to brewing to ready to picked-up, with cancellation allowed while pending or brewing.",
+  },
+  {
+    name: "checkout-flow",
+    label:
+      "Checkout: a customer prepares and confirms a checkout on the Cart, the confirmed checkout starts the fulfillment saga, and the saga places the order.",
+  },
+  {
+    name: "cache-requests",
+    label:
+      "Turbo cache requests: Turbo on either laptop signs artifacts locally and sends them with a team token to a Cloudflare Worker over R2 or to ECS Fargate over S3.",
+  },
 ];
 for (const { name, label } of plainDiagrams) {
   const plain = render(await readFile(`docs/architecture/${name}.mmd`, "utf8"), {

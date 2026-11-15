@@ -1,0 +1,10 @@
+flowchart TB
+  Client["Turbo on either laptop<br/>signs artifacts locally,<br/>never sends the signing key"]
+  subgraph CF["Cloudflare target"]
+    Worker["Worker<br/>/v8/artifacts, /health"] --> R2[("R2 bucket<br/>14-day lifecycle")]
+  end
+  subgraph AWS["AWS target"]
+    Alb["HTTPS ALB"] --> Ecs["ECS Fargate"] --> S3[("S3 bucket<br/>14-day lifecycle")]
+  end
+  Client -->|"team token"| Worker
+  Client -->|"team token"| Alb
