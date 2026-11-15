@@ -1,20 +1,14 @@
 import * as Schema from "effect/Schema";
+import { MenuItemView } from "@effect-coffee-shop/coffee-http/contract";
 import { drinkSizes, milks, orderStatuses, temperatures } from "./coffee.ts";
+
+/** The menu item the Worker serves, decoded once at the boundary. */
+export const MenuItem = MenuItemView;
 
 export const DrinkSize = Schema.Literals(drinkSizes);
 export const Milk = Schema.Literals(milks);
 export const Temperature = Schema.Literals(temperatures);
 const OrderStatus = Schema.Literals(orderStatuses);
-
-export const MenuItem = Schema.Struct({
-  id: Schema.String,
-  name: Schema.String,
-  kind: Schema.Literals(["espresso", "tea"] as const),
-  basePriceCents: Schema.Int,
-  availableMilks: Schema.Array(Milk),
-  availableTemperatures: Schema.Array(Temperature),
-  maxShots: Schema.Int,
-});
 
 const CoffeeOrderItem = Schema.Struct({
   drinkId: Schema.String,
@@ -66,15 +60,7 @@ export const OrderDraft = Schema.Struct({
   notes: Schema.String,
 });
 
-export const CoffeeApiError = Schema.Struct({
-  _tag: Schema.optional(Schema.String),
-  message: Schema.optional(Schema.String),
-});
-
-export const Menu = Schema.Array(MenuItem);
-
 export type MenuItem = typeof MenuItem.Type;
 export type OrderTicket = typeof OrderTicket.Type;
 export type OrderDraft = typeof OrderDraft.Type;
 export type PlaceOrderRequest = typeof PlaceOrderRequest.Type;
-export type CoffeeApiError = typeof CoffeeApiError.Type;

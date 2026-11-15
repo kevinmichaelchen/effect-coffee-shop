@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./api": "./src/api.ts",
+    "./contract": "./src/contract.ts",
     "./domain-rest": "./src/domain-rest.ts"
   },
   "scripts": {

@@ -7,7 +7,8 @@ import * as HttpRouter from "effect/http/HttpRouter";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import { CurrentActor, type AppActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import { CustomerId } from "@effect-coffee-shop/coffee-domain/Customer/Customer.id";
-import { CoffeeHttpApi, CoffeeHttpApiLive } from "./api.ts";
+import { CoffeeHttpApiLive } from "./api.ts";
+import { CoffeeHttpApi } from "./contract.ts";
 
 const serveAs = (actor: AppActor) =>
   HttpRouter.serve(CoffeeHttpApiLive, { disableListenLog: true, disableLogger: true }).pipe(

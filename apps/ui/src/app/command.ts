@@ -3,7 +3,7 @@ import type { CoffeeOrder } from "@effect-coffee-shop/coffee-domain/Order/Coffee
 import { makeOrderId, OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
 import * as DomainFoldkit from "@alchemy.run/domain/Foldkit";
-import { Effect, Match, Option, Schedule, Schema } from "effect";
+import { Effect, Match, Option, Schema } from "effect";
 import { Command } from "foldkit";
 import { load, pushUrl } from "foldkit/navigation";
 import { ThemePreference, themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
@@ -22,8 +22,7 @@ import {
   toolsFor,
 } from "#features/assistant/lib/tools.ts";
 import { authClient } from "#features/auth/auth-client.ts";
-import { fetchViewer } from "#features/auth/api/viewer.ts";
-import { fetchMenu } from "#features/coffee-shop/api/menu.ts";
+import { fetchMenu, fetchViewer } from "#features/coffee-shop/api/coffee-api.ts";
 import { toCoffeeOrder } from "#features/coffee-shop/api/order-mapping.ts";
 import {
   describeOrderFailure,
@@ -157,8 +156,8 @@ export const RunPasskeyAuth = Command.define("RunPasskeyAuth", {
 
 export const FetchMenu = Command.define("FetchMenu", {
   messages: [Message.SucceededFetchMenu, Message.FailedFetchMenu],
+  // The typed client already retries transient failures and times each attempt out.
   execute: fetchMenu.pipe(
-    Effect.retry(Schedule.exponential("250 millis").pipe(Schedule.upTo({ times: 2 }))),
     Effect.map((menu) => Message.SucceededFetchMenu({ menu })),
     recoverWith(Message.FailedFetchMenu),
   ),

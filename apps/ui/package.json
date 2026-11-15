@@ -24,6 +24,7 @@
     "@alchemy.run/domain": "catalog:",
     "@effect-coffee-shop/coffee-auth": "workspace:*",
     "@effect-coffee-shop/coffee-domain": "workspace:*",
+    "@effect-coffee-shop/coffee-http": "workspace:*",
     "@effect-coffee-shop/coffee-routes": "workspace:*",
     "@effect-coffee-shop/ui-kit": "workspace:*",
     "@effect/platform-browser": "catalog:",

@@ -41,7 +41,7 @@ const menu = [
     maxShots: 3,
   },
   {
-    id: "earl-grey",
+    id: "tea",
     name: "Earl Grey",
     kind: "tea",
     basePriceCents: 300,

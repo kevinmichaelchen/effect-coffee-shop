@@ -158,6 +158,10 @@
         "patterns": ["packages/coffee/auth/src/contract.ts"],
       },
       {
+        "name": "http-contract",
+        "patterns": ["packages/coffee/presentation/http/src/contract.ts"],
+      },
+      {
         "name": "auth",
         "patterns": ["packages/coffee/auth/**"],
       },
@@ -188,8 +192,10 @@
         "allow": ["server-hosts", "routes", "ui", "turbo-cache"],
       },
       {
+        // The UI renders the application's view models (the menu the REST
+        // contract serves), reached through the http contract it depends on.
         "from": "ui",
-        "allow": ["auth-contract", "domain", "routes", "ui-kit"],
+        "allow": ["auth-contract", "http-contract", "domain", "application", "routes", "ui-kit"],
       },
       {
         "from": "ui-kit",
@@ -220,8 +226,12 @@
         "allow": ["auth-contract", "http-routing", "domain", "application"],
       },
       {
+        "from": "http-contract",
+        "allow": ["application"],
+      },
+      {
         "from": "presentation",
-        "allow": ["http-routing", "domain", "application", "actions"],
+        "allow": ["http-routing", "domain", "application", "actions", "http-contract"],
       },
       {
         "from": "server",

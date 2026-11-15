@@ -1,21 +1,12 @@
-import * as Schema from "effect/Schema";
+import {
+  type ActorSummary,
+  ActorSummary as ViewerSchema,
+} from "@effect-coffee-shop/coffee-http/contract";
 
-const AnonymousViewer = Schema.Struct({
-  kind: Schema.Literal("anonymous"),
-}).annotate({ identifier: "AnonymousViewer" });
-
-const AuthenticatedViewer = Schema.Struct({
-  displayName: Schema.String,
-  kind: Schema.Literals(["customer", "staff"] as const),
-  userId: Schema.String,
-}).annotate({ identifier: "AuthenticatedViewer" });
-
-export const Viewer = Schema.Union([AnonymousViewer, AuthenticatedViewer]).annotate({
-  identifier: "Viewer",
-});
-
-export type Viewer = typeof Viewer.Type;
-export type AuthenticatedViewer = typeof AuthenticatedViewer.Type;
+/** The UI calls the contract's account summary its viewer: who the page shows. */
+export const Viewer = ViewerSchema;
+export type Viewer = ActorSummary;
+export type AuthenticatedViewer = Exclude<Viewer, { kind: "anonymous" }>;
 
 export const anonymousViewer: Viewer = {
   kind: "anonymous",

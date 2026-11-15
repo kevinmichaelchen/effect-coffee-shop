@@ -13,9 +13,9 @@ const latte: MenuItem = {
   maxShots: 3,
 };
 
-const chai: MenuItem = {
-  id: "chai",
-  name: "Chai",
+const tea: MenuItem = {
+  id: "tea",
+  name: "Tea",
   kind: "tea",
   basePriceCents: 400,
   availableMilks: ["whole", "oat"],
@@ -23,13 +23,13 @@ const chai: MenuItem = {
   maxShots: 0,
 };
 
-const menu = [latte, chai];
+const menu = [latte, tea];
 
 type OrderItem = OrderTicket["items"][number];
 
 const line = (drinkId: string, quantity = 1): OrderItem => ({
   drinkId,
-  drinkName: drinkId === "latte" ? "Latte" : "Chai",
+  drinkName: drinkId === "latte" ? "Latte" : "Tea",
   size: "medium",
   milk: "whole",
   temperature: "hot",
@@ -66,21 +66,21 @@ describe("usualDraft", () => {
 
   test("quantity counts, not just tickets", () => {
     const orders = [
-      ticket("ticket-1", "2026-10-27T10:00:00.000Z", [line("chai", 3)]),
+      ticket("ticket-1", "2026-10-27T10:00:00.000Z", [line("tea", 3)]),
       ticket("ticket-2", "2026-10-27T12:00:00.000Z", [line("latte", 1)]),
     ];
 
-    expect(usualDrink(orders)).toBe("chai");
+    expect(usualDrink(orders)).toBe("tea");
   });
 
   test("cancelled tickets are not habits", () => {
     const orders = [
       ticket("ticket-1", "2026-10-27T09:00:00.000Z", [line("latte", 5)], "cancelled"),
-      ticket("ticket-2", "2026-10-27T10:00:00.000Z", [line("chai")]),
-      ticket("ticket-3", "2026-10-27T11:00:00.000Z", [line("chai")]),
+      ticket("ticket-2", "2026-10-27T10:00:00.000Z", [line("tea")]),
+      ticket("ticket-3", "2026-10-27T11:00:00.000Z", [line("tea")]),
     ];
 
-    expect(usualDrink(orders)).toBe("chai");
+    expect(usualDrink(orders)).toBe("tea");
   });
 
   test("cancelled tickets cannot reach the threshold on their own", () => {
@@ -93,8 +93,8 @@ describe("usualDraft", () => {
 
   test("ties go to the drink ordered most recently", () => {
     const orders = [
-      ticket("ticket-1", "2026-10-25T09:00:00.000Z", [line("chai")]),
-      ticket("ticket-2", "2026-10-25T10:00:00.000Z", [line("chai")]),
+      ticket("ticket-1", "2026-10-25T09:00:00.000Z", [line("tea")]),
+      ticket("ticket-2", "2026-10-25T10:00:00.000Z", [line("tea")]),
       ticket("ticket-3", "2026-10-26T09:00:00.000Z", [line("latte")]),
       ticket("ticket-4", "2026-10-27T09:00:00.000Z", [line("latte")]),
     ];
@@ -108,6 +108,6 @@ describe("usualDraft", () => {
       ticket("ticket-2", "2026-10-27T09:00:00.000Z", [line("latte")]),
     ];
 
-    expect(usualDrink(orders, [chai])).toBe(undefined);
+    expect(usualDrink(orders, [tea])).toBe(undefined);
   });
 });
