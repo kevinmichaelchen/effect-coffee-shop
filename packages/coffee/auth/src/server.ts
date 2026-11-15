@@ -34,6 +34,16 @@ export class AuthUnavailable extends Schema.TaggedError<
  */
 export type AuthDatabase = Layer.Layer<SqlClient.SqlClient | SqlBatchCommit>;
 
+/**
+ * Whether a request is a mutation from outside the app's own origin. Auth's
+ * middleware refuses one before it reads anything, and every surface that
+ * mounts its own mutation routes asks the same question.
+ */
+export const crossOriginMutation =
+  (origin: string) =>
+  (request: HttpServerRequest.HttpServerRequest): boolean =>
+    !["GET", "HEAD", "OPTIONS"].includes(request.method) && request.headers.origin !== origin;
+
 export const makeCoffeeAuth = (
   config: AuthServerConfig,
   database: AuthDatabase,
@@ -105,10 +115,7 @@ export const makeCoffeeAuth = (
         (services) => (effect) =>
           Effect.gen(function* () {
             const request = yield* HttpServerRequest.HttpServerRequest;
-            if (
-              !["GET", "HEAD", "OPTIONS"].includes(request.method) &&
-              request.headers.origin !== origin.origin
-            ) {
+            if (crossOriginMutation(origin.origin)(request)) {
               return HttpServerResponse.empty({ status: 403 });
             }
             return yield* http

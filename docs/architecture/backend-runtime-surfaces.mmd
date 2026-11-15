@@ -1,7 +1,7 @@
 flowchart TB
   Clients["Clients<br/>browser, MCP agents, tests"]
   Website["Website Worker (apps/ui)<br/>Foldkit assets; forwards /api, /mcp,<br/>/oauth/, /.well-known/"]
-  Coffee["Coffee Worker (coffee-server)<br/>one wide event per request"]
+  Coffee["Coffee Worker (coffee-server)<br/>one generation per AUTH_SECRET<br/>one wide event per request"]
   subgraph Surfaces["Surfaces"]
     direction LR
     Mcp["MCP HTTP<br/>/mcp (OAuth)<br/>CustomerApi_* / StaffApi_* tools<br/>generated from the Apis;<br/>menu tools, resources, prompts"]

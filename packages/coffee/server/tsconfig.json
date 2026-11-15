@@ -19,6 +19,7 @@
         "allowedUnstableApis": [
           "@effect/vitest",
           "@effect/platform-node",
+          "effect/LayerMap",
           "effect/crypto",
           "effect/http",
           "effect/http-api",

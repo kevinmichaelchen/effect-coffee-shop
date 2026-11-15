@@ -1,14 +1,11 @@
 import { describe, expect, it } from "@effect/vitest";
-import * as NodeServices from "@effect/platform-node/NodeServices";
 import * as Domain from "@alchemy.run/domain";
 import { Passkey } from "@yielded/auth";
 import { actorHeader } from "@effect-coffee-shop/coffee-application/ActorHeader";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { AuthAdaptersLive } from "@effect-coffee-shop/coffee-auth/adapters";
-import { d1AuthDatabase } from "@effect-coffee-shop/coffee-auth/adapters/d1";
 import { type AuthDatabase, makeCoffeeAuth } from "@effect-coffee-shop/coffee-auth/server";
 import { makeAuthClient } from "@effect-coffee-shop/coffee-auth/testing/auth-client";
-import { migrateCloudflareD1 } from "@effect-coffee-shop/coffee-auth/testing/migrate";
 import { makeTestPasskey } from "@effect-coffee-shop/coffee-auth/testing/passkey";
 import { type Actor, Actor as ActorSchema } from "@effect-coffee-shop/coffee-domain/Actor";
 import { CoffeeShop, CoffeeShopHandlers } from "@effect-coffee-shop/coffee-domain/CoffeeShop.model";
@@ -19,7 +16,6 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as HashSet from "effect/HashSet";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as R from "effect/Record";
 import * as Redacted from "effect/Redacted";
 import * as References from "effect/References";
@@ -28,8 +24,8 @@ import { SecureRandom } from "effect/crypto";
 import { HttpRouter, HttpServer } from "effect/http";
 import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
-import { Miniflare } from "miniflare";
-import { type DomainToolServices, domainApi } from "../src/CoffeeHttp.ts";
+import { authDatabase } from "./auth-database.ts";
+import { type DomainToolServices, coffeeGeneration, domainApi } from "../src/CoffeeHttp.ts";
 import { SessionLive } from "../src/Session.ts";
 
 const World = Layer.mergeAll(SessionLive, CoffeeOrderApp.layer).pipe(
@@ -39,12 +35,16 @@ const World = Layer.mergeAll(SessionLive, CoffeeOrderApp.layer).pipe(
 );
 
 const origin = "http://localhost";
-const config = {
+/** The deployment's auth settings; the secret is what one generation adds. */
+const deployment = {
   origin,
   oauthSecret: Redacted.make("A".repeat(43)),
   mcpClients: [],
-  secret: Redacted.make("coffee-auth-test-secret-at-least-32-characters"),
   staffUserIds: HashSet.empty<string>(),
+};
+const config = {
+  ...deployment,
+  secret: Redacted.make("coffee-auth-test-secret-at-least-32-characters"),
 };
 
 const encodeJson = Schema.encodeSync(Schema.fromJsonString(Schema.Json));
@@ -71,24 +71,6 @@ const bodyOf =
       Effect.flatMap(Schema.decodeEffect(Schema.fromJsonString(schema))),
       Effect.orDie,
     );
-
-/** A migrated D1 auth database in a local Workers runtime. */
-const authDatabase = Effect.fn("DomainRestTest.authDatabase")(function* () {
-  const proxy = yield* Effect.acquireRelease(
-    Effect.sync(
-      () =>
-        new Miniflare({
-          modules: true,
-          script: "export default { fetch() { return new Response(); } }",
-          d1Databases: ["DB"],
-        }),
-    ),
-    (proxy) => Effect.promise(async () => proxy.dispose()),
-  );
-  const db = yield* Effect.promise(async () => proxy.getD1Database("DB"));
-  yield* migrateCloudflareD1(db).pipe(Effect.provide(NodeServices.layer));
-  return d1AuthDatabase(db);
-});
 
 /** A browser that registered a passkey and signed in: its cookies carry a customer session. */
 const signedInBrowser = Effect.fnUntraced(function* (database: AuthDatabase) {
@@ -145,13 +127,16 @@ describe("the domain Apis over REST, behind the auth session", () => {
       Effect.gen(function* () {
         const database = yield* authDatabase();
         const { cookie } = yield* signedInBrowser(database);
-        const input = {
-          auth: Option.some(config),
-          database,
-          app: yield* CoffeeOrderApp,
-          domain: yield* Effect.context<DomainToolServices>(),
-        };
-        const rest = domainApi(input, yield* domainRestHttp);
+        const generation = yield* coffeeGeneration(
+          {
+            auth: deployment,
+            database,
+            app: yield* CoffeeOrderApp,
+            domain: yield* Effect.context<DomainToolServices>(),
+          },
+          config.secret,
+        );
+        const rest = domainApi(generation, yield* domainRestHttp);
         const call = (path: string, init: RequestInit = {}) =>
           rest.pipe(
             Effect.provideService(
