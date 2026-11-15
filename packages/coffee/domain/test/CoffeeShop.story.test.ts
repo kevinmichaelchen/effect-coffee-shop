@@ -9,7 +9,6 @@ import { Cart } from "../src/Cart/Cart.aggregate.ts";
 import { CartItemId } from "../src/Cart/CartItem.id.ts";
 import { CartItemNotFound } from "../src/Cart/CartItemNotFound.rejection.ts";
 import { CheckoutId } from "../src/Cart/Checkout.ts";
-import { FulfillCheckout } from "../src/Cart/FulfillCheckout.saga.ts";
 import { CartCleared, ClearCart } from "../src/Cart/ClearCart.command.ts";
 import {
   CheckoutConfirmed,
@@ -360,7 +359,6 @@ describe("checkout", () => {
         }),
       ),
       then(o9, samPlaced),
-      Story.saga(FulfillCheckout, o9.id, { _tag: "Completed", result: undefined }),
       state(samsCart, (cart) => expect(cart).toEqual({ lines: [], checkout: null })),
       view(CustomerOrders, Customer.ref(sam.userId), (orders) =>
         expect(orders.orders.map((order) => order.id)).toEqual([o9.id]),
@@ -383,7 +381,6 @@ describe("checkout", () => {
         }),
       ),
       then(o9, samPlaced),
-      Story.saga(FulfillCheckout, o9.id, { _tag: "Completed", result: undefined }),
       when(
         samsCart,
         new AddCartItem({
@@ -404,7 +401,6 @@ describe("checkout", () => {
           checkout: { ...prepared, checkoutId: checkoutId(2) },
         }),
       ),
-      Story.saga(FulfillCheckout, o9.id, { _tag: "Completed", result: undefined }),
       then(o9),
     ),
   );

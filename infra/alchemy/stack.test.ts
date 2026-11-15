@@ -201,7 +201,7 @@ const browserProtocol = (url: string, session: Session) => {
   return Domain.protocolWebSocket(url).pipe(Layer.provide(Layer.mergeAll(http, sockets)));
 };
 
-/** Confirm checkout through CustomerApi, then wait for its durable workflow to place the order. */
+/** Confirm checkout through CustomerApi, then wait for the policy to place the order. */
 const orderThroughCustomerApi = (api: string, session: Session, userId: CustomerId) =>
   Effect.scoped(
     Effect.gen(function* () {
@@ -231,7 +231,7 @@ const orderThroughCustomerApi = (api: string, session: Session, userId: Customer
   );
 
 test(
-  "fulfills a signed-in customer's checkout through a Durable Object workflow",
+  "fulfills a signed-in customer's checkout on Durable Objects",
   Effect.gen(function* () {
     const api = yield* Effect.fromNullishOr((yield* deployed).api);
     const session = yield* signedInCustomer(api, "Sam");
@@ -339,8 +339,8 @@ test(
       );
       expect(placed?.orders.map((order) => order.id)).toEqual([orderId]);
 
-      // A second checkout confirmed for the same order starts the saga again
-      // with the same key, which reuses the run that already placed it.
+      // A second checkout confirmed for the same order sends PlaceCheckedOutOrder
+      // again; the order is already placed, so the command records nothing.
       yield* coffee.AddCartItem(userId, {
         cartItemId: yield* makeCartItemId,
         item: { drinkId: "tea", size: "small" },

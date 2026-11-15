@@ -4,7 +4,6 @@ import { Cart } from "./Cart/Cart.aggregate.ts";
 import { CheckoutFulfillment, CheckoutFulfillmentLive } from "./Cart/CheckoutFulfillment.policy.ts";
 import { CustomerCart, CustomerCartLive } from "./Cart/CustomerCart.view.ts";
 import { Customer } from "./Customer/Customer.aggregate.ts";
-import { FulfillCheckout, FulfillCheckoutLive } from "./Cart/FulfillCheckout.saga.ts";
 import { CustomerOrders, CustomerOrdersLive } from "./Order/CustomerOrders.view.ts";
 import { Order } from "./Order/Order.aggregate.ts";
 import { OrderQueue, OrderQueueLive } from "./Order/OrderQueue.view.ts";
@@ -15,17 +14,15 @@ export const coffeeShopMembers = {
   aggregates: [Order, Cart, Customer],
   views: [OrderSummary, CustomerOrders, OrderQueue, CustomerCart],
   policies: [CheckoutFulfillment],
-  sagas: [FulfillCheckout],
 };
 
 export class CoffeeShop extends Domain.Model("CoffeeShop", coffeeShopMembers) {}
 
-/** Every read guard, policy and saga implementation, as one Layer. */
+/** Every read guard and policy implementation, as one Layer. */
 export const CoffeeShopHandlers = Layer.mergeAll(
   OrderSummaryLive,
   CustomerOrdersLive,
   OrderQueueLive,
   CustomerCartLive,
   CheckoutFulfillmentLive,
-  FulfillCheckoutLive,
 );

@@ -30,18 +30,17 @@ folders as subdomains. Import them by path, e.g.
 | View           | [`Order/CustomerOrders.view.ts`](src/Order/CustomerOrders.view.ts)                       | Every order one customer placed, folded from `OrderSummary`.                                                                              |
 | View           | [`Order/OrderQueue.view.ts`](src/Order/OrderQueue.view.ts)                               | The baristas' queue: open orders plus the 200 most recent finished ones. Staff only.                                                      |
 | View           | [`Cart/CustomerCart.view.ts`](src/Cart/CustomerCart.view.ts)                             | One person's cart as they read it, folded from the same events as `Cart`. Owner only.                                                     |
-| Policy         | [`Cart/CheckoutFulfillment.policy.ts`](src/Cart/CheckoutFulfillment.policy.ts)           | Whenever a checkout is confirmed, start its fulfillment saga.                                                                             |
-| Saga           | [`Cart/FulfillCheckout.saga.ts`](src/Cart/FulfillCheckout.saga.ts)                       | Place the confirmed order in a durable workflow, keyed by order id.                                                                       |
+| Policy         | [`Cart/CheckoutFulfillment.policy.ts`](src/Cart/CheckoutFulfillment.policy.ts)           | Whenever a checkout is confirmed, send `PlaceCheckedOutOrder` at the prices it froze.                                                     |
 | Api            | [`CustomerApi.api.ts`](src/CustomerApi.api.ts), [`StaffApi.api.ts`](src/StaffApi.api.ts) | What each audience may send and read.                                                                                                     |
-| Model          | [`CoffeeShop.model.ts`](src/CoffeeShop.model.ts)                                         | Everything hosted together, plus read guards, policy and saga implementations as one Layer.                                               |
+| Model          | [`CoffeeShop.model.ts`](src/CoffeeShop.model.ts)                                         | Everything hosted together, plus read guards and the policy implementation as one Layer.                                                  |
 
 Commands live in `<Command>.command.ts` with the events they record and the rejections only they
 return. Shared rejections have their own `*.rejection.ts` files.
 
-| Aggregate | Commands                                                                                                    | Events                                                                                                        |
-| --------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `Order`   | `PlaceOrder`, `PlaceCheckedOutOrder` (saga only), `StartBrewing`, `MarkReady`, `PickUpOrder`, `CancelOrder` | `OrderPlaced`, `BrewingStarted`, `OrderReady`, `OrderPickedUp`, `OrderCancelled`                              |
-| `Cart`    | `AddCartItem`, `UpdateCartItem`, `RemoveCartItem`, `ClearCart`, `PrepareCheckout`, `ConfirmCheckout`        | `CartItemAdded`, `CartItemUpdated`, `CartItemRemoved`, `CartCleared`, `CheckoutPrepared`, `CheckoutConfirmed` |
+| Aggregate | Commands                                                                                             | Events                                                                                                        |
+| --------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `Order`   | `PlaceOrder`, `PlaceCheckedOutOrder`, `StartBrewing`, `MarkReady`, `PickUpOrder`, `CancelOrder`      | `OrderPlaced`, `BrewingStarted`, `OrderReady`, `OrderPickedUp`, `OrderCancelled`                              |
+| `Cart`    | `AddCartItem`, `UpdateCartItem`, `RemoveCartItem`, `ClearCart`, `PrepareCheckout`, `ConfirmCheckout` | `CartItemAdded`, `CartItemUpdated`, `CartItemRemoved`, `CartCleared`, `CheckoutPrepared`, `CheckoutConfirmed` |
 
 Rejections carry their evidence: `DrinkNotFound { drinkId }`, `InvalidOrder { message }`,
 `InvalidStatusTransition { orderId, from, to }`, `OrderNotFound`, `AlreadyPlaced`, `StaffOnly`,
@@ -52,15 +51,13 @@ Rejections carry their evidence: `DrinkNotFound { drinkId }`, `InvalidOrder { me
 <details>
 <summary>Checkout</summary>
 
-![Checkout: a customer prepares and confirms a checkout on the Cart, the confirmed checkout starts the fulfillment saga, and the saga places the order](../../../docs/architecture/checkout-flow.svg)
+![Checkout: a customer prepares and confirms a checkout on the Cart, then the fulfillment policy places the order](../../../docs/architecture/checkout-flow.svg)
 
 `PrepareCheckout` holds prices for 15 minutes. Emptying the cart and confirming happen in one `Cart`
-commit, so a confirmed cart is never ordered twice. After the commit, the policy starts
-`FulfillCheckout`, a saga keyed by order id. Its `PlaceCheckedOutOrder` activity journals completion
-and uses workflow-derived command ids, so redelivery or replay does not place another order. The
-in-memory platform runs the same workflow in stories; Cloudflare hosts it on the built-in workflow
-engine of `DomainCloudflare.layerDurableObjects()`. `PlaceCheckedOutOrder` is idempotent, because
-policies run at least once.
+commit, so a confirmed cart is never ordered twice. After the commit, `CheckoutFulfillment` sends
+`PlaceCheckedOutOrder` in one step: it derives the command id from the event, and the command itself
+places an order that is not yet placed, so a redelivery places nothing twice. Policies run at least
+once.
 
 </details>
 

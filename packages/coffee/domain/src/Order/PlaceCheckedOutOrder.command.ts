@@ -7,7 +7,7 @@ import { OrderPlaced } from "./PlaceOrder.command.ts";
 
 /**
  * Place the order a customer confirmed at checkout, at the prices they saw.
- * Sent by `FulfillCheckout`; placing it again changes nothing.
+ * Sent by `CheckoutFulfillment`; placing it again changes nothing.
  */
 export class PlaceCheckedOutOrder extends Domain.Command("PlaceCheckedOutOrder", {
   target: OrderId,
