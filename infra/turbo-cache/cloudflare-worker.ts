@@ -1,3 +1,4 @@
+import * as Alchemy from "alchemy";
 import * as Cloudflare from "@alchemy.run/cloudflare";
 import * as Effect from "effect/Effect";
 import * as HttpServerRequest from "effect/http/HttpServerRequest";
@@ -16,7 +17,11 @@ export const Artifacts = Cloudflare.R2.Bucket("Artifacts", {
       abortMultipartUploadsTransition: { condition: { type: "Age", maxAge: 24 * 60 * 60 } },
     },
   ],
-});
+}).pipe(
+  // The production cache is worth keeping when the stack goes; any other
+  // stage's is disposable and recreated by the next deploy.
+  Alchemy.RemovalPolicy.retain(Effect.map(Alchemy.Stack, (stack) => stack.stage === "prod")),
+);
 export default class CacheApi extends Cloudflare.Worker<CacheApi>()(
   "CacheApi",
   Effect.gen(function* () {

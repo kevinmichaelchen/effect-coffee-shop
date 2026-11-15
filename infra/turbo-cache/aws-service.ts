@@ -1,4 +1,5 @@
 import * as AWS from "@alchemy.run/aws";
+import * as Alchemy from "alchemy";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -26,7 +27,11 @@ export const Artifacts = AWS.S3.Bucket("Artifacts", {
       AbortIncompleteMultipartUpload: { DaysAfterInitiation: 1 },
     },
   ],
-});
+}).pipe(
+  // The production cache is worth keeping when the stack goes; any other
+  // stage's is disposable and recreated by the next deploy.
+  Alchemy.RemovalPolicy.retain(Effect.map(Alchemy.Stack, (stack) => stack.stage === "prod")),
+);
 export default class CacheApi extends AWS.ECS.Service<CacheApi>()(
   "CacheApi",
   Effect.gen(function* () {

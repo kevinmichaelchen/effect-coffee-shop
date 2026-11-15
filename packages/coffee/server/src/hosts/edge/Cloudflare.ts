@@ -16,12 +16,29 @@ import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import { AuthSecret, AuthSecretUnavailable, AuthStorage } from "../../CoffeeServer.ts";
 
-/** Passkeys, sessions and MCP OAuth grants. Orders and carts live in the model. */
-const AuthD1 = Cloudflare.D1.Database("coffee-db", {
-  migrations: decodeURIComponent(authMigrations.pathname),
-});
+/** Whether this plan runs against the `prod` stage. */
+const isProductionStage = Effect.map(Alchemy.Stack, (stack) => stack.stage === "prod");
 
-const AuthSecretStore = Cloudflare.SecretsStore.Store("coffee-secrets");
+/**
+ * A resource whose contents cannot be recreated. In production a plan that
+ * would replace or delete it refuses to apply; everywhere else its deletion
+ * leaves the cloud object in place instead of destroying it.
+ */
+const stateful = <A, R>(resource: Effect.Effect<A, never, R>) =>
+  Effect.flatMap(isProductionStage, (production) =>
+    production
+      ? resource.pipe(Alchemy.RemovalPolicy.protect())
+      : resource.pipe(Alchemy.RemovalPolicy.retain()),
+  );
+
+/** Passkeys, sessions and MCP OAuth grants. Orders and carts live in the model. */
+const AuthD1 = stateful(
+  Cloudflare.D1.Database("coffee-db", {
+    migrations: decodeURIComponent(authMigrations.pathname),
+  }),
+);
+
+const AuthSecretStore = stateful(Cloudflare.SecretsStore.Store("coffee-secrets"));
 
 /** Set `AUTH_SECRET` to choose the secret; otherwise Alchemy mints one and keeps it. */
 const authSecretName = "AUTH_SECRET";
