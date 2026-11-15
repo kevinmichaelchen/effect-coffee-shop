@@ -9,7 +9,7 @@
  *
  * @module
  */
-import CoffeeWorkerRivet from "@effect-coffee-shop/coffee-server/CoffeeWorkerRivet";
+import CoffeeWorkerRivet from "@effect-coffee-shop/coffee-server/hosts/CoffeeWorkerRivet";
 import { coffeeStackName } from "./shared.ts";
 import { coffeeStack } from "./stack.ts";
 

@@ -11,10 +11,10 @@ export default Alchemy.Stack(
     providers: Cloudflare.providers(),
     // The state layer reads its backend choice from Config when Alchemy builds it.
     state: Layer.unwrap(
-      Config.String("ALCHEMY_LOCAL_STATE").pipe(
-        Config.withDefault(""),
+      Config.Boolean("ALCHEMY_LOCAL_STATE").pipe(
+        Config.withDefault(false),
         Effect.orDie,
-        Effect.map((local) => (local === "true" ? Alchemy.localState() : Cloudflare.state())),
+        Effect.map((local) => (local ? Alchemy.localState() : Cloudflare.state())),
       ),
     ),
   },

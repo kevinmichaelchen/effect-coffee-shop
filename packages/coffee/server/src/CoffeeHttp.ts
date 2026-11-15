@@ -50,27 +50,6 @@ export interface CoffeeHttpInput {
   readonly domain: Context.Context<DomainToolServices>;
 }
 
-const hasBearerAuthorization = (request: HttpServerRequest) =>
-  Option.fromNullishOr(request.headers.authorization).pipe(
-    Option.exists((value) => value.trimStart().toLowerCase().startsWith("bearer ")),
-  );
-
-/** App routes authenticate with session cookies; agents use MCP with OAuth instead. */
-export const rejectBearer = <E, R>(
-  effect: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>,
-) =>
-  Effect.flatMap(HttpServerRequest, (request) =>
-    hasBearerAuthorization(request)
-      ? HttpServerResponse.json(
-          {
-            error:
-              "Direct HTTP routes do not accept bearer agent tokens. Use session cookies for the app UI/API or MCP capability execution for agent access.",
-          },
-          { status: 400 },
-        ).pipe(Effect.orDie)
-      : effect,
-  );
-
 const restApi = Layer.unwrap(
   Effect.map(HttpRouter.HttpRouter, (router) =>
     CoffeeHttpApiLive.pipe(

@@ -1,4 +1,5 @@
 import tailwindcss from "@tailwindcss/vite";
+import { backendPrefixes } from "@effect-coffee-shop/coffee-routes";
 import type { UserConfig } from "vite";
 
 // A standalone `vite` dev server proxies the backend paths to the CoffeeWorker
@@ -13,20 +14,12 @@ const coffeeProxyTarget = process.env.VITE_COFFEE_PROXY_TARGET ?? "http://localh
  */
 const alchemyHostsVite = process.env.ALCHEMY_CLOUDFLARE_VITE_INJECTED === "1";
 
-const coffeeProxy = {
-  "/api": {
-    target: coffeeProxyTarget,
-    changeOrigin: false,
-    ws: true,
-  },
-  "/oauth": { target: coffeeProxyTarget, changeOrigin: false },
-  "/.well-known": { target: coffeeProxyTarget, changeOrigin: false },
-  "/mcp": {
-    target: coffeeProxyTarget,
-    changeOrigin: false,
-    ws: true,
-  },
-} satisfies NonNullable<NonNullable<UserConfig["server"]>["proxy"]>;
+const coffeeProxy = Object.fromEntries(
+  backendPrefixes.map((prefix) => [
+    prefix,
+    { target: coffeeProxyTarget, changeOrigin: false, ws: true },
+  ]),
+) satisfies NonNullable<NonNullable<UserConfig["server"]>["proxy"]>;
 
 export const sharedViteConfig = {
   plugins: [tailwindcss()],

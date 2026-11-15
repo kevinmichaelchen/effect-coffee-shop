@@ -1,9 +1,7 @@
 /**
- * The coffee shop model and the platform that hosts it. The model, its
- * handlers and its Apis never change; the host is this one Layer. To move the
- * model, swap `DomainCloudflare.layerDurableObjects()` for
- * `DomainRivet.layerDurableObjects` or `DomainCluster.layerEntities`, which
- * load this file's default export on their nodes.
+ * The coffee shop model on Cloudflare Durable Objects. The model, its handlers
+ * and its Apis never change; the host is this one Layer. `RivetDocker.ts` is
+ * the same model on Rivet.
  *
  * @module
  */

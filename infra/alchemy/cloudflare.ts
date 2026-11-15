@@ -3,7 +3,7 @@
  *
  * @module
  */
-import CoffeeWorker from "@effect-coffee-shop/coffee-server/CoffeeWorker";
+import CoffeeWorker from "@effect-coffee-shop/coffee-server/hosts/CoffeeWorker";
 import { coffeeStackName } from "./shared.ts";
 import { coffeeStack } from "./stack.ts";
 

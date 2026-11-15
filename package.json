@@ -11,6 +11,7 @@
       "packages/coffee/application",
       "packages/coffee/auth",
       "packages/coffee/server",
+      "packages/coffee/routes",
       "packages/coffee/presentation/*",
       "packages/turbo-cache",
       "infra/*",

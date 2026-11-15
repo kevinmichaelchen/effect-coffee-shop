@@ -25,6 +25,7 @@
         "@alchemy.run/domain": "catalog:",
         "@effect-coffee-shop/coffee-auth": "workspace:*",
         "@effect-coffee-shop/coffee-domain": "workspace:*",
+        "@effect-coffee-shop/coffee-routes": "workspace:*",
         "@effect-coffee-shop/ui-kit": "workspace:*",
         "@effect/platform-browser": "catalog:",
         "@foldkit/ui": "catalog:",
@@ -60,6 +61,7 @@
         "@alchemy.run/docker": "catalog:",
         "@alchemy.run/domain": "catalog:",
         "@alchemy.run/rivet": "catalog:",
+        "@effect-coffee-shop/coffee-routes": "workspace:*",
         "@effect-coffee-shop/coffee-server": "workspace:*",
         "alchemy": "catalog:",
         "effect": "catalog:",
@@ -219,6 +221,19 @@
         "vitest": "catalog:",
       },
     },
+    "packages/coffee/routes": {
+      "name": "@effect-coffee-shop/coffee-routes",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@effect/tsgo": "catalog:",
+        "@types/bun": "catalog:",
+        "@types/node": "catalog:",
+        "oxfmt": "catalog:",
+        "oxlint": "catalog:",
+        "tsrs": "catalog:",
+        "vitest": "catalog:",
+      },
+    },
     "packages/coffee/server": {
       "name": "@effect-coffee-shop/coffee-server",
       "version": "0.1.0",
@@ -233,6 +248,7 @@
         "@effect-coffee-shop/coffee-domain": "workspace:*",
         "@effect-coffee-shop/coffee-http": "workspace:*",
         "@effect-coffee-shop/coffee-mcp": "workspace:*",
+        "@effect-coffee-shop/coffee-routes": "workspace:*",
         "@effect-coffee-shop/http-routing": "workspace:*",
         "@yielded/auth-persistence": "catalog:",
         "alchemy": "catalog:",
@@ -464,6 +480,8 @@
     "@effect-coffee-shop/coffee-http": ["@effect-coffee-shop/coffee-http@workspace:packages/coffee/presentation/http"],
 
     "@effect-coffee-shop/coffee-mcp": ["@effect-coffee-shop/coffee-mcp@workspace:packages/coffee/presentation/mcp"],
+
+    "@effect-coffee-shop/coffee-routes": ["@effect-coffee-shop/coffee-routes@workspace:packages/coffee/routes"],
 
     "@effect-coffee-shop/coffee-server": ["@effect-coffee-shop/coffee-server@workspace:packages/coffee/server"],
 

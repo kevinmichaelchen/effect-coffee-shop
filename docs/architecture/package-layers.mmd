@@ -1,7 +1,8 @@
 flowchart TB
-  Infra["infra/alchemy<br/>Cloudflare stack"]
+  Infra["infra/alchemy<br/>Cloudflare and Rivet stacks"]
   Ui["apps/ui<br/>Foldkit app + Website Worker"]
-  Server["coffee-server<br/>Coffee Worker, composition root<br/>Durable Objects, D1, Secrets Store"]
+  Server["coffee-server<br/>provider-neutral program<br/>hosts/: Workers, edge (D1, Secrets Store), model hosts"]
+  Routes["coffee-routes<br/>backend path prefixes"]
   Presentation["presentation<br/>REST (health, menu, me, generated Apis), MCP"]
   Actions["presentation/actions<br/>hand-written tool catalog"]
   Auth["coffee-auth<br/>Yielded passkeys, MCP OAuth"]
@@ -9,6 +10,9 @@ flowchart TB
   Domain["coffee-domain<br/>alchemy/Domain model<br/>aggregates, views, policy, Apis"]
   Infra -->|deploys| Server
   Infra -->|deploys| Ui
+  Infra -->|Worker-first paths| Routes
+  Ui -->|forwards| Routes
+  Server -->|routes| Routes
   Ui -->|Api clients| Domain
   Server -->|mounts| Presentation
   Server -->|sessions| Auth

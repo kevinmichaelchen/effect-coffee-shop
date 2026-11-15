@@ -1,10 +1,10 @@
 # Coffee Server
 
 The Coffee Worker: serves every backend path over the `coffee-domain` model, wherever it is hosted.
-`src/CoffeeServer.ts` is the program and names no provider; a Worker provides its model host and
-its auth storage and secret. The model host is one Layer: `src/CoffeeShopLive.ts` (Cloudflare
-Durable Objects) or `src/CoffeeShopRivet.ts` (Rivet), used by `src/CoffeeWorker.ts` and
-`src/CoffeeWorkerRivet.ts`. Both Workers keep auth on Cloudflare (`src/adapters/cloudflare.ts`).
+`src/CoffeeServer.ts` is the program and names no provider. `src/hosts/` picks where it runs: `edge/`
+for where requests are served (Cloudflare, with auth on D1 and Secrets Store), `model/` for where the
+domain model runs (`DurableObjects.ts` or `RivetDocker.ts`), and one Worker per combination
+(`CoffeeWorker.ts`, `CoffeeWorkerRivet.ts`). Backend paths come from `coffee-routes`.
 
 | Path                                        | Served by                                                    |
 | ------------------------------------------- | ------------------------------------------------------------ |
