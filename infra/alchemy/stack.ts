@@ -159,10 +159,10 @@ export const coffeeStack = (options: {
       // COFFEE_STAFF_USER_IDS and AUTH_SECRET from this environment.
       const api = yield* options.worker;
 
-      // The app: the Vite build, and a small Worker that forwards the backend's
-      // paths to it over a service binding, so the app and the Apis share one
-      // origin and the session cookie stays first-party.
-      const website = yield* Cloudflare.Website.Vite("onion", {
+      // The app: the Foldkit build, and a small Worker that forwards the
+      // backend's paths to it over a service binding, so the app and the Apis
+      // share one origin and the session cookie stays first-party.
+      const website = yield* Cloudflare.Website.Foldkit("onion", {
         rootDir: path.join(repoRoot, "apps/ui"),
         main: "src/worker.ts",
         observability: {
