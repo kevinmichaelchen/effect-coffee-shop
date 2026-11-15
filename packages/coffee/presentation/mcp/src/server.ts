@@ -66,7 +66,7 @@ export const CoffeeMcpFeaturesLive = Layer.mergeAll(
 ).pipe(Layer.provide(CoffeeMcpVisibility.combine(CoffeeMcpServices).layer));
 
 export const CoffeeMcpHttpLive = (allowedOrigins: ReadonlyArray<string>) =>
-  McpServer.layerHttp({
+  McpServer.layerHttpRequestScoped({
     ...mcpServerInfo,
     protocols: [McpProtocol.v2026_07_28],
     cacheHints: mcpCacheHints,
