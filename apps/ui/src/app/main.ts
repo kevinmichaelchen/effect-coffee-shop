@@ -4,7 +4,7 @@ import { Effect, Option, Schema } from "effect";
 import type { Runtime } from "foldkit";
 import type { Url } from "foldkit/url";
 import { SecureRandom } from "effect/crypto";
-import { ThemePreference, themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
+import { ThemePreference, readTheme } from "@effect-coffee-shop/ui-kit/components/theme";
 import { initialAssistant } from "#features/assistant/lib/state.ts";
 import { ApplyTheme } from "#app/command.ts";
 import type { Message } from "../message.ts";
@@ -25,10 +25,7 @@ export type Flags = typeof Flags.Type;
  */
 export const flags: Effect.Effect<Flags> = Effect.sync(() =>
   Flags.make({
-    theme: Option.getOrElse(
-      Schema.decodeUnknownOption(ThemePreference)(window.localStorage.getItem(themeStorageKey)),
-      () => "light" as const,
-    ),
+    theme: readTheme(),
     commandIds: { session: SecureRandom.uuidV4Unsafe(), sent: 0 },
   }),
 );

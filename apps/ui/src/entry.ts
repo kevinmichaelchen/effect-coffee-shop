@@ -1,5 +1,5 @@
 import { Runtime } from "foldkit";
-import { themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
+import { applyTheme, readTheme } from "@effect-coffee-shop/ui-kit/components/theme";
 import { Flags, flags, init } from "#app/main.ts";
 import { Message } from "./message.ts";
 import { Model } from "#app/model.ts";
@@ -10,10 +10,7 @@ import { view } from "#app/view/root.ts";
 import "./index.css";
 
 // Apply the saved theme before the first paint so dark users never see a light flash.
-document.documentElement.classList.toggle(
-  "dark",
-  window.localStorage.getItem(themeStorageKey) === "dark",
-);
+applyTheme(readTheme());
 
 const application = Runtime.makeApplication({
   Model,

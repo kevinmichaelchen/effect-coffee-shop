@@ -6,7 +6,7 @@ import * as DomainFoldkit from "@alchemy.run/domain/Foldkit";
 import { Effect, Match, Option, Schema } from "effect";
 import { Command } from "foldkit";
 import { load, pushUrl } from "foldkit/navigation";
-import { ThemePreference, themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
+import { ThemePreference, applyTheme } from "@effect-coffee-shop/ui-kit/components/theme";
 import {
   generateReply,
   loadModel,
@@ -114,8 +114,7 @@ export const ApplyTheme = Command.define("ApplyTheme", {
   messages: [Message.CompletedApplyTheme],
   execute: ({ theme }) =>
     Effect.sync(() => {
-      document.documentElement.classList.toggle("dark", theme === "dark");
-      window.localStorage.setItem(themeStorageKey, theme);
+      applyTheme(theme);
       return Message.CompletedApplyTheme();
     }),
 });

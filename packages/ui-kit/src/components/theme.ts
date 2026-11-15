@@ -1,4 +1,4 @@
-import { Schema } from "effect";
+import { Option, Schema } from "effect";
 import type { Attributes } from "#ui/components/types.ts";
 import type { HtmlBuilder } from "foldkit/html";
 import { button } from "#ui/components/button.ts";
@@ -7,6 +7,19 @@ export const ThemePreference = Schema.Literals(["light", "dark"]);
 export type ThemePreference = typeof ThemePreference.Type;
 
 export const themeStorageKey = "coffee-shop-theme";
+
+/** The theme the last page load saved, or light. */
+export const readTheme = (): ThemePreference =>
+  Option.getOrElse(
+    Schema.decodeUnknownOption(ThemePreference)(window.localStorage.getItem(themeStorageKey)),
+    () => "light",
+  );
+
+/** Makes the document dark for a dark theme, and remembers the choice. */
+export const applyTheme = (theme: ThemePreference): void => {
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  window.localStorage.setItem(themeStorageKey, theme);
+};
 
 export const toggledTheme = (theme: ThemePreference): ThemePreference =>
   theme === "light" ? "dark" : "light";
