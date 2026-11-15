@@ -5,8 +5,8 @@ import { Passkey } from "@yielded/auth";
 import { actorHeader } from "@effect-coffee-shop/coffee-application/ActorHeader";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { AuthAdaptersLive } from "@effect-coffee-shop/coffee-auth/adapters";
-import { d1AuthDatabase } from "@effect-coffee-shop/coffee-auth/database";
-import { makeCoffeeAuth } from "@effect-coffee-shop/coffee-auth/server";
+import { d1AuthDatabase } from "@effect-coffee-shop/coffee-auth/adapters/d1";
+import { type AuthDatabase, makeCoffeeAuth } from "@effect-coffee-shop/coffee-auth/server";
 import { makeAuthClient } from "@effect-coffee-shop/coffee-auth/testing/auth-client";
 import { migrateCloudflareD1 } from "@effect-coffee-shop/coffee-auth/testing/migrate";
 import { makeTestPasskey } from "@effect-coffee-shop/coffee-auth/testing/passkey";
@@ -91,7 +91,7 @@ const authDatabase = Effect.fn("DomainRestTest.authDatabase")(function* () {
 });
 
 /** A browser that registered a passkey and signed in: its cookies carry a customer session. */
-const signedInBrowser = Effect.fnUntraced(function* (database: ReturnType<typeof d1AuthDatabase>) {
+const signedInBrowser = Effect.fnUntraced(function* (database: AuthDatabase) {
   const auth = makeCoffeeAuth(config, database, AuthAdaptersLive);
   const server = yield* Effect.acquireRelease(
     Effect.sync(() =>

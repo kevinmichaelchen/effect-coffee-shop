@@ -10,13 +10,16 @@
 import * as Arr from "effect/Array";
 import { AuthAdaptersLive } from "@effect-coffee-shop/coffee-auth/adapters";
 import { CoffeeOAuth, coffeeAccess, makeCoffeeOAuth } from "@effect-coffee-shop/coffee-auth/oauth";
-import { type AuthServerConfig, makeCoffeeAuth } from "@effect-coffee-shop/coffee-auth/server";
+import {
+  type AuthDatabase,
+  type AuthServerConfig,
+  makeCoffeeAuth,
+} from "@effect-coffee-shop/coffee-auth/server";
 import { CoffeeOrderApp } from "@effect-coffee-shop/coffee-application/CoffeeOrderApp";
 import { CurrentActor, anonymousActor } from "@effect-coffee-shop/coffee-application/CurrentActor";
 import { CoffeeHttpApiLive } from "@effect-coffee-shop/coffee-http/api";
 import { McpActor } from "@effect-coffee-shop/coffee-mcp/actor";
 import { CoffeeMcpHttpLive } from "@effect-coffee-shop/coffee-mcp/server";
-import type { d1AuthDatabase } from "@effect-coffee-shop/coffee-auth/database";
 import type * as DomainAi from "@alchemy.run/domain/Ai";
 import type { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
 import type { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
@@ -41,7 +44,7 @@ export type DomainToolServices = DomainAi.Services<typeof CustomerApi | typeof S
 export interface CoffeeHttpInput {
   /** Auth configuration, when the deployment has its secrets. */
   readonly auth: Option.Option<AuthServerConfig>;
-  readonly database: ReturnType<typeof d1AuthDatabase>;
+  readonly database: AuthDatabase;
   readonly app: CoffeeOrderApp["Service"];
   /** The Worker's hosted model and Api middleware, for the generated MCP tools. */
   readonly domain: Context.Context<DomainToolServices>;

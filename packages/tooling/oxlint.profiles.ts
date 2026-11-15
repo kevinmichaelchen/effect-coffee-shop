@@ -166,6 +166,32 @@ const hostAndAi = {
   message:
     "Actions are transport-neutral. Cloudflare bindings and AI toolkits belong to the presentation adapters.",
 };
+// Shared backend code is provider-neutral (AGENTS.md design principles).
+const cloudProviders = {
+  group: [
+    "@alchemy.run/cloudflare",
+    "@alchemy.run/cloudflare/**",
+    "@alchemy.run/docker",
+    "@alchemy.run/docker/**",
+    "@alchemy.run/rivet",
+    "@alchemy.run/rivet/**",
+    "@alchemy.run/domain/Cloudflare",
+    "@alchemy.run/domain/Rivet",
+    "@alchemy.run/domain/EffectCluster",
+    "@cloudflare/*",
+    "@effect/sql-d1",
+    "@effect/sql-d1/**",
+    "cloudflare:*",
+  ],
+  message:
+    "Shared code is provider-neutral. Ask for a capability (SqlClient, Config, a small Effect service) and provide it from a host adapter (`src/adapters/`) or composition root (`*Worker*.ts`, `CoffeeShop*.ts`, `infra/`).",
+};
+// The only backend files that may name a provider.
+const providerEdges = [
+  "**/src/adapters/**",
+  "**/coffee/server/src/*Worker*.ts",
+  "**/coffee/server/src/CoffeeShop*.ts",
+];
 type Override = NonNullable<OxlintConfig["overrides"]>[number];
 const banImports = (files: string, ...patterns: Array<typeof runtimeModules>): Override => ({
   files: [files],
@@ -193,9 +219,13 @@ export const backend: OxlintConfig = {
   },
   overrides: [
     ...shared.overrides,
-    banImports("**/coffee/domain/**", runtimeModules, platformAdapters),
-    banImports("**/coffee/application/**", runtimeModules),
-    banImports("**/coffee/presentation/actions/**", runtimeModules, hostAndAi),
+    banImports("**/coffee/**", cloudProviders),
+    banImports("**/http-routing/**", cloudProviders),
+    banImports("**/turbo-cache/src/**", cloudProviders),
+    banImports("**/coffee/domain/**", runtimeModules, platformAdapters, cloudProviders),
+    banImports("**/coffee/application/**", runtimeModules, cloudProviders),
+    banImports("**/coffee/presentation/actions/**", runtimeModules, hostAndAi, cloudProviders),
+    { files: providerEdges, rules: { "no-restricted-imports": "off" } },
     {
       files: testFiles,
       rules: {

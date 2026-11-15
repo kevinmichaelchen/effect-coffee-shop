@@ -13,7 +13,8 @@ and Yielded's SimpleWebAuthn browser adapter.
   `@yielded/crypto` package is no longer needed.
 - `src/config.ts`: schema-decoded origin and OAuth client configuration.
 - `src/persistence/`: Effect SQL mappings and atomic credential/session writes.
-- `src/database.ts`: D1 atomic batches (`d1AuthDatabase`) and a generic transactional SQL layer.
+- `src/adapters/d1.ts`: auth storage on D1, with D1 batches as atomic commits (`d1AuthDatabase`).
+- `src/migrations.ts`: where the auth SQL migrations live.
 - `migrations/0000_auth.sql`: the complete Yielded Auth and OAuth schema for a fresh D1 database.
   Recreate development databases when adopting this baseline; it is not an incremental upgrade.
 - `src/testing/`: test helpers, including `migrate.ts`, which applies `migrations/` to a D1 binding.

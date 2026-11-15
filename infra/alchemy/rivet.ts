@@ -9,16 +9,8 @@
  *
  * @module
  */
-import * as Cloudflare from "@alchemy.run/cloudflare";
-import * as Docker from "@alchemy.run/docker";
-import * as Rivet from "@alchemy.run/rivet";
 import CoffeeWorkerRivet from "@effect-coffee-shop/coffee-server/CoffeeWorkerRivet";
-import * as Layer from "effect/Layer";
 import { coffeeStackName } from "./shared.ts";
 import { coffeeStack } from "./stack.ts";
 
-export default coffeeStack({
-  name: `${coffeeStackName}-rivet`,
-  worker: CoffeeWorkerRivet,
-  providers: Layer.mergeAll(Cloudflare.providers(), Docker.providers(), Rivet.providers()),
-});
+export default coffeeStack({ name: `${coffeeStackName}-rivet`, worker: CoffeeWorkerRivet });

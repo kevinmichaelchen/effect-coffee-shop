@@ -1,13 +1,16 @@
 /**
  * The Alchemy stack that deploys Coffee Shop, over whichever host its model
  * runs on: `cloudflare.ts` passes the Durable Objects Worker, `rivet.ts` the
- * Rivet one, each with the providers its host needs.
+ * Rivet one. Both get every host's providers; a stack uses only those its
+ * resources need.
  *
  * @module
  */
 import * as Alchemy from "alchemy";
-import type { StackServices } from "alchemy/Stack";
 import * as Cloudflare from "@alchemy.run/cloudflare";
+import * as Docker from "@alchemy.run/docker";
+import * as DomainCloudflare from "@alchemy.run/domain/Cloudflare";
+import * as Rivet from "@alchemy.run/rivet";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as HttpClient from "effect/http/HttpClient";
@@ -116,16 +119,20 @@ const CloudflareDeploymentSmokeCheck = Alchemy.Action(
   }),
 );
 
-/** The stack around one host's Coffee Worker, deployed with that host's providers. */
-export const coffeeStack = <ROut>(options: {
+/** The stack around one host's Coffee Worker. */
+export const coffeeStack = (options: {
   readonly name: string;
   readonly worker: typeof CoffeeWorker | typeof CoffeeWorkerRivet;
-  readonly providers: Layer.Layer<ROut, never, StackServices>;
 }) =>
   Alchemy.Stack(
     options.name,
     {
-      providers: options.providers,
+      providers: Layer.mergeAll(
+        Cloudflare.providers(),
+        DomainCloudflare.providers(),
+        Docker.providers(),
+        Rivet.providers(),
+      ),
       state,
     },
     Effect.gen(function* () {

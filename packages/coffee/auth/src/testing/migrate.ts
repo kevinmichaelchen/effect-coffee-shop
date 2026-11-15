@@ -19,6 +19,7 @@ import * as Str from "effect/String";
 import { SqlClient } from "effect/sql";
 import type { D1Database } from "@cloudflare/workers-types";
 import { D1Client } from "@effect/sql-d1";
+import { authMigrations } from "../migrations.ts";
 
 class SqlMigrationError extends Schema.TaggedError<
   SqlMigrationError,
@@ -50,7 +51,7 @@ const migrationFailure = (message: string) => (cause: unknown) =>
 const loadMigrations = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  const directory = yield* path.fromFileUrl(new URL("../../migrations", import.meta.url));
+  const directory = yield* path.fromFileUrl(authMigrations);
   const files = yield* fs.readDirectory(directory);
 
   return yield* Effect.forEach(
