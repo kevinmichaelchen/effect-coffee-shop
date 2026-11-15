@@ -89,19 +89,17 @@ export const CloudflareAuth = Layer.mergeAll(storage, secret).pipe(
 );
 
 /**
- * Effect spans and logs as Workers Traces and Logs on the host Worker, which
- * `coffeeWorkerSettings` turns on. Cloudflare-native, so like `CloudflareAuth`
+ * Effect spans and logs as Workers Traces and Logs on the host Worker, with
+ * both persisted in the dashboard. Cloudflare-native, so like `CloudflareAuth`
  * it belongs to this edge and not to shared server code.
  */
-export const CloudflareTelemetry = Cloudflare.Telemetry();
+export const CloudflareTelemetry = Cloudflare.Telemetry({
+  persist: true,
+  logs: { persist: true },
+});
 
 /** The Worker settings; `main` is the Worker's own module. */
 export const coffeeWorkerSettings = (main: string) => ({
   main,
   compatibility: { flags: ["nodejs_compat"] },
-  observability: {
-    enabled: true,
-    logs: { enabled: true, invocationLogs: true, persist: true },
-    traces: { enabled: true, persist: true },
-  },
 });

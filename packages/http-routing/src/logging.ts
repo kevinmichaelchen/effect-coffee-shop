@@ -8,24 +8,9 @@ import { WideEvent, withWideEvent } from "effect-wide-event";
 export type StructuredLogValue = boolean | number | string;
 export type StructuredLogRecord = Readonly<Record<string, StructuredLogValue>>;
 
-export const logStructuredEvent = (record: StructuredLogRecord) =>
-  Effect.logInfo("structured event").pipe(Effect.annotateLogs(record));
-
 class HttpRequestEvent extends Context.Service<HttpRequestEvent, { readonly requestId: string }>()(
   "@effect-coffee-shop/http-routing/logging/HttpRequestEvent",
 ) {}
-
-export const withResponseRequestId = (response: Response) =>
-  Effect.gen(function* () {
-    const { requestId } = yield* HttpRequestEvent;
-    const headers = new Headers(response.headers);
-    headers.set("x-request-id", requestId);
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    });
-  });
 
 // Error payloads can contain credentials, SQL parameters, or request bodies.
 // Classify the cause without serializing any of its values.
@@ -69,15 +54,4 @@ export const annotateHttpStatus = (input: {
     route_kind: input.routeKind,
     http_status: input.status,
     outcome: input.status >= 500 ? "domain_error" : input.status >= 400 ? "warning" : "ok",
-  });
-
-export const annotateHttpResponse = (input: {
-  readonly extraFields?: StructuredLogRecord;
-  readonly response: Response;
-  readonly routeKind: string;
-}) =>
-  annotateHttpStatus({
-    extraFields: input.extraFields ?? {},
-    status: input.response.status,
-    routeKind: input.routeKind,
   });

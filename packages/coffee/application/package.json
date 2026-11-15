@@ -8,8 +8,7 @@
     "./CoffeeOrderApp": "./src/CoffeeOrderApp.ts",
     "./CurrentActor": "./src/CurrentActor.ts",
     "./contracts": "./src/contracts.ts",
-    "./errors": "./src/errors.ts",
-    "./observability": "./src/observability.ts"
+    "./errors": "./src/errors.ts"
   },
   "scripts": {
     "typecheck": "tsrs --noEmit",
