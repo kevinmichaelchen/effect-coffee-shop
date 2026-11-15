@@ -38,20 +38,19 @@ export default class CacheApi extends Cloudflare.Worker<CacheApi>()(
     };
   }),
   Effect.gen(function* () {
+    // The isolate builds this once, so the config is read once and closed over.
+    const config = yield* cacheConfig.pipe(Effect.orDie);
     const boundBucket = yield* Cloudflare.R2.ReadWriteBucket(yield* Artifacts);
     return {
       fetch: Effect.gen(function* () {
         const store = yield* makeR2Store(boundBucket);
-        const runtimeConfig = yield* cacheConfig.pipe(Effect.orDie);
         const request = yield* HttpServerRequest.HttpServerRequest;
         const web = yield* HttpServerRequest.toWeb(request).pipe(Effect.orDie);
         const response = yield* handleRequest(web).pipe(
           Effect.provideService(ArtifactStore, store),
-          Effect.provideService(CacheConfig, runtimeConfig),
+          Effect.provideService(CacheConfig, config),
         );
-        return HttpServerResponse.fromWeb(response).pipe(
-          HttpServerResponse.setHeaders(response.headers),
-        );
+        return HttpServerResponse.fromWeb(response);
       }),
     };
   }).pipe(Effect.provide([Cloudflare.R2.ReadWriteBucketBinding, Cloudflare.Telemetry()])),
