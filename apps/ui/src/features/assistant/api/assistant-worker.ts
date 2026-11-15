@@ -1,4 +1,6 @@
-import { Effect, Option, PubSub, Ref, Schema, Stream } from "effect";
+import { BrowserWorker } from "@effect/platform-browser";
+import { Effect, Layer, Option, PubSub, Ref, Schema, Stream } from "effect";
+import { WorkerPlatform } from "effect/workers/Worker";
 import { ManagedResource } from "foldkit";
 import type { ChatMessage } from "#features/assistant/lib/prompt.ts";
 import { type LocalModel, WorkerEvent, WorkerRequest } from "#features/assistant/lib/protocol.ts";
@@ -14,7 +16,7 @@ interface AssistantWorkerHandle {
   readonly send: (
     request: WorkerRequest,
     transfer?: readonly Transferable[],
-  ) => Effect.Effect<void>;
+  ) => Effect.Effect<void, AssistantError>;
   readonly events: PubSub.PubSub<WorkerEvent>;
   /** Latched on the first crash, so a request that subscribes afterwards still fails. */
   readonly crashed: Ref.Ref<Option.Option<string>>;
@@ -31,7 +33,14 @@ const decodeEvent = Schema.decodeUnknownOption(WorkerEvent);
 /** Starts the worker for the resource's lifetime; it is terminated when the scope closes. */
 export const acquireAssistantWorker = Effect.gen(function* () {
   const events = yield* PubSub.unbounded<WorkerEvent>();
-  const worker = yield* Effect.acquireRelease(
+  const crashed = yield* Ref.make(Option.none<string>());
+  const requestCount = yield* Ref.make(0);
+  const publish = (event: WorkerEvent) =>
+    (event._tag === "Crashed" ? Ref.set(crashed, Option.some(event.message)) : Effect.void).pipe(
+      Effect.andThen(PubSub.publish(events, event)),
+    );
+  // The browser platform sends a close signal on release but never terminates a dedicated worker.
+  const dedicated = yield* Effect.acquireRelease(
     Effect.sync(
       () =>
         new Worker(new URL("../worker/assistant.worker.ts", import.meta.url), {
@@ -41,25 +50,30 @@ export const acquireAssistantWorker = Effect.gen(function* () {
     ),
     (running) => Effect.sync(() => running.terminate()),
   );
-  const crashed = yield* Ref.make(Option.none<string>());
-  const requestCount = yield* Ref.make(0);
-  const context = yield* Effect.context();
-  const publish = (event: WorkerEvent) => {
-    if (event._tag === "Crashed")
-      Effect.runSyncWith(context)(Ref.set(crashed, Option.some(event.message)));
-    PubSub.publishUnsafe(events, event);
-  };
-  worker.addEventListener("message", (message: MessageEvent<unknown>) =>
-    Option.map(decodeEvent(message.data), publish),
-  );
-  worker.addEventListener("error", (error: ErrorEvent) =>
-    publish(
-      WorkerEvent.cases.Crashed.make({ message: error.message || "The local AI worker stopped." }),
-    ),
-  );
+  const scope = yield* Effect.scope;
+  // @effect-diagnostics-next-line unstableApiUsage:off -- BrowserWorker is Effect's supported worker transport; nothing stable wraps a Web Worker.
+  const browserWorker = BrowserWorker.layer(() => dedicated);
+  const platform = yield* Layer.buildWithScope(browserWorker, scope);
+  const worker = yield* Effect.gen(function* () {
+    // @effect-diagnostics-next-line unstableApiUsage:off -- the platform above is what provides this service.
+    const workers = yield* WorkerPlatform;
+    return yield* workers.spawn<WorkerEvent, WorkerRequest>(0);
+  }).pipe(Effect.provide(platform));
+  // `run` never returns: it buffers sends until the worker is ready, then stays
+  // subscribed for the life of the scope, failing if the worker breaks.
+  yield* worker
+    .run((data) => Option.match(decodeEvent(data), { onNone: () => Effect.void, onSome: publish }))
+    .pipe(
+      Effect.catchTag("WorkerError", (error) =>
+        publish(WorkerEvent.cases.Crashed.make({ message: error.message })),
+      ),
+      Effect.forkScoped,
+    );
   const handle: AssistantWorkerHandle = {
     send: (request, transfer = []) =>
-      Effect.sync(() => worker.postMessage(encodeRequest(request), [...transfer])),
+      worker
+        .send(encodeRequest(request), transfer)
+        .pipe(Effect.mapError((error) => new AssistantError({ message: error.message }))),
     events,
     crashed,
     nextId: Ref.getAndUpdate(requestCount, (count) => count + 1).pipe(Effect.map(String)),

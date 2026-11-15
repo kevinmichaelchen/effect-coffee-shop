@@ -1,6 +1,7 @@
-/// <reference lib="webworker" />
+import { BrowserWorkerRunner } from "@effect/platform-browser";
 import type { ProgressInfo } from "@huggingface/transformers";
-import { Cause, Effect, Option, Queue, Ref, Schema, Semaphore, Stream } from "effect";
+import { Cause, Effect, Option, Ref, Schema, Semaphore } from "effect";
+import { WorkerRunnerPlatform } from "effect/workers/WorkerRunner";
 import { type LocalModel, WorkerEvent, WorkerRequest } from "#features/assistant/lib/protocol.ts";
 import { configureOnnxRuntime } from "#features/assistant/worker/ort-env.ts";
 import { aggregateProgress } from "#features/assistant/worker/progress.ts";
@@ -21,22 +22,7 @@ type LoadError = TextModelError | VoiceModelError;
  * The on-device models live here, off the UI thread. Every message in either
  * direction is checked against the protocol Schemas.
  */
-declare const self: DedicatedWorkerGlobalScope;
-
 const encodeEvent = Schema.encodeSync(WorkerEvent);
-/** Worker-to-page messages; a dedicated worker's postMessage has no target origin. */
-const postEvent = (event: WorkerEvent) =>
-  // oxlint-disable-next-line unicorn/require-post-message-target-origin -- DedicatedWorkerGlobalScope.postMessage takes no targetOrigin; the rule assumes window.postMessage.
-  self.postMessage(encodeEvent(event));
-const post = (event: WorkerEvent) => Effect.sync(() => postEvent(event));
-
-const progressOf = (model: LocalModel) => (loaded: number, total: number) =>
-  postEvent(WorkerEvent.cases.Progressed.make({ model, loaded, total }));
-
-const textProgress = aggregateProgress(progressOf("text"));
-const onTextProgress = (info: ProgressInfo) => {
-  if (info.status === "progress") textProgress(info.file, info.loaded, info.total);
-};
 
 const messageOf = (error: { readonly message: string }) => error.message;
 
@@ -60,6 +46,20 @@ const loadOnce = <A, E>(load: Effect.Effect<A, E>) =>
 const program = Effect.gen(function* () {
   // Models load lazily on the first request, so this runs before any session exists.
   yield* configureOnnxRuntime;
+  // @effect-diagnostics-next-line unstableApiUsage:off -- BrowserWorkerRunner is Effect's supported worker-side transport; nothing stable wraps a Web Worker.
+  const runner = yield* WorkerRunnerPlatform;
+  const backing = yield* runner.start<WorkerEvent>();
+  // A dedicated worker has exactly one client port, and the browser runner numbers it 0.
+  const postEvent = (event: WorkerEvent) => backing.sendUnsafe(0, encodeEvent(event));
+  const post = (event: WorkerEvent) => Effect.sync(() => postEvent(event));
+  const progressOf = (model: LocalModel) => (loaded: number, total: number) =>
+    postEvent(WorkerEvent.cases.Progressed.make({ model, loaded, total }));
+
+  const textProgress = aggregateProgress(progressOf("text"));
+  const onTextProgress = (info: ProgressInfo) => {
+    if (info.status === "progress") textProgress(info.file, info.loaded, info.total);
+  };
+
   const text = yield* loadOnce(loadTextModel(onTextProgress));
   const voice = yield* loadOnce(loadVoiceModel(progressOf("voice")));
   // One sequence at a time per model: generation state is not shareable.
@@ -111,31 +111,22 @@ const program = Effect.gen(function* () {
         ),
     });
 
-  const requests = Stream.callback<unknown>((queue) =>
-    Effect.sync(() => {
-      self.addEventListener("message", (event: MessageEvent<unknown>) => {
-        Queue.offerUnsafe(queue, event.data);
-      });
-    }),
-  );
-
-  yield* requests.pipe(
-    Stream.mapEffect((data) => Schema.decodeUnknownEffect(WorkerRequest)(data).pipe(Effect.option)),
-    Stream.runForEach(
-      Option.match({
-        onNone: () => Effect.void,
-        onSome: (request) =>
-          Effect.forkDetach(
-            // A defect has no request-shaped answer, so it fails everything still waiting.
-            handle(request).pipe(
-              Effect.catchCause((cause) =>
-                post(WorkerEvent.cases.Crashed.make({ message: Cause.pretty(cause) })),
-              ),
-            ),
+  // The runner forks one fiber per request, so a slow answer never blocks the next message.
+  yield* backing.run((_port: number, data: unknown) =>
+    Effect.matchEffect(Schema.decodeUnknownEffect(WorkerRequest)(data), {
+      onFailure: () => Effect.void,
+      onSuccess: (request) =>
+        // A defect has no request-shaped answer, so it fails everything still waiting.
+        handle(request).pipe(
+          Effect.catchCause((cause) =>
+            Cause.hasInterruptsOnly(cause)
+              ? Effect.void
+              : post(WorkerEvent.cases.Crashed.make({ message: Cause.pretty(cause) })),
           ),
-      }),
-    ),
+        ),
+    }),
   );
 });
 
-Effect.runFork(program);
+// @effect-diagnostics-next-line unstableApiUsage:off -- the runner side of the worker transport above.
+Effect.runFork(program.pipe(Effect.provide(BrowserWorkerRunner.layer)));
