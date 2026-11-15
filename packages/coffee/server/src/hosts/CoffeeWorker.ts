@@ -7,11 +7,11 @@
 import * as Cloudflare from "@alchemy.run/cloudflare";
 import * as Effect from "effect/Effect";
 import { coffeeServer } from "../CoffeeServer.ts";
-import { CloudflareAuth, coffeeWorkerSettings } from "./edge/Cloudflare.ts";
+import { CloudflareAuth, CloudflareTelemetry, coffeeWorkerSettings } from "./edge/Cloudflare.ts";
 import DurableObjects from "./model/DurableObjects.ts";
 
 export default class CoffeeWorker extends Cloudflare.Worker<CoffeeWorker>()(
   "CoffeeWorker",
   coffeeWorkerSettings(import.meta.url),
-  coffeeServer.pipe(Effect.provide([DurableObjects, CloudflareAuth])),
+  coffeeServer.pipe(Effect.provide([DurableObjects, CloudflareAuth, CloudflareTelemetry])),
 ) {}

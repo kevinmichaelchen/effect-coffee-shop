@@ -71,6 +71,13 @@ export const CloudflareAuth = Layer.mergeAll(storage, secret).pipe(
   ),
 );
 
+/**
+ * Effect spans and logs as Workers Traces and Logs on the host Worker, which
+ * `coffeeWorkerSettings` turns on. Cloudflare-native, so like `CloudflareAuth`
+ * it belongs to this edge and not to shared server code.
+ */
+export const CloudflareTelemetry = Cloudflare.Telemetry();
+
 /** The Worker settings; `main` is the Worker's own module. */
 export const coffeeWorkerSettings = (main: string) => ({
   main,
