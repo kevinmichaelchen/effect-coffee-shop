@@ -29,6 +29,15 @@ pass_filenames = false
 stages = ["pre-commit"]
 
 [[repos.hooks]]
+# D2 is banned (AGENTS.md): diagrams are Pele Mermaid sources.
+id = "no-d2"
+name = "no D2 diagrams"
+entry = "D2 is banned in this repository: draw the diagram with Pele (Mermaid) instead, see AGENTS.md."
+language = "fail"
+files = '\.d2$'
+stages = ["pre-commit"]
+
+[[repos.hooks]]
 # check:affected compares the pushed range (PRE_COMMIT_FROM_REF..TO_REF), not
 # the local main, so pushing straight to main still runs the affected tests.
 id = "check-affected"
