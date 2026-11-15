@@ -3,7 +3,7 @@ import { preferTaggedErrorHandlingRule } from "./vendor/anti-slop/src/effect/rul
 import { maxTernaryDepthRule } from "./vendor/anti-slop/src/rules/max-ternary-depth.ts";
 import { noReprovideAmbientServiceRule } from "./vendor/anti-slop/src/rules/no-reprovide-ambient-service.ts";
 
-// Rules vendored unmodified from k-mistele/anti-slop (see vendor/anti-slop/upstream.json).
+// Rules vendored unmodified from k-mistele/anti-slop (rule-sources.json records the commit).
 // The rest of anti-slop reaches us through @mpsuesser/oxlint-plugin-effect.
 export default eslintCompatPlugin({
   meta: { name: "anti-slop" },

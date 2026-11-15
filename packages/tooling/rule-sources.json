@@ -1,0 +1,535 @@
+{
+  "$comment": "Every rule from repositories we borrow lint rules from, with our decision. Run `bun run rules:check` after an upstream change. Statuses: adopted (vendored, enabled as `as`), covered (another enabled rule does the job: `by`), candidate (looks good, not vendored yet), declined (`reason`). `hits` counts matches in this repo when the rule was reviewed.",
+  "sources": {
+    "dillon": {
+      "author": "Dillon Mulroy",
+      "repository": "https://github.com/dmmulroy/anti-slop",
+      "reviewed": "13909c9e07590f5a85d93c62712259fe14a883f7",
+      "ruleDirs": ["src/rules", "src/effect/rules"],
+      "reachesUs": "Through @mpsuesser/oxlint-plugin-effect (Marc Suesser), which bundles a snapshot of these rules as `effect/*`.",
+      "rules": {
+        "no-array-filter-map": {
+          "status": "candidate",
+          "reason": "Cheap perf rule; fix the one hit, then vendor.",
+          "hits": 1
+        },
+        "no-chained-type-assertions": {
+          "status": "covered",
+          "by": "effect/no-chained-type-assertions",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-conditional-empty-object-spread": {
+          "status": "covered",
+          "by": "effect/no-conditional-empty-object-spread",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-known-value-widening": {
+          "status": "covered",
+          "by": "effect/no-known-value-widening",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-manual-effect-error-tag": {
+          "status": "candidate",
+          "reason": "No hits; overlaps effect/avoid-untagged-errors.",
+          "hits": 0
+        },
+        "no-manual-tag-comparison": {
+          "status": "candidate",
+          "reason": "Best of the rest: catches `x._tag === \"...\"` that effect/avoid-direct-tag-checks misses. Clean the 32 non-test hits first.",
+          "hits": 38
+        },
+        "no-manual-tagged-construction": {
+          "status": "declined",
+          "reason": "Flags aggregate state literals such as `{ _tag: \"Unplaced\" }` and test fixtures.",
+          "hits": 53
+        },
+        "no-module-mocking": {
+          "status": "covered",
+          "by": "effect/no-module-mocking",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-object-parameters": {
+          "status": "covered",
+          "by": "effect/no-object-parameters",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-reduce-accumulator-copy": {
+          "status": "candidate",
+          "reason": "Cheap perf rule.",
+          "hits": 0
+        },
+        "no-reflect-apply": {
+          "status": "covered",
+          "by": "effect/no-reflect-apply",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-reflect-get": {
+          "status": "covered",
+          "by": "effect/no-reflect-get",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-runtime-typeof": {
+          "status": "covered",
+          "by": "effect/no-runtime-typeof",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-service-constructor-imports": {
+          "status": "covered",
+          "by": "effect/no-service-constructor-imports",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-shape-in-symbol-names": {
+          "status": "covered",
+          "by": "effect/no-shape-in-symbol-names",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-unknown-parameters": {
+          "status": "covered",
+          "by": "effect/no-unknown-parameters",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-unknown-returns": {
+          "status": "covered",
+          "by": "effect/no-unknown-returns",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-unknown-type-aliases": {
+          "status": "covered",
+          "by": "effect/no-unknown-type-aliases",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-unsafe-dictionary-type": {
+          "status": "covered",
+          "by": "effect/no-unsafe-dictionary-type",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "no-widen-then-assert": {
+          "status": "covered",
+          "by": "effect/no-widen-then-assert",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        },
+        "prefer-effect-match": {
+          "status": "candidate",
+          "reason": "Same idea as sandro/prefer-effect-match; pick one copy.",
+          "hits": 2
+        },
+        "require-readable-spacing": {
+          "status": "declined",
+          "reason": "oxfmt owns layout; the rule autofixes ~950 blank lines of taste.",
+          "hits": 946
+        },
+        "require-safety-comment-for-type-assertion": {
+          "status": "covered",
+          "by": "effect/require-safety-comment-for-type-assertion",
+          "reason": "Bundled by @mpsuesser/oxlint-plugin-effect; the bundled copy may lag upstream."
+        }
+      }
+    },
+    "kyle": {
+      "author": "Kyle Mistele",
+      "repository": "https://github.com/k-mistele/anti-slop",
+      "reviewed": "5360c123dfe89a20edab7b277099dd423247a8dd",
+      "ruleDirs": ["src/rules", "src/effect/rules"],
+      "reachesUs": "Fork of Dillon's. Adopted rules are copied verbatim into vendor/anti-slop/ and loaded as `anti-slop/*`.",
+      "vendored": {
+        "commit": "5360c123dfe89a20edab7b277099dd423247a8dd",
+        "into": "vendor/anti-slop",
+        "files": [
+          "LICENSE",
+          "src/effect/shared/tagged-values.ts",
+          "src/effect/rules/prefer-tagged-error-handling.ts",
+          "src/effect/rules/prefer-tagged-error-handling.test.ts",
+          "src/rules/max-ternary-depth.ts",
+          "src/rules/max-ternary-depth.test.ts",
+          "src/rules/no-reprovide-ambient-service.ts",
+          "src/rules/no-reprovide-ambient-service.test.ts"
+        ]
+      },
+      "notes": [
+        "skills/effect-program-design conflicts with AGENTS.md: it requires tests and fakes only in test/ (we keep src/testing/ and in-memory adapters) and makes every capability a Context.Service (we add a port only when needed)."
+      ],
+      "rules": {
+        "max-ternary-depth": {
+          "status": "adopted",
+          "as": "anti-slop/max-ternary-depth"
+        },
+        "no-array-filter-map": {
+          "status": "candidate",
+          "reason": "Cheap perf rule; fix the one hit, then vendor.",
+          "hits": 1
+        },
+        "no-chained-type-assertions": {
+          "status": "covered",
+          "by": "effect/no-chained-type-assertions",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-conditional-spread": {
+          "status": "declined",
+          "reason": "Foldkit views build child lists with `...(cond ? [x] : [])`; Dillon's narrower empty-object version is on.",
+          "hits": 28
+        },
+        "no-known-value-widening": {
+          "status": "covered",
+          "by": "effect/no-known-value-widening",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-manual-effect-error-tag": {
+          "status": "candidate",
+          "reason": "No hits; overlaps effect/avoid-untagged-errors.",
+          "hits": 0
+        },
+        "no-manual-tag-comparison": {
+          "status": "candidate",
+          "reason": "Best of the rest: catches `x._tag === \"...\"` that effect/avoid-direct-tag-checks misses. Clean the 32 non-test hits first.",
+          "hits": 38
+        },
+        "no-manual-tagged-construction": {
+          "status": "declined",
+          "reason": "Flags aggregate state literals such as `{ _tag: \"Unplaced\" }` and test fixtures.",
+          "hits": 53
+        },
+        "no-manual-tagged-type": {
+          "status": "declined",
+          "reason": "Flags `Extract<Union, { _tag: \"X\" }>` narrowing, not just hand-declared tags.",
+          "hits": 6
+        },
+        "no-module-mocking": {
+          "status": "covered",
+          "by": "effect/no-module-mocking",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-object-parameters": {
+          "status": "covered",
+          "by": "effect/no-object-parameters",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-reduce-accumulator-copy": {
+          "status": "candidate",
+          "reason": "Cheap perf rule.",
+          "hits": 0
+        },
+        "no-reflect-apply": {
+          "status": "covered",
+          "by": "effect/no-reflect-apply",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-reflect-get": {
+          "status": "covered",
+          "by": "effect/no-reflect-get",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-reprovide-ambient-service": {
+          "status": "adopted",
+          "as": "anti-slop/no-reprovide-ambient-service"
+        },
+        "no-runtime-typeof": {
+          "status": "covered",
+          "by": "effect/no-runtime-typeof",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-service-constructor-imports": {
+          "status": "covered",
+          "by": "effect/no-service-constructor-imports",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-shape-in-symbol-names": {
+          "status": "covered",
+          "by": "effect/no-shape-in-symbol-names",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-unknown-parameters": {
+          "status": "covered",
+          "by": "effect/no-unknown-parameters",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-unknown-returns": {
+          "status": "covered",
+          "by": "effect/no-unknown-returns",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-unknown-type-aliases": {
+          "status": "covered",
+          "by": "effect/no-unknown-type-aliases",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-unsafe-dictionary-type": {
+          "status": "covered",
+          "by": "effect/no-unsafe-dictionary-type",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "no-widen-then-assert": {
+          "status": "covered",
+          "by": "effect/no-widen-then-assert",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        },
+        "prefer-effect-match": {
+          "status": "candidate",
+          "reason": "Same idea as sandro/prefer-effect-match; pick one copy.",
+          "hits": 2
+        },
+        "prefer-tagged-error-handling": {
+          "status": "adopted",
+          "as": "anti-slop/prefer-tagged-error-handling"
+        },
+        "require-readable-spacing": {
+          "status": "declined",
+          "reason": "oxfmt owns layout; the rule autofixes ~950 blank lines of taste.",
+          "hits": 946
+        },
+        "require-safety-comment-for-type-assertion": {
+          "status": "covered",
+          "by": "effect/require-safety-comment-for-type-assertion",
+          "reason": "Same rule as Dillon's, bundled by @mpsuesser/oxlint-plugin-effect."
+        }
+      }
+    },
+    "sandro": {
+      "author": "Sandro Maglione",
+      "repository": "https://github.com/typeonce-dev/ai-automation",
+      "reviewed": "0bca096fe6fe9878cd15303a623dd2cd85915ddd",
+      "ruleDirs": ["rules/oxlint/src/rules", "rules/typed/src/rules"],
+      "reachesUs": "Not yet; a reference repo meant to be copied from. Several of our rules share his ideas.",
+      "notes": [
+        "Targets React, XState, Next.js and Tailwind apps; most UI rules do not apply to Foldkit."
+      ],
+      "rules": {
+        "no-ambient-nondeterminism": {
+          "status": "covered",
+          "by": "effecttsgo/global-date-in-effect, effecttsgo/global-random-in-effect, house/no-new-date-in-core",
+          "reason": "Ours only fire inside Effects or core; Sandro's 5 hits are outside them."
+        },
+        "no-api-backend-imports": {
+          "status": "declined",
+          "reason": "Fallow zones in .fallowrc.jsonc own import boundaries."
+        },
+        "no-api-repository-imports": {
+          "status": "declined",
+          "reason": "Fallow zones in .fallowrc.jsonc own import boundaries."
+        },
+        "no-banned-type-assertions": {
+          "status": "covered",
+          "by": "typescript/no-unsafe-type-assertion"
+        },
+        "no-cascading-layer-provide": {
+          "status": "candidate",
+          "reason": "No hits; pairs with effecttsgo/provide-merge-all-to-array.",
+          "hits": 0
+        },
+        "no-comments": {
+          "status": "declined",
+          "reason": "AGENTS.md wants rationale comments and named lint suppressions; Kyle dropped his copy too.",
+          "hits": 746
+        },
+        "no-css-modules": {
+          "status": "declined",
+          "reason": "We have no CSS Modules; nothing to guard."
+        },
+        "no-direct-browser-storage": {
+          "status": "candidate",
+          "reason": "UI only; 2 hits.",
+          "hits": 2
+        },
+        "no-direct-fetch": {
+          "status": "covered",
+          "by": "effecttsgo/global-fetch-in-effect, effect/avoid-native-fetch"
+        },
+        "no-direct-xstate-create-machine": {
+          "status": "declined",
+          "reason": "We have no XState; state machines use effect-machine."
+        },
+        "no-direct-xstate-use-selector": {
+          "status": "declined",
+          "reason": "We have no XState; state machines use effect-machine."
+        },
+        "no-disable-validation": {
+          "status": "candidate",
+          "reason": "No hits; protects Schema decoding at the boundary.",
+          "hits": 0
+        },
+        "no-effect-asvoid": {
+          "status": "declined",
+          "reason": "Taste; Effect.asVoid is idiomatic. Warn-level upstream.",
+          "hits": 10
+        },
+        "no-fixed-height-on-content": {
+          "status": "declined",
+          "reason": "Tailwind design taste, not correctness."
+        },
+        "no-global-json": {
+          "status": "covered",
+          "by": "effecttsgo/global-json"
+        },
+        "no-in-operator": {
+          "status": "covered",
+          "by": "house/no-in-operator"
+        },
+        "no-jsx-style": {
+          "status": "declined",
+          "reason": "We have no JSX."
+        },
+        "no-multiple-function-params": {
+          "status": "declined",
+          "reason": "Conflicts with Effect's data-last and pipeable APIs; 226 hits.",
+          "hits": 226
+        },
+        "no-multiple-xstate-hooks": {
+          "status": "declined",
+          "reason": "We have no XState; state machines use effect-machine."
+        },
+        "no-nested-effect-array-methods": {
+          "status": "candidate",
+          "reason": "4 hits; nested Effect Array calls lose inference.",
+          "hits": 4
+        },
+        "no-nested-layer-provide": {
+          "status": "candidate",
+          "reason": "No hits; warn-level upstream.",
+          "hits": 0
+        },
+        "no-non-route-layout-files": {
+          "status": "declined",
+          "reason": "We have no Next.js."
+        },
+        "no-optional-function-parameters": {
+          "status": "candidate",
+          "reason": "5 hits; fits exactOptionalPropertyTypes.",
+          "hits": 5
+        },
+        "no-react-component-inner-functions": {
+          "status": "declined",
+          "reason": "We have no React; the UI is Foldkit."
+        },
+        "no-react-non-component-function-exports": {
+          "status": "declined",
+          "reason": "We have no React; the UI is Foldkit."
+        },
+        "no-react-state-hooks": {
+          "status": "declined",
+          "reason": "We have no React; the UI is Foldkit."
+        },
+        "no-reexport-only-modules": {
+          "status": "candidate",
+          "reason": "6 hits; check against package export maps first.",
+          "hits": 6
+        },
+        "no-service-option": {
+          "status": "candidate",
+          "reason": "1 hit.",
+          "hits": 1
+        },
+        "no-shadowed-standard-array-static": {
+          "status": "candidate",
+          "reason": "No hits.",
+          "hits": 0
+        },
+        "no-silent-error-swallow": {
+          "status": "candidate",
+          "reason": "No hits; overlaps effect/effect-catchall-default.",
+          "hits": 0
+        },
+        "no-single-use-private-functions": {
+          "status": "declined",
+          "reason": "Conflicts with naming steps for readability in deep modules.",
+          "hits": 172
+        },
+        "no-single-use-xstate-actions": {
+          "status": "declined",
+          "reason": "We have no XState; state machines use effect-machine."
+        },
+        "no-single-use-xstate-guards": {
+          "status": "declined",
+          "reason": "We have no XState; state machines use effect-machine."
+        },
+        "no-sql-type-parameter": {
+          "status": "candidate",
+          "reason": "No hits; we use @effect/sql.",
+          "hits": 0
+        },
+        "no-static-effect-service-forwarders": {
+          "status": "candidate",
+          "reason": "No hits; matches 'declare a port where consumed'.",
+          "hits": 0
+        },
+        "no-switch": {
+          "status": "covered",
+          "by": "effect/prefer-match-over-switch",
+          "reason": "Backend only; the 1 hit is UI."
+        },
+        "no-try-catch": {
+          "status": "covered",
+          "by": "effect/avoid-try-catch"
+        },
+        "no-type-assertion": {
+          "status": "covered",
+          "by": "typescript/no-unsafe-type-assertion, effect/require-safety-comment-for-type-assertion"
+        },
+        "no-typeof-object": {
+          "status": "covered",
+          "by": "effect/no-runtime-typeof",
+          "reason": "Backend only; the 1 hit is UI."
+        },
+        "no-xstate-derived-boolean-context": {
+          "status": "declined",
+          "reason": "We have no XState; state machines use effect-machine."
+        },
+        "pipe-max-arguments": {
+          "status": "candidate",
+          "reason": "No hits; warn-level upstream.",
+          "hits": 0
+        },
+        "prefer-effect-array-match": {
+          "status": "covered",
+          "by": "effect/no-length-comparison"
+        },
+        "prefer-effect-match": {
+          "status": "candidate",
+          "reason": "Same idea as dillon/prefer-effect-match; pick one copy.",
+          "hits": 2
+        },
+        "prefer-option-from-nullable": {
+          "status": "candidate",
+          "reason": "No hits.",
+          "hits": 0
+        },
+        "prefer-typed-schema-apis": {
+          "status": "declined",
+          "reason": "Needs Sandro's own Compiler API engine beside tsgo; revisit if tsgo gains it."
+        },
+        "private-function-prefix": {
+          "status": "declined",
+          "reason": "Conflicts with our naming; 311 hits.",
+          "hits": 311
+        },
+        "require-approved-ui-primitives": {
+          "status": "declined",
+          "reason": "We have no Next.js."
+        },
+        "require-cn-for-classname-composition": {
+          "status": "declined",
+          "reason": "Targets JSX className; Foldkit views already use cn."
+        },
+        "require-context-service-in-services": {
+          "status": "declined",
+          "reason": "Assumes a services/ folder layout we do not use."
+        },
+        "require-default-component-export": {
+          "status": "declined",
+          "reason": "We have no Next.js."
+        },
+        "require-tsx-in-ui-folders": {
+          "status": "declined",
+          "reason": "Foldkit views are .ts.",
+          "hits": 41
+        },
+        "require-xstate-event-satisfies": {
+          "status": "declined",
+          "reason": "We have no XState; state machines use effect-machine."
+        },
+        "xstate-single-use": {
+          "status": "declined",
+          "reason": "Helper module, not a rule."
+        }
+      }
+    }
+  }
+}

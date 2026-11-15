@@ -10,7 +10,7 @@
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "test": "vitest run --fsModuleCache=false",
-    "vendor:check": "bash vendor/check-upstream.sh"
+    "rules:check": "bash check-rule-sources.sh"
   },
   "devDependencies": {
     "@effect/tsgo": "catalog:",
