@@ -1,0 +1,4 @@
+[tools]
+# Latest Node LTS. mise activates it in this directory, so hooks and tests
+# run on the same Node everywhere.
+node = "26.13.1"

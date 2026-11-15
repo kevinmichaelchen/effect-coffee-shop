@@ -92,7 +92,7 @@
   },
   "globalDependencies": [
     "bunfig.toml",
-    ".node-version",
+    "mise.toml",
     "packages/tooling/oxlint*.ts",
     "patches/*.patch"
   ],
