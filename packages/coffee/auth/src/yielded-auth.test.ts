@@ -12,16 +12,16 @@ import * as Schema from "effect/Schema";
 import { SecureRandom } from "effect/crypto";
 import { HttpRouter, HttpServer, HttpServerResponse } from "effect/http";
 import { migrateCloudflareD1 } from "./testing/migrate.ts";
-import { d1AuthDatabase } from "./database.ts";
+import { d1AuthDatabase } from "./adapters/d1.ts";
 import { makeAuthClient } from "./testing/auth-client.ts";
 import { makeTestPasskey } from "./testing/passkey.ts";
 import { AuthAdaptersLive } from "./adapters.ts";
-import { makeCoffeeAuth, type AuthServerConfig } from "./server.ts";
+import { makeCoffeeAuth, type AuthDatabase, type AuthServerConfig } from "./server.ts";
 
 type AuthServer = Effect.Success<ReturnType<typeof authServer>>;
 
 /** The auth routes plus an actor probe, served as a scoped Fetch handler. */
-const authServer = (config: AuthServerConfig, database: ReturnType<typeof d1AuthDatabase>) => {
+const authServer = (config: AuthServerConfig, database: AuthDatabase) => {
   const auth = makeCoffeeAuth(config, database, AuthAdaptersLive);
   const routes = Layer.merge(
     auth.routes,

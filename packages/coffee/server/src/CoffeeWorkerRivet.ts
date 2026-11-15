@@ -1,16 +1,18 @@
 /**
- * The Coffee Worker with the model on Rivet Durable Objects
- * (`CoffeeShopRivet`). It is `CoffeeWorker` with one Layer swapped; see
- * `CoffeeServer.ts` for what it serves.
+ * The Coffee Worker on Cloudflare, with the model on Rivet Durable Objects
+ * (`CoffeeShopRivet`). It is `CoffeeWorker` with the model's host swapped;
+ * see `CoffeeServer.ts` for what it serves.
  *
  * @module
  */
 import * as Cloudflare from "@alchemy.run/cloudflare";
+import * as Effect from "effect/Effect";
+import { CloudflareAuth, coffeeWorkerSettings } from "./adapters/cloudflare.ts";
+import { coffeeServer } from "./CoffeeServer.ts";
 import CoffeeShopRivet from "./CoffeeShopRivet.ts";
-import { coffeeWorker, coffeeWorkerSettings } from "./CoffeeServer.ts";
 
 export default class CoffeeWorkerRivet extends Cloudflare.Worker<CoffeeWorkerRivet>()(
   "CoffeeWorker",
   coffeeWorkerSettings(import.meta.url),
-  coffeeWorker(CoffeeShopRivet),
+  coffeeServer.pipe(Effect.provide([CoffeeShopRivet, CloudflareAuth])),
 ) {}

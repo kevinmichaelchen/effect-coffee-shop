@@ -28,9 +28,15 @@ export class AuthUnavailable extends Schema.TaggedError<
   { readonly brand: unique symbol }
 >()("AuthUnavailable", {}) {}
 
-export const makeCoffeeAuth = <E>(
+/**
+ * Where auth keeps passkeys, sessions and OAuth grants, with batched commits.
+ * Each host provides one; see `adapters/d1.ts` for Cloudflare D1.
+ */
+export type AuthDatabase = Layer.Layer<SqlClient.SqlClient | SqlBatchCommit>;
+
+export const makeCoffeeAuth = (
   config: AuthServerConfig,
-  database: Layer.Layer<SqlClient.SqlClient | SqlBatchCommit, E>,
+  database: AuthDatabase,
   adapters: AuthAdapters,
 ) => {
   const origin = new URL(config.origin);
@@ -120,4 +126,4 @@ export const makeCoffeeAuth = <E>(
   return { auth, http, actor, routes, middleware, crypto };
 };
 
-export type CoffeeAuthLayers<E> = ReturnType<typeof makeCoffeeAuth<E>>;
+export type CoffeeAuthLayers = ReturnType<typeof makeCoffeeAuth>;

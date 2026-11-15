@@ -6,7 +6,7 @@ import * as Layer from "effect/Layer";
 import { KeyValueStore } from "effect/persistence";
 import { migrateCloudflareD1 } from "./testing/migrate.ts";
 import { AuthRateLimitStoreLive } from "./persistence/rate-limit-store.ts";
-import { d1AuthDatabase } from "./database.ts";
+import { d1AuthDatabase } from "./adapters/d1.ts";
 
 it.live(
   "round-trips persisted rate-limit entries across fresh D1 layer scopes",

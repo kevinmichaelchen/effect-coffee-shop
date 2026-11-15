@@ -21,6 +21,15 @@ Code style for agents:
 - Every lint suppression names its rule and gives a reason after `--`.
 - When a preference here is deterministic, encode it as a type, lint rule (Oxlint profile or the `house` plugin), Fallow rule or test instead of more prose.
 
+Design principles:
+
+- Locality of behaviour comes first ([essay](https://htmx.org/essays/locality-of-behaviour/)): a unit's behaviour should be obvious from that unit alone. Keep business rules in their aggregate folder, beside the command, view, policy or saga they govern. Make behaviour visible where it is invoked; hide only its implementation.
+- Duplicate code, never a source of truth. Prefer a few repeated lines over a generic or helper that only threads type parameters or saves lines. Use a generic only when it carries a real type relationship and keeps call sites readable, like one invariant shared by several commands. Facts such as env-var values, route prefixes and resource paths get exactly one definition.
+- Keep shared code provider-neutral. Only host adapters (`src/adapters/`) and composition roots (the server's `*Worker*.ts` and `CoffeeShop*.ts`, and `infra/`) may import a provider such as `@alchemy.run/cloudflare`, `@alchemy.run/rivet`, `@cloudflare/*` or `@effect/sql-d1`; `cloudProviders` in the backend Oxlint profile enforces the list. Shared code asks for capabilities (`SqlClient`, `Config`, a small Effect service), and its caller provides them as Layers.
+- Declare a port where it is consumed, like `AuthStorage` in `CoffeeServer.ts`. Never derive it from one implementation's type, such as `Layer.Success<typeof CoffeeShopLive>`. Add a port only when a second implementation exists or the code must stay host-neutral; otherwise call the thing directly.
+- Declare concrete infrastructure (databases, secret stores, buckets) only in host adapters and composition roots. Shared code names the service it needs, not the resource it runs on.
+- Matching types do not mean matching behaviour. When code runs on several hosts, test transactions, ordering, retries and idempotency against each host's Layer.
+
 Dependency patches live in `patches/`. After upgrading any patched package, run `bun run patches:check` and delete patches it reports as unused or no longer needed.
 
 Draw every diagram with Pele (Mermaid sources rendered by `pele`); D2 is banned in this codebase. Architecture diagrams render with `node docs/architecture/render.mjs` (see `docs/architecture/README.md`).

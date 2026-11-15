@@ -19,10 +19,10 @@ export const coffeeAccess = OAuthScope.make("coffee:access");
 
 export const CoffeeOAuth = OAuthServer.make("coffee", { scopes: [coffeeAccess] });
 
-export const makeCoffeeOAuth = <E>(
+export const makeCoffeeOAuth = (
   config: AuthServerConfig,
-  auth: CoffeeAuthLayers<E>,
-  database: Layer.Layer<SqlClient.SqlClient, E>,
+  auth: CoffeeAuthLayers,
+  database: Layer.Layer<SqlClient.SqlClient>,
 ) => {
   const identity = Layer.effect(
     CoffeeOAuth.Identity,
