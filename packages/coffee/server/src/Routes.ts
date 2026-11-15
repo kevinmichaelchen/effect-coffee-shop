@@ -18,7 +18,8 @@ import { domainRestPrefix } from "@effect-coffee-shop/coffee-http/domain-rest";
 /** A surface of the Worker. */
 export type Route = "rest" | "customer" | "staff" | "auth" | "mcp" | "api" | "unmatched";
 
-interface RouteRow {
+/** One surface's row in the ordered route table. */
+export interface RouteRow {
   readonly route: Route;
   readonly prefixes: ReadonlyArray<string>;
   /** Without auth configured, the surface answers 503. */
