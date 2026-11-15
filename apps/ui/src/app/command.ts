@@ -246,12 +246,6 @@ export const CopyUserId = Command.define("CopyUserId", {
     ),
 });
 
-export const ExpireToast = Command.define("ExpireToast", {
-  args: { id: Schema.String },
-  messages: [Message.ExpiredToast],
-  execute: ({ id }) => Effect.sleep("4 seconds").pipe(Effect.as(Message.ExpiredToast({ id }))),
-});
-
 // LOCAL AI
 
 export const DetectWebGpu = Command.define("DetectWebGpu", {

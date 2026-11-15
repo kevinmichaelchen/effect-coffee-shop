@@ -13,7 +13,7 @@ import {
 import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import type { OrderTicket } from "#features/coffee-shop/lib/coffee.ts";
 import { Message } from "#app/message.ts";
-import type { Model } from "#app/model.ts";
+import { ordersOf, type Model } from "#app/model.ts";
 import type { Builder } from "#app/view/builder.ts";
 import { detailsDrawer } from "#app/view/staffDetails.ts";
 import { statusBadge } from "#app/view/shared.ts";
@@ -21,10 +21,11 @@ import { statusBadge } from "#app/view/shared.ts";
 const recentLimit = 6;
 
 export const staffSnapshot = (model: Model) => {
-  const active = model.orders.filter(isActiveOrder);
+  const orders = ordersOf(model);
+  const active = orders.filter(isActiveOrder);
   return {
     active,
-    history: model.orders.filter((order) => !isActiveOrder(order)).toReversed(),
+    history: orders.filter((order) => !isActiveOrder(order)).toReversed(),
     ready: active.filter((order) => order.status === "ready").length,
   };
 };

@@ -3,10 +3,10 @@ import type { Document } from "foldkit/html";
 import { card, cardContent } from "@effect-coffee-shop/ui-kit/components/card";
 import { linkButton } from "@effect-coffee-shop/ui-kit/components/button";
 import { text } from "@effect-coffee-shop/ui-kit/components/text";
-import { toastRegion } from "@effect-coffee-shop/ui-kit/components/toast";
+import { toastEntry } from "@effect-coffee-shop/ui-kit/components/toast";
 import { getQueueLoad } from "#features/coffee-shop/lib/coffee.ts";
 import { Message } from "#app/message.ts";
-import type { Model } from "#app/model.ts";
+import { Toast, menuOf, ordersOf, readErrors, viewerOf, type Model } from "#app/model.ts";
 import { shopRouter, staffRouter } from "#app/route.ts";
 import { authGate } from "#app/view/auth.ts";
 import type { Builder } from "#app/view/builder.ts";
@@ -19,21 +19,16 @@ import { isActiveOrder } from "#features/coffee-shop/lib/coffee.ts";
 
 const pageShell = "mx-auto grid min-h-screen w-full max-w-7xl gap-5 px-4 py-5 lg:px-6";
 
-const firstMessage = (...candidates: readonly Option.Option<string>[]) =>
-  candidates.reduce<Option.Option<string>>(
-    (found, candidate) => Option.orElse(found, () => candidate),
-    Option.none(),
-  );
-
 const warningFor = (model: Model, h: Builder) =>
-  Option.match(firstMessage(model.viewerError, model.menuError, model.ordersError), {
+  Option.match(Option.fromNullishOr(readErrors(model)[0]), {
     onNone: () => [],
     onSome: (message) => [workspaceWarning(message, h)],
   });
 
 function shopPage(model: Model, h: Builder) {
-  const active = model.orders.filter(isActiveOrder).length;
-  const signedIn = model.viewer.kind !== "anonymous";
+  const orders = ordersOf(model);
+  const active = orders.filter(isActiveOrder).length;
+  const signedIn = viewerOf(model).kind !== "anonymous";
   return h.main(
     [h.Class(pageShell)],
     [
@@ -49,9 +44,9 @@ function shopPage(model: Model, h: Builder) {
       ),
       metricStrip(
         [
-          { label: "Menu", value: String(model.menu.length) },
+          { label: "Menu", value: String(menuOf(model).length) },
           { label: "Active", value: String(active) },
-          { label: "History", value: String(model.orders.length - active) },
+          { label: "History", value: String(orders.length - active) },
         ],
         h,
       ),
@@ -74,7 +69,8 @@ function shopPage(model: Model, h: Builder) {
 function staffPage(model: Model, h: Builder) {
   const { active, history, ready } = staffSnapshot(model);
   const load = getQueueLoad(active.length);
-  const staffSession = model.viewer.kind === "staff";
+  const viewer = viewerOf(model);
+  const staffSession = viewer.kind === "staff";
   return h.main(
     [h.Class(pageShell)],
     [
@@ -106,7 +102,7 @@ function staffPage(model: Model, h: Builder) {
         },
         h,
       ),
-      ...(model.viewer.kind === "customer" ? [staffAccessWarning(h)] : []),
+      ...(viewer.kind === "customer" ? [staffAccessWarning(h)] : []),
       ...(staffSession ? [assistantCard(model, h), staffQueue(model, h)] : []),
     ],
   );
@@ -160,6 +156,20 @@ const pageTitle = (model: Model): string =>
     Match.orElse(() => "Customer workspace | Coffee shop"),
   );
 
+const toastRegion = (model: Model, h: Builder) =>
+  h.submodel({
+    slotId: model.toast.id,
+    model: model.toast,
+    view: Toast.view,
+    viewInputs: {
+      position: "TopCenter",
+      entryClassName: "pointer-events-auto w-full max-w-md",
+      entryToView: (entry, handlers) =>
+        toastEntry(entry.payload.kind, entry.payload.message, handlers.dismiss, h),
+    },
+    toParentMessage: (message) => Message.GotToastMessage({ message }),
+  });
+
 export const view = (model: Model, h: Builder): Document => ({
   title: pageTitle(model),
   body: h.div(
@@ -170,13 +180,7 @@ export const view = (model: Model, h: Builder): Document => ({
         Match.tag("NotFound", () => notFoundPage(h)),
         Match.orElse(() => shopPage(model, h)),
       ),
-      toastRegion(
-        model.toasts.map((toast) => ({
-          ...toast,
-          onDismiss: Message.DismissedToast({ id: toast.id }),
-        })),
-        h,
-      ),
+      toastRegion(model, h),
     ],
   ),
 });

@@ -5,7 +5,7 @@ import type { AssistantRequest, AssistantTurn } from "#features/assistant/lib/to
 import { usualDraft } from "#features/coffee-shop/lib/usual.ts";
 import { AskAssistant, DetectWebGpu, LoadLocalModel, TranscribeRecording } from "#app/command.ts";
 import { composerFor, patchDraft } from "#app/draft.ts";
-import type { Model } from "#app/model.ts";
+import { type Model, menuOf, ordersOf } from "#app/model.ts";
 import type { UpdateReturn as Return } from "#app/resources.ts";
 
 const withAssistant = (model: Model, change: Partial<AssistantState>): Model => ({
@@ -91,9 +91,9 @@ export const receiveCrash = (model: Model, message: string): Return => ({
 const requestFor = (model: Model): AssistantRequest => ({
   page: model.route._tag === "Staff" ? "staff" : "shop",
   prompt: model.assistant.prompt.trim(),
-  menu: model.menu,
-  draft: Option.map(composerFor(model.menu, model.draft), ({ draft }) => draft),
-  orders: model.orders,
+  menu: menuOf(model),
+  draft: Option.map(composerFor(menuOf(model), model.draft), ({ draft }) => draft),
+  orders: ordersOf(model),
 });
 
 export const submitPrompt = (model: Model): Return => {
@@ -132,10 +132,10 @@ export const receiveTurn = (model: Model, requestId: number, turn: AssistantTurn
     undo: Option.none(),
   });
   if (turn._tag !== "UpdatedDraft") return { model: settled };
-  const before = Option.map(composerFor(model.menu, model.draft), ({ draft }) => draft);
+  const before = Option.map(composerFor(menuOf(model), model.draft), ({ draft }) => draft);
   return {
     model: withAssistant(
-      { ...settled, draft: patchDraft(model.menu, model.draft, turn.patch) },
+      { ...settled, draft: patchDraft(menuOf(model), model.draft, turn.patch) },
       { undo: before },
     ),
   };
@@ -181,7 +181,7 @@ export const abandonInteraction = (model: Model): Model =>
 
 /** The frequency table's pick: the drink this customer has ordered most. */
 export const useUsual = (model: Model): Return =>
-  Option.match(usualDraft(model.orders, model.menu), {
+  Option.match(usualDraft(ordersOf(model), menuOf(model)), {
     onNone: () => ({ model }),
     onSome: (draft) => ({ model: { ...model, draft: Option.some(draft) } }),
   });

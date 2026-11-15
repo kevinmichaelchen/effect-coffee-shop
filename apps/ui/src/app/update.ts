@@ -1,5 +1,6 @@
 import * as DomainFoldkit from "@alchemy.run/domain/Foldkit";
-import { Equal, Option, Schema } from "effect";
+import { Equal, Option, Result, Schema } from "effect";
+import * as AsyncData from "foldkit/asyncData";
 import { Update } from "foldkit";
 import { UrlRequest } from "foldkit/navigation";
 import { toString as urlToString } from "foldkit/url";
@@ -32,8 +33,6 @@ import {
   openDetails,
   openMenu,
   openReceipt,
-  type UpdateStep,
-  withToast,
 } from "#app/dialogs.ts";
 import {
   enableAssistant,
@@ -60,19 +59,31 @@ import {
   useUsual,
 } from "#app/assistant.ts";
 import { composerFor, selectDrink, toInt } from "#app/draft.ts";
-import { type Feed, feedFor } from "#app/feed.ts";
+import { feedFor, type Feed } from "#app/feed.ts";
 import { Message } from "#app/message.ts";
-import type { AuthAction, Model, OrderActionName } from "#app/model.ts";
-import type { UpdateReturn } from "#app/resources.ts";
+import {
+  MenuData,
+  OrdersData,
+  ViewerData,
+  menuOf,
+  viewerOf,
+  type AuthAction,
+  type Model,
+  type OrderActionName,
+} from "#app/model.ts";
+import type { UpdateReturn, UpdateStep } from "#app/resources.ts";
 import { type AppRoute, mcpAuthorizePath, urlToAppRoute } from "#app/route.ts";
+import { foldToast, withToast } from "#app/toast.ts";
 
 // SESSION
 
-const userIdOf = (model: Model): Option.Option<string> =>
-  model.viewer.kind === "anonymous" ? Option.none() : Option.some(model.viewer.userId);
+const userIdOf = (model: Model): Option.Option<string> => {
+  const viewer = viewerOf(model);
+  return viewer.kind === "anonymous" ? Option.none() : Option.some(viewer.userId);
+};
 
 const wantsMenu = (model: Model): boolean =>
-  (model.route._tag === "Shop" || model.route._tag === "McpLogin") && model.menu.length === 0;
+  (model.route._tag === "Shop" || model.route._tag === "McpLogin") && menuOf(model).length === 0;
 
 const withMenuFetch = (result: UpdateReturn): UpdateReturn =>
   wantsMenu(result.model)
@@ -81,15 +92,17 @@ const withMenuFetch = (result: UpdateReturn): UpdateReturn =>
 
 /** Orders survive only a move that keeps the same account watching the same feed. */
 const keepsOrders = (before: Model, after: Model): boolean =>
-  Equal.equals(userIdOf(before), userIdOf(after)) && Equal.equals(feedFor(before), feedFor(after));
+  Equal.equals(userIdOf(before), userIdOf(after)) &&
+  Equal.equals(feedFor(viewerOf(before), before.route), feedFor(viewerOf(after), after.route));
 
 /** A feed message counts only for the account and feed the page shows now. */
 const isCurrentFeed = (model: Model, feed: Feed, userId: string): boolean =>
-  Option.contains(feedFor(model), feed) && Option.contains(userIdOf(model), userId);
+  Option.contains(feedFor(viewerOf(model), model.route), feed) &&
+  Option.contains(userIdOf(model), userId);
 
 /** Stores the feed's snapshot; an open drawer whose ticket disappeared closes. */
 const applyOrders = (model: Model, orders: readonly OrderTicket[]): UpdateReturn => {
-  const next: Model = { ...model, orders, ordersError: Option.none() };
+  const next: Model = { ...model, orders: OrdersData.Success({ data: orders }) };
   const vanished = Option.exists(
     next.selectedOrderId,
     (id) => !orders.some((order) => order.id === id),
@@ -99,8 +112,7 @@ const applyOrders = (model: Model, orders: readonly OrderTicket[]): UpdateReturn
 
 const withoutOrders = (model: Model): Model => ({
   ...model,
-  orders: [],
-  ordersError: Option.none(),
+  orders: OrdersData.Success({ data: [] }),
   selectedOrderId: Option.none(),
 });
 
@@ -124,7 +136,7 @@ const closeOverlays: UpdateStep = (model) =>
 
 /** Signed-in visitors on the MCP login page continue straight to authorization. */
 const continueMcp = (result: UpdateReturn): UpdateReturn =>
-  result.model.route._tag === "McpLogin" && result.model.viewer.kind !== "anonymous"
+  result.model.route._tag === "McpLogin" && viewerOf(result.model).kind !== "anonymous"
     ? {
         model: result.model,
         commands: [...(result.commands ?? []), LoadExternal({ href: mcpAuthorizePath })],
@@ -136,7 +148,7 @@ const continueMcp = (result: UpdateReturn): UpdateReturn =>
 const editDraft =
   (change: (draft: OrderDraft) => OrderDraft) =>
   (model: Model): UpdateReturn =>
-    Option.match(composerFor(model.menu, model.draft), {
+    Option.match(composerFor(menuOf(model), model.draft), {
       onNone: () => ({ model }),
       onSome: ({ draft }) => ({ model: { ...model, draft: Option.some(change(draft)) } }),
     });
@@ -167,7 +179,10 @@ const afterAuth =
   (action: AuthAction) =>
   (model: Model): UpdateReturn => {
     // Signing out drops the viewer at once, so the open feed closes before it can refill orders.
-    const signedOut: Model = action === "sign-out" ? { ...model, viewer: anonymousViewer } : model;
+    const signedOut: Model =
+      action === "sign-out"
+        ? { ...model, viewer: ViewerData.Success({ data: anonymousViewer }) }
+        : model;
     const cleared: Model = { ...withoutAccountState(signedOut), pendingAuth: Option.none() };
     return action !== "sign-out" && cleared.route._tag === "McpLogin"
       ? { model: cleared, commands: [LoadExternal({ href: mcpAuthorizePath })] }
@@ -209,7 +224,7 @@ const receiveOrderActionFailed = (
  * changed since starts a new ticket.
  */
 const sendOrder = (model: Model): UpdateReturn =>
-  Option.match(composerFor(model.menu, model.draft), {
+  Option.match(composerFor(menuOf(model), model.draft), {
     onNone: () => ({ model }),
     onSome: ({ draft }) => {
       const request = toPlaceOrderRequest(draft);
@@ -303,7 +318,7 @@ export const update = (model: Model, message: Message): UpdateReturn =>
     },
 
     SucceededFetchViewer: ({ viewer }) => {
-      const settled: Model = { ...model, viewer, viewerError: Option.none() };
+      const settled: Model = { ...model, viewer: ViewerData.Success({ data: viewer }) };
       const next = keepsOrders(model, settled) ? settled : withoutAccountState(settled);
       // Someone already signed in who lands on the MCP login page continues straight on.
       return next.route._tag === "McpLogin" && viewer.kind !== "anonymous"
@@ -311,7 +326,7 @@ export const update = (model: Model, message: Message): UpdateReturn =>
         : withMenuFetch({ model: next });
     },
     FailedFetchViewer: ({ message }) => ({
-      model: { ...model, viewer: anonymousViewer, viewerError: Option.some(message) },
+      model: { ...model, viewer: ViewerData.Failure({ error: message }) },
     }),
 
     ChangedDisplayName: ({ value }) => ({ model: { ...model, displayName: value } }),
@@ -323,19 +338,23 @@ export const update = (model: Model, message: Message): UpdateReturn =>
       model: { ...model, pendingAuth: Option.none(), authError: Option.some(message) },
     }),
 
-    SucceededFetchMenu: ({ menu }) => ({ model: { ...model, menu, menuError: Option.none() } }),
-    FailedFetchMenu: ({ message }) => ({ model: { ...model, menuError: Option.some(message) } }),
+    SucceededFetchMenu: ({ menu }) => ({
+      model: { ...model, menu: MenuData.Success({ data: menu }) },
+    }),
+    FailedFetchMenu: ({ message }) => ({
+      model: { ...model, menu: AsyncData.settle(model.menu, Result.fail(message)) },
+    }),
 
     // A feed message counts only while the page still shows that feed.
     LoadedOrders: ({ feed, userId, orders }) =>
       isCurrentFeed(model, feed, userId) ? applyOrders(model, orders) : { model },
     FailedOrders: ({ feed, userId, message }) =>
       isCurrentFeed(model, feed, userId)
-        ? { model: { ...model, ordersError: Option.some(message) } }
+        ? { model: { ...model, orders: AsyncData.settle(model.orders, Result.fail(message)) } }
         : { model },
 
     ClickedSelectDrink: ({ drinkId }) => ({
-      model: { ...model, draft: selectDrink(model.menu, model.draft, drinkId) },
+      model: { ...model, draft: selectDrink(menuOf(model), model.draft, drinkId) },
     }),
     ChangedDrinkSize: ({ value }) =>
       editDraft((draft) => ({ ...draft, size: decodedOr(DrinkSize, value, draft.size) }))(model),
@@ -405,10 +424,12 @@ export const update = (model: Model, message: Message): UpdateReturn =>
     // A modal drawer hides the toast region, so a failure also shows inside the drawer.
     FailedOrderAction: ({ message, retryable }) =>
       receiveOrderActionFailed(model, message, retryable),
-    ClickedCopyUserId: () =>
-      model.viewer.kind === "anonymous"
+    ClickedCopyUserId: () => {
+      const viewer = viewerOf(model);
+      return viewer.kind === "anonymous"
         ? { model }
-        : { model, commands: [CopyUserId({ userId: model.viewer.userId })] },
+        : { model, commands: [CopyUserId({ userId: viewer.userId })] };
+    },
     SucceededCopyUserId: () => ({ model: { ...model, copyState: "copied" } }),
     FailedCopyUserId: () => ({ model: { ...model, copyState: "failed" } }),
     GotDetailsDialogMessage: ({ message }) => foldDetails(model, message),
@@ -416,12 +437,7 @@ export const update = (model: Model, message: Message): UpdateReturn =>
     ClickedOpenMenu: () => openMenu(model),
     GotMenuDialogMessage: ({ message }) => foldMenu(model, message),
 
-    DismissedToast: ({ id }) => ({
-      model: { ...model, toasts: model.toasts.filter((toast) => toast.id !== id) },
-    }),
-    ExpiredToast: ({ id }) => ({
-      model: { ...model, toasts: model.toasts.filter((toast) => toast.id !== id) },
-    }),
+    GotToastMessage: ({ message }) => foldToast(model, message),
 
     ClickedEnableAssistant: () => enableAssistant(model),
     DetectedWebGpu: ({ isSupported }) => receiveWebGpu(model, isSupported),

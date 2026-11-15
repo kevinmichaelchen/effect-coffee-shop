@@ -1,28 +1,9 @@
 import { Dialog } from "@foldkit/ui";
 import { Option } from "effect";
 import { Update } from "foldkit";
-import { ExpireToast } from "#app/command.ts";
 import { Message } from "#app/message.ts";
-import type { Model, Toast } from "#app/model.ts";
-import type { AppServices } from "#app/resources.ts";
-
-export type UpdateStep = Update.Step<Model, Message, AppServices>;
-
-// TOASTS
-
-export const withToast =
-  (kind: Toast["kind"], message: string): UpdateStep =>
-  (model) => {
-    const id = `toast-${model.toastCount}`;
-    return {
-      model: {
-        ...model,
-        toastCount: model.toastCount + 1,
-        toasts: [...model.toasts, { id, kind, message }],
-      },
-      commands: [ExpireToast({ id })],
-    };
-  };
+import type { Model } from "#app/model.ts";
+import type { UpdateStep } from "#app/resources.ts";
 
 // DIALOGS
 

@@ -11,6 +11,7 @@ vi.mock("#features/auth/auth-client.ts", () => ({
 }));
 
 const { init } = await import("#app/main.ts");
+const { MenuData, ViewerData } = await import("#app/model.ts");
 const { RunPasskeyAuth } = await import("#app/command.ts");
 const { Message } = await import("#app/message.ts");
 const { update } = await import("#app/update.ts");
@@ -51,17 +52,19 @@ const menu = [
   },
 ] as const;
 
+const customer = { kind: "customer", displayName: "Ada", userId: "user-1" } as const;
+
 const signedIn = {
   ...boot("/shop"),
-  menu,
-  viewer: { kind: "customer", displayName: "Ada", userId: "user-1" },
-} as const;
+  menu: MenuData.Success({ data: menu }),
+  viewer: ViewerData.Success({ data: customer }),
+};
 
 describe("customer workspace", () => {
   test("anonymous visitors see the passkey gate and no composer", () => {
     scene(
       { update, view },
-      given({ ...boot("/shop"), menu }),
+      given({ ...boot("/shop"), menu: MenuData.Success({ data: menu }) }),
       expect(role("heading", { name: "Sign in before placing an order" })).toExist(),
       expect(role("button", { name: "Create account with passkey" })).toExist(),
       expect(role("heading", { name: "Build an order" })).toBeAbsent(),
@@ -127,7 +130,7 @@ describe("staff workspace", () => {
   test("a customer account is told it is not on the allowlist", () => {
     scene(
       { update, view },
-      given({ ...boot("/staff"), viewer: signedIn.viewer }),
+      given({ ...boot("/staff"), viewer: ViewerData.Success({ data: customer }) }),
       expect(text("Staff access required")).toExist(),
       expect(role("heading", { name: "Barista queue" })).toBeAbsent(),
     );
@@ -136,7 +139,12 @@ describe("staff workspace", () => {
   test("staff see the queue", () => {
     scene(
       { update, view },
-      given({ ...boot("/staff"), viewer: { kind: "staff", displayName: "Sam", userId: "user-2" } }),
+      given({
+        ...boot("/staff"),
+        viewer: ViewerData.Success({
+          data: { kind: "staff", displayName: "Sam", userId: "user-2" },
+        }),
+      }),
       expect(role("heading", { name: "Barista queue" })).toExist(),
       expect(text("No active tickets")).toExist(),
     );

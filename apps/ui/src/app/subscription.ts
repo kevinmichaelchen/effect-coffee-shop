@@ -21,17 +21,19 @@ import { workerNotices } from "#features/assistant/api/assistant-worker.ts";
 import { toCoffeeOrder } from "#features/coffee-shop/api/order-mapping.ts";
 import { Feed, feedFor } from "#app/feed.ts";
 import { Message } from "#app/message.ts";
-import type { Model } from "#app/model.ts";
+import { type Model, viewerOf } from "#app/model.ts";
 import type { AppServices } from "#app/resources.ts";
 
 const Connection = Schema.Struct({ userId: Schema.String, feed: Feed });
 type Connection = typeof Connection.Type;
 
-const connectionFor = (model: Model): Option.Option<Connection> =>
-  Option.map(feedFor(model), (feed) => ({
-    userId: model.viewer.kind === "anonymous" ? "" : model.viewer.userId,
+const connectionFor = (model: Model): Option.Option<Connection> => {
+  const viewer = viewerOf(model);
+  return Option.map(feedFor(viewer, model.route), (feed) => ({
+    userId: viewer.kind === "anonymous" ? "" : viewer.userId,
     feed,
   }));
+};
 
 /** Oldest first, so the staff queue reads in the order the tickets were placed. */
 const loaded = (connection: Connection, orders: ReadonlyArray<CoffeeOrder>): Message =>

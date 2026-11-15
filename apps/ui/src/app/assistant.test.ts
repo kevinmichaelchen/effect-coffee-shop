@@ -34,6 +34,7 @@ vi.mock("#features/assistant/api/microphone.ts", async () => {
 
 const { AskAssistant, DetectWebGpu, LoadLocalModel } = await import("#app/command.ts");
 const { init } = await import("#app/main.ts");
+const { MenuData, ViewerData } = await import("#app/model.ts");
 const { Message } = await import("#app/message.ts");
 const { update } = await import("#app/update.ts");
 const { view } = await import("#app/view/root.ts");
@@ -78,7 +79,11 @@ const latteDraft = {
 
 const ready = LocalModelStatus.cases.Ready.make({});
 
-const signedIn = { ...bootModel("/shop"), viewer: customer, menu: [latte] };
+const signedIn = {
+  ...bootModel("/shop"),
+  viewer: ViewerData.Success({ data: customer }),
+  menu: MenuData.Success({ data: [latte] }),
+};
 const textReady = { ...signedIn, assistant: { ...initialAssistant, text: ready } };
 const voiceReady = { ...textReady, assistant: { ...textReady.assistant, voice: ready } };
 /** An answer is only wanted while its request is the pending one. */

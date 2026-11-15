@@ -4,7 +4,7 @@ import { text } from "@effect-coffee-shop/ui-kit/components/text";
 import { formatOrderTime, formatPrice, isActiveOrder } from "#features/coffee-shop/lib/coffee.ts";
 import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import type { OrderTicket } from "#features/coffee-shop/lib/coffee.ts";
-import type { Model } from "#app/model.ts";
+import { ordersOf, type Model } from "#app/model.ts";
 import type { Builder } from "#app/view/builder.ts";
 import { statusBadge } from "#app/view/shared.ts";
 
@@ -50,8 +50,9 @@ function orderGroup(
 }
 
 export function ordersCard(model: Model, h: Builder) {
-  const active = model.orders.filter(isActiveOrder);
-  const history = model.orders.filter((order) => !isActiveOrder(order)).toReversed();
+  const orders = ordersOf(model);
+  const active = orders.filter(isActiveOrder);
+  const history = orders.filter((order) => !isActiveOrder(order)).toReversed();
   return card(
     { className: "w-full" },
     [

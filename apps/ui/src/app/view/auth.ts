@@ -6,7 +6,7 @@ import { textField } from "@effect-coffee-shop/ui-kit/components/field";
 import { text } from "@effect-coffee-shop/ui-kit/components/text";
 import type { AuthenticatedViewer } from "#features/auth/lib/viewer.ts";
 import { Message } from "#app/message.ts";
-import type { AuthAction, Model } from "#app/model.ts";
+import { viewerOf, type AuthAction, type Model } from "#app/model.ts";
 import type { Builder } from "#app/view/builder.ts";
 
 const pendingLabels = {
@@ -172,7 +172,6 @@ export function authGate(
   props: { readonly title: string; readonly description: string },
   h: Builder,
 ) {
-  return model.viewer.kind === "anonymous"
-    ? passkeyGate(model, props, h)
-    : sessionCard(model, model.viewer, h);
+  const viewer = viewerOf(model);
+  return viewer.kind === "anonymous" ? passkeyGate(model, props, h) : sessionCard(model, viewer, h);
 }

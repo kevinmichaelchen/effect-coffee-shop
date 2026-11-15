@@ -8,7 +8,7 @@ import { overlay } from "@effect-coffee-shop/ui-kit/components/overlay";
 import { text } from "@effect-coffee-shop/ui-kit/components/text";
 import { themeToggle } from "@effect-coffee-shop/ui-kit/components/theme";
 import { Message } from "#app/message.ts";
-import type { Model } from "#app/model.ts";
+import { ordersOf, type Model } from "#app/model.ts";
 import { staffRouter, shopRouter } from "#app/route.ts";
 import type { Builder } from "#app/view/builder.ts";
 
@@ -53,7 +53,7 @@ function menuDrawer(model: Model, links: readonly NavLink[], active: number, h: 
             title: "Workspace menu",
             description: "Navigation and theme controls.",
             body: [
-              sessionSummary(active, model.orders.length, h),
+              sessionSummary(active, ordersOf(model).length, h),
               h.div(
                 [h.Class("grid gap-2")],
                 links.map((link) =>
@@ -133,7 +133,7 @@ export function pageHeader(model: Model, props: HeaderProps, h: Builder) {
         [h.Class("flex flex-wrap items-center justify-between gap-3")],
         [
           text({ className: "text-sm text-muted-foreground" }, [props.footerLabel], h),
-          sessionSummary(props.active, model.orders.length, h),
+          sessionSummary(props.active, ordersOf(model).length, h),
         ],
       ),
       menuDrawer(model, links, props.active, h),

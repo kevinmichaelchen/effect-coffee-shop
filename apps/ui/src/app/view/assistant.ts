@@ -10,7 +10,7 @@ import type { AssistantTurn } from "#features/assistant/lib/tools.ts";
 import { getOrderActions } from "#features/coffee-shop/lib/coffee.ts";
 import { getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import { Message } from "#app/message.ts";
-import type { Model } from "#app/model.ts";
+import { ordersOf, type Model } from "#app/model.ts";
 import type { Builder } from "#app/view/builder.ts";
 
 const megabytes = (bytes: number): string => `${Math.round(bytes / 1_000_000).toLocaleString()} MB`;
@@ -163,7 +163,7 @@ function voiceStatus(status: LocalModelStatus, h: Builder) {
 }
 
 const actionLabel = (model: Model, orderId: string, action: string): string =>
-  Option.fromNullishOr(model.orders.find((order) => order.id === orderId)).pipe(
+  Option.fromNullishOr(ordersOf(model).find((order) => order.id === orderId)).pipe(
     Option.map((order) => {
       const option = getOrderActions(order.status).find((entry) => entry.action === action);
       return `${option?.label ?? action}: ${order.customerName}'s ${getOrderTitle(order)}`;

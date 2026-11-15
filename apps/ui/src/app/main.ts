@@ -6,10 +6,9 @@ import type { Url } from "foldkit/url";
 import { SecureRandom } from "effect/crypto";
 import { ThemePreference, themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
 import { initialAssistant } from "#features/assistant/lib/state.ts";
-import { anonymousViewer } from "#features/auth/lib/viewer.ts";
 import { ApplyTheme } from "#app/command.ts";
 import type { Message } from "#app/message.ts";
-import type { Model } from "#app/model.ts";
+import { MenuData, OrdersData, Toast, ViewerData, type Model } from "#app/model.ts";
 import type { AppServices } from "#app/resources.ts";
 import { urlToAppRoute } from "#app/route.ts";
 import { bootCommands } from "#app/update.ts";
@@ -43,15 +42,12 @@ export const init: Runtime.RoutingApplicationInit<Model, Message, Flags, AppServ
     model: {
       route,
       theme: flags.theme,
-      viewer: anonymousViewer,
-      viewerError: Option.none(),
+      viewer: ViewerData.Idle(),
       displayName: "",
       pendingAuth: Option.none(),
       authError: Option.none(),
-      menu: [],
-      menuError: Option.none(),
-      orders: [],
-      ordersError: Option.none(),
+      menu: MenuData.Idle(),
+      orders: OrdersData.Idle(),
       draft: Option.none(),
       commandIds: flags.commandIds,
       isPlacingOrder: false,
@@ -65,8 +61,7 @@ export const init: Runtime.RoutingApplicationInit<Model, Message, Flags, AppServ
       detailsError: Option.none(),
       copyState: "idle",
       menuDialog: Dialog.init({ id: "menu-dialog" }),
-      toasts: [],
-      toastCount: 0,
+      toast: Toast.init({ id: "app-toast", defaultDuration: "4 seconds" }),
       assistant: initialAssistant,
     },
     commands: [ApplyTheme({ theme: flags.theme }), ...bootCommands(route)],

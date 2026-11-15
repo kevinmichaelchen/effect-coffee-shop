@@ -37,6 +37,9 @@ export type AppServices =
 /** What every update function returns: the next Model and the Commands to run. */
 export type UpdateReturn = Update.Return<Model, Message, AppServices>;
 
+/** One step in a composed update: the next Model and the Commands to run. */
+export type UpdateStep = Update.Step<Model, Message, AppServices>;
+
 /** The model decides when the worker and the microphone exist. */
 export const managedResources = ManagedResource.make<Model, Message>()((entry) => ({
   assistantWorker: entry(Schema.Option(Schema.Null), {

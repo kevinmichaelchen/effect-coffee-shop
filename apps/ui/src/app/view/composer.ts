@@ -8,7 +8,7 @@ import { usualDraft } from "#features/coffee-shop/lib/usual.ts";
 import { orderPreview } from "#app/view/preview.ts";
 import { composerFor, type Composer } from "#app/draft.ts";
 import { Message } from "#app/message.ts";
-import type { Model } from "#app/model.ts";
+import { menuOf, ordersOf, type Model } from "#app/model.ts";
 import type { Builder } from "#app/view/builder.ts";
 
 const toLabel = (value: string): string => value.replaceAll("-", " ");
@@ -18,7 +18,7 @@ const options = (values: readonly string[]) =>
 function drinkPicker(model: Model, composer: Composer, h: Builder) {
   return h.div(
     [h.Class("flex flex-wrap gap-2")],
-    model.menu.map((item) =>
+    menuOf(model).map((item) =>
       button(
         {
           attributes: [h.OnClick(Message.ClickedSelectDrink({ drinkId: item.id }))],
@@ -107,7 +107,7 @@ function drinkSelect(model: Model, composer: Composer, h: Builder) {
       id: "order-drink",
       label: "Drink",
       value: composer.draft.drinkId,
-      options: model.menu.map((entry) => ({ label: entry.name, value: entry.id })),
+      options: menuOf(model).map((entry) => ({ label: entry.name, value: entry.id })),
       onChange: (drinkId) => Message.ClickedSelectDrink({ drinkId }),
     },
     h,
@@ -116,7 +116,7 @@ function drinkSelect(model: Model, composer: Composer, h: Builder) {
 
 /** The frequency table's suggestion: one tap back to the drink this customer orders most. */
 function usualChip(model: Model, h: Builder) {
-  return Option.match(usualDraft(model.orders, model.menu), {
+  return Option.match(usualDraft(ordersOf(model), menuOf(model)), {
     onNone: () => [],
     onSome: (usual) => [
       h.div(
@@ -130,7 +130,7 @@ function usualChip(model: Model, h: Builder) {
             },
             [
               `Your usual: ${usual.size} ${toLabel(usual.milk === "none" ? "" : `${usual.milk} `)}${
-                model.menu.find((item) => item.id === usual.drinkId)?.name ?? usual.drinkId
+                menuOf(model).find((item) => item.id === usual.drinkId)?.name ?? usual.drinkId
               }`,
             ],
             h,
@@ -183,7 +183,7 @@ function orderFields(model: Model, composer: Composer, h: Builder) {
 }
 
 export function composerCard(model: Model, h: Builder) {
-  return Option.match(composerFor(model.menu, model.draft), {
+  return Option.match(composerFor(menuOf(model), model.draft), {
     onNone: () =>
       alert(
         { status: "info", surface: "card", title: "Loading customer tools" },

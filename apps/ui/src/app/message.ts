@@ -8,7 +8,7 @@ import { AssistantTurn } from "#features/assistant/lib/tools.ts";
 import { Viewer } from "#features/auth/lib/viewer.ts";
 import { MenuItem, OrderTicket } from "#features/coffee-shop/lib/coffee-schemas.ts";
 import { Feed } from "#app/feed.ts";
-import { AuthAction, OrderActionName } from "#app/model.ts";
+import { AuthAction, OrderActionName, Toast } from "#app/model.ts";
 
 export const Message = defineMessageUnion({
   // Navigation
@@ -64,8 +64,7 @@ export const Message = defineMessageUnion({
   ClickedOpenMenu: {},
   GotMenuDialogMessage: { message: Dialog.Message },
   // Toasts
-  DismissedToast: { id: Schema.String },
-  ExpiredToast: { id: Schema.String },
+  GotToastMessage: { message: Toast.Message },
   // Local AI
   ClickedEnableAssistant: {},
   DetectedWebGpu: { isSupported: Schema.Boolean },

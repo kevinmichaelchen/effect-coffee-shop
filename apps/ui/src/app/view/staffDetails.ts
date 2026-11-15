@@ -8,7 +8,7 @@ import { formatOrderTime, formatPrice, getOrderActions } from "#features/coffee-
 import { formatOrderItems, getOrderTitle } from "#features/coffee-shop/lib/order-display.ts";
 import type { OrderTicket } from "#features/coffee-shop/lib/coffee.ts";
 import { Message } from "#app/message.ts";
-import type { Model } from "#app/model.ts";
+import { ordersOf, type Model } from "#app/model.ts";
 import type { Builder } from "#app/view/builder.ts";
 import { statusBadge } from "#app/view/shared.ts";
 
@@ -56,7 +56,7 @@ function drawerContent(model: Model, order: OrderTicket, info: Dialog.RenderInfo
 
 export function detailsDrawer(model: Model, h: Builder) {
   const selected = Option.flatMap(model.selectedOrderId, (id) =>
-    Option.fromNullishOr(model.orders.find((order) => order.id === id)),
+    Option.fromNullishOr(ordersOf(model).find((order) => order.id === id)),
   );
   return h.submodel({
     slotId: model.detailsDialog.id,

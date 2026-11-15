@@ -4,8 +4,9 @@ import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import { Unauthorized } from "@effect-coffee-shop/coffee-domain/Session.middleware";
 import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
 import * as DomainFoldkit from "@alchemy.run/domain/Foldkit";
-import { Dialog } from "@foldkit/ui";
+import { Dialog, Toast as UiToast } from "@foldkit/ui";
 import { DateTime, Option, Schema } from "effect";
+import * as AsyncData from "foldkit/asyncData";
 import { Command, given, message, model, story } from "foldkit/story";
 import { describe, expect, test, vi } from "vitest";
 import type { Feed } from "#app/feed.ts";
@@ -22,16 +23,10 @@ vi.mock("#features/auth/auth-client.ts", () => ({
   },
 }));
 
-const {
-  ApplyTheme,
-  ExpireToast,
-  FetchMenu,
-  FetchViewer,
-  LoadExternal,
-  RunPasskeyAuth,
-  StartOrder,
-} = await import("#app/command.ts");
+const { ApplyTheme, FetchMenu, FetchViewer, LoadExternal, RunPasskeyAuth, StartOrder } =
+  await import("#app/command.ts");
 const { init } = await import("#app/main.ts");
+const { MenuData, OrdersData, ViewerData } = await import("#app/model.ts");
 const { Message } = await import("#app/message.ts");
 const { update } = await import("#app/update.ts");
 const { AppRoute, urlToAppRoute } = await import("#app/route.ts");
@@ -82,6 +77,10 @@ const ticket = {
 } as const;
 
 const ticketId = ticket.id;
+
+/** A model field as the page reads it: the loaded data, or a test's failure. */
+const dataOf = <A>(field: AsyncData.AsyncData<A, string>): A =>
+  Option.getOrThrow(AsyncData.getData(field));
 
 /** An order in the domain's own shape, as its commands reply with it. */
 const orderReply = (status: CoffeeOrder["status"]) =>
@@ -152,7 +151,7 @@ describe("passkey auth", () => {
       Command.expectExact(FetchMenu),
       Command.resolve(FetchMenu, Message.SucceededFetchMenu({ menu: [latte] })),
       model((next) => {
-        expect(next.viewer).toEqual(customer);
+        expect(dataOf(next.viewer)).toEqual(customer);
         expect(Option.isNone(next.pendingAuth)).toBe(true);
       }),
     );
@@ -175,21 +174,29 @@ describe("passkey auth", () => {
   test("signing out drops the viewer at once, so a late feed message is ignored", () => {
     story(
       update,
-      given({ ...bootModel("/staff"), viewer: staff, orders: [ticket] }),
+      given({
+        ...bootModel("/staff"),
+        viewer: ViewerData.Success({ data: staff }),
+        orders: OrdersData.Success({ data: [ticket] }),
+      }),
       message(Message.ClickedSignOut()),
       Command.expectExact(RunPasskeyAuth),
       Command.resolve(RunPasskeyAuth, Message.SucceededAuth({ action: "sign-out" })),
       Command.expectExact(FetchViewer),
-      model((next) => expect(next.viewer).toEqual({ kind: "anonymous" })),
+      model((next) => expect(dataOf(next.viewer)).toEqual({ kind: "anonymous" })),
       Command.resolve(FetchViewer, Message.SucceededFetchViewer({ viewer: { kind: "anonymous" } })),
       message(Message.LoadedOrders({ feed: staffFeed, userId: "user-2", orders: [ticket] })),
-      model((next) => expect(next.orders).toEqual([])),
+      model((next) => expect(dataOf(next.orders)).toEqual([])),
     );
   });
 });
 
 describe("customer orders", () => {
-  const signedIn = { ...bootModel("/shop"), viewer: customer, menu: [latte] };
+  const signedIn = {
+    ...bootModel("/shop"),
+    viewer: ViewerData.Success({ data: customer }),
+    menu: MenuData.Success({ data: [latte] }),
+  };
 
   /** The draft the composer shows for the menu, as the app sends it. */
   const orderRequest = toPlaceOrderRequest(
@@ -245,14 +252,12 @@ describe("customer orders", () => {
         reply: { order: domainOrder },
         receipt: { stream: `CoffeeShop/${ticketId}`, version: 1 },
       }),
-      Command.resolveAll(
-        [ExpireToast, Message.ExpiredToast({ id: "toast-0" })],
-        [Dialog.ShowDialog, Dialog.Message.SucceededShowDialog()],
-      ),
+      Command.resolve(Dialog.ShowDialog, Dialog.Message.SucceededShowDialog()),
+      UiToast.test.drainEntry({ entryId: "app-toast-entry-0" }),
       model((next) => {
         expect(next.isPlacingOrder).toBe(false);
         expect(next.receipt).toEqual(Option.some(placedTicket));
-        expect(next.toasts).toHaveLength(0);
+        expect(next.toast.entries).toHaveLength(0);
       }),
     );
   });
@@ -282,24 +287,19 @@ describe("customer orders", () => {
         expect(next.pendingOrder.pipe(Option.map((pending) => pending.commandId))).toEqual(
           Option.some("test:0"),
         );
-        expect(next.toasts.map((toast) => toast.message)).toEqual([
+        expect(next.toast.entries.map((entry) => entry.payload.message)).toEqual([
           "Unable to reach the coffee shop. Check your connection and try again.",
         ]);
       }),
-      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-0" })),
+      UiToast.test.drainEntry({ entryId: "app-toast-entry-0" }),
       message(Message.ClickedSendOrder()),
       // The same ids go out again: a reply lost after the write cannot make a second ticket.
-      Command.resolveAllExact(
-        [
-          placeOrder("test:0"),
-          {
-            _tag: "FailedPlaceOrder",
-            commandId: "test:0",
-            failure: { _tag: "Unknown" },
-          },
-        ],
-        [ExpireToast, Message.ExpiredToast({ id: "toast-1" })],
-      ),
+      Command.resolve(placeOrder("test:0"), {
+        _tag: "FailedPlaceOrder",
+        commandId: "test:0",
+        failure: { _tag: "Unknown" },
+      }),
+      UiToast.test.drainEntry({ entryId: "app-toast-entry-1" }),
     );
   });
 
@@ -316,11 +316,11 @@ describe("customer orders", () => {
       }),
       model((next) => {
         expect(Option.isNone(next.pendingOrder)).toBe(true);
-        expect(next.toasts.map((toast) => toast.message)).toEqual([
+        expect(next.toast.entries.map((entry) => entry.payload.message)).toEqual([
           '"espresso" is not on the menu.',
         ]);
       }),
-      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-0" })),
+      UiToast.test.drainEntry({ entryId: "app-toast-entry-0" }),
       message(Message.ClickedSendOrder()),
       // The old ticket is finished with, so the next attempt allocates a new id.
       Command.expectExact(StartOrder({ commandId: "test:1" })),
@@ -334,8 +334,8 @@ describe("customer orders", () => {
         commandId: "test:1",
         failure: { _tag: "Denied", error: new Unauthorized() },
       }),
-      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-1" })),
-      model((next) => expect(next.toasts).toEqual([])),
+      UiToast.test.drainEntry({ entryId: "app-toast-entry-1" }),
+      model((next) => expect(next.toast.entries).toEqual([])),
     );
   });
 
@@ -345,20 +345,20 @@ describe("customer orders", () => {
       given(signedIn),
       message(Message.LoadedOrders({ feed: customerFeed, userId: "user-1", orders: [ticket] })),
       model((next) => {
-        expect(next.orders).toEqual([ticket]);
-        expect(Option.isNone(next.ordersError)).toBe(true);
+        expect(dataOf(next.orders)).toEqual([ticket]);
+        expect(Option.isNone(AsyncData.getError(next.orders))).toBe(true);
       }),
     );
   });
 });
 
 describe("staff queue", () => {
-  const staffModel = { ...bootModel("/staff"), viewer: staff };
+  const staffModel = { ...bootModel("/staff"), viewer: ViewerData.Success({ data: staff }) };
 
   test("an order action carries a command id, then shows the reply right away", () => {
     story(
       update,
-      given({ ...staffModel, orders: [ticket] }),
+      given({ ...staffModel, orders: OrdersData.Success({ data: [ticket] }) }),
       message(Message.ClickedOrderAction({ orderId: ticketId, action: "start-brewing" })),
       Command.expectExact(startBrewing("test:0")),
       model((next) => expect(next.pendingOrderId).toEqual(Option.some(ticketId))),
@@ -368,11 +368,11 @@ describe("staff queue", () => {
         reply: { order: orderReply("brewing") },
         receipt: { stream: `CoffeeShop/${ticketId}`, version: 2 },
       }),
-      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-0" })),
+      UiToast.test.drainEntry({ entryId: "app-toast-entry-0" }),
       model((next) => {
         expect(next.pendingOrderId).toEqual(Option.none());
         // The reply drives the toast and the pending flag; the feed still owns the queue.
-        expect(next.orders).toEqual([ticket]);
+        expect(dataOf(next.orders)).toEqual([ticket]);
       }),
     );
   });
@@ -380,7 +380,7 @@ describe("staff queue", () => {
   test("a refused action says why, and the next attempt gets a new command id", () => {
     story(
       update,
-      given({ ...staffModel, orders: [ticket] }),
+      given({ ...staffModel, orders: OrdersData.Success({ data: [ticket] }) }),
       message(Message.ClickedOrderAction({ orderId: ticketId, action: "start-brewing" })),
       Command.resolve(startBrewing("test:0"), {
         _tag: "FailedStartBrewing",
@@ -389,11 +389,11 @@ describe("staff queue", () => {
       }),
       model((next) => {
         expect(next.pendingOrderId).toEqual(Option.none());
-        expect(next.toasts.map((toast) => toast.message)).toEqual([
+        expect(next.toast.entries.map((entry) => entry.payload.message)).toEqual([
           "Only coffee-shop staff can do that.",
         ]);
       }),
-      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-0" })),
+      UiToast.test.drainEntry({ entryId: "app-toast-entry-0" }),
       message(Message.ClickedOrderAction({ orderId: ticketId, action: "start-brewing" })),
       Command.expectExact(startBrewing("test:1")),
       Command.resolve(startBrewing("test:1"), {
@@ -402,16 +402,16 @@ describe("staff queue", () => {
         reply: { order: orderReply("brewing") },
         receipt: { stream: `CoffeeShop/${ticketId}`, version: 2 },
       }),
-      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-1" })),
+      UiToast.test.drainEntry({ entryId: "app-toast-entry-1" }),
     );
   });
 
   test("a staff queue message from another staff account is ignored", () => {
     story(
       update,
-      given({ ...staffModel, orders: [ticket] }),
+      given({ ...staffModel, orders: OrdersData.Success({ data: [ticket] }) }),
       message(Message.LoadedOrders({ feed: staffFeed, userId: "user-9", orders: [] })),
-      model((next) => expect(next.orders).toEqual([ticket])),
+      model((next) => expect(dataOf(next.orders)).toEqual([ticket])),
     );
   });
 });
@@ -433,18 +433,22 @@ describe("navigation", () => {
   test("going from the staff page to the shop loads the menu", () => {
     story(
       update,
-      given({ ...bootModel("/staff"), viewer: staff }),
+      given({ ...bootModel("/staff"), viewer: ViewerData.Success({ data: staff }) }),
       message(Message.ChangedUrl({ url: url("/shop") })),
       Command.expectHas(FetchMenu),
       Command.resolve(FetchMenu, Message.SucceededFetchMenu({ menu: [latte] })),
-      model((next) => expect(next.menu).toHaveLength(1)),
+      model((next) => expect(dataOf(next.menu)).toHaveLength(1)),
     );
   });
 
   test("switching accounts drops the previous orders", () => {
     story(
       update,
-      given({ ...bootModel("/shop"), viewer: customer, orders: [ticket] }),
+      given({
+        ...bootModel("/shop"),
+        viewer: ViewerData.Success({ data: customer }),
+        orders: OrdersData.Success({ data: [ticket] }),
+      }),
       message(
         Message.SucceededFetchViewer({
           viewer: { ...customer, userId: "user-9", displayName: "Bo" },
@@ -452,7 +456,7 @@ describe("navigation", () => {
       ),
       Command.expectHas(FetchMenu),
       Command.resolve(FetchMenu, Message.SucceededFetchMenu({ menu: [latte] })),
-      model((next) => expect(next.orders).toEqual([])),
+      model((next) => expect(dataOf(next.orders)).toEqual([])),
     );
   });
 
@@ -469,7 +473,11 @@ describe("navigation", () => {
   test("navigating to the MCP login page while signed in continues to authorize", () => {
     story(
       update,
-      given({ ...bootModel("/staff"), viewer: customer, menu: [latte] }),
+      given({
+        ...bootModel("/staff"),
+        viewer: ViewerData.Success({ data: customer }),
+        menu: MenuData.Success({ data: [latte] }),
+      }),
       message(Message.ChangedUrl({ url: url("/login/mcp") })),
       Command.expectExact(LoadExternal),
       Command.resolve(LoadExternal, Message.CompletedLoadExternal()),
@@ -479,20 +487,30 @@ describe("navigation", () => {
   test("a detour through an unknown page clears the orders, and the next snapshot refills them", () => {
     story(
       update,
-      given({ ...bootModel("/shop"), viewer: customer, menu: [latte], orders: [ticket] }),
+      given({
+        ...bootModel("/shop"),
+        viewer: ViewerData.Success({ data: customer }),
+        menu: MenuData.Success({ data: [latte] }),
+        orders: OrdersData.Success({ data: [ticket] }),
+      }),
       message(Message.ChangedUrl({ url: url("/nope") })),
-      model((next) => expect(next.orders).toEqual([])),
+      model((next) => expect(dataOf(next.orders)).toEqual([])),
       message(Message.ChangedUrl({ url: url("/shop") })),
       Command.expectNone(),
       message(Message.LoadedOrders({ feed: customerFeed, userId: "user-1", orders: [ticket] })),
-      model((next) => expect(next.orders).toEqual([ticket])),
+      model((next) => expect(dataOf(next.orders)).toEqual([ticket])),
     );
   });
 
   test("a feed message for another account is ignored", () => {
     story(
       update,
-      given({ ...bootModel("/shop"), viewer: customer, menu: [latte], orders: [ticket] }),
+      given({
+        ...bootModel("/shop"),
+        viewer: ViewerData.Success({ data: customer }),
+        menu: MenuData.Success({ data: [latte] }),
+        orders: OrdersData.Success({ data: [ticket] }),
+      }),
       message(
         Message.LoadedOrders({
           feed: { _tag: "CustomerOrders", customerId: "user-9" },
@@ -508,15 +526,15 @@ describe("navigation", () => {
         }),
       ),
       model((next) => {
-        expect(next.orders).toEqual([ticket]);
-        expect(Option.isNone(next.ordersError)).toBe(true);
+        expect(dataOf(next.orders)).toEqual([ticket]);
+        expect(Option.isNone(AsyncData.getError(next.orders))).toBe(true);
       }),
     );
   });
 });
 
 const feedOf = (pathname: string, viewer: Viewer) =>
-  Option.getOrElse(feedFor({ ...bootModel(pathname), viewer }), () => "none");
+  Option.getOrElse(feedFor(viewer, urlToAppRoute(url(pathname))), () => "none");
 
 describe("feeds", () => {
   test("only the page's own feed is shown to its own viewer", () => {
