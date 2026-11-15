@@ -76,9 +76,9 @@ Design principles:
   hosts, test transactions, ordering, retries and idempotency against each
   host's Layer.
 
-Checks run locally in prek git hooks (`prek.toml`): format, lint and typecheck
-on commit; on push, `check:affected` for the pushed commits, plus the Rivet
-stack test when Rivet code changed. There is no GitHub CI; do not add a
+Checks run locally in prek git hooks (`prek.toml`): format, lint, typecheck and
+Fallow on commit; on push, `check:affected` for the pushed commits, plus the
+Rivet stack test when Rivet code changed. There is no GitHub CI; do not add a
 workflow that runs checks. Keep every test fast and local, on in-memory or local
 adapters such as `Domain.InMemory` and Alchemy's local runtime. Before building
 a helper, script or config around Turbo, Vitest or prek, check their docs

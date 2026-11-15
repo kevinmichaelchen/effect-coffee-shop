@@ -20,6 +20,9 @@
   ],
   "rulePacks": ["packages/tooling/fallow/runtime-boundaries.jsonc"],
   "ignorePatterns": ["**/*.d.ts"],
+  // A file the parser cannot handle is a silent blind spot, so the gate fails
+  // instead of skipping it.
+  "failOnParseError": true,
   // `@effect/language-service` is the tsconfig plugin key that @effect/tsgo
   // reads its Effect diagnostics settings from, not a package to install.
   "ignoreDependencies": ["@effect-coffee-shop/web", "@effect/language-service"],
@@ -45,6 +48,8 @@
     "coverage-gaps": "off",
     "feature-flags": "warn",
     "stale-suppressions": "error",
+    // AGENTS.md: every suppression names its rule and gives a reason after `--`.
+    "require-suppression-reason": "error",
     "unused-catalog-entries": "error",
     "empty-catalog-groups": "error",
     "unresolved-catalog-references": "error",
@@ -97,7 +102,7 @@
   },
   "audit": {
     "gate": "new-only",
-    "healthBaseline": ".fallow/health-baseline.json",
+    "healthBaseline": "fallow-baselines/health.json",
     "typeAware": false,
   },
   "boundaries": {

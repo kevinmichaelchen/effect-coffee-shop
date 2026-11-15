@@ -1,0 +1,15 @@
+{
+  "kind": "health",
+  "runtime_coverage_findings": [],
+  "target_keys": [
+    "apps/ui/src/app/update.ts:high impact",
+    "apps/ui/src/features/assistant/api/assistant-worker.ts:high impact",
+    "apps/ui/src/app/subscription.ts:hidden coupling",
+    "packages/coffee/presentation/mcp/src/action-tools.ts:hidden coupling",
+    "packages/coffee/presentation/mcp/src/resources.ts:hidden coupling",
+    "packages/coffee/presentation/mcp/src/server.ts:hidden coupling",
+    "packages/coffee/presentation/mcp/src/prompts.ts:hidden coupling",
+    "packages/coffee/presentation/http/src/api.ts:hidden coupling",
+    "packages/coffee/presentation/http/src/api.test.ts:hidden coupling"
+  ]
+}
