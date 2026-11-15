@@ -1,6 +1,12 @@
 [install]
 linker = "isolated"
-globalStore = true
+# Keep packages inside the project's own node_modules. Bun's global store
+# symlinks every package into ~/.bun/install/cache/links, so realpath() of
+# node_modules/fallow leaves the project. Fallow's launcher accepts the
+# fallow-type-aware companion only when its realpath shares the launcher's
+# outermost node_modules, so type-aware mode failed in every fresh worktree.
+# Packages are still hardlinked from Bun's cache, so installs stay fast.
+globalStore = false
 minimumReleaseAge = 259200
 # Bun 1.3.11 only honors package-level release-age exclusions.
 minimumReleaseAgeExcludes = [
