@@ -2,19 +2,23 @@
 
 `@effect-coffee-shop/coffee-domain` is the coffee shop as an
 [`@alchemy.run/domain`](https://main.alchemy.run/domain/what-is-ddd/) model: commands that aggregates
-decide, events they record, views that fold those events into what people read, and a policy that
-reacts. Its contracts use `@alchemy.run/domain` and `effect`. The same model runs in memory
-for tests and on Cloudflare Durable Objects in production, hosted by
+decide, events they record, views that fold those events, and a policy that reacts. The same model
+runs in memory for tests and on Durable Objects or Rivet in production, hosted by
 [`coffee-server`](../server).
 
-Files follow the alchemy-domain layout: one building block per file, named `<Noun>.<kind>.ts`,
-with folders as subdomains. Import them by path, e.g.
-`@effect-coffee-shop/coffee-domain/Order/Order.aggregate`.
+![Order lifecycle: pending to brewing to ready to picked-up, with cancellation allowed while pending or brewing](../../../docs/architecture/order-lifecycle.svg)
 
-> Alchemy core and the Cloudflare, AWS, and Domain packages are pinned together at
-> `2.0.0-beta.87` in the workspace catalog. Providers use their own `@alchemy.run/*` packages.
+`decide` in `Order.aggregate.ts` refuses every other move with `InvalidStatusTransition`, including
+repeated, skipped and backward steps.
 
-## The model
+<details>
+<summary>Building blocks</summary>
+
+Files follow the alchemy-domain layout: one building block per file, named `<Noun>.<kind>.ts`, with
+folders as subdomains. Import them by path, e.g.
+`@effect-coffee-shop/coffee-domain/Order/Order.aggregate`. Contracts use `@alchemy.run/domain` and
+`effect`; Alchemy core and the Cloudflare, AWS, and Domain packages are pinned together at
+`2.0.0-beta.87` in the workspace catalog.
 
 | Building block | Files                                                                                    | What it does                                                                                                                              |
 | -------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -43,51 +47,29 @@ Rejections carry their evidence: `DrinkNotFound { drinkId }`, `InvalidOrder { me
 `InvalidStatusTransition { orderId, from, to }`, `OrderNotFound`, `AlreadyPlaced`, `StaffOnly`,
 `NotYourOrder`, `NotYourCart`, `CartItemNotFound`, `CheckoutNotFound`, `CheckoutExpired`.
 
-## Order lifecycle
+</details>
 
-Staff move a ticket through these states. `decide` in `Order.aggregate.ts` refuses every other
-move with `InvalidStatusTransition`, including repeated, skipped and backward steps.
+<details>
+<summary>Checkout</summary>
 
-```mermaid
-stateDiagram-v2
-    state "picked-up" as pickedUp
-    [*] --> pending: PlaceOrder
-    pending --> brewing: StartBrewing
-    pending --> cancelled: CancelOrder
-    brewing --> ready: MarkReady
-    brewing --> cancelled: CancelOrder
-    ready --> pickedUp: PickUpOrder
-```
+![Checkout: a customer prepares and confirms a checkout on the Cart, the confirmed checkout starts the fulfillment saga, and the saga places the order](../../../docs/architecture/checkout-flow.svg)
 
-## Checkout
+`PrepareCheckout` holds prices for 15 minutes. Emptying the cart and confirming happen in one `Cart`
+commit, so a confirmed cart is never ordered twice. After the commit, the policy starts
+`FulfillCheckout`, a saga keyed by order id. Its `PlaceCheckedOutOrder` activity journals completion
+and uses workflow-derived command ids, so redelivery or replay does not place another order. The
+in-memory platform runs the same workflow in stories; Cloudflare hosts it on the built-in workflow
+engine of `DomainCloudflare.layerDurableObjects()`. `PlaceCheckedOutOrder` is idempotent, because
+policies run at least once.
 
-```mermaid
-sequenceDiagram
-    participant C as Customer
-    participant Cart
-    participant P as CheckoutFulfillment
-    participant Order
-    C->>Cart: PrepareCheckout(checkoutId)
-    Cart-->>C: CheckoutPrepared (prices held 15 minutes)
-    C->>Cart: ConfirmCheckout(checkoutId, orderId)
-    Cart-->>C: CheckoutConfirmed (cart emptied)
-    Cart--)P: CheckoutConfirmed
-    P->>Order: PlaceCheckedOutOrder(orderId)
-    Order--)C: OrderPlaced, seen in OrderSummary / CustomerOrders
-```
+</details>
 
-Emptying the cart and confirming happen in one `Cart` commit, so a confirmed cart is never
-ordered twice. After the commit, the policy starts `FulfillCheckout`, a saga keyed by order id. Its
-`PlaceCheckedOutOrder` activity journals completion and uses workflow-derived command ids, so
-redelivery or replay does not place another order. The in-memory platform runs the same workflow
-in stories; Cloudflare hosts it on the built-in workflow engine of `DomainCloudflare.layerDurableObjects()`.
-`PlaceCheckedOutOrder` is idempotent, because policies run at least once.
+<details>
+<summary>Who may do what</summary>
 
-## Who may do what
-
-`Session` ([`Session.middleware.ts`](src/Session.middleware.ts)) authenticates a request and
-provides `CurrentActor` ([`CurrentActor.context.ts`](src/CurrentActor.context.ts)): a `customer`,
-`staff`, or `system` [`Actor`](src/Actor.ts). Each command's `decide` and each view's Layer (`View.toLayer`)
+`Session` ([`Session.middleware.ts`](src/Session.middleware.ts)) authenticates a request and provides
+`CurrentActor` ([`CurrentActor.context.ts`](src/CurrentActor.context.ts)): a `customer`, `staff`, or
+`system` [`Actor`](src/Actor.ts). Each command's `decide` and each view's Layer (`View.toLayer`)
 authorizes against it:
 
 - Anyone signed in may place orders and use their own cart (a cart is keyed by its owner).
@@ -97,21 +79,21 @@ authorizes against it:
 Staff authority comes from deployment configuration (`COFFEE_STAFF_USER_IDS`), never from the
 session.
 
-## Values
+</details>
+
+<details>
+<summary>Values and tests</summary>
 
 [`Menu/`](src/Menu) holds the static menu and pricing. [`Menu/OrderItem.ts`](src/Menu/OrderItem.ts)
 prices a `DrinkSelection` (menu choices with defaults) as pure functions returning `Result`, so
-`decide` can price a request and reject it in the same step. [`Money.ts`](src/Money.ts) keeps
-exact cents. Ids (`OrderId`, `CartItemId`, `CheckoutId`) are prefixed, time-ordered strings made by
-whoever sends the creating command ([`TypedId.ts`](src/TypedId.ts)), so a retried command
-addresses the same instance.
-
-## Tests
+`decide` can price a request and reject it in the same step. [`Money.ts`](src/Money.ts) keeps exact
+cents. Ids (`OrderId`, `CartItemId`, `CheckoutId`) are prefixed, time-ordered strings made by whoever
+sends the creating command ([`TypedId.ts`](src/TypedId.ts)), so a retried command addresses the same
+instance.
 
 [`test/CoffeeShop.story.test.ts`](test/CoffeeShop.story.test.ts) specifies the model with stories:
 given events, when a command is sent, then the events, replies, rejections and view states that
-follow. The policy runs for real. Unit tests cover pricing, money, the menu and the lifecycle
-table.
+follow. The policy runs for real. Unit tests cover pricing, money, the menu and the lifecycle table.
 
 ```bash
 bun run --cwd packages/coffee/domain test
@@ -120,5 +102,7 @@ bun run --cwd packages/coffee/domain lint
 ```
 
 The server's [`CoffeeApis.test.ts`](../server/test/CoffeeApis.test.ts) drives the Apis over the
-in-memory platform. The Alchemy smoke test (`bun run cf:test`) runs the model on locally emulated
-Durable Objects.
+in-memory platform. The Alchemy stack test (`bun run cf:test`) runs the model on locally emulated
+Durable Objects, and `bun run rivet:test` runs it on Rivet.
+
+</details>
