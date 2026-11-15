@@ -1,3 +1,4 @@
+import * as DomainFoldkit from "@alchemy.run/domain/Foldkit";
 import { Equal, Option, Schema } from "effect";
 import { Update } from "foldkit";
 import { UrlRequest } from "foldkit/navigation";
@@ -15,10 +16,11 @@ import {
   FetchViewer,
   LoadExternal,
   NavigateInternal,
-  PlaceOrder,
-  RunOrderAction,
+  placeOrder,
+  runOrderAction,
   RunPasskeyAuth,
   ScrollToOrders,
+  StartOrder,
 } from "#app/command.ts";
 import {
   foldDetails,
@@ -60,7 +62,7 @@ import {
 import { composerFor, selectDrink, toInt } from "#app/draft.ts";
 import { type Feed, feedFor } from "#app/feed.ts";
 import { Message } from "#app/message.ts";
-import type { AuthAction, Model } from "#app/model.ts";
+import type { AuthAction, Model, OrderActionName } from "#app/model.ts";
 import type { UpdateReturn } from "#app/resources.ts";
 import { type AppRoute, mcpAuthorizePath, urlToAppRoute } from "#app/route.ts";
 
@@ -105,7 +107,10 @@ const withoutOrders = (model: Model): Model => ({
 /** Leaving an account behind: its pending action, copy feedback and orders go with it. */
 const withoutAccountState = (model: Model): Model => ({
   ...withoutOrders(abandonInteraction(model)),
+  isPlacingOrder: false,
+  pendingOrder: Option.none(),
   pendingOrderId: Option.none(),
+  orderActionAttempt: Option.none(),
   detailsError: Option.none(),
   copyState: "idle",
 });
@@ -179,18 +184,94 @@ const receiveOrderPlaced = (model: Model, order: OrderTicket): UpdateReturn =>
       );
 
 /** A modal drawer hides the toast region, so the failure also shows inside that ticket's drawer. */
-const receiveOrderActionFailed = (model: Model, message: string): UpdateReturn =>
+const receiveOrderActionFailed = (
+  model: Model,
+  message: string,
+  retryable: boolean,
+): UpdateReturn =>
   withToast(
     "error",
     message,
   )({
     ...model,
     pendingOrderId: Option.none(),
+    // A refusal is final; an unknown outcome keeps its ids for the retry.
+    orderActionAttempt: retryable ? model.orderActionAttempt : Option.none(),
     detailsError: Option.filter(
       Option.map(model.selectedOrderId, () => message),
       () => Equal.equals(model.selectedOrderId, model.pendingOrderId),
     ),
   });
+
+/**
+ * Sends the draft as a new ticket. An attempt whose outcome was unknown is
+ * sent again with its own ids, so the write cannot land twice; a draft that
+ * changed since starts a new ticket.
+ */
+const sendOrder = (model: Model): UpdateReturn =>
+  Option.match(composerFor(model.menu, model.draft), {
+    onNone: () => ({ model }),
+    onSome: ({ draft }) => {
+      const request = toPlaceOrderRequest(draft);
+      const retry = Option.filter(model.pendingOrder, (pending) =>
+        Equal.equals(pending.request, request),
+      );
+      return Option.match(retry, {
+        onSome: (pending) =>
+          Option.match(pending.orderId, {
+            // StartOrder has not answered yet, so there is no ticket to address.
+            onNone: () => ({ model }),
+            onSome: (orderId) => ({
+              model: settleTurn({
+                ...model,
+                isPlacingOrder: true,
+                pendingOrder: Option.some(pending),
+              }),
+              commands: [placeOrder({ commandId: pending.commandId, orderId, request })],
+            }),
+          }),
+        onNone: () => {
+          const { commandId, commandIds } = DomainFoldkit.next(model.commandIds);
+          return {
+            model: settleTurn({
+              ...model,
+              commandIds,
+              isPlacingOrder: true,
+              pendingOrder: Option.some({ commandId, orderId: Option.none(), request }),
+            }),
+            commands: [StartOrder({ commandId })],
+          };
+        },
+      });
+    },
+  });
+
+/**
+ * Runs one staff action. A retry of an action whose outcome was unknown goes
+ * out with the same command id, so the ticket moves once.
+ */
+const runAction = (model: Model, orderId: string, action: OrderActionName): UpdateReturn => {
+  const retry = Option.filter(
+    model.orderActionAttempt,
+    (attempt) => attempt.orderId === orderId && attempt.action === action,
+  );
+  const pending: Model = settleTurn({
+    ...model,
+    pendingOrderId: Option.some(orderId),
+    detailsError: Option.none(),
+  });
+  return Option.match(retry, {
+    onSome: (attempt) => ({ model: pending, commands: [runOrderAction(attempt)] }),
+    onNone: () => {
+      const { commandId, commandIds } = DomainFoldkit.next(model.commandIds);
+      const attempt = { commandId, orderId, action };
+      return {
+        model: { ...pending, commandIds, orderActionAttempt: Option.some(attempt) },
+        commands: [runOrderAction(attempt)],
+      };
+    },
+  });
+};
 
 // UPDATE
 
@@ -271,19 +352,33 @@ export const update = (model: Model, message: Message): UpdateReturn =>
       editDraft((draft) => ({ ...draft, quantity: Math.max(toInt(value, 1), 1) }))(model),
     ChangedNotes: ({ value }) => editDraft((draft) => ({ ...draft, notes: value }))(model),
 
-    ClickedSendOrder: () =>
-      model.isPlacingOrder
-        ? { model }
-        : Option.match(composerFor(model.menu, model.draft), {
-            onNone: () => ({ model }),
-            onSome: ({ draft }) => ({
-              model: settleTurn({ ...model, isPlacingOrder: true }),
-              commands: [PlaceOrder({ request: toPlaceOrderRequest(draft) })],
-            }),
-          }),
-    SucceededPlaceOrder: ({ order }) => receiveOrderPlaced(model, order),
-    FailedPlaceOrder: ({ message }) =>
-      withToast("error", message)({ ...model, isPlacingOrder: false }),
+    ClickedSendOrder: () => (model.isPlacingOrder ? { model } : sendOrder(model)),
+    StartedOrder: ({ commandId, orderId }) =>
+      Option.match(model.pendingOrder, {
+        onNone: () => ({ model }),
+        onSome: (pending) =>
+          pending.commandId === commandId
+            ? {
+                model: {
+                  ...model,
+                  pendingOrder: Option.some({ ...pending, orderId: Option.some(orderId) }),
+                },
+                commands: [placeOrder({ commandId, orderId, request: pending.request })],
+              }
+            : { model },
+      }),
+    SucceededPlaceOrder: ({ order }) =>
+      receiveOrderPlaced({ ...model, pendingOrder: Option.none() }, order),
+    FailedPlaceOrder: ({ message, retryable }) =>
+      withToast(
+        "error",
+        message,
+      )({
+        ...model,
+        isPlacingOrder: false,
+        // A refusal is final; an unknown outcome keeps its ids for the retry.
+        pendingOrder: retryable ? model.pendingOrder : Option.none(),
+      }),
 
     ClickedOpenMyOrders: () =>
       Update.combine(model, [
@@ -296,23 +391,20 @@ export const update = (model: Model, message: Message): UpdateReturn =>
     ClickedInspectOrder: ({ orderId }) =>
       openDetails({ ...model, selectedOrderId: Option.some(orderId), detailsError: Option.none() }),
     ClickedOrderAction: ({ orderId, action }) =>
-      Option.isSome(model.pendingOrderId)
-        ? { model }
-        : {
-            model: settleTurn({
-              ...model,
-              pendingOrderId: Option.some(orderId),
-              detailsError: Option.none(),
-            }),
-            commands: [RunOrderAction({ orderId, action })],
-          },
+      Option.isSome(model.pendingOrderId) ? { model } : runAction(model, orderId, action),
     SucceededOrderAction: ({ order }) =>
       withToast(
         "success",
         `${getOrderTitle(order)} moved to ${order.status}.`,
-      )({ ...model, pendingOrderId: Option.none(), detailsError: Option.none() }),
+      )({
+        ...model,
+        pendingOrderId: Option.none(),
+        orderActionAttempt: Option.none(),
+        detailsError: Option.none(),
+      }),
     // A modal drawer hides the toast region, so a failure also shows inside the drawer.
-    FailedOrderAction: ({ message }) => receiveOrderActionFailed(model, message),
+    FailedOrderAction: ({ message, retryable }) =>
+      receiveOrderActionFailed(model, message, retryable),
     ClickedCopyUserId: () =>
       model.viewer.kind === "anonymous"
         ? { model }

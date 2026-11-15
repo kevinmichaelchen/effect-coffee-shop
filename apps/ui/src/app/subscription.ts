@@ -19,11 +19,6 @@ import {
 import { Subscription } from "foldkit";
 import { workerNotices } from "#features/assistant/api/assistant-worker.ts";
 import { toCoffeeOrder } from "#features/coffee-shop/api/order-mapping.ts";
-import {
-  customerRuntime,
-  onRuntime,
-  staffRuntime,
-} from "#features/coffee-shop/api/domain-clients.ts";
 import { Feed, feedFor } from "#app/feed.ts";
 import { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
@@ -63,18 +58,12 @@ const watch = (feed: Feed) =>
     Match.tagsExhaustive({
       CustomerOrders: ({ customerId }) =>
         Stream.unwrap(
-          onRuntime(customerRuntime)(
-            Effect.map(CustomerApi.Client, (client) =>
-              client.CustomerOrders.watch(CustomerId.make(customerId)),
-            ),
+          Effect.map(CustomerApi.Client, (client) =>
+            client.CustomerOrders.watch(CustomerId.make(customerId)),
           ),
         ),
       OrderQueue: () =>
-        Stream.unwrap(
-          onRuntime(staffRuntime)(
-            Effect.map(StaffApi.Client, (client) => client.OrderQueue.watch(mainShop)),
-          ),
-        ),
+        Stream.unwrap(Effect.map(StaffApi.Client, (client) => client.OrderQueue.watch(mainShop))),
     }),
   );
 
@@ -89,7 +78,7 @@ const backoff = Schedule.exponential("250 millis").pipe(
 );
 
 /** Live orders, reconnected after every drop with a growing pause. */
-const observe = (connection: Connection): Stream.Stream<Message> =>
+const observe = (connection: Connection) =>
   Stream.unwrap(
     Effect.gen(function* () {
       const drops = yield* Queue.unbounded<Message>();

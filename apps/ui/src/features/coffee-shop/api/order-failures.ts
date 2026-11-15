@@ -1,45 +1,56 @@
+import type { CancelOrder } from "@effect-coffee-shop/coffee-domain/Order/CancelOrder.command";
+import type { MarkReady } from "@effect-coffee-shop/coffee-domain/Order/MarkReady.command";
+import type { PickUpOrder } from "@effect-coffee-shop/coffee-domain/Order/PickUpOrder.command";
+import type { PlaceOrder } from "@effect-coffee-shop/coffee-domain/Order/PlaceOrder.command";
+import type { StartBrewing } from "@effect-coffee-shop/coffee-domain/Order/StartBrewing.command";
+import type { Failure } from "@alchemy.run/domain/Foldkit";
 import * as Match from "effect/Match";
-import type * as Effect from "effect/Effect";
-import * as Schema from "effect/Schema";
 import { getStatusLabel } from "#features/coffee-shop/lib/coffee.ts";
-import type { CustomerClient, StaffClient } from "./domain-clients.ts";
-
-/** What the order screens show when an Api call fails: one readable message. */
-export class OrderRequestError extends Schema.TaggedError<
-  OrderRequestError,
-  { readonly brand: unique symbol }
->()("OrderRequestError", { message: Schema.String }) {}
-
-export type FailureOf<Call> = Call extends (...args: never[]) => infer Result
-  ? Effect.Error<Result>
-  : never;
 
 /**
- * Every failure the order calls report, as the Api clients type them: the
- * domain rejections, the session middleware's `Unauthorized`, and transport.
+ * How an order command answers when it does not succeed, as the Foldkit
+ * adapter reports it: the domain's refusal, the session's `Unauthorized`, or
+ * an outcome the client never learned.
  */
-export type OrderFailure =
-  | FailureOf<CustomerClient["PlaceOrder"]>
-  | FailureOf<CustomerClient["CustomerOrders"]["get"]>
-  | FailureOf<StaffClient["OrderQueue"]["get"]>
-  | FailureOf<StaffClient["StartBrewing" | "MarkReady" | "PickUpOrder" | "CancelOrder"]>;
+export type OrderFailure = Failure<
+  | typeof PlaceOrder
+  | typeof StartBrewing
+  | typeof MarkReady
+  | typeof PickUpOrder
+  | typeof CancelOrder
+>;
 
-const describeOrderFailure = Match.type<OrderFailure>().pipe(
+/** Every reason those commands refuse to run, with its fields intact. */
+type OrderRejection = Extract<OrderFailure, { readonly _tag: "Rejected" }>["rejection"];
+
+/** What a Command shows when no reply established an outcome. */
+export const unreachableMessage =
+  "Unable to reach the coffee shop. Check your connection and try again.";
+
+const describeRejection = Match.type<OrderRejection>().pipe(
   Match.tagsExhaustive({
     AlreadyPlaced: () => "This order was already placed.",
     DrinkNotFound: ({ drinkId }) => `"${drinkId}" is not on the menu.`,
     InvalidOrder: ({ message }) => message,
     InvalidStatusTransition: ({ from, to }) =>
       `An order that is ${getStatusLabel(from)} cannot move to ${getStatusLabel(to)}.`,
-    NotYourOrder: () => "That order belongs to another customer.",
     OrderNotFound: ({ orderId }) => `Order ${orderId} was not found.`,
     StaffOnly: () => "Only coffee-shop staff can do that.",
-    ConsistencyTimeout: () => "Your order is still updating. Refresh in a moment.",
-    Unauthorized: () => "Sign in to place and view orders.",
-    RpcClientError: () => "Unable to reach the coffee shop. Check your connection and try again.",
   }),
 );
 
-export function toOrderRequestError(failure: OrderFailure): OrderRequestError {
-  return new OrderRequestError({ message: describeOrderFailure(failure) });
-}
+/** What the order screens show when a command fails: one readable message. */
+export const describeOrderFailure = (failure: OrderFailure): string =>
+  Match.value(failure).pipe(
+    Match.tagsExhaustive({
+      Rejected: ({ rejection }) => describeRejection(rejection),
+      Denied: () => "Sign in to place and view orders.",
+      Unknown: () => unreachableMessage,
+    }),
+  );
+
+/**
+ * A refusal is final, so the next attempt gets a new command id. An unknown
+ * outcome may have committed, so its retry keeps the original one.
+ */
+export const isRetryable = (failure: OrderFailure): boolean => failure._tag === "Unknown";

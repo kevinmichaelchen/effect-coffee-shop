@@ -2,14 +2,6 @@ import { Option } from "effect";
 import { Command, click, expect, given, label, role, scene, text, type } from "foldkit/scene";
 import { describe, test, vi } from "vitest";
 
-vi.mock("#features/coffee-shop/api/coffee.ts", async () => {
-  const { Effect } = await import("effect");
-  return {
-    createOrder: () => Effect.never,
-    fetchMenu: Effect.never,
-    updateOrderStatus: () => Effect.never,
-  };
-});
 vi.mock("#features/auth/auth-client.ts", () => ({
   authClient: {
     register: async () => ({ ok: true, message: "" }),
@@ -33,7 +25,10 @@ const url = (pathname: string) => ({
   hash: Option.none(),
 });
 
-const boot = (pathname: string) => init({ theme: "light" }, url(pathname)).model;
+/** A page load's command-id session, so a test knows the ids the app will send. */
+const flags = { theme: "light", commandIds: { session: "test", sent: 0 } } as const;
+
+const boot = (pathname: string) => init(flags, url(pathname)).model;
 
 const menu = [
   {

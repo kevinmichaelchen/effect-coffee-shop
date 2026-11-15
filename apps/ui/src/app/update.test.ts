@@ -1,19 +1,19 @@
+import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
+import { CoffeeOrder } from "@effect-coffee-shop/coffee-domain/Order/CoffeeOrder";
+import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
+import { Unauthorized } from "@effect-coffee-shop/coffee-domain/Session.middleware";
+import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
+import * as DomainFoldkit from "@alchemy.run/domain/Foldkit";
 import { Dialog } from "@foldkit/ui";
-import type { Feed } from "#app/feed.ts";
-import { Option } from "effect";
+import { DateTime, Option, Schema } from "effect";
 import { Command, given, message, model, story } from "foldkit/story";
 import { describe, expect, test, vi } from "vitest";
+import type { Feed } from "#app/feed.ts";
 import type { Viewer } from "#features/auth/lib/viewer.ts";
+import type { OrderTicket } from "#features/coffee-shop/lib/coffee-schemas.ts";
+import { toPlaceOrderRequest } from "#features/coffee-shop/lib/coffee.ts";
+import { composerFor } from "#app/draft.ts";
 
-// The Api clients need the Alchemy runtime; update tests only need Command identities.
-vi.mock("#features/coffee-shop/api/coffee.ts", async () => {
-  const { Effect } = await import("effect");
-  return {
-    createOrder: () => Effect.never,
-    fetchMenu: Effect.never,
-    updateOrderStatus: () => Effect.never,
-  };
-});
 vi.mock("#features/auth/auth-client.ts", () => ({
   authClient: {
     register: async () => ({ ok: true, message: "" }),
@@ -28,15 +28,18 @@ const {
   FetchMenu,
   FetchViewer,
   LoadExternal,
-  PlaceOrder,
-  RunOrderAction,
   RunPasskeyAuth,
+  StartOrder,
 } = await import("#app/command.ts");
 const { init } = await import("#app/main.ts");
 const { Message } = await import("#app/message.ts");
 const { update } = await import("#app/update.ts");
 const { AppRoute, urlToAppRoute } = await import("#app/route.ts");
 const { feedFor } = await import("#app/feed.ts");
+
+/** The domain commands the app sends, as the Api's own client builds them. */
+const CustomerDomain = DomainFoldkit.make(CustomerApi);
+const StaffDomain = DomainFoldkit.make(StaffApi);
 
 const url = (pathname: string) => ({
   protocol: "https:",
@@ -47,7 +50,10 @@ const url = (pathname: string) => ({
   hash: Option.none(),
 });
 
-const bootModel = (pathname: string) => init({ theme: "light" }, url(pathname)).model;
+/** A page load's command-id session, so a test knows the ids the app will send. */
+const flags = { theme: "light", commandIds: { session: "test", sent: 0 } } as const;
+
+const bootModel = (pathname: string) => init(flags, url(pathname)).model;
 
 const customer = { kind: "customer", displayName: "Ada", userId: "user-1" } as const;
 const staff = { kind: "staff", displayName: "Sam", userId: "user-2" } as const;
@@ -66,7 +72,7 @@ const latte = {
 } as const;
 
 const ticket = {
-  id: "ticket-1",
+  id: "order_01j9z3k6a0x8s5v2c4b7n1m3p6",
   customerName: "Ada",
   ownerUserId: "user-1",
   items: [],
@@ -74,6 +80,32 @@ const ticket = {
   totalPriceCents: 450,
   createdAt: "2026-10-27T12:00:00.000Z",
 } as const;
+
+const ticketId = ticket.id;
+
+/** An order in the domain's own shape, as its commands reply with it. */
+const orderReply = (status: CoffeeOrder["status"]) =>
+  Schema.decodeSync(CoffeeOrder)({
+    id: ticketId,
+    customerName: "Ada",
+    ownerUserId: "user-1",
+    items: [
+      {
+        drinkId: "latte",
+        drinkName: "Latte",
+        size: "medium",
+        milk: "whole",
+        temperature: "hot",
+        shots: 1,
+        quantity: 1,
+        unitPrice: { currency: "USD", minorUnits: 518 },
+        lineTotal: { currency: "USD", minorUnits: 518 },
+      },
+    ],
+    status,
+    totalPrice: { currency: "USD", minorUnits: 518 },
+    createdAt: DateTime.makeUnsafe("2026-10-27T12:00:00.000Z"),
+  });
 
 describe("routing", () => {
   test("the customer paths open the customer workspace", () => {
@@ -89,8 +121,16 @@ describe("routing", () => {
   });
 });
 
+/** The staff command the app sends, as the staff Api's client builds it. */
+const startBrewing = (commandId: string) =>
+  StaffDomain.StartBrewing({
+    target: OrderId.make(ticketId),
+    input: {},
+    commandId,
+  });
+
 const names = (pathname: string) =>
-  init({ theme: "light" }, url(pathname)).commands?.map((command) => command.name);
+  init(flags, url(pathname)).commands?.map((command) => command.name);
 
 describe("boot", () => {
   test("every page loads the viewer, and only the customer page the menu", () => {
@@ -151,21 +191,67 @@ describe("passkey auth", () => {
 describe("customer orders", () => {
   const signedIn = { ...bootModel("/shop"), viewer: customer, menu: [latte] };
 
-  test("sending an order places it, then shows the receipt and a toast", () => {
+  /** The draft the composer shows for the menu, as the app sends it. */
+  const orderRequest = toPlaceOrderRequest(
+    Option.getOrThrow(composerFor([latte], Option.none())).draft,
+  );
+
+  /** What the domain replies with: the ticket, in its own shape. */
+  const domainOrder = orderReply("pending");
+
+  /** The same ticket as the components render it. */
+  const placedTicket: OrderTicket = {
+    id: ticketId,
+    customerName: "Ada",
+    ownerUserId: "user-1",
+    items: [
+      {
+        drinkId: "latte",
+        drinkName: "Latte",
+        size: "medium",
+        milk: "whole",
+        temperature: "hot",
+        shots: 1,
+        quantity: 1,
+        unitPriceCents: 518,
+        lineTotalCents: 518,
+      },
+    ],
+    status: "pending",
+    totalPriceCents: 518,
+    createdAt: "2026-10-27T12:00:00.000Z",
+  };
+
+  /** The command the app sends, as the customer Api's client builds it. */
+  const placeOrder = (commandId: string) =>
+    CustomerDomain.PlaceOrder({
+      target: OrderId.make(ticketId),
+      input: orderRequest,
+      commandId,
+    });
+
+  test("sending an order opens a ticket, then places it and shows the receipt", () => {
     story(
       update,
       given(signedIn),
       message(Message.ClickedSendOrder()),
-      Command.expectExact(PlaceOrder),
+      Command.expectExact(StartOrder),
       model((next) => expect(next.isPlacingOrder).toBe(true)),
-      Command.resolve(PlaceOrder, Message.SucceededPlaceOrder({ order: ticket })),
+      Command.resolve(StartOrder, Message.StartedOrder({ commandId: "test:0", orderId: ticketId })),
+      Command.expectExact(placeOrder("test:0")),
+      Command.resolve(placeOrder("test:0"), {
+        _tag: "SucceededPlaceOrder",
+        commandId: "test:0",
+        reply: { order: domainOrder },
+        receipt: { stream: `CoffeeShop/${ticketId}`, version: 1 },
+      }),
       Command.resolveAll(
         [ExpireToast, Message.ExpiredToast({ id: "toast-0" })],
         [Dialog.ShowDialog, Dialog.Message.SucceededShowDialog()],
       ),
       model((next) => {
         expect(next.isPlacingOrder).toBe(false);
-        expect(next.receipt).toEqual(Option.some(ticket));
+        expect(next.receipt).toEqual(Option.some(placedTicket));
         expect(next.toasts).toHaveLength(0);
       }),
     );
@@ -177,6 +263,79 @@ describe("customer orders", () => {
       given({ ...signedIn, isPlacingOrder: true }),
       message(Message.ClickedSendOrder()),
       Command.expectNone(),
+    );
+  });
+
+  test("an uncertain outcome is retried with the same ticket and command id", () => {
+    story(
+      update,
+      given(signedIn),
+      message(Message.ClickedSendOrder()),
+      Command.resolve(StartOrder, Message.StartedOrder({ commandId: "test:0", orderId: ticketId })),
+      Command.resolve(placeOrder("test:0"), {
+        _tag: "FailedPlaceOrder",
+        commandId: "test:0",
+        failure: { _tag: "Unknown" },
+      }),
+      model((next) => {
+        expect(next.isPlacingOrder).toBe(false);
+        expect(next.pendingOrder.pipe(Option.map((pending) => pending.commandId))).toEqual(
+          Option.some("test:0"),
+        );
+        expect(next.toasts.map((toast) => toast.message)).toEqual([
+          "Unable to reach the coffee shop. Check your connection and try again.",
+        ]);
+      }),
+      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-0" })),
+      message(Message.ClickedSendOrder()),
+      // The same ids go out again: a reply lost after the write cannot make a second ticket.
+      Command.resolveAllExact(
+        [
+          placeOrder("test:0"),
+          {
+            _tag: "FailedPlaceOrder",
+            commandId: "test:0",
+            failure: { _tag: "Unknown" },
+          },
+        ],
+        [ExpireToast, Message.ExpiredToast({ id: "toast-1" })],
+      ),
+    );
+  });
+
+  test("a refusal explains itself, and the next attempt opens a new ticket", () => {
+    story(
+      update,
+      given(signedIn),
+      message(Message.ClickedSendOrder()),
+      Command.resolve(StartOrder, Message.StartedOrder({ commandId: "test:0", orderId: ticketId })),
+      Command.resolve(placeOrder("test:0"), {
+        _tag: "FailedPlaceOrder",
+        commandId: "test:0",
+        failure: { _tag: "Rejected", rejection: { _tag: "DrinkNotFound", drinkId: "espresso" } },
+      }),
+      model((next) => {
+        expect(Option.isNone(next.pendingOrder)).toBe(true);
+        expect(next.toasts.map((toast) => toast.message)).toEqual([
+          '"espresso" is not on the menu.',
+        ]);
+      }),
+      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-0" })),
+      message(Message.ClickedSendOrder()),
+      // The old ticket is finished with, so the next attempt allocates a new id.
+      Command.expectExact(StartOrder({ commandId: "test:1" })),
+      Command.resolve(
+        StartOrder({ commandId: "test:1" }),
+        Message.StartedOrder({ commandId: "test:1", orderId: ticketId }),
+      ),
+      Command.expectExact(placeOrder("test:1")),
+      Command.resolve(placeOrder("test:1"), {
+        _tag: "FailedPlaceOrder",
+        commandId: "test:1",
+        failure: { _tag: "Denied", error: new Unauthorized() },
+      }),
+      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-1" })),
+      model((next) => expect(next.toasts).toEqual([])),
     );
   });
 
@@ -196,23 +355,54 @@ describe("customer orders", () => {
 describe("staff queue", () => {
   const staffModel = { ...bootModel("/staff"), viewer: staff };
 
-  test("an order action marks the order pending, then shows the reply right away", () => {
+  test("an order action carries a command id, then shows the reply right away", () => {
     story(
       update,
       given({ ...staffModel, orders: [ticket] }),
-      message(Message.ClickedOrderAction({ orderId: "ticket-1", action: "start-brewing" })),
-      Command.expectExact(RunOrderAction),
-      model((next) => expect(next.pendingOrderId).toEqual(Option.some("ticket-1"))),
-      Command.resolve(
-        RunOrderAction,
-        Message.SucceededOrderAction({ order: { ...ticket, status: "brewing" } }),
-      ),
+      message(Message.ClickedOrderAction({ orderId: ticketId, action: "start-brewing" })),
+      Command.expectExact(startBrewing("test:0")),
+      model((next) => expect(next.pendingOrderId).toEqual(Option.some(ticketId))),
+      Command.resolve(startBrewing("test:0"), {
+        _tag: "SucceededStartBrewing",
+        commandId: "test:0",
+        reply: { order: orderReply("brewing") },
+        receipt: { stream: `CoffeeShop/${ticketId}`, version: 2 },
+      }),
       Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-0" })),
       model((next) => {
         expect(next.pendingOrderId).toEqual(Option.none());
         // The reply drives the toast and the pending flag; the feed still owns the queue.
         expect(next.orders).toEqual([ticket]);
       }),
+    );
+  });
+
+  test("a refused action says why, and the next attempt gets a new command id", () => {
+    story(
+      update,
+      given({ ...staffModel, orders: [ticket] }),
+      message(Message.ClickedOrderAction({ orderId: ticketId, action: "start-brewing" })),
+      Command.resolve(startBrewing("test:0"), {
+        _tag: "FailedStartBrewing",
+        commandId: "test:0",
+        failure: { _tag: "Rejected", rejection: { _tag: "StaffOnly" } },
+      }),
+      model((next) => {
+        expect(next.pendingOrderId).toEqual(Option.none());
+        expect(next.toasts.map((toast) => toast.message)).toEqual([
+          "Only coffee-shop staff can do that.",
+        ]);
+      }),
+      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-0" })),
+      message(Message.ClickedOrderAction({ orderId: ticketId, action: "start-brewing" })),
+      Command.expectExact(startBrewing("test:1")),
+      Command.resolve(startBrewing("test:1"), {
+        _tag: "SucceededStartBrewing",
+        commandId: "test:1",
+        reply: { order: orderReply("brewing") },
+        receipt: { stream: `CoffeeShop/${ticketId}`, version: 2 },
+      }),
+      Command.resolve(ExpireToast, Message.ExpiredToast({ id: "toast-1" })),
     );
   });
 

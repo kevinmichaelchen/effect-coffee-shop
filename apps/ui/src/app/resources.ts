@@ -1,12 +1,14 @@
-import { Effect, Option, Schema } from "effect";
+import { Effect, Layer, Option, Schema } from "effect";
 import type { HttpClient } from "effect/http";
 import { Http, ManagedResource, type Update } from "foldkit";
+import type * as Domain from "@alchemy.run/domain";
 import {
   acquireAssistantWorker,
   AssistantWorker,
 } from "#features/assistant/api/assistant-worker.ts";
 import { acquireMicrophone, Microphone } from "#features/assistant/api/microphone.ts";
 import { wantsWorker } from "#features/assistant/lib/state.ts";
+import { CustomerConnection, StaffConnection } from "#features/coffee-shop/api/domain-clients.ts";
 import { Message } from "#app/message.ts";
 import type { Model } from "#app/model.ts";
 
@@ -18,15 +20,18 @@ const reason = (error: unknown): string =>
     Option.match({ onNone: () => "Something went wrong.", onSome: ({ message }) => message }),
   );
 
-/** Services every Command may use for the app's whole lifetime. */
-export const resources = Http.layer;
-
 /**
- * The services Commands and Subscriptions may use: the app-wide HttpClient,
- * plus each managed resource while it is held.
+ * Services every Command and Subscription may use for the app's whole
+ * lifetime: the app-wide HttpClient and both Domain Api clients, whose
+ * connections outlive any page.
  */
+export const resources = Layer.mergeAll(Http.layer, CustomerConnection, StaffConnection);
+
+/** The services Commands and Subscriptions may use: the resources above, plus each managed resource while it is held. */
 export type AppServices =
   | HttpClient.HttpClient
+  | Domain.Api.ClientKey<"CustomerApi">
+  | Domain.Api.ClientKey<"StaffApi">
   | ManagedResource.ServicesOf<typeof managedResources>;
 
 /** What every update function returns: the next Model and the Commands to run. */

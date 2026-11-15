@@ -8,14 +8,7 @@ import { AssistantTurn } from "#features/assistant/lib/tools.ts";
 import { Viewer } from "#features/auth/lib/viewer.ts";
 import { MenuItem, OrderTicket } from "#features/coffee-shop/lib/coffee-schemas.ts";
 import { Feed } from "#app/feed.ts";
-import { AuthAction } from "#app/model.ts";
-
-export const OrderActionName = Schema.Literals([
-  "start-brewing",
-  "mark-ready",
-  "pick-up",
-  "cancel",
-]);
+import { AuthAction, OrderActionName } from "#app/model.ts";
 
 export const Message = defineMessageUnion({
   // Navigation
@@ -50,8 +43,9 @@ export const Message = defineMessageUnion({
   ChangedQuantity: { value: Schema.String },
   ChangedNotes: { value: Schema.String },
   ClickedSendOrder: {},
+  StartedOrder: { commandId: Schema.String, orderId: Schema.String },
   SucceededPlaceOrder: { order: OrderTicket },
-  FailedPlaceOrder: { message: Schema.String },
+  FailedPlaceOrder: { message: Schema.String, retryable: Schema.Boolean },
   // Receipt
   ClickedOpenMyOrders: {},
   CompletedScrollToOrders: {},
@@ -60,7 +54,7 @@ export const Message = defineMessageUnion({
   ClickedInspectOrder: { orderId: Schema.String },
   ClickedOrderAction: { orderId: Schema.String, action: OrderActionName },
   SucceededOrderAction: { order: OrderTicket },
-  FailedOrderAction: { message: Schema.String },
+  FailedOrderAction: { message: Schema.String, retryable: Schema.Boolean },
   GotDetailsDialogMessage: { message: Dialog.Message },
   // Session card
   ClickedCopyUserId: {},

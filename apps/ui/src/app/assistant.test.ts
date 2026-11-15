@@ -4,15 +4,6 @@ import { expect as sceneExpect, given as sceneGiven, label, role, scene } from "
 import { describe, expect, test, vi } from "vitest";
 import { AssistantTurn } from "#features/assistant/lib/tools.ts";
 
-// The Api clients need the Alchemy runtime; these tests only need Command identities.
-vi.mock("#features/coffee-shop/api/coffee.ts", async () => {
-  const { Effect } = await import("effect");
-  return {
-    createOrder: () => Effect.never,
-    fetchMenu: Effect.never,
-    updateOrderStatus: () => Effect.never,
-  };
-});
 vi.mock("#features/auth/auth-client.ts", () => ({
   authClient: {
     register: async () => ({ ok: true, message: "" }),
@@ -57,7 +48,10 @@ const url = (pathname: string) => ({
   hash: Option.none(),
 });
 
-const bootModel = (pathname: string) => init({ theme: "light" }, url(pathname)).model;
+/** A page load's command-id session, so a test knows the ids the app will send. */
+const flags = { theme: "light", commandIds: { session: "test", sent: 0 } } as const;
+
+const bootModel = (pathname: string) => init(flags, url(pathname)).model;
 
 const customer = { kind: "customer", displayName: "Ada", userId: "user-1" } as const;
 

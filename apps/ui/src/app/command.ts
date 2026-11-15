@@ -1,4 +1,9 @@
-import { Effect, Option, Schedule, Schema } from "effect";
+import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
+import type { CoffeeOrder } from "@effect-coffee-shop/coffee-domain/Order/CoffeeOrder";
+import { makeOrderId, OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
+import { StaffApi } from "@effect-coffee-shop/coffee-domain/StaffApi.api";
+import * as DomainFoldkit from "@alchemy.run/domain/Foldkit";
+import { Effect, Match, Option, Schedule, Schema } from "effect";
 import { Command } from "foldkit";
 import { load, pushUrl } from "foldkit/navigation";
 import { ThemePreference, themeStorageKey } from "@effect-coffee-shop/ui-kit/components/theme";
@@ -18,12 +23,62 @@ import {
 } from "#features/assistant/lib/tools.ts";
 import { authClient } from "#features/auth/auth-client.ts";
 import { fetchViewer } from "#features/auth/api/viewer.ts";
-import { createOrder, fetchMenu, updateOrderStatus } from "#features/coffee-shop/api/coffee.ts";
-import { PlaceOrderRequest } from "#features/coffee-shop/lib/coffee-schemas.ts";
-import { AuthAction } from "#app/model.ts";
-import { Message, OrderActionName } from "#app/message.ts";
+import { fetchMenu } from "#features/coffee-shop/api/menu.ts";
+import { toCoffeeOrder } from "#features/coffee-shop/api/order-mapping.ts";
+import {
+  describeOrderFailure,
+  isRetryable,
+  type OrderFailure,
+  unreachableMessage,
+} from "#features/coffee-shop/api/order-failures.ts";
+import type { PlaceOrderRequest } from "#features/coffee-shop/lib/coffee-schemas.ts";
+import { AuthAction, type OrderActionName } from "#app/model.ts";
+import { Message } from "#app/message.ts";
 
-const unreachable = "Unable to reach the coffee shop. Check your connection and try again.";
+/** The customer Api as Foldkit Commands: each takes its target, input and command id. */
+const CustomerDomain = DomainFoldkit.make(CustomerApi);
+
+/** The staff Api as Foldkit Commands. */
+const StaffDomain = DomainFoldkit.make(StaffApi);
+
+type PlaceOrderResult = Extract<
+  (typeof CustomerDomain)["Message"]["Type"],
+  { readonly _tag: "SucceededPlaceOrder" | "FailedPlaceOrder" }
+>;
+
+const toPlaceOrderMessage = Match.type<PlaceOrderResult>().pipe(
+  Match.tagsExhaustive({
+    SucceededPlaceOrder: ({ reply }) =>
+      Message.SucceededPlaceOrder({ order: toCoffeeOrder(reply.order) }),
+    FailedPlaceOrder: ({ failure }) =>
+      Message.FailedPlaceOrder({
+        message: describeOrderFailure(failure),
+        retryable: isRetryable(failure),
+      }),
+  }),
+);
+
+const orderActionSucceeded = (reply: { readonly order: CoffeeOrder }) =>
+  Message.SucceededOrderAction({ order: toCoffeeOrder(reply.order) });
+
+const orderActionFailed = (failure: OrderFailure) =>
+  Message.FailedOrderAction({
+    message: describeOrderFailure(failure),
+    retryable: isRetryable(failure),
+  });
+
+const toOrderActionMessage = Match.type<(typeof StaffDomain)["Message"]["Type"]>().pipe(
+  Match.tagsExhaustive({
+    SucceededStartBrewing: ({ reply }) => orderActionSucceeded(reply),
+    SucceededMarkReady: ({ reply }) => orderActionSucceeded(reply),
+    SucceededPickUpOrder: ({ reply }) => orderActionSucceeded(reply),
+    SucceededCancelOrder: ({ reply }) => orderActionSucceeded(reply),
+    FailedStartBrewing: ({ failure }) => orderActionFailed(failure),
+    FailedMarkReady: ({ failure }) => orderActionFailed(failure),
+    FailedPickUpOrder: ({ failure }) => orderActionFailed(failure),
+    FailedCancelOrder: ({ failure }) => orderActionFailed(failure),
+  }),
+);
 
 /**
  * Turns an Effect's typed failure (every failure carries a readable message)
@@ -36,7 +91,7 @@ const recoverWith =
   ): Effect.Effect<Success | Failed, never, R> =>
     effect.pipe(
       Effect.catch((error) => Effect.succeed(onFailure({ message: error.message }))),
-      Effect.catchCause(() => Effect.succeed(onFailure({ message: unreachable }))),
+      Effect.catchCause(() => Effect.succeed(onFailure({ message: unreachableMessage }))),
     );
 
 // NAVIGATION
@@ -109,25 +164,65 @@ export const FetchMenu = Command.define("FetchMenu", {
   ),
 });
 
-export const PlaceOrder = Command.define("PlaceOrder", {
-  args: { request: PlaceOrderRequest },
-  messages: [Message.SucceededPlaceOrder, Message.FailedPlaceOrder],
-  execute: ({ request }) =>
-    createOrder(request).pipe(
-      Effect.map((order) => Message.SucceededPlaceOrder({ order })),
-      recoverWith(Message.FailedPlaceOrder),
-    ),
+/**
+ * Opens a new ticket. Its id comes from the clock and randomness, so a Command
+ * makes it; `update` then addresses PlaceOrder at it, and a retry of an
+ * uncertain send reuses both ids.
+ */
+export const StartOrder = Command.define("StartOrder", {
+  args: { commandId: Schema.String },
+  messages: [Message.StartedOrder],
+  execute: ({ commandId }) =>
+    makeOrderId.pipe(Effect.map((orderId) => Message.StartedOrder({ commandId, orderId }))),
 });
 
-export const RunOrderAction = Command.define("RunOrderAction", {
-  args: { orderId: Schema.String, action: OrderActionName },
-  messages: [Message.SucceededOrderAction, Message.FailedOrderAction],
-  execute: ({ orderId, action }) =>
-    updateOrderStatus(orderId, action).pipe(
-      Effect.map((order) => Message.SucceededOrderAction({ order })),
-      recoverWith(Message.FailedOrderAction),
-    ),
-});
+/** Places the ticket `StartOrder` opened; the ids come from the Model so a retry repeats it once. */
+export const placeOrder = (args: {
+  readonly commandId: string;
+  readonly orderId: string;
+  readonly request: PlaceOrderRequest;
+}) =>
+  Command.mapMessage(
+    CustomerDomain.PlaceOrder({
+      target: OrderId.make(args.orderId),
+      input: args.request,
+      commandId: args.commandId,
+    }),
+    toPlaceOrderMessage,
+  );
+
+/** Moves one ticket along the line; the command id comes from the Model so a retry moves it once. */
+export const runOrderAction = (args: {
+  readonly action: OrderActionName;
+  readonly commandId: string;
+  readonly orderId: string;
+}) => {
+  const { action, commandId, orderId } = args;
+  const target = OrderId.make(orderId);
+  const input = {};
+  switch (action) {
+    case "start-brewing":
+      return Command.mapMessage(
+        StaffDomain.StartBrewing({ target, input, commandId }),
+        toOrderActionMessage,
+      );
+    case "mark-ready":
+      return Command.mapMessage(
+        StaffDomain.MarkReady({ target, input, commandId }),
+        toOrderActionMessage,
+      );
+    case "pick-up":
+      return Command.mapMessage(
+        StaffDomain.PickUpOrder({ target, input, commandId }),
+        toOrderActionMessage,
+      );
+    case "cancel":
+      return Command.mapMessage(
+        StaffDomain.CancelOrder({ target, input, commandId }),
+        toOrderActionMessage,
+      );
+  }
+};
 
 // PAGE AND TOASTS
 
