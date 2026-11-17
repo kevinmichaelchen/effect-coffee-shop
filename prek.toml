@@ -1,7 +1,7 @@
 #:schema https://www.schemastore.org/prek.json
 
 # Every check runs here; there is no GitHub CI. The slower a check, the rarer
-# the operation that runs it: commit (format, lint, typecheck, Fallow),
+# the operation that runs it: commit (format, lint with typechecking, Fallow),
 # push (affected unit tests and builds), release tag (integration tests).
 default_install_hook_types = ["pre-commit", "pre-push"]
 
@@ -22,7 +22,7 @@ repo = "local"
 # what makes the pre-push audit free.
 id = "static"
 name = "format, lint, typecheck and architecture"
-entry = "bunx turbo run typecheck lint fmt:check //#fmt:check:root //#fallow"
+entry = "bunx turbo run lint fmt:check //#fmt:check:root //#fallow"
 language = "system"
 always_run = true
 pass_filenames = false

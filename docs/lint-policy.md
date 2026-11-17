@@ -4,7 +4,7 @@ Both Oxlint profiles in `packages/tooling/oxlint.profiles.ts` run type-aware und
 `effect-tsgo --tsrs-lint oxlint` with every Effect language-service rule; a workspace points at a
 profile and never carries its own Oxlint config.
 
-Checks live in prek hooks, the slower ones rarer: commit runs format, lint, typecheck and Fallow,
+Checks live in prek hooks, the slower ones rarer: commit runs format, combined lint/typechecking and Fallow,
 push runs the same set over the pushed commits (`check:affected`), and a pushed `v*` tag runs
 `check:release`, which adds the emulator and Rivet stack tests plus Fallow's typed health pass.
 There is no CI.
@@ -37,7 +37,7 @@ There is no CI.
   `strict-boolean-expressions`, ...).
 - Lint is type-aware and type-checks; since tsrs 0.23 that check covers the whole program of each
   tsconfig Oxlint's files map to, so lint can fail on a type error in a file it does not lint.
-  Typecheck is `tsrs --noEmit`.
+  The `lint` task is the single compiler and lint gate for builds and tests.
 - Lint runs through the official [`@effect/tsgo`](https://github.com/Effect-TS/tsgo), which loads
   Oxlint with an Effect-patched native binding on the tsrs linter instead of `tsgolint`. Oxlint and
   tsrs are pinned to versions in its "Supported Package Versions" table.

@@ -11,7 +11,7 @@ LFM3 assistant.
 ```bash
 bun install
 bun run dev    # the whole stack on Alchemy's Cloudflare emulation
-bun run check  # typecheck, lint, format, tests, build, Fallow
+bun run check  # lint + types, format, tests, build, Fallow
 ```
 
 > [!NOTE]

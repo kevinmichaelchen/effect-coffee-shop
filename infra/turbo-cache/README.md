@@ -123,7 +123,7 @@ destructive; bucket retention and cloud deletion rules may require clearing cach
 ```sh
 bun run --cwd packages/turbo-cache test     # unit tests, milliseconds
 bun run cache:test                          # integration, needs no cloud credentials
-bun run --cwd infra/turbo-cache typecheck
+bun run --cwd infra/turbo-cache lint
 ```
 
 `infra/turbo-cache` is a workspace (`@effect-coffee-shop/infra-turbo-cache`), so `cache:test` is a
@@ -153,7 +153,7 @@ Varlock:
 
 ```sh
 bunx varlock load --path config/turbo-cache/
-bun run cache:run bun run typecheck
+bun run cache:run bun run lint
 ```
 
 Each laptop keeps its local Turbo cache. A local miss is fetched from the shared remote cache, so it

@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsrs --noEmit",
     "lint": "effect-tsgo --tsrs-lint oxlint -c oxlint.config.ts --disable-nested-config .",
     "lint:fix": "effect-tsgo --tsrs-lint oxlint -c oxlint.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",

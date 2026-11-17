@@ -38,7 +38,6 @@ here, and the request actor comes from the server's auth middleware
 ([`coffee-server`](../../server)).
 
 ```bash
-bun run --cwd packages/coffee/presentation/http typecheck
 bun run --cwd packages/coffee/presentation/http lint
 bun run --cwd packages/coffee/presentation/http test
 ```

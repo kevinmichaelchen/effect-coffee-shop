@@ -101,7 +101,7 @@ Design principles:
   host's Layer.
 
 Checks run locally in prek git hooks (`prek.toml`), and the slower a check, the
-rarer the operation that runs it: format, lint, typecheck and Fallow on commit;
+rarer the operation that runs it: format, combined lint/typechecking and Fallow on commit;
 `check:affected` (unit tests and builds for the pushed commits) on push;
 `check:release` (Alchemy-emulator and Rivet stack tests, Fallow's typed health
 pass) only when a `v*` tag is pushed. There is no GitHub CI; do not add a

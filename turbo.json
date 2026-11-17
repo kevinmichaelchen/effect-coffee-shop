@@ -7,29 +7,22 @@
   "tasks": {
     "build": {
       "description": "Build distributable workspace artifacts.",
-      "dependsOn": ["^build", "typecheck"],
+      "dependsOn": ["^build", "lint"],
       "inputs": ["$TURBO_DEFAULT$", ".env*", "!README.md"],
       "outputs": ["dist/**"],
       "outputLogs": "new-only"
     },
-    "typecheck": {
-      "description": "Type-check each workspace.",
-      "dependsOn": ["^typecheck"],
-      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
-      "outputs": [],
-      "outputLogs": "new-only"
-    },
     "lint": {
-      "description": "Run standard workspace lint checks.",
+      "description": "Type-check and lint each workspace, including Effect language-service rules, in one analysis.",
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
       "outputs": [],
       "outputLogs": "new-only",
-      "dependsOn": ["^typecheck"]
+      "dependsOn": ["^lint"]
     },
     "lint:fix": {
       "description": "Apply safe Oxlint fixes in each workspace.",
       "cache": false,
-      "dependsOn": ["^typecheck"]
+      "dependsOn": ["^lint"]
     },
     "fmt": {
       "description": "Format workspace files in place.",
@@ -45,21 +38,21 @@
     },
     "test": {
       "description": "Run workspace test suites. Each runs Vitest with --fsModuleCache=false: the runs Turbo starts in parallel would share one module cache and race.",
-      "dependsOn": ["typecheck"],
+      "dependsOn": ["lint"],
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
       "outputs": [],
       "outputLogs": "new-only"
     },
     "test:integration": {
       "description": "Deploy a stack to Alchemy's local emulation and drive it end to end. Seconds, not milliseconds, so it runs only on release (check:release).",
-      "dependsOn": ["typecheck"],
+      "dependsOn": ["lint"],
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
       "outputs": [],
       "outputLogs": "new-only"
     },
     "test:rivet": {
       "description": "Run the stack test with the model hosted on Rivet in local Docker (about 100s; release only).",
-      "dependsOn": ["typecheck"],
+      "dependsOn": ["lint"],
       "inputs": ["$TURBO_DEFAULT$", "!README.md"],
       "outputs": [],
       "outputLogs": "new-only"

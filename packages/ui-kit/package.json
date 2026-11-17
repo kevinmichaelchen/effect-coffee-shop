@@ -11,7 +11,6 @@
     "./lib/utils": "./src/lib/utils.ts"
   },
   "scripts": {
-    "typecheck": "tsrs --noEmit",
     "lint": "effect-tsgo --tsrs-lint oxlint -c ../tooling/oxlint.ui.config.ts --disable-nested-config .",
     "lint:fix": "effect-tsgo --tsrs-lint oxlint -c ../tooling/oxlint.ui.config.ts --disable-nested-config --fix .",
     "fmt": "oxfmt --write .",
