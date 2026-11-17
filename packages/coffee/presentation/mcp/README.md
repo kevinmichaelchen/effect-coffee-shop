@@ -51,7 +51,6 @@ templates; tools perform actions. Canonical Coffee action contracts, business ru
 model), auth session setup, and Worker routing belong in their owning packages.
 
 ```bash
-bun run --cwd packages/coffee/presentation/mcp typecheck
 bun run --cwd packages/coffee/presentation/mcp lint
 bun run --cwd packages/coffee/presentation/mcp fmt:check
 bun run --cwd packages/coffee/presentation/mcp test

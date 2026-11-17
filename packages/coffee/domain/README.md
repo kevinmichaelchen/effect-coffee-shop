@@ -94,7 +94,6 @@ follow. The policy runs for real. Unit tests cover pricing, money, the menu and 
 
 ```bash
 bun run --cwd packages/coffee/domain test
-bun run --cwd packages/coffee/domain typecheck
 bun run --cwd packages/coffee/domain lint
 ```
 

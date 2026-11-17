@@ -25,7 +25,6 @@ Import modules by path, e.g. `@effect-coffee-shop/coffee-application/CoffeeOrder
 [`coffee-server`](../server/test/CoffeeApis.test.ts).
 
 ```bash
-bun run --cwd packages/coffee/application typecheck
 bun run --cwd packages/coffee/application lint
 bun run --cwd packages/coffee/application fmt:check
 ```

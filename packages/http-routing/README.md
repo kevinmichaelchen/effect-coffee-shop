@@ -50,7 +50,6 @@ parse deployment-specific bindings, adapt MCP protocol details, or define Coffee
 runtime composition belongs in [`coffee-server`](../coffee/server).
 
 ```bash
-bun run --cwd packages/http-routing typecheck
 bun run --cwd packages/http-routing lint
 bun run --cwd packages/http-routing fmt:check
 ```
