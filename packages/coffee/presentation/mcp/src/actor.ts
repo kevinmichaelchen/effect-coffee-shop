@@ -17,5 +17,5 @@ export class McpActor extends Context.Service<
 
 export const withMcpActor = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
   Effect.flatMap(McpActor, ({ current }) =>
-    Effect.flatMap(current, (actor) => Effect.provideService(effect, CurrentActor, actor)),
+    Effect.provideServiceEffect(effect, CurrentActor, current),
   );

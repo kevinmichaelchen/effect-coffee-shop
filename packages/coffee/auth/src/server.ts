@@ -119,11 +119,7 @@ export const makeCoffeeAuth = (
               return HttpServerResponse.empty({ status: 403 });
             }
             return yield* http
-              .withRequest(
-                Effect.flatMap(actor(), (actor) =>
-                  Effect.provideService(effect, CurrentActor, actor),
-                ),
-              )
+              .withRequest(Effect.provideServiceEffect(effect, CurrentActor, actor()))
               .pipe(Effect.provideContext(services));
           }),
       ),
