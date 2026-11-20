@@ -1,8 +1,12 @@
 import { assert, describe, expect, it } from "@effect/vitest";
+import * as Domain from "@alchemy.run/domain";
 import { Story } from "@alchemy.run/domain/Story";
 import * as DateTime from "effect/DateTime";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
+import * as Schedule from "effect/Schedule";
 import { type Actor, systemActor } from "../src/Actor.ts";
 import { AddCartItem, CartItemAdded } from "../src/Cart/AddCartItem.command.ts";
 import { Cart } from "../src/Cart/Cart.aggregate.ts";
@@ -38,8 +42,8 @@ import { MarkReady, OrderReady } from "../src/Order/MarkReady.command.ts";
 import { Order } from "../src/Order/Order.aggregate.ts";
 import { OrderId } from "../src/Order/Order.id.ts";
 import { OrderNotFound } from "../src/Order/OrderNotFound.rejection.ts";
-import { OrderQueue } from "../src/Order/OrderQueue.view.ts";
-import { OrderSummary } from "../src/Order/OrderSummary.view.ts";
+import { OrderQueue, OrderQueueLive } from "../src/Order/OrderQueue.view.ts";
+import { OrderSummary, OrderSummaryLive } from "../src/Order/OrderSummary.view.ts";
 import { OrderPickedUp, PickUpOrder } from "../src/Order/PickUpOrder.command.ts";
 import { AlreadyPlaced, OrderPlaced, PlaceOrder } from "../src/Order/PlaceOrder.command.ts";
 import { mainShop } from "../src/Shop/Shop.id.ts";
@@ -105,6 +109,13 @@ const samsTicket = (orderId: OrderId): CoffeeOrder => ({
   createdAt: DateTime.makeUnsafe(placedAt),
 });
 
+const waitForReplay = (history: Effect.Effect<{ readonly complete: boolean }>) =>
+  history.pipe(
+    Effect.repeat({ until: (state) => state.complete, schedule: Schedule.spaced("5 millis") }),
+    Effect.timeout("500 millis"),
+    Effect.asVoid,
+  );
+
 describe("placing orders", () => {
   it.effect("prices the drinks and puts the ticket in the customer's list and the queue", () => {
     const o1 = orderRef(1);
@@ -122,6 +133,65 @@ describe("placing orders", () => {
         expect(queue.orders.map((order) => order.customerName)).toEqual(["Sam"]),
       ),
     );
+  });
+
+  it.live("rebuilds the staff queue from existing orders when its view version changes", () => {
+    class PreviousQueue extends Domain.View("OrderQueue", {
+      ...OrderQueue.definition,
+      evolve: {
+        OrderSummary: (queue, _, { state }) =>
+          state?.order
+            ? { orders: [{ ...state.order, customerName: CustomerName.make("Legacy") }] }
+            : queue,
+      },
+    }) {}
+    class RebuiltQueue extends Domain.View("OrderQueue", {
+      ...OrderQueue.definition,
+      version: 1,
+    }) {}
+    const members = { aggregates: [Order] };
+    const Previous = Domain.Model("QueueReplay", {
+      ...members,
+      views: [OrderSummary, PreviousQueue],
+    });
+    const Rebuilt = Domain.Model("QueueReplay", {
+      ...members,
+      views: [OrderSummary, RebuiltQueue],
+    });
+    const handlers = Layer.mergeAll(OrderSummaryLive, OrderQueueLive);
+    const orderId = orderRef(1).id;
+
+    return Effect.gen(function* () {
+      yield* Effect.gen(function* () {
+        const orders = yield* Order;
+        const summary = yield* OrderSummary;
+        const queue = yield* PreviousQueue;
+        yield* waitForReplay(summary.history);
+        yield* waitForReplay(queue.history);
+        yield* orders.send(
+          orderId,
+          new PlaceOrder({ items: [{ drinkId: "latte", size: "medium" }] }),
+        );
+        const previous = yield* queue
+          .get(mainShop)
+          .pipe(
+            Effect.repeat({ until: Option.isSome, schedule: Schedule.spaced("5 millis") }),
+            Effect.timeout("500 millis"),
+          );
+        expect(
+          Option.map(previous, (view) => view.orders.map((order) => order.customerName)),
+        ).toEqual(Option.some(["Legacy"]));
+      }).pipe(Effect.provide(Previous.layer(handlers)));
+
+      yield* Effect.gen(function* () {
+        const queue = yield* RebuiltQueue;
+        yield* waitForReplay(queue.history);
+        const rebuilt = yield* queue.get(mainShop);
+        expect(
+          Option.map(rebuilt, (view) => view.orders.map((order) => [order.id, order.customerName])),
+        ).toEqual(Option.some([[orderId, sam.displayName]]));
+      }).pipe(Effect.provide(Rebuilt.layer(handlers)));
+    }).pipe(Effect.provideService(CurrentActor, sam), Effect.provide(Domain.InMemory));
   });
 
   it.effect("refuses drinks the menu does not offer, and impossible choices", () =>
