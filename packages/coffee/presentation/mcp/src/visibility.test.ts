@@ -163,7 +163,7 @@ describe("MCP tool visibility", () => {
         (name) =>
           Effect.gen(function* () {
             const error = yield* client
-              .callTool({ name, arguments: { target: "order-1", input: {} } })
+              .callTool({ name, arguments: { input: { orderId: "order-1" } } })
               .pipe(Effect.flip);
             expect(error.message).toBe(`Tool '${name}' not found`);
           }),
@@ -181,7 +181,7 @@ describe("MCP tool visibility", () => {
       yield* Ref.set(actor, customer);
       expect(yield* listToolNames(client)).toEqual(customerTools);
       const error = yield* client
-        .callTool({ name: "StaffApi_StartBrewing_send", arguments: { target: "x", input: {} } })
+        .callTool({ name: "StaffApi_StartBrewing_send", arguments: { input: { orderId: "x" } } })
         .pipe(Effect.flip);
       expect(error.message).toBe("Tool 'StaffApi_StartBrewing_send' not found");
     }),
@@ -207,8 +207,11 @@ describe("MCP tools generated from the domain Apis", () => {
       const added = yield* client.callTool({
         name: "CustomerApi_AddCartItem_send",
         arguments: {
-          target: "customer",
-          input: { cartItemId: newIds.cartItemId, item: { drinkId: "latte", size: "medium" } },
+          input: {
+            customerId: "customer",
+            cartItemId: newIds.cartItemId,
+            item: { drinkId: "latte", size: "medium" },
+          },
         },
       });
       expect(added.isError).not.toBe(true);
@@ -258,19 +261,20 @@ describe("MCP tools generated from the domain Apis", () => {
       )(context.structuredContent);
 
       yield* call("CustomerApi_AddCartItem_send", {
-        target: "customer",
-        input: { cartItemId: newIds.cartItemId, item: { drinkId: "latte", size: "large" } },
+        input: {
+          customerId: "customer",
+          cartItemId: newIds.cartItemId,
+          item: { drinkId: "latte", size: "large" },
+        },
       });
       const prepared = yield* call("CustomerApi_PrepareCheckout_send", {
-        target: "customer",
-        input: { checkoutId: newIds.checkoutId },
+        input: { customerId: "customer", checkoutId: newIds.checkoutId },
       });
       expect(prepared.isError).not.toBe(true);
 
       const confirm = {
-        target: "customer",
         commandId: "confirm-1",
-        input: { checkoutId: newIds.checkoutId, orderId: newIds.orderId },
+        input: { customerId: "customer", checkoutId: newIds.checkoutId, orderId: newIds.orderId },
       };
       const confirmed = yield* call("CustomerApi_ConfirmCheckout_send", confirm);
       expect(confirmed.isError).not.toBe(true);

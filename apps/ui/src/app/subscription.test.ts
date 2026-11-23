@@ -207,7 +207,8 @@ test("a live watch pushes the customer's orders as the model commits them", asyn
       const customers = yield* CustomerApi.Client;
       yield* settle;
       const orderId = yield* makeOrderId;
-      yield* customers.PlaceOrder(orderId, {
+      yield* customers.PlaceOrder({
+        orderId,
         items: [{ drinkId: "latte", size: "medium", milk: "oat" }],
       });
       // The view folds the commit on its own queued work; the second push waits for it.

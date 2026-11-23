@@ -18,13 +18,12 @@ import { OrderId } from "./Order.id.ts";
 import { OrderNotFound } from "./OrderNotFound.rejection.ts";
 import { canTransitionTo, type OrderStatus } from "./OrderStatus.ts";
 import { OrderPickedUp, PickUpOrder } from "./PickUpOrder.command.ts";
-import { PlaceCheckedOutOrder } from "./PlaceCheckedOutOrder.command.ts";
 import { AlreadyPlaced, OrderPlaced, PlaceOrder } from "./PlaceOrder.command.ts";
 
-const Placed = Schema.TaggedStruct("Placed", { order: CoffeeOrder });
-const OrderState = Schema.Union([Schema.TaggedStruct("Unplaced", {}), Placed]);
+export const OrderPlacedState = Schema.TaggedStruct("Placed", { order: CoffeeOrder });
+const OrderState = Schema.Union([Schema.TaggedStruct("Unplaced", {}), OrderPlacedState]);
 type OrderState = typeof OrderState.Type;
-type Placed = typeof Placed.Type;
+export type OrderPlacedState = typeof OrderPlacedState.Type;
 
 /** A barista moves a placed order one step along its lifecycle. */
 const moveTo =
@@ -39,7 +38,7 @@ const moveTo =
       if (!isStaff(actor)) return yield* new StaffOnly();
       const placed = yield* Match.value(state).pipe(
         Match.tag("Unplaced", () => Effect.fail(new OrderNotFound({ orderId: id }))),
-        Match.tag("Placed", (placed: Placed) => Effect.succeed(placed)),
+        Match.tag("Placed", (placed: OrderPlacedState) => Effect.succeed(placed)),
         Match.exhaustive,
       );
       const from = placed.order.status;
@@ -61,7 +60,7 @@ const withStatus = (state: OrderState, status: OrderStatus): OrderState =>
 // Replies follow an accepted command, so the order exists.
 const placedOrder = (state: OrderState) =>
   Match.value(state).pipe(
-    Match.tag("Placed", (placed: Placed) => ({ order: placed.order })),
+    Match.tag("Placed", (placed: OrderPlacedState) => ({ order: placed.order })),
     Match.orElse(() => invariantViolated("An order reply requires a placed order")),
   );
 
@@ -74,11 +73,19 @@ export class Order extends Domain.Aggregate("Order", {
   id: OrderId,
   state: OrderState,
   initial: { _tag: "Unplaced" },
-  commands: [PlaceOrder, PlaceCheckedOutOrder, StartBrewing, MarkReady, PickUpOrder, CancelOrder],
+  commands: [PlaceOrder, StartBrewing, MarkReady, PickUpOrder, CancelOrder],
+  keyOf: (command) => command.orderId,
+  events: [OrderPlaced],
+  transitions: {
+    CancelledStaysCancelled: ({ before, after }) => {
+      if (!Schema.is(OrderPlacedState)(before) || before.order.status !== "cancelled") return true;
+      return Schema.is(OrderPlacedState)(after) && after.order.status === "cancelled";
+    },
+  },
   decide: {
     PlaceOrder: Effect.fn(function* (state, command, { id }) {
       yield* Effect.annotateCurrentSpan("coffee.items", command.items.length);
-      if (Schema.is(Placed)(state)) return yield* new AlreadyPlaced({ orderId: id });
+      if (Schema.is(OrderPlacedState)(state)) return yield* new AlreadyPlaced({ orderId: id });
       const actor = yield* CurrentActor;
       const customerName = yield* customerNameFor(
         actor,
@@ -94,17 +101,6 @@ export class Order extends Domain.Aggregate("Order", {
         }),
       ];
     }),
-    PlaceCheckedOutOrder: (state, command) =>
-      Schema.is(Placed)(state)
-        ? []
-        : [
-            new OrderPlaced({
-              customerId: command.customerId,
-              customerName: command.customerName,
-              items: command.checkout.items,
-              totalPrice: command.checkout.totalPrice,
-            }),
-          ],
     StartBrewing: moveTo("brewing", (by) => new BrewingStarted({ by })),
     MarkReady: moveTo("ready", (by) => new OrderReady({ by })),
     PickUpOrder: moveTo("picked-up", (by) => new OrderPickedUp({ by })),

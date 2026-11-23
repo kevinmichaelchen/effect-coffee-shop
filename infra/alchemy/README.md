@@ -19,7 +19,6 @@ passkey checkout, and live order watches end to end: `bun run cf:test` on Cloudf
 rivet:test` on Rivet. These are the slow checks behind `bun run check:release`, so commits and
 ordinary pushes skip them.
 
-`patches/` carries workarounds for `alchemy@2.0.0-beta.87`, `@alchemy.run/rivet@2.0.0-beta.87` and
-`@yielded/auth-persistence@0.1.0-beta.47`; drop them when upstream ships the fixes.
+`patches/` carries workarounds for Rivet’s Docker Swarm types and Yielded’s passkey registration.
 
 </details>

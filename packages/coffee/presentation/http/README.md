@@ -13,7 +13,7 @@
   actor header, so the Worker mounts it only behind its auth session (`domainApi`), which replaces any
   copy a client sent.
 
-A command is `POST /<Command>` with `{ target, input, commandId? }`; a read is `GET /<View>/:key` (and
+A command is `POST /<Command>` with `{ input, commandId? }`; the ID belongs in `input`. A read is `GET /<View>/:key` (and
 `/snapshot`, `/list`, and Server-Sent Events at `/watch` and `/events`). A rejection answers with its
 `_tag` at the status its `httpApiStatus` gives it. Each endpoint's OpenAPI description is its
 command's `description`, or its view's.

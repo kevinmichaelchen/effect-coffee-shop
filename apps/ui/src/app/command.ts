@@ -182,8 +182,7 @@ export const placeOrder = (args: {
 }) =>
   Command.mapMessage(
     CustomerDomain.PlaceOrder({
-      target: OrderId.make(args.orderId),
-      input: args.request,
+      input: { ...args.request, orderId: OrderId.make(args.orderId) },
       commandId: args.commandId,
     }),
     toPlaceOrderMessage,
@@ -196,27 +195,23 @@ export const runOrderAction = (args: {
   readonly orderId: string;
 }) => {
   const { action, commandId, orderId } = args;
-  const target = OrderId.make(orderId);
-  const input = {};
+  const input = { orderId: OrderId.make(orderId) };
   switch (action) {
     case "start-brewing":
       return Command.mapMessage(
-        StaffDomain.StartBrewing({ target, input, commandId }),
+        StaffDomain.StartBrewing({ input, commandId }),
         toOrderActionMessage,
       );
     case "mark-ready":
-      return Command.mapMessage(
-        StaffDomain.MarkReady({ target, input, commandId }),
-        toOrderActionMessage,
-      );
+      return Command.mapMessage(StaffDomain.MarkReady({ input, commandId }), toOrderActionMessage);
     case "pick-up":
       return Command.mapMessage(
-        StaffDomain.PickUpOrder({ target, input, commandId }),
+        StaffDomain.PickUpOrder({ input, commandId }),
         toOrderActionMessage,
       );
     case "cancel":
       return Command.mapMessage(
-        StaffDomain.CancelOrder({ target, input, commandId }),
+        StaffDomain.CancelOrder({ input, commandId }),
         toOrderActionMessage,
       );
   }

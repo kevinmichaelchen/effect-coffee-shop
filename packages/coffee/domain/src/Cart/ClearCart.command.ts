@@ -11,8 +11,8 @@ export class CartCleared extends Domain.Event("CartCleared") {}
 export class ClearCart extends Domain.Command(
   "ClearCart",
   {
-    target: CustomerId,
     middleware: [Session],
+    input: { customerId: CustomerId },
     events: [CartCleared],
     rejects: [NotYourCart],
     reply: { cart: CartSnapshot },

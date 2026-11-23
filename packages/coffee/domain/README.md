@@ -18,7 +18,7 @@ Files follow the alchemy-domain layout: one building block per file, named `<Nou
 folders as subdomains. Import them by path, e.g.
 `@effect-coffee-shop/coffee-domain/Order/Order.aggregate`. Contracts use `@alchemy.run/domain` and
 `effect`; Alchemy core and the Cloudflare, AWS, and Domain packages are pinned together at
-`2.0.0-beta.87` in the workspace catalog.
+preview commit `8b2e29a` in the workspace catalog.
 
 | Building block | Files                                                                                    | What it does                                                                                                                              |
 | -------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -30,16 +30,16 @@ folders as subdomains. Import them by path, e.g.
 | View           | [`Order/CustomerOrders.view.ts`](src/Order/CustomerOrders.view.ts)                       | Every order one customer placed, folded from `OrderSummary`.                                                                              |
 | View           | [`Order/OrderQueue.view.ts`](src/Order/OrderQueue.view.ts)                               | The baristas' queue: open orders plus the 200 most recent finished ones. Staff only.                                                      |
 | View           | [`Cart/CustomerCart.view.ts`](src/Cart/CustomerCart.view.ts)                             | One person's cart as they read it, folded from the same events as `Cart`. Owner only.                                                     |
-| Policy         | [`Cart/CheckoutFulfillment.policy.ts`](src/Cart/CheckoutFulfillment.policy.ts)           | Whenever a checkout is confirmed, send `PlaceCheckedOutOrder` at the prices it froze.                                                     |
+| Decision       | [`Cart/CheckoutFulfillment.decision.ts`](src/Cart/CheckoutFulfillment.decision.ts)       | Confirm the checkout and place the order at its frozen prices in one commit.                                                              |
 | Api            | [`CustomerApi.api.ts`](src/CustomerApi.api.ts), [`StaffApi.api.ts`](src/StaffApi.api.ts) | What each audience may send and read.                                                                                                     |
-| Model          | [`CoffeeShop.model.ts`](src/CoffeeShop.model.ts)                                         | Everything hosted together, plus read guards and the policy implementation as one Layer.                                                  |
+| Model          | [`CoffeeShop.model.ts`](src/CoffeeShop.model.ts)                                         | Everything hosted together, plus read guards as one Layer.                                                                                |
 
 Commands live in `<Command>.command.ts` with the events they record and the rejections only they
 return. Shared rejections have their own `*.rejection.ts` files.
 
 | Aggregate | Commands                                                                                             | Events                                                                                                        |
 | --------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `Order`   | `PlaceOrder`, `PlaceCheckedOutOrder`, `StartBrewing`, `MarkReady`, `PickUpOrder`, `CancelOrder`      | `OrderPlaced`, `BrewingStarted`, `OrderReady`, `OrderPickedUp`, `OrderCancelled`                              |
+| `Order`   | `PlaceOrder`, `StartBrewing`, `MarkReady`, `PickUpOrder`, `CancelOrder`                              | `OrderPlaced`, `BrewingStarted`, `OrderReady`, `OrderPickedUp`, `OrderCancelled`                              |
 | `Cart`    | `AddCartItem`, `UpdateCartItem`, `RemoveCartItem`, `ClearCart`, `PrepareCheckout`, `ConfirmCheckout` | `CartItemAdded`, `CartItemUpdated`, `CartItemRemoved`, `CartCleared`, `CheckoutPrepared`, `CheckoutConfirmed` |
 
 Rejections carry their evidence: `DrinkNotFound { drinkId }`, `InvalidOrder { message }`,
@@ -51,13 +51,11 @@ Rejections carry their evidence: `DrinkNotFound { drinkId }`, `InvalidOrder { me
 <details>
 <summary>Checkout</summary>
 
-![Checkout: a customer prepares and confirms a checkout on the Cart, then the fulfillment policy places the order](../../../docs/architecture/checkout-flow.svg)
+![Checkout commits the cart and order together](../../../docs/architecture/checkout-flow.svg)
 
-`PrepareCheckout` holds prices for 15 minutes. Emptying the cart and confirming happen in one `Cart`
-commit, so a confirmed cart is never ordered twice. After the commit, `CheckoutFulfillment` sends
-`PlaceCheckedOutOrder` in one step: it derives the command id from the event, and the command itself
-places an order that is not yet placed, so a redelivery places nothing twice. Policies run at least
-once.
+`PrepareCheckout` holds prices for 15 minutes. `CheckoutFulfillment` records confirmation on the
+cart and placement on the order in one decision. An existing order ID rejects a new checkout
+without clearing the cart.
 
 </details>
 

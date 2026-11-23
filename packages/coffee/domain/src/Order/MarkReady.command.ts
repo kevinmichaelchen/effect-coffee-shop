@@ -14,8 +14,8 @@ export class OrderReady extends Domain.Event("OrderReady", { by: Actor }) {}
 export class MarkReady extends Domain.Command(
   "MarkReady",
   {
-    target: OrderId,
     middleware: [Session],
+    input: { orderId: OrderId },
     events: [OrderReady],
     rejects: [StaffOnly, OrderNotFound, InvalidStatusTransition],
     reply: { order: CoffeeOrder },

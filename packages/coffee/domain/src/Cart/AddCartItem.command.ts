@@ -18,9 +18,8 @@ export class CartItemAdded extends Domain.Event("CartItemAdded", {
 export class AddCartItem extends Domain.Command(
   "AddCartItem",
   {
-    target: CustomerId,
     middleware: [Session],
-    input: { cartItemId: CartItemId, item: DrinkSelection },
+    input: { customerId: CustomerId, cartItemId: CartItemId, item: DrinkSelection },
     events: [CartItemAdded],
     rejects: [NotYourCart, DrinkNotFound, InvalidOrder],
     reply: { cart: CartSnapshot },

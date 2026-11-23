@@ -14,8 +14,8 @@ export class OrderCancelled extends Domain.Event("OrderCancelled", { by: Actor }
 export class CancelOrder extends Domain.Command(
   "CancelOrder",
   {
-    target: OrderId,
     middleware: [Session],
+    input: { orderId: OrderId },
     events: [OrderCancelled],
     rejects: [StaffOnly, OrderNotFound, InvalidStatusTransition],
     reply: { order: CoffeeOrder },

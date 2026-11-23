@@ -1,3 +1,5 @@
+import { DrinkNotFound } from "@effect-coffee-shop/coffee-domain/Menu/DrinkNotFound.rejection";
+import { StaffOnly } from "@effect-coffee-shop/coffee-domain/StaffOnly.rejection";
 import { CustomerApi } from "@effect-coffee-shop/coffee-domain/CustomerApi.api";
 import { CoffeeOrder } from "@effect-coffee-shop/coffee-domain/Order/CoffeeOrder";
 import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
@@ -123,8 +125,7 @@ describe("routing", () => {
 /** The staff command the app sends, as the staff Api's client builds it. */
 const startBrewing = (commandId: string) =>
   StaffDomain.StartBrewing({
-    target: OrderId.make(ticketId),
-    input: {},
+    input: { orderId: OrderId.make(ticketId) },
     commandId,
   });
 
@@ -232,8 +233,7 @@ describe("customer orders", () => {
   /** The command the app sends, as the customer Api's client builds it. */
   const placeOrder = (commandId: string) =>
     CustomerDomain.PlaceOrder({
-      target: OrderId.make(ticketId),
-      input: orderRequest,
+      input: { ...orderRequest, orderId: OrderId.make(ticketId) },
       commandId,
     });
 
@@ -251,6 +251,7 @@ describe("customer orders", () => {
         commandId: "test:0",
         reply: { order: domainOrder },
         receipt: { stream: `CoffeeShop/${ticketId}`, version: 1 },
+        commits: [{ stream: `CoffeeShop/${ticketId}`, version: 1 }],
       }),
       Command.resolve(Dialog.ShowDialog, Dialog.Message.SucceededShowDialog()),
       UiToast.test.drainEntry({ entryId: "app-toast-entry-0" }),
@@ -312,7 +313,7 @@ describe("customer orders", () => {
       Command.resolve(placeOrder("test:0"), {
         _tag: "FailedPlaceOrder",
         commandId: "test:0",
-        failure: { _tag: "Rejected", rejection: { _tag: "DrinkNotFound", drinkId: "espresso" } },
+        failure: { _tag: "Rejected", rejection: new DrinkNotFound({ drinkId: "espresso" }) },
       }),
       model((next) => {
         expect(Option.isNone(next.pendingOrder)).toBe(true);
@@ -367,6 +368,7 @@ describe("staff queue", () => {
         commandId: "test:0",
         reply: { order: orderReply("brewing") },
         receipt: { stream: `CoffeeShop/${ticketId}`, version: 2 },
+        commits: [{ stream: `CoffeeShop/${ticketId}`, version: 2 }],
       }),
       UiToast.test.drainEntry({ entryId: "app-toast-entry-0" }),
       model((next) => {
@@ -385,7 +387,7 @@ describe("staff queue", () => {
       Command.resolve(startBrewing("test:0"), {
         _tag: "FailedStartBrewing",
         commandId: "test:0",
-        failure: { _tag: "Rejected", rejection: { _tag: "StaffOnly" } },
+        failure: { _tag: "Rejected", rejection: new StaffOnly() },
       }),
       model((next) => {
         expect(next.pendingOrderId).toEqual(Option.none());
@@ -401,6 +403,7 @@ describe("staff queue", () => {
         commandId: "test:1",
         reply: { order: orderReply("brewing") },
         receipt: { stream: `CoffeeShop/${ticketId}`, version: 2 },
+        commits: [{ stream: `CoffeeShop/${ticketId}`, version: 2 }],
       }),
       UiToast.test.drainEntry({ entryId: "app-toast-entry-1" }),
     );

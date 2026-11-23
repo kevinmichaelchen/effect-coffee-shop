@@ -3,6 +3,7 @@ import * as Schema from "effect/Schema";
 import { CustomerId } from "../Customer/Customer.id.ts";
 import { InvalidOrder } from "../Menu/InvalidOrder.rejection.ts";
 import { CustomerName } from "../Menu/OrderPrimitives.ts";
+import { AlreadyPlaced, OrderPlaced } from "../Order/PlaceOrder.command.ts";
 import { OrderId } from "../Order/Order.id.ts";
 import { Session } from "../Session.middleware.ts";
 import { Checkout, CheckoutId } from "./Checkout.ts";
@@ -27,7 +28,7 @@ export class CheckoutExpired extends Domain.Rejection(
 
 /**
  * The customer confirmed their checkout: the cart is emptied, and the order
- * is placed at the checkout's prices (by `CheckoutFulfillment`).
+ * is placed at the checkout's prices in the same decision.
  */
 export class CheckoutConfirmed extends Domain.Event("CheckoutConfirmed", {
   orderId: OrderId,
@@ -39,17 +40,17 @@ export class CheckoutConfirmed extends Domain.Event("CheckoutConfirmed", {
 export class ConfirmCheckout extends Domain.Command(
   "ConfirmCheckout",
   {
-    target: CustomerId,
     middleware: [Session],
     input: {
+      customerId: CustomerId,
       checkoutId: CheckoutId,
       orderId: OrderId,
       customerName: Schema.optionalKey(
         Schema.Trim.annotate({ description: "Customer display name, for system orders." }),
       ),
     },
-    events: [CheckoutConfirmed],
-    rejects: [NotYourCart, CheckoutNotFound, CheckoutExpired, InvalidOrder],
+    events: [CheckoutConfirmed, OrderPlaced],
+    rejects: [NotYourCart, CheckoutNotFound, CheckoutExpired, InvalidOrder, AlreadyPlaced],
     reply: { orderId: OrderId },
   },
   {

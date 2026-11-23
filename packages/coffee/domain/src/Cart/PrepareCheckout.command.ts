@@ -16,9 +16,8 @@ export class CheckoutPrepared extends Domain.Event("CheckoutPrepared", { checkou
 export class PrepareCheckout extends Domain.Command(
   "PrepareCheckout",
   {
-    target: CustomerId,
     middleware: [Session],
-    input: { checkoutId: CheckoutId },
+    input: { customerId: CustomerId, checkoutId: CheckoutId },
     events: [CheckoutPrepared],
     rejects: [NotYourCart, DrinkNotFound, InvalidOrder],
     reply: { checkout: Checkout },

@@ -19,12 +19,8 @@ export class CartItemUpdated extends Domain.Event("CartItemUpdated", {
 export class UpdateCartItem extends Domain.Command(
   "UpdateCartItem",
   {
-    target: CustomerId,
     middleware: [Session],
-    input: {
-      cartItemId: CartItemId,
-      changes: DrinkSelectionChanges,
-    },
+    input: { customerId: CustomerId, cartItemId: CartItemId, changes: DrinkSelectionChanges },
     events: [CartItemUpdated],
     rejects: [NotYourCart, CartItemNotFound, DrinkNotFound, InvalidOrder],
     reply: { cart: CartSnapshot },

@@ -1,3 +1,9 @@
+import { AlreadyPlaced } from "@effect-coffee-shop/coffee-domain/Order/PlaceOrder.command";
+import { DrinkNotFound } from "@effect-coffee-shop/coffee-domain/Menu/DrinkNotFound.rejection";
+import { InvalidOrder } from "@effect-coffee-shop/coffee-domain/Menu/InvalidOrder.rejection";
+import { InvalidStatusTransition } from "@effect-coffee-shop/coffee-domain/Order/InvalidStatusTransition.rejection";
+import { OrderNotFound } from "@effect-coffee-shop/coffee-domain/Order/OrderNotFound.rejection";
+import { StaffOnly } from "@effect-coffee-shop/coffee-domain/StaffOnly.rejection";
 import { OrderId } from "@effect-coffee-shop/coffee-domain/Order/Order.id";
 import { Unauthorized } from "@effect-coffee-shop/coffee-domain/Session.middleware";
 import { describe, expect, test } from "vitest";
@@ -14,12 +20,12 @@ describe("order failures", () => {
   test("each rejection says what the domain refused", () => {
     expect(
       [
-        rejected({ _tag: "AlreadyPlaced", orderId }),
-        rejected({ _tag: "DrinkNotFound", drinkId: "espresso" }),
-        rejected({ _tag: "InvalidOrder", message: "Tea drinks do not support extra shots" }),
-        rejected({ _tag: "InvalidStatusTransition", orderId, from: "ready", to: "brewing" }),
-        rejected({ _tag: "OrderNotFound", orderId }),
-        rejected({ _tag: "StaffOnly" }),
+        rejected(new AlreadyPlaced({ orderId })),
+        rejected(new DrinkNotFound({ drinkId: "espresso" })),
+        rejected(new InvalidOrder({ message: "Tea drinks do not support extra shots" })),
+        rejected(new InvalidStatusTransition({ orderId, from: "ready", to: "brewing" })),
+        rejected(new OrderNotFound({ orderId })),
+        rejected(new StaffOnly()),
       ].map(describeOrderFailure),
     ).toEqual([
       "This order was already placed.",
@@ -42,7 +48,7 @@ describe("order failures", () => {
     expect([
       isRetryable({ _tag: "Unknown" }),
       isRetryable(denied),
-      isRetryable(rejected({ _tag: "StaffOnly" })),
+      isRetryable(rejected(new StaffOnly())),
     ]).toEqual([true, false, false]);
   });
 });

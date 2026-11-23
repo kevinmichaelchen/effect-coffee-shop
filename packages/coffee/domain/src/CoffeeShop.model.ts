@@ -1,7 +1,7 @@
 import * as Domain from "@alchemy.run/domain";
 import * as Layer from "effect/Layer";
 import { Cart } from "./Cart/Cart.aggregate.ts";
-import { CheckoutFulfillment, CheckoutFulfillmentLive } from "./Cart/CheckoutFulfillment.policy.ts";
+import { CheckoutFulfillment } from "./Cart/CheckoutFulfillment.decision.ts";
 import { CustomerCart, CustomerCartLive } from "./Cart/CustomerCart.view.ts";
 import { Customer } from "./Customer/Customer.aggregate.ts";
 import { CustomerOrders, CustomerOrdersLive } from "./Order/CustomerOrders.view.ts";
@@ -13,16 +13,15 @@ import { OrderSummary, OrderSummaryLive } from "./Order/OrderSummary.view.ts";
 export const coffeeShopMembers = {
   aggregates: [Order, Cart, Customer],
   views: [OrderSummary, CustomerOrders, OrderQueue, CustomerCart],
-  policies: [CheckoutFulfillment],
+  decisions: [CheckoutFulfillment],
 };
 
 export class CoffeeShop extends Domain.Model("CoffeeShop", coffeeShopMembers) {}
 
-/** Every read guard and policy implementation, as one Layer. */
+/** Every read guard, as one Layer. */
 export const CoffeeShopHandlers = Layer.mergeAll(
   OrderSummaryLive,
   CustomerOrdersLive,
   OrderQueueLive,
   CustomerCartLive,
-  CheckoutFulfillmentLive,
 );

@@ -2,11 +2,9 @@ import * as Arr from "effect/Array";
 import * as DateTime from "effect/DateTime";
 import * as Domain from "@alchemy.run/domain";
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { CurrentActor } from "../CurrentActor.context.ts";
 import { CustomerId } from "../Customer/Customer.id.ts";
-import { customerNameFor } from "../customerName.ts";
 import { invariantViolated } from "../Invariant.ts";
 import { InvalidOrder } from "../Menu/InvalidOrder.rejection.ts";
 import {
@@ -21,14 +19,9 @@ import { AddCartItem, CartItemAdded } from "./AddCartItem.command.ts";
 import { CartItemNotFound } from "./CartItemNotFound.rejection.ts";
 import type { CartItemId } from "./CartItem.id.ts";
 import { CartLine, type CartSnapshot } from "./CartSnapshot.ts";
-import { Checkout, type CheckoutId, checkoutLifetime } from "./Checkout.ts";
+import { Checkout, checkoutLifetime } from "./Checkout.ts";
 import { CartCleared, ClearCart } from "./ClearCart.command.ts";
-import {
-  CheckoutConfirmed,
-  CheckoutExpired,
-  CheckoutNotFound,
-  ConfirmCheckout,
-} from "./ConfirmCheckout.command.ts";
+import { CheckoutConfirmed } from "./ConfirmCheckout.command.ts";
 import { NotYourCart } from "./NotYourCart.rejection.ts";
 import { CheckoutPrepared, PrepareCheckout } from "./PrepareCheckout.command.ts";
 import { CartItemRemoved, RemoveCartItem } from "./RemoveCartItem.command.ts";
@@ -60,13 +53,6 @@ const withChanges = (line: CartLine, changes: DrinkSelectionChanges): DrinkSelec
   ...toDrinkSelection(line.item),
   ...changes,
 });
-
-/** The checkout awaiting confirmation, if it is the one asked for. */
-const awaitingCheckout = (state: CartState, checkoutId: CheckoutId): Option.Option<Checkout> =>
-  Option.filter(
-    Option.fromNullishOr(state.checkout),
-    (checkout) => checkout.checkoutId === checkoutId,
-  );
 
 const replace = (state: CartState, line: CartLine): CartState => ({
   ...state,
@@ -108,14 +94,6 @@ const preparedCheckout = (state: CartState) => ({
   checkout: state.checkout ?? invariantViolated("A checkout reply requires a prepared checkout"),
 });
 
-// The reply follows an accepted ConfirmCheckout, which records exactly one confirmation.
-const confirmedOrder = (_state: CartState, events: ReadonlyArray<object>) => ({
-  orderId: Option.match(Arr.findFirst(events, Schema.is(CheckoutConfirmed)), {
-    onNone: () => invariantViolated("A confirmation reply requires its event"),
-    onSome: (confirmed) => confirmed.orderId,
-  }),
-});
-
 /**
  * One person's cart, keyed by who owns it: the drinks they are collecting,
  * and the checkout they have been asked to confirm. Emptying the cart and
@@ -126,14 +104,9 @@ export class Cart extends Domain.Aggregate("Cart", {
   id: CustomerId,
   state: CartState,
   initial: { lines: [], checkout: null },
-  commands: [
-    AddCartItem,
-    UpdateCartItem,
-    RemoveCartItem,
-    ClearCart,
-    PrepareCheckout,
-    ConfirmCheckout,
-  ],
+  commands: [AddCartItem, UpdateCartItem, RemoveCartItem, ClearCart, PrepareCheckout],
+  keyOf: (command) => command.customerId,
+  events: [CheckoutConfirmed],
   decide: {
     AddCartItem: Effect.fn(function* (state, command, { id }) {
       yield* mustOwn(id);
@@ -164,37 +137,16 @@ export class Cart extends Domain.Aggregate("Cart", {
         return yield* new InvalidOrder({ message: "cart must include at least one item" });
       }
       // Re-price every line now: the checkout holds today's prices, not the ones seen when adding.
-      const quote = yield* Effect.fromResult(
-        quoteOrder(Arr.map(state.lines, (line) => toDrinkSelection(line.item))),
-      );
-      return [
-        new CheckoutPrepared({
-          checkout: {
-            checkoutId: command.checkoutId,
-            items: quote.items,
-            totalPrice: quote.totalPrice,
-            createdAt: now,
-            expiresAt: DateTime.add(now, checkoutLifetime),
-          },
-        }),
-      ];
-    }),
-    ConfirmCheckout: Effect.fn(function* (state, command, { id, now }) {
-      yield* mustOwn(id);
-      const checkout = yield* Effect.fromOption(awaitingCheckout(state, command.checkoutId)).pipe(
-        Effect.mapError(() => new CheckoutNotFound({ checkoutId: command.checkoutId })),
-      );
-      if (DateTime.isGreaterThan(now, checkout.expiresAt)) {
-        return yield* new CheckoutExpired({
-          checkoutId: checkout.checkoutId,
-          expiredAt: checkout.expiresAt,
-        });
-      }
-      const customerName = yield* customerNameFor(
-        yield* CurrentActor,
-        Option.fromUndefinedOr(command.customerName),
-      );
-      return [new CheckoutConfirmed({ orderId: command.orderId, customerName, checkout })];
+      const selections = Arr.map(state.lines, (line) => toDrinkSelection(line.item));
+      const quote = yield* Effect.fromResult(quoteOrder(selections));
+      const checkout = {
+        checkoutId: command.checkoutId,
+        items: quote.items,
+        totalPrice: quote.totalPrice,
+        createdAt: now,
+        expiresAt: DateTime.add(now, checkoutLifetime),
+      };
+      return [new CheckoutPrepared({ checkout })];
     }),
   },
   evolve: cartEvolve,
@@ -204,6 +156,5 @@ export class Cart extends Domain.Aggregate("Cart", {
     RemoveCartItem: cartReply,
     ClearCart: cartReply,
     PrepareCheckout: preparedCheckout,
-    ConfirmCheckout: confirmedOrder,
   },
 }) {}

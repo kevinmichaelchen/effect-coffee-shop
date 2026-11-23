@@ -122,7 +122,12 @@ describe("placing orders", () => {
     return story(
       clock(placedAt),
       as(sam),
-      when(o1, new PlaceOrder({ items: [{ drinkId: "latte", size: "medium", milk: "oat" }] })),
+      when(
+        new PlaceOrder({
+          orderId: o1.id,
+          items: [{ drinkId: "latte", size: "medium", milk: "oat" }],
+        }),
+      ),
       then(o1, samPlaced),
       replied({ order: samsTicket(o1.id) }),
       view(OrderSummary, o1, (summary) => expect(summary.order?.status).toBe("pending")),
@@ -169,8 +174,7 @@ describe("placing orders", () => {
         yield* waitForReplay(summary.history);
         yield* waitForReplay(queue.history);
         yield* orders.send(
-          orderId,
-          new PlaceOrder({ items: [{ drinkId: "latte", size: "medium" }] }),
+          new PlaceOrder({ orderId, items: [{ drinkId: "latte", size: "medium" }] }),
         );
         const previous = yield* queue
           .get(mainShop)
@@ -197,11 +201,18 @@ describe("placing orders", () => {
   it.effect("refuses drinks the menu does not offer, and impossible choices", () =>
     story(
       as(sam),
-      when(orderRef(1), new PlaceOrder({ items: [{ drinkId: "mocha", size: "medium" }] })),
+      when(
+        new PlaceOrder({ orderId: orderRef(1).id, items: [{ drinkId: "mocha", size: "medium" }] }),
+      ),
       rejected(new DrinkNotFound({ drinkId: "mocha" })),
-      when(orderRef(1), new PlaceOrder({ items: [{ drinkId: "tea", size: "large", shots: 2 }] })),
+      when(
+        new PlaceOrder({
+          orderId: orderRef(1).id,
+          items: [{ drinkId: "tea", size: "large", shots: 2 }],
+        }),
+      ),
       rejected(new InvalidOrder({ message: "Tea drinks do not support extra shots" })),
-      when(orderRef(1), new PlaceOrder({ items: [] })),
+      when(new PlaceOrder({ orderId: orderRef(1).id, items: [] })),
       rejected(new InvalidOrder({ message: "items must include at least one drink" })),
       then(orderRef(1)),
     ),
@@ -211,7 +222,7 @@ describe("placing orders", () => {
     story(
       given(orderRef(1), samPlaced),
       as(alex),
-      when(orderRef(1), new PlaceOrder({ items: [{ drinkId: "tea", size: "small" }] })),
+      when(new PlaceOrder({ orderId: orderRef(1).id, items: [{ drinkId: "tea", size: "small" }] })),
       rejected(new AlreadyPlaced({ orderId: orderRef(1).id })),
     ),
   );
@@ -220,13 +231,19 @@ describe("placing orders", () => {
     story(
       as(systemActor),
       when(
-        orderRef(1),
-        new PlaceOrder({ customerName: "", items: [{ drinkId: "tea", size: "small" }] }),
+        new PlaceOrder({
+          orderId: orderRef(1).id,
+          customerName: "",
+          items: [{ drinkId: "tea", size: "small" }],
+        }),
       ),
       rejected(new InvalidOrder({ message: "customerName must not be blank" })),
       when(
-        orderRef(1),
-        new PlaceOrder({ customerName: "Walk-in", items: [{ drinkId: "tea", size: "small" }] }),
+        new PlaceOrder({
+          orderId: orderRef(1).id,
+          customerName: "Walk-in",
+          items: [{ drinkId: "tea", size: "small" }],
+        }),
       ),
       then(
         orderRef(1),
@@ -246,10 +263,12 @@ describe("placing orders", () => {
   it.effect("keeps each customer's orders apart, and lets only staff read the queue", () =>
     story(
       as(sam),
-      when(orderRef(1), new PlaceOrder({ items: [{ drinkId: "latte", size: "medium" }] })),
+      when(
+        new PlaceOrder({ orderId: orderRef(1).id, items: [{ drinkId: "latte", size: "medium" }] }),
+      ),
       then(orderRef(1), placed(sam, plainLatte)),
       as(alex),
-      when(orderRef(2), new PlaceOrder({ items: [{ drinkId: "tea", size: "small" }] })),
+      when(new PlaceOrder({ orderId: orderRef(2).id, items: [{ drinkId: "tea", size: "small" }] })),
       then(orderRef(2), placed(alex, smallTea)),
       view(CustomerOrders, Customer.ref(sam.userId), (orders) =>
         expect(orders.orders.map((order) => order.customerName)).toEqual(["Sam"]),
@@ -268,9 +287,9 @@ describe("fulfilling orders", () => {
     return story(
       given(o1, samPlaced),
       as(barista),
-      when(o1, new StartBrewing()),
-      when(o1, new MarkReady()),
-      when(o1, new PickUpOrder()),
+      when(new StartBrewing({ orderId: o1.id })),
+      when(new MarkReady({ orderId: o1.id })),
+      when(new PickUpOrder({ orderId: o1.id })),
       then(
         o1,
         new BrewingStarted({ by: barista }),
@@ -289,13 +308,13 @@ describe("fulfilling orders", () => {
     return story(
       given(o1, samPlaced),
       as(barista),
-      when(o1, new MarkReady()),
+      when(new MarkReady({ orderId: o1.id })),
       rejected(new InvalidStatusTransition({ orderId: o1.id, from: "pending", to: "ready" })),
-      when(o1, new StartBrewing()),
-      when(o1, new StartBrewing()),
+      when(new StartBrewing({ orderId: o1.id })),
+      when(new StartBrewing({ orderId: o1.id })),
       rejected(new InvalidStatusTransition({ orderId: o1.id, from: "brewing", to: "brewing" })),
-      when(o1, new MarkReady()),
-      when(o1, new CancelOrder()),
+      when(new MarkReady({ orderId: o1.id })),
+      when(new CancelOrder({ orderId: o1.id })),
       rejected(new InvalidStatusTransition({ orderId: o1.id, from: "ready", to: "cancelled" })),
       then(o1, new BrewingStarted({ by: barista }), new OrderReady({ by: barista })),
     );
@@ -306,9 +325,9 @@ describe("fulfilling orders", () => {
     return story(
       given(o1, samPlaced),
       as(barista),
-      when(o1, new CancelOrder()),
+      when(new CancelOrder({ orderId: o1.id })),
       then(o1, new OrderCancelled({ by: barista })),
-      when(o1, new StartBrewing()),
+      when(new StartBrewing({ orderId: o1.id })),
       rejected(new InvalidStatusTransition({ orderId: o1.id, from: "cancelled", to: "brewing" })),
     );
   });
@@ -317,10 +336,10 @@ describe("fulfilling orders", () => {
     story(
       given(orderRef(1), samPlaced),
       as(sam),
-      when(orderRef(1), new StartBrewing()),
+      when(new StartBrewing({ orderId: orderRef(1).id })),
       rejected(new StaffOnly()),
       as(barista),
-      when(orderRef(2), new StartBrewing()),
+      when(new StartBrewing({ orderId: orderRef(2).id })),
       rejected(new OrderNotFound({ orderId: orderRef(2).id })),
     ),
   );
@@ -333,14 +352,26 @@ describe("the cart", () => {
     story(
       as(sam),
       when(
-        samsCart,
-        new AddCartItem({ cartItemId: cartItem(1), item: { drinkId: "latte", size: "medium" } }),
+        new AddCartItem({
+          customerId: samsCart.id,
+          cartItemId: cartItem(1),
+          item: { drinkId: "latte", size: "medium" },
+        }),
       ),
       when(
-        samsCart,
-        new AddCartItem({ cartItemId: cartItem(2), item: { drinkId: "espresso", size: "small" } }),
+        new AddCartItem({
+          customerId: samsCart.id,
+          cartItemId: cartItem(2),
+          item: { drinkId: "espresso", size: "small" },
+        }),
       ),
-      when(samsCart, new UpdateCartItem({ cartItemId: cartItem(2), changes: { quantity: 2 } })),
+      when(
+        new UpdateCartItem({
+          customerId: samsCart.id,
+          cartItemId: cartItem(2),
+          changes: { quantity: 2 },
+        }),
+      ),
       replied({
         cart: {
           items: [
@@ -351,7 +382,7 @@ describe("the cart", () => {
           checkout: null,
         },
       }),
-      when(samsCart, new RemoveCartItem({ cartItemId: cartItem(1) })),
+      when(new RemoveCartItem({ customerId: samsCart.id, cartItemId: cartItem(1) })),
       then(
         samsCart,
         new CartItemAdded({
@@ -365,11 +396,11 @@ describe("the cart", () => {
         new CartItemUpdated({ cartItemId: cartItem(2), item: twoEspressos }),
         new CartItemRemoved({ cartItemId: cartItem(1) }),
       ),
-      when(samsCart, new RemoveCartItem({ cartItemId: cartItem(1) })),
+      when(new RemoveCartItem({ customerId: samsCart.id, cartItemId: cartItem(1) })),
       rejected(new CartItemNotFound({ cartItemId: cartItem(1) })),
-      when(samsCart, new ClearCart()),
+      when(new ClearCart({ customerId: samsCart.id })),
       then(samsCart, new CartCleared()),
-      when(samsCart, new ClearCart()),
+      when(new ClearCart({ customerId: samsCart.id })),
       then(samsCart),
     ),
   );
@@ -379,8 +410,11 @@ describe("the cart", () => {
       given(samsCart, new CartItemAdded({ cartItemId: cartItem(1), item: latte })),
       as(sam),
       when(
-        samsCart,
-        new AddCartItem({ cartItemId: cartItem(1), item: { drinkId: "tea", size: "small" } }),
+        new AddCartItem({
+          customerId: samsCart.id,
+          cartItemId: cartItem(1),
+          item: { drinkId: "tea", size: "small" },
+        }),
       ),
       then(samsCart),
     ),
@@ -390,8 +424,11 @@ describe("the cart", () => {
     story(
       as(alex),
       when(
-        samsCart,
-        new AddCartItem({ cartItemId: cartItem(1), item: { drinkId: "latte", size: "medium" } }),
+        new AddCartItem({
+          customerId: samsCart.id,
+          cartItemId: cartItem(1),
+          item: { drinkId: "latte", size: "medium" },
+        }),
       ),
       rejected(new NotYourCart()),
     ),
@@ -414,11 +451,13 @@ describe("checkout", () => {
       given(samsCart, new CartItemAdded({ cartItemId: cartItem(1), item: latte })),
       clock(placedAt),
       as(sam),
-      when(samsCart, new PrepareCheckout({ checkoutId: checkoutId(1) })),
+      when(new PrepareCheckout({ customerId: samsCart.id, checkoutId: checkoutId(1) })),
       then(samsCart, new CheckoutPrepared({ checkout: prepared })),
       replied({ checkout: prepared }),
       clock("2026-10-18T09:10:00.000Z"),
-      when(samsCart, new ConfirmCheckout({ checkoutId: checkoutId(1), orderId: o9.id })),
+      when(
+        new ConfirmCheckout({ customerId: samsCart.id, checkoutId: checkoutId(1), orderId: o9.id }),
+      ),
       replied({ orderId: o9.id }),
       then(
         samsCart,
@@ -436,12 +475,14 @@ describe("checkout", () => {
     ),
   );
 
-  it.effect("reuses the completed fulfillment when another confirmation names the same order", () =>
+  it.effect("keeps the second checkout when its order id is already used", () =>
     story(
       given(samsCart, new CheckoutPrepared({ checkout: prepared })),
       clock(placedAt),
       as(sam),
-      when(samsCart, new ConfirmCheckout({ checkoutId: checkoutId(1), orderId: o9.id })),
+      when(
+        new ConfirmCheckout({ customerId: samsCart.id, checkoutId: checkoutId(1), orderId: o9.id }),
+      ),
       then(
         samsCart,
         new CheckoutConfirmed({
@@ -452,24 +493,21 @@ describe("checkout", () => {
       ),
       then(o9, samPlaced),
       when(
-        samsCart,
         new AddCartItem({
+          customerId: samsCart.id,
           cartItemId: cartItem(1),
           item: { drinkId: "latte", size: "medium", milk: "oat" },
         }),
       ),
-      when(samsCart, new PrepareCheckout({ checkoutId: checkoutId(2) })),
-      when(samsCart, new ConfirmCheckout({ checkoutId: checkoutId(2), orderId: o9.id })),
-      replied({ orderId: o9.id }),
+      when(new PrepareCheckout({ customerId: samsCart.id, checkoutId: checkoutId(2) })),
+      when(
+        new ConfirmCheckout({ customerId: samsCart.id, checkoutId: checkoutId(2), orderId: o9.id }),
+      ),
+      rejected(new AlreadyPlaced({ orderId: o9.id })),
       then(
         samsCart,
         new CartItemAdded({ cartItemId: cartItem(1), item: latte }),
         new CheckoutPrepared({ checkout: { ...prepared, checkoutId: checkoutId(2) } }),
-        new CheckoutConfirmed({
-          orderId: o9.id,
-          customerName: CustomerName.make("Sam"),
-          checkout: { ...prepared, checkoutId: checkoutId(2) },
-        }),
       ),
       then(o9),
     ),
@@ -478,7 +516,7 @@ describe("checkout", () => {
   it.effect("needs something in the cart", () =>
     story(
       as(sam),
-      when(samsCart, new PrepareCheckout({ checkoutId: checkoutId(1) })),
+      when(new PrepareCheckout({ customerId: samsCart.id, checkoutId: checkoutId(1) })),
       rejected(new InvalidOrder({ message: "cart must include at least one item" })),
     ),
   );
@@ -492,10 +530,14 @@ describe("checkout", () => {
       ),
       as(sam),
       clock("2026-10-18T09:05:00.000Z"),
-      when(samsCart, new ConfirmCheckout({ checkoutId: checkoutId(2), orderId: o9.id })),
+      when(
+        new ConfirmCheckout({ customerId: samsCart.id, checkoutId: checkoutId(2), orderId: o9.id }),
+      ),
       rejected(new CheckoutNotFound({ checkoutId: checkoutId(2) })),
       clock("2026-10-18T09:16:00.000Z"),
-      when(samsCart, new ConfirmCheckout({ checkoutId: checkoutId(1), orderId: o9.id })),
+      when(
+        new ConfirmCheckout({ customerId: samsCart.id, checkoutId: checkoutId(1), orderId: o9.id }),
+      ),
       rejected(new CheckoutExpired({ checkoutId: checkoutId(1), expiredAt: prepared.expiresAt })),
       then(o9),
       state(samsCart, (cart) => expect(Option.fromNullishOr(cart.checkout)._tag).toBe("Some")),

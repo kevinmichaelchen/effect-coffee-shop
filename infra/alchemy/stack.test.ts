@@ -210,15 +210,13 @@ const orderThroughCustomerApi = (api: string, session: Session, userId: Customer
       );
       const orderId = yield* makeOrderId;
       const checkoutId = yield* makeCheckoutId;
-      yield* coffee.AddCartItem(userId, {
+      yield* coffee.AddCartItem({
+        customerId: userId,
         cartItemId: yield* makeCartItemId,
         item: { drinkId: "latte", size: "medium", milk: "oat" },
       });
-      yield* coffee.PrepareCheckout(userId, { checkoutId });
-      const confirmed = yield* coffee.ConfirmCheckout(userId, {
-        checkoutId,
-        orderId,
-      });
+      yield* coffee.PrepareCheckout({ customerId: userId, checkoutId });
+      const confirmed = yield* coffee.ConfirmCheckout({ customerId: userId, checkoutId, orderId });
       const mine = yield* coffee.CustomerOrders.get(userId).pipe(
         Effect.repeat({
           until: (view) => Boolean(view?.orders.length),
@@ -241,6 +239,10 @@ test(
 
     const { orderId, confirmed, mine } = yield* orderThroughCustomerApi(api, session, me.userId);
     expect(confirmed.reply.orderId).toEqual(orderId);
+    expect(confirmed.commits.map(({ stream }) => stream)).toEqual([
+      `Cart/${me.userId}`,
+      `Order/${orderId}`,
+    ]);
     expect(mine?.orders).toMatchObject([{ customerName: "Sam", status: "pending" }]);
     expect(mine?.orders.map((order) => order.id)).toEqual([orderId]);
     const pushed = yield* liveOrders(api, session, me.userId).pipe(Effect.timeout("20 seconds"));
@@ -270,25 +272,27 @@ test(
     Effect.gen(function* () {
       const { coffee, userId } = yield* newCustomer();
       const emptyCart = yield* coffee
-        .PrepareCheckout(userId, { checkoutId: yield* makeCheckoutId })
+        .PrepareCheckout({ customerId: userId, checkoutId: yield* makeCheckoutId })
         .pipe(Effect.flip);
       expect(emptyCart).toMatchObject({
         _tag: "InvalidOrder",
         message: "cart must include at least one item",
       });
       const unknownCheckout = yield* coffee
-        .ConfirmCheckout(userId, {
+        .ConfirmCheckout({
+          customerId: userId,
           checkoutId: yield* makeCheckoutId,
           orderId: yield* makeOrderId,
         })
         .pipe(Effect.flip);
       expect(unknownCheckout).toMatchObject({ _tag: "CheckoutNotFound" });
       const missingLine = yield* coffee
-        .RemoveCartItem(userId, { cartItemId: yield* makeCartItemId })
+        .RemoveCartItem({ customerId: userId, cartItemId: yield* makeCartItemId })
         .pipe(Effect.flip);
       expect(missingLine).toMatchObject({ _tag: "CartItemNotFound" });
 
-      const added = yield* coffee.AddCartItem(userId, {
+      const added = yield* coffee.AddCartItem({
+        customerId: userId,
         cartItemId: yield* makeCartItemId,
         item: { drinkId: "latte", size: "medium", milk: "oat" },
       });
@@ -313,18 +317,19 @@ test(
       const { coffee, userId } = yield* newCustomer();
       const orderId = yield* makeOrderId;
       const checkoutId = yield* makeCheckoutId;
-      yield* coffee.AddCartItem(userId, {
+      yield* coffee.AddCartItem({
+        customerId: userId,
         cartItemId: yield* makeCartItemId,
         item: { drinkId: "latte", size: "medium", milk: "oat" },
       });
-      yield* coffee.PrepareCheckout(userId, { checkoutId });
+      yield* coffee.PrepareCheckout({ customerId: userId, checkoutId });
 
       // A client that timed out retries: both deliveries carry the same command id.
       const commandId = `confirm-${checkoutId}`;
       const [first, retried] = yield* Effect.all(
         [
-          coffee.ConfirmCheckout(userId, { checkoutId, orderId }, { commandId }),
-          coffee.ConfirmCheckout(userId, { checkoutId, orderId }, { commandId }),
+          coffee.ConfirmCheckout({ customerId: userId, checkoutId, orderId }, { commandId }),
+          coffee.ConfirmCheckout({ customerId: userId, checkoutId, orderId }, { commandId }),
         ],
         { concurrency: 2 },
       );
@@ -339,19 +344,18 @@ test(
       );
       expect(placed?.orders.map((order) => order.id)).toEqual([orderId]);
 
-      // A second checkout confirmed for the same order sends PlaceCheckedOutOrder
-      // again; the order is already placed, so the command records nothing.
-      yield* coffee.AddCartItem(userId, {
+      // An existing order id rejects a new checkout without consuming it.
+      yield* coffee.AddCartItem({
+        customerId: userId,
         cartItemId: yield* makeCartItemId,
         item: { drinkId: "tea", size: "small" },
       });
       const secondCheckout = yield* makeCheckoutId;
-      yield* coffee.PrepareCheckout(userId, { checkoutId: secondCheckout });
-      const reconfirmed = yield* coffee.ConfirmCheckout(userId, {
-        checkoutId: secondCheckout,
-        orderId,
-      });
-      expect(reconfirmed.reply.orderId).toEqual(orderId);
+      yield* coffee.PrepareCheckout({ customerId: userId, checkoutId: secondCheckout });
+      const rejected = yield* coffee
+        .ConfirmCheckout({ customerId: userId, checkoutId: secondCheckout, orderId })
+        .pipe(Effect.flip);
+      expect(rejected).toMatchObject({ _tag: "AlreadyPlaced", orderId });
 
       const summary = yield* coffee.OrderSummary.list(orderId).pipe(
         Effect.repeat({ schedule: Schedule.spaced("250 millis"), times: 4 }),
@@ -376,12 +380,17 @@ test(
             Effect.map(Arr.fromIterable),
           ),
           Effect.gen(function* () {
-            yield* coffee.AddCartItem(userId, {
+            yield* coffee.AddCartItem({
+              customerId: userId,
               cartItemId,
               item: { drinkId: "latte", size: "medium", milk: "oat" },
             });
-            yield* coffee.UpdateCartItem(userId, { cartItemId, changes: { quantity: 2 } });
-            yield* coffee.RemoveCartItem(userId, { cartItemId });
+            yield* coffee.UpdateCartItem({
+              customerId: userId,
+              cartItemId,
+              changes: { quantity: 2 },
+            });
+            yield* coffee.RemoveCartItem({ customerId: userId, cartItemId });
           }),
         ],
         { concurrency: 2 },
