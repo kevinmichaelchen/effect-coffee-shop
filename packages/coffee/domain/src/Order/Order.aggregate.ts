@@ -77,10 +77,10 @@ export class Order extends Domain.Aggregate("Order", {
   keyOf: (command) => command.orderId,
   events: [OrderPlaced],
   transitions: {
-    CancelledStaysCancelled: ({ before, after }) =>
-      !Schema.is(OrderPlacedState)(before) ||
-      before.order.status !== "cancelled" ||
-      (Schema.is(OrderPlacedState)(after) && after.order.status === "cancelled"),
+    CancelledStaysCancelled: ({ before, after }) => {
+      if (!Schema.is(OrderPlacedState)(before) || before.order.status !== "cancelled") return true;
+      return Schema.is(OrderPlacedState)(after) && after.order.status === "cancelled";
+    },
   },
   decide: {
     PlaceOrder: Effect.fn(function* (state, command, { id }) {

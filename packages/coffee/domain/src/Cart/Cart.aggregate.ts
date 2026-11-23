@@ -2,7 +2,6 @@ import * as Arr from "effect/Array";
 import * as DateTime from "effect/DateTime";
 import * as Domain from "@alchemy.run/domain";
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { CurrentActor } from "../CurrentActor.context.ts";
 import { CustomerId } from "../Customer/Customer.id.ts";
@@ -20,7 +19,7 @@ import { AddCartItem, CartItemAdded } from "./AddCartItem.command.ts";
 import { CartItemNotFound } from "./CartItemNotFound.rejection.ts";
 import type { CartItemId } from "./CartItem.id.ts";
 import { CartLine, type CartSnapshot } from "./CartSnapshot.ts";
-import { Checkout, type CheckoutId, checkoutLifetime } from "./Checkout.ts";
+import { Checkout, checkoutLifetime } from "./Checkout.ts";
 import { CartCleared, ClearCart } from "./ClearCart.command.ts";
 import { CheckoutConfirmed } from "./ConfirmCheckout.command.ts";
 import { NotYourCart } from "./NotYourCart.rejection.ts";
@@ -54,16 +53,6 @@ const withChanges = (line: CartLine, changes: DrinkSelectionChanges): DrinkSelec
   ...toDrinkSelection(line.item),
   ...changes,
 });
-
-/** The checkout awaiting confirmation, if it is the one asked for. */
-export const awaitingCheckout = (
-  state: CartState,
-  checkoutId: CheckoutId,
-): Option.Option<Checkout> =>
-  Option.filter(
-    Option.fromNullishOr(state.checkout),
-    (checkout) => checkout.checkoutId === checkoutId,
-  );
 
 const replace = (state: CartState, line: CartLine): CartState => ({
   ...state,

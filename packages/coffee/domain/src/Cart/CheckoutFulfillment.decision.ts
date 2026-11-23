@@ -8,7 +8,8 @@ import { CurrentActor } from "../CurrentActor.context.ts";
 import { customerNameFor } from "../customerName.ts";
 import { Order, OrderPlacedState } from "../Order/Order.aggregate.ts";
 import { AlreadyPlaced, OrderPlaced } from "../Order/PlaceOrder.command.ts";
-import { awaitingCheckout, Cart, mustOwn } from "./Cart.aggregate.ts";
+import type { CheckoutId } from "./Checkout.ts";
+import { Cart, type CartState, mustOwn } from "./Cart.aggregate.ts";
 import {
   CheckoutConfirmed,
   CheckoutExpired,
@@ -16,21 +17,27 @@ import {
   ConfirmCheckout,
 } from "./ConfirmCheckout.command.ts";
 
+const requireConfirmableCheckout = Effect.fnUntraced(function* (
+  { checkout }: CartState,
+  checkoutId: CheckoutId,
+  now: DateTime.Utc,
+) {
+  if (checkout === null || checkout.checkoutId !== checkoutId) {
+    return yield* new CheckoutNotFound({ checkoutId });
+  }
+  if (DateTime.isGreaterThan(now, checkout.expiresAt)) {
+    return yield* new CheckoutExpired({ checkoutId, expiredAt: checkout.expiresAt });
+  }
+  return checkout;
+});
+
 export class CheckoutFulfillment extends Domain.Decision(ConfirmCheckout, {
   reads: { cart: Cart, order: Order },
   keyOf: (command) => ({ cart: command.customerId, order: command.orderId }),
   decide: ({ cart, order }, command, { now }) =>
     Effect.gen(function* () {
       yield* mustOwn(cart.id);
-      const checkout = yield* Effect.fromOption(
-        awaitingCheckout(cart.state, command.checkoutId),
-      ).pipe(Effect.mapError(() => new CheckoutNotFound({ checkoutId: command.checkoutId })));
-      if (DateTime.isGreaterThan(now, checkout.expiresAt)) {
-        return yield* new CheckoutExpired({
-          checkoutId: checkout.checkoutId,
-          expiredAt: checkout.expiresAt,
-        });
-      }
+      const checkout = yield* requireConfirmableCheckout(cart.state, command.checkoutId, now);
       if (Schema.is(OrderPlacedState)(order.state)) {
         return yield* new AlreadyPlaced({ orderId: order.id });
       }
@@ -51,10 +58,9 @@ export class CheckoutFulfillment extends Domain.Decision(ConfirmCheckout, {
         ),
       ];
     }),
-  reply: (_, events) => ({
-    orderId: Option.match(Option.fromUndefinedOr(events.find(Schema.is(CheckoutConfirmed))), {
-      onSome: (event) => event.orderId,
-      onNone: () => invariantViolated("Checkout requires a confirmation"),
-    }),
-  }),
+  reply: (_, events) => {
+    const confirmation = events.find(Schema.is(CheckoutConfirmed));
+    if (confirmation === undefined) return invariantViolated("Checkout requires a confirmation");
+    return { orderId: confirmation.orderId };
+  },
 }) {}
