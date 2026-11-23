@@ -137,20 +137,16 @@ export class Cart extends Domain.Aggregate("Cart", {
         return yield* new InvalidOrder({ message: "cart must include at least one item" });
       }
       // Re-price every line now: the checkout holds today's prices, not the ones seen when adding.
-      const quote = yield* Effect.fromResult(
-        quoteOrder(Arr.map(state.lines, (line) => toDrinkSelection(line.item))),
-      );
-      return [
-        new CheckoutPrepared({
-          checkout: {
-            checkoutId: command.checkoutId,
-            items: quote.items,
-            totalPrice: quote.totalPrice,
-            createdAt: now,
-            expiresAt: DateTime.add(now, checkoutLifetime),
-          },
-        }),
-      ];
+      const selections = Arr.map(state.lines, (line) => toDrinkSelection(line.item));
+      const quote = yield* Effect.fromResult(quoteOrder(selections));
+      const checkout = {
+        checkoutId: command.checkoutId,
+        items: quote.items,
+        totalPrice: quote.totalPrice,
+        createdAt: now,
+        expiresAt: DateTime.add(now, checkoutLifetime),
+      };
+      return [new CheckoutPrepared({ checkout })];
     }),
   },
   evolve: cartEvolve,
