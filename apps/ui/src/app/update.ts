@@ -223,36 +223,43 @@ const receiveOrderActionFailed = (
  * sent again with its own ids, so the write cannot land twice; a draft that
  * changed since starts a new ticket.
  */
-const sendOrder = (model: Model): UpdateReturn => {
-  const composer = composerFor(menuOf(model), model.draft);
-  if (Option.isNone(composer)) return { model };
-
-  const request = toPlaceOrderRequest(composer.value.draft);
-  const retry = Option.filter(model.pendingOrder, (pending) =>
-    Equal.equals(pending.request, request),
-  );
-  if (Option.isSome(retry)) {
-    const pending = retry.value;
-    // StartOrder has not answered yet, so there is no ticket to address.
-    if (Option.isNone(pending.orderId)) return { model };
-    const command = placeOrder({
-      commandId: pending.commandId,
-      orderId: pending.orderId.value,
-      request,
-    });
-    const next = settleTurn({ ...model, isPlacingOrder: true, pendingOrder: retry });
-    return { model: next, commands: [command] };
-  }
-
-  const { commandId, commandIds } = DomainFoldkit.next(model.commandIds);
-  const next = settleTurn({
-    ...model,
-    commandIds,
-    isPlacingOrder: true,
-    pendingOrder: Option.some({ commandId, orderId: Option.none(), request }),
+const sendOrder = (model: Model): UpdateReturn =>
+  Option.match(composerFor(menuOf(model), model.draft), {
+    onNone: () => ({ model }),
+    onSome: ({ draft }) => {
+      const request = toPlaceOrderRequest(draft);
+      const retry = Option.filter(model.pendingOrder, (pending) =>
+        Equal.equals(pending.request, request),
+      );
+      return Option.match(retry, {
+        onSome: (pending) =>
+          Option.match(pending.orderId, {
+            // StartOrder has not answered yet, so there is no ticket to address.
+            onNone: () => ({ model }),
+            onSome: (orderId) => ({
+              model: settleTurn({
+                ...model,
+                isPlacingOrder: true,
+                pendingOrder: Option.some(pending),
+              }),
+              commands: [placeOrder({ commandId: pending.commandId, orderId, request })],
+            }),
+          }),
+        onNone: () => {
+          const { commandId, commandIds } = DomainFoldkit.next(model.commandIds);
+          return {
+            model: settleTurn({
+              ...model,
+              commandIds,
+              isPlacingOrder: true,
+              pendingOrder: Option.some({ commandId, orderId: Option.none(), request }),
+            }),
+            commands: [StartOrder({ commandId })],
+          };
+        },
+      });
+    },
   });
-  return { model: next, commands: [StartOrder({ commandId })] };
-};
 
 /**
  * Runs one staff action. A retry of an action whose outcome was unknown goes
