@@ -36,10 +36,12 @@ const moveTo =
     Effect.gen(function* () {
       const actor = yield* CurrentActor;
       if (!isStaff(actor)) return yield* new StaffOnly();
-      if (!Schema.is(OrderPlacedState)(state)) {
-        return yield* new OrderNotFound({ orderId: id });
-      }
-      const from = state.order.status;
+      const placed = yield* Match.value(state).pipe(
+        Match.tag("Unplaced", () => Effect.fail(new OrderNotFound({ orderId: id }))),
+        Match.tag("Placed", (placed: OrderPlacedState) => Effect.succeed(placed)),
+        Match.exhaustive,
+      );
+      const from = placed.order.status;
       if (!canTransitionTo(from, to)) {
         return yield* new InvalidStatusTransition({ orderId: id, from, to });
       }
