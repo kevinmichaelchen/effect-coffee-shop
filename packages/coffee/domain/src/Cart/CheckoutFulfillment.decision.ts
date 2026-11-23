@@ -46,17 +46,14 @@ export class CheckoutFulfillment extends Domain.Decision(ConfirmCheckout, {
         actor,
         Option.fromUndefinedOr(command.customerName),
       );
-      return [
-        cart.record(new CheckoutConfirmed({ orderId: order.id, customerName, checkout })),
-        order.record(
-          new OrderPlaced({
-            customerId: cart.id,
-            customerName,
-            items: checkout.items,
-            totalPrice: checkout.totalPrice,
-          }),
-        ),
-      ];
+      const confirmation = new CheckoutConfirmed({ orderId: order.id, customerName, checkout });
+      const placement = new OrderPlaced({
+        customerId: cart.id,
+        customerName,
+        items: checkout.items,
+        totalPrice: checkout.totalPrice,
+      });
+      return [cart.record(confirmation), order.record(placement)];
     }),
   reply: (_, events) => {
     const confirmation = events.find(Schema.is(CheckoutConfirmed));
