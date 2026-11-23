@@ -153,13 +153,12 @@ export const coffeeGeneration = (input: CoffeeDeployment, secret: Redacted.Redac
       layers: { ...made, auth: Layer.succeedContext(services) },
       services,
     };
-    const http = yield* HttpRouter.toHttpEffect(
-      authenticatedRoutes(input, auth).pipe(
-        Layer.provide(Layer.succeed(CoffeeOrderApp, input.app)),
-        Layer.provide(Layer.succeedContext(input.domain)),
-        Layer.provide(HttpServer.layerServices),
-      ),
-    ).pipe(
+    const routes = authenticatedRoutes(input, auth).pipe(
+      Layer.provide(Layer.succeed(CoffeeOrderApp, input.app)),
+      Layer.provide(Layer.succeedContext(input.domain)),
+      Layer.provide(HttpServer.layerServices),
+    );
+    const http = yield* HttpRouter.toHttpEffect(routes).pipe(
       // Built once per generation: a graph that cannot build is a defect, and
       // a route failure its own middleware does not answer is the request's 500.
       Effect.orDie,
