@@ -31,9 +31,9 @@ export class OrderPlaced extends Domain.Event("OrderPlaced", {
 export class PlaceOrder extends Domain.Command(
   "PlaceOrder",
   {
-    target: OrderId,
     middleware: [Session],
     input: {
+      orderId: OrderId,
       items: Schema.Array(DrinkSelection),
       customerName: Schema.optionalKey(
         Schema.Trim.annotate({ description: "Customer display name, for system orders." }),

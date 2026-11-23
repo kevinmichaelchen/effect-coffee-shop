@@ -61,8 +61,7 @@ describe("the domain Apis over the in-memory platform", () => {
       const orderId = yield* makeOrderId;
 
       const placed = yield* customers.PlaceOrder(
-        orderId,
-        { items: [{ drinkId: "latte", size: "medium", milk: "oat" }] },
+        { orderId, items: [{ drinkId: "latte", size: "medium", milk: "oat" }] },
         as(sam),
       );
       expect(placed.reply.order.customerName).toBe("Sam");
@@ -74,7 +73,7 @@ describe("the domain Apis over the in-memory platform", () => {
       );
       expect(mine?.orders.map((order) => order.id)).toEqual([orderId]);
 
-      const brewing = yield* staff.StartBrewing(orderId, {}, as(barista));
+      const brewing = yield* staff.StartBrewing({ orderId }, as(barista));
       expect(brewing.reply.order.status).toBe("brewing");
 
       const queue = yield* eventually(staff.OrderQueue.get(mainShop, as(barista)), (view) =>
@@ -93,17 +92,16 @@ describe("the domain Apis over the in-memory platform", () => {
       const orderId = yield* makeOrderId;
 
       const signedOut = yield* customers
-        .PlaceOrder(orderId, { items: [{ drinkId: "tea", size: "small" }] })
+        .PlaceOrder({ orderId, items: [{ drinkId: "tea", size: "small" }] })
         .pipe(Effect.flip);
       expect(signedOut._tag).toBe("Unauthorized");
 
       const placed = yield* customers.PlaceOrder(
-        orderId,
-        { items: [{ drinkId: "tea", size: "small" }] },
+        { orderId, items: [{ drinkId: "tea", size: "small" }] },
         as(sam),
       );
 
-      const notStaff = yield* staff.StartBrewing(orderId, {}, as(sam)).pipe(Effect.flip);
+      const notStaff = yield* staff.StartBrewing({ orderId }, as(sam)).pipe(Effect.flip);
       expect(notStaff._tag).toBe("StaffOnly");
 
       const queue = yield* staff.OrderQueue.get(mainShop, as(alex)).pipe(Effect.flip);

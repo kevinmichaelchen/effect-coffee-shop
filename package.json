@@ -17,11 +17,11 @@
       "packages/tooling"
     ],
     "catalog": {
-      "@alchemy.run/aws": "2.0.0-beta.87",
-      "@alchemy.run/cloudflare": "2.0.0-beta.87",
-      "@alchemy.run/docker": "2.0.0-beta.87",
-      "@alchemy.run/domain": "2.0.0-beta.87",
-      "@alchemy.run/rivet": "2.0.0-beta.87",
+      "@alchemy.run/aws": "https://pkg.alchemy.run/@alchemy.run/aws/-/c546b71e8fd1e4ae5f6ca2bbddfcb4d332073cdec2062572d933df8f1982347d.tgz",
+      "@alchemy.run/cloudflare": "https://pkg.alchemy.run/@alchemy.run/cloudflare/-/158730a42b9e2c127ac199f7fea7f00466b010e71df888bc24f6b3986c88bf07.tgz",
+      "@alchemy.run/docker": "https://pkg.alchemy.run/@alchemy.run/docker/-/1e14476f9620c314db91ee96a51b41acad477816b39ba1c479fb3e13bdc93917.tgz",
+      "@alchemy.run/domain": "https://pkg.alchemy.run/@alchemy.run/domain/-/856425e9c40134a87ef20d5a16804eaf4f8d28e79ed753ff395ac6630e17bfc9.tgz",
+      "@alchemy.run/rivet": "https://pkg.alchemy.run/@alchemy.run/rivet/-/a8ae58ce2483523b5f9fdbbbc97fd1052099e36add895d269f95caa0c2077067.tgz",
       "@alchemy.run/test": "2.0.0-beta.87",
       "@cloudflare/workers-types": "5.20261120.1",
       "@effect/platform-browser": "4.1.5",
@@ -45,7 +45,7 @@
       "@yielded/auth": "0.1.0-beta.49",
       "@yielded/auth-persistence": "0.1.0-beta.49",
       "@yielded/auth-simplewebauthn": "0.1.0-beta.49",
-      "alchemy": "2.0.0-beta.87",
+      "alchemy": "https://pkg.alchemy.run/alchemy/-/6ca328742a59419cfb9e01f2c182f3c92fe081d7706f11c8814bce9a02b2682a.tgz",
       "class-variance-authority": "^0.7.1",
       "clsx": "^2.1.1",
       "effect": "4.1.5",
@@ -100,6 +100,7 @@
     "patches:check": "bun patches/check.ts"
   },
   "devDependencies": {
+    "@alchemy.run/frontend-frameworks": "https://pkg.alchemy.run/@alchemy.run/frontend-frameworks/-/da594b557b7ae990a01045b994ff49bb3f49bc8a8f5bbe728bacb284e309c7ce.tgz",
     "@effect/platform-bun": "catalog:",
     "@effect/platform-node": "catalog:",
     "@effect/tsgo": "catalog:",
@@ -117,12 +118,12 @@
     "@effect/platform-node-shared": "4.1.5",
     "@effect/sql-d1": "4.1.5",
     "@effect/vitest": "4.1.5",
+    "alchemy": "https://pkg.alchemy.run/alchemy/-/6ca328742a59419cfb9e01f2c182f3c92fe081d7706f11c8814bce9a02b2682a.tgz",
     "effect": "4.1.5"
   },
   "packageManager": "bun@1.4.4",
   "patchedDependencies": {
-    "@alchemy.run/rivet@2.0.0-beta.87": "patches/@alchemy.run%2Frivet@2.0.0-beta.87.patch",
-    "alchemy@2.0.0-beta.87": "patches/alchemy@2.0.0-beta.87.patch",
-    "@yielded/auth-persistence@0.1.0-beta.49": "patches/@yielded%2Fauth-persistence@0.1.0-beta.49.patch"
+    "@yielded/auth-persistence@0.1.0-beta.49": "patches/@yielded%2Fauth-persistence@0.1.0-beta.49.patch",
+    "@alchemy.run/rivet@https://pkg.alchemy.run/@alchemy.run/rivet/-/a8ae58ce2483523b5f9fdbbbc97fd1052099e36add895d269f95caa0c2077067.tgz": "patches/@alchemy.run%2Frivet@2.0.0-beta.87.patch"
   }
 }

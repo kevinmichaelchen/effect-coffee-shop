@@ -98,7 +98,7 @@ describe("the MCP order resources", () => {
     Effect.gen(function* () {
       const customers = yield* CustomerApi.clientInProcess;
       const orderId = yield* makeOrderId;
-      yield* customers.PlaceOrder(orderId, { items: [{ drinkId: "tea", size: "small" }] }, as(sam));
+      yield* customers.PlaceOrder({ orderId, items: [{ drinkId: "tea", size: "small" }] }, as(sam));
 
       const mine = yield* clientFor(sam);
       const orders = yield* eventually(

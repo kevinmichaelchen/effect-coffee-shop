@@ -12,8 +12,8 @@ name: order-coffee
 description: Choose drinks, manage the signed-in customer's cart, and check out with the Coffee Orders MCP tools.
 ---
 
-Start with \`get_ordering_context\`. Its customerId is the target of every cart
-command and the key of \`CustomerApi_CustomerCart_get\` and
+Start with \`get_ordering_context\`. Pass its customerId in the input of every cart
+command. It is also the key of \`CustomerApi_CustomerCart_get\` and
 \`CustomerApi_CustomerOrders_get\`. Its newIds are fresh ids for a new cart line
 (cartItemId), checkout (checkoutId) and order (orderId); call it again whenever
 you need more. Never invent ids.
@@ -26,7 +26,7 @@ placing it.
 Read \`CustomerApi_CustomerCart_get\` before editing an existing cart. Use
 \`CustomerApi_AddCartItem_send\`, \`CustomerApi_UpdateCartItem_send\`, and
 \`CustomerApi_RemoveCartItem_send\` to apply the customer's choices; preserve
-unrelated cart items. Each command takes a target, an input, and an optional
+unrelated cart items. Each command takes an input and an optional
 commandId: resending with the same commandId returns the first result instead
 of applying the command twice.
 
@@ -39,7 +39,7 @@ resend it with the same commandId, or read \`CustomerApi_CustomerCart_get\` and
 \`CustomerApi_OrderSummary_get\` for the orderId, before trying again; do not
 create a duplicate order with \`CustomerApi_PlaceOrder_send\`.
 
-The order is placed moments after confirmation. Report its orderId, and use
+Confirmation places the order and clears the cart in the same commit. Report its orderId, and use
 \`CustomerApi_OrderSummary_get\` (keyed by orderId) for its status. A failure
 such as Unauthorized, NotYourCart or CheckoutExpired comes back as the tool's
 result: act on it rather than retrying blindly. The StaffApi tools (the queue,

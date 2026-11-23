@@ -1,12 +1,10 @@
-sequenceDiagram
-    participant C as Customer
-    participant Cart
-    participant P as CheckoutFulfillment
-    participant Order
-    C->>Cart: PrepareCheckout(checkoutId)
-    Cart-->>C: CheckoutPrepared, prices held 15 minutes
-    C->>Cart: ConfirmCheckout(checkoutId, orderId)
-    Cart-->>C: CheckoutConfirmed, cart emptied
-    Cart--)P: CheckoutConfirmed
-    P->>Order: PlaceCheckedOutOrder(orderId)
-    Order--)C: OrderPlaced, read from OrderSummary
+flowchart LR
+    CartQuote["PrepareCheckout holds prices"]
+    Confirm["ConfirmCheckout"]
+    subgraph Atomic["One atomic decision"]
+        Cart["Cart records CheckoutConfirmed"]
+        Order["Order records OrderPlaced"]
+    end
+    CartQuote --> Confirm
+    Confirm --> Cart
+    Confirm --> Order

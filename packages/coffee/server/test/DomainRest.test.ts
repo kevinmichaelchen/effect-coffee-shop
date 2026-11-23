@@ -162,7 +162,7 @@ describe("the domain Apis over REST, behind the auth session", () => {
         const orderId = yield* makeOrderId;
         const placed = yield* post(
           "/api/rest/customer/PlaceOrder",
-          { target: orderId, input: { items: [{ drinkId: "latte", size: "medium" }] } },
+          { input: { orderId, items: [{ drinkId: "latte", size: "medium" }] } },
           { cookie, ...forgedStaff },
         );
         expect(placed.status).toBe(200);
@@ -171,7 +171,7 @@ describe("the domain Apis over REST, behind the auth session", () => {
 
         const brew = yield* post(
           "/api/rest/staff/StartBrewing",
-          { target: orderId, input: {} },
+          { input: { orderId } },
           { cookie, ...forgedStaff },
         );
         expect(brew.status).toBe(403);
@@ -187,7 +187,7 @@ describe("the domain Apis over REST, behind the auth session", () => {
 
         const repeat = yield* post(
           "/api/rest/customer/PlaceOrder",
-          { target: orderId, input: { items: [{ drinkId: "latte", size: "medium" }] } },
+          { input: { orderId, items: [{ drinkId: "latte", size: "medium" }] } },
           { cookie },
         );
         expect(repeat.status).toBe(409);
@@ -196,7 +196,7 @@ describe("the domain Apis over REST, behind the auth session", () => {
         // Mutations must come from the app's own origin.
         const crossSite = yield* post(
           "/api/rest/customer/ClearCart",
-          { target: owner, input: {} },
+          { input: { customerId: owner } },
           { cookie, origin: "https://attacker.example" },
         );
         expect(crossSite.status).toBe(403);

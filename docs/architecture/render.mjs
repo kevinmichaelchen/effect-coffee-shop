@@ -90,7 +90,7 @@ const plainDiagrams = [
   {
     name: "checkout-flow",
     label:
-      "Checkout: a customer prepares and confirms a checkout on the Cart, the confirmed checkout starts the fulfillment saga, and the saga places the order.",
+      "Checkout: a customer prepares a cart, then CheckoutFulfillment confirms the cart and places the order in one atomic decision.",
   },
   {
     name: "cache-requests",

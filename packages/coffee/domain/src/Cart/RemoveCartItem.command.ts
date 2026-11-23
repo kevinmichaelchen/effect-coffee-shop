@@ -13,9 +13,8 @@ export class CartItemRemoved extends Domain.Event("CartItemRemoved", { cartItemI
 export class RemoveCartItem extends Domain.Command(
   "RemoveCartItem",
   {
-    target: CustomerId,
     middleware: [Session],
-    input: { cartItemId: CartItemId },
+    input: { customerId: CustomerId, cartItemId: CartItemId },
     events: [CartItemRemoved],
     rejects: [NotYourCart, CartItemNotFound],
     reply: { cart: CartSnapshot },
